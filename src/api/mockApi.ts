@@ -2447,7 +2447,8 @@ export const mockApi = {
           if (srIdx !== -1) {
             maintenanceRequests[srIdx].status = 'Completed';
             if (data.actualCost) {
-              maintenanceRequests[srIdx].cost = data.actualCost;
+              const totalCost = Number(data.actualCost) + Number(data.extraExpenses || 0);
+              maintenanceRequests[srIdx].cost = totalCost;
             }
           }
         }

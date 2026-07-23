@@ -5,12 +5,13 @@ import api from '../../api';
 import { PageHeader } from '../../components/PageHeader';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
 import { StatusBadge } from '../../components/StatusBadge';
 import { LoadingSkeleton } from '../../components/LoadingSkeleton';
 import { 
   ArrowLeft, CheckCircle2, Play, AlertCircle, XCircle, Clock, 
   MapPin, User, Tag, Calendar, DollarSign, Image as ImageIcon,
-  Wrench, Check
+  Wrench, Check, AlertTriangle, X
 } from 'lucide-react';
 
 export const StaffTaskDetailsPage: React.FC = () => {
@@ -18,15 +19,32 @@ export const StaffTaskDetailsPage: React.FC = () => {
   const navigate = useNavigate();
 
   const { data: task, isLoading } = useQuery({
-    queryKey: ['staff-work-order-details', id],
+    queryKey: ['staff-work-order-details-v2', id],
     queryFn: () => api.workOrders.getById(id),
   });
 
   const [localStatus, setLocalStatus] = useState<string>('');
+  const [rejectReason, setRejectReason] = useState<string>('');
+  const [actualCost, setActualCost] = useState<number>(0);
+  const [extraExpenses, setExtraExpenses] = useState<number>(0);
+  const [resolutionNotes, setResolutionNotes] = useState<string>('');
+
+  // Modals state
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+  const [rejectReasonText, setRejectReasonText] = useState('');
+
+  const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false);
+  const [actualCostVal, setActualCostVal] = useState<string>('');
+  const [extraExpensesVal, setExtraExpensesVal] = useState<string>('');
+  const [resolutionNotesVal, setResolutionNotesVal] = useState('');
 
   useEffect(() => {
-    if (task?.status) {
+    if (task) {
       setLocalStatus(task.status);
+      setRejectReason(task.rejectReason || '');
+      setActualCost(task.actualCost || 0);
+      setExtraExpenses(task.extraExpenses || 0);
+      setResolutionNotes(task.resolutionNotes || '');
     }
   }, [task]);
 
@@ -68,8 +86,33 @@ export const StaffTaskDetailsPage: React.FC = () => {
   const isRejected = localStatus === 'Rejected' || localStatus === 'Cancelled';
 
   // UI-only action triggers
-  const handleStatusChange = (status: string) => {
-    setLocalStatus(status);
+  const handleAccept = () => {
+    setLocalStatus('Assigned');
+  };
+
+  const handleStartWork = () => {
+    setLocalStatus('In Progress');
+  };
+
+  // Reject Submit Handler
+  const handleRejectSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLocalStatus('Rejected');
+    setRejectReason(rejectReasonText || 'No reason provided');
+    setIsRejectModalOpen(false);
+  };
+
+  // Completion Submit Handler
+  const handleCompleteSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const actual = actualCostVal ? Number(actualCostVal) : 0;
+    const extra = extraExpensesVal ? Number(extraExpensesVal) : 0;
+
+    setLocalStatus('Completed');
+    setActualCost(actual);
+    setExtraExpenses(extra);
+    setResolutionNotes(resolutionNotesVal || 'Repairs completed.');
+    setIsCompleteModalOpen(false);
   };
 
   return (
@@ -156,44 +199,85 @@ export const StaffTaskDetailsPage: React.FC = () => {
                 <div className="flex items-center space-x-3 text-muted-foreground">
                   <DollarSign className="w-4.5 h-4.5 text-emerald-500 shrink-0" />
                   <div>
-                    <p className="text-[10px] uppercase font-bold text-muted-foreground/60">Estimated Cost</p>
-                    <p className="text-foreground mt-0.5">${task.estimatedCost || '0.00'}</p>
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground/60">
+                      {localStatus === 'Completed' ? 'Actual / Total Cost' : 'Estimated Cost'}
+                    </p>
+                    <p className="text-foreground mt-0.5 font-bold">
+                      ${localStatus === 'Completed' ? (actualCost + extraExpenses) : (task.estimatedCost || '0.00')}
+                    </p>
                   </div>
                 </div>
               </div>
             </div>
 
+            {/* Reject reason details */}
+            {localStatus === 'Rejected' && rejectReason && (
+              <div className="p-4 bg-rose-500/5 border border-rose-500/20 text-rose-500 rounded-2xl text-xs font-bold space-y-1">
+                <p className="uppercase text-[9px] text-muted-foreground">Reason for Rejection</p>
+                <p className="leading-relaxed font-semibold">{rejectReason}</p>
+              </div>
+            )}
+
+            {/* Completed Resolution logs */}
+            {localStatus === 'Completed' && (
+              <div className="p-4 bg-emerald-500/5 border border-emerald-500/20 text-emerald-600 rounded-2xl text-xs font-bold grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <p className="uppercase text-[9px] text-muted-foreground">Cost Breakdown</p>
+                  <p>Base Labor: <span className="text-foreground font-extrabold">${actualCost}</span></p>
+                  <p>Extra Expenses: <span className="text-foreground font-extrabold">${extraExpenses}</span></p>
+                </div>
+                <div className="space-y-1 md:border-l md:pl-4">
+                  <p className="uppercase text-[9px] text-muted-foreground">Resolution Summary</p>
+                  <p className="text-foreground font-medium italic mt-1 leading-relaxed">"{resolutionNotes || 'No notes provided.'}"</p>
+                </div>
+              </div>
+            )}
+
             {/* Actions Panel */}
-            <div className="flex flex-wrap gap-3 pt-2">
-              <Button
-                onClick={() => handleStatusChange('Assigned')}
-                disabled={localStatus === 'Assigned' || isRejected}
-                className="flex-1 rounded-xl h-10 font-bold bg-secondary/80 hover:bg-secondary text-foreground"
-              >
-                Accept
-              </Button>
-              <Button
-                onClick={() => handleStatusChange('Rejected')}
-                disabled={localStatus === 'Rejected' || isRejected}
-                className="flex-1 rounded-xl h-10 font-bold bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/20"
-              >
-                Reject
-              </Button>
-              <Button
-                onClick={() => handleStatusChange('In Progress')}
-                disabled={localStatus === 'In Progress' || isRejected || localStatus === 'Completed'}
-                className="flex-1 rounded-xl h-10 font-bold bg-amber-500 hover:bg-amber-600 text-white"
-              >
-                Start Work
-              </Button>
-              <Button
-                onClick={() => handleStatusChange('Completed')}
-                disabled={localStatus === 'Completed' || isRejected}
-                className="flex-1 rounded-xl h-10 font-bold bg-emerald-500 hover:bg-emerald-600 text-white"
-              >
-                Complete
-              </Button>
-            </div>
+            {!isRejected && localStatus !== 'Completed' && (
+              <div className="flex flex-wrap gap-3 pt-2">
+                {localStatus === 'New' && (
+                  <>
+                    <Button
+                      onClick={handleAccept}
+                      className="flex-1 rounded-xl h-10 font-bold bg-primary text-white"
+                    >
+                      Accept Job
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        setRejectReasonText('');
+                        setIsRejectModalOpen(true);
+                      }}
+                      className="flex-1 rounded-xl h-10 font-bold bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/20"
+                    >
+                      Reject Job
+                    </Button>
+                  </>
+                )}
+
+                {(localStatus === 'Assigned' || localStatus === 'Scheduled' || localStatus === 'Draft') && (
+                  <Button
+                    onClick={handleStartWork}
+                    className="flex-1 rounded-xl h-10 font-bold bg-amber-500 hover:bg-amber-600 text-white flex items-center justify-center gap-1.5"
+                  >
+                    <Play className="w-4 h-4 fill-white" /> Start Work
+                  </Button>
+                )}
+
+                {localStatus === 'In Progress' && (
+                  <Button
+                    onClick={() => {
+                      setActualCostVal(task.estimatedCost.toString());
+                      setIsCompleteModalOpen(true);
+                    }}
+                    className="flex-1 rounded-xl h-10 font-bold bg-emerald-500 hover:bg-emerald-600 text-white flex items-center justify-center gap-1.5"
+                  >
+                    <Check className="w-4.5 h-4.5" /> Complete Work
+                  </Button>
+                )}
+              </div>
+            )}
           </Card>
 
           {/* Images Section */}
@@ -250,6 +334,139 @@ export const StaffTaskDetailsPage: React.FC = () => {
         </div>
 
       </div>
+
+      {/* REJECT DIALOG MODAL */}
+      {isRejectModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-card border w-full max-w-md rounded-3xl p-6 shadow-2xl space-y-4 relative animate-in zoom-in-95 duration-200 text-foreground">
+            <button
+              onClick={() => setIsRejectModalOpen(false)}
+              className="absolute top-4 right-4 text-muted-foreground hover:text-foreground p-1 rounded-full hover:bg-secondary/40 transition"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center space-x-2.5 text-rose-500 font-extrabold text-sm border-b pb-3 uppercase tracking-wide">
+              <AlertTriangle className="w-5 h-5" />
+              <h3>Reject Work Assignment</h3>
+            </div>
+
+            <form onSubmit={handleRejectSubmit} className="space-y-4 text-xs font-semibold">
+              <div className="space-y-1">
+                <label className="text-muted-foreground font-bold text-[10px] uppercase">Reason for Rejection</label>
+                <textarea
+                  required
+                  rows={3}
+                  value={rejectReasonText}
+                  onChange={(e) => setRejectReasonText(e.target.value)}
+                  placeholder="Please state why you are rejecting this task (e.g. materials unavailable, conflicts with existing schedule, incorrect dispatch)..."
+                  className="w-full rounded-xl border bg-background p-3.5 border-border/80 focus:outline-none focus:ring-1 focus:ring-primary text-xs"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1 rounded-xl h-10 font-bold"
+                  onClick={() => setIsRejectModalOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  className="flex-1 rounded-xl h-10 font-bold bg-rose-500 text-white hover:bg-rose-600"
+                >
+                  Confirm Reject
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* COMPLETION DETAIL MODAL */}
+      {isCompleteModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-card border w-full max-w-lg rounded-3xl p-6 shadow-2xl space-y-4 relative animate-in zoom-in-95 duration-200 text-foreground">
+            <button
+              onClick={() => setIsCompleteModalOpen(false)}
+              className="absolute top-4 right-4 text-muted-foreground hover:text-foreground p-1 rounded-full hover:bg-secondary/40 transition"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center space-x-2.5 text-emerald-500 font-extrabold text-sm border-b pb-3 uppercase tracking-wide">
+              <CheckCircle2 className="w-5 h-5" />
+              <h3>Record Job Resolution</h3>
+            </div>
+
+            <form onSubmit={handleCompleteSubmit} className="space-y-4 text-xs font-semibold">
+              <div className="grid grid-cols-2 gap-4">
+                {/* Actual repair cost */}
+                <div className="space-y-1">
+                  <label className="text-muted-foreground font-bold text-[10px] uppercase">Labor / Base Cost ($)</label>
+                  <div className="relative">
+                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      type="number"
+                      required
+                      value={actualCostVal}
+                      onChange={(e) => setActualCostVal(e.target.value)}
+                      className="pl-8 h-10 rounded-xl"
+                      placeholder="0.00"
+                    />
+                  </div>
+                </div>
+
+                {/* Extra Expenses */}
+                <div className="space-y-1">
+                  <label className="text-muted-foreground font-bold text-[10px] uppercase">Extra Expenses / Materials ($)</label>
+                  <div className="relative">
+                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      type="number"
+                      value={extraExpensesVal}
+                      onChange={(e) => setExtraExpensesVal(e.target.value)}
+                      className="pl-8 h-10 rounded-xl"
+                      placeholder="0.00"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Resolution Notes */}
+              <div className="space-y-1">
+                <label className="text-muted-foreground font-bold text-[10px] uppercase">Materials Used / Resolution Notes</label>
+                <textarea
+                  rows={4}
+                  value={resolutionNotesVal}
+                  onChange={(e) => setResolutionNotesVal(e.target.value)}
+                  placeholder="Mention parts replaced, details of diagnostic checks, or extra materials purchased for this task..."
+                  className="w-full rounded-xl border bg-background p-3.5 border-border/80 focus:outline-none focus:ring-1 focus:ring-primary text-xs"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1 rounded-xl h-10 font-bold"
+                  onClick={() => setIsCompleteModalOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  className="flex-1 rounded-xl h-10 font-bold bg-emerald-500 text-white hover:bg-emerald-600"
+                >
+                  Submit & Finish Job
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

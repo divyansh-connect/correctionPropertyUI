@@ -40,7 +40,7 @@ export const StaffLayout: React.FC<StaffLayoutProps> = ({
   const menuItems: MenuItem[] = [
     { title: 'Dashboard', icon: <LayoutDashboard className="w-5 h-5" />, path: '/staff/dashboard' },
     { title: 'My Tasks', icon: <Wrench className="w-5 h-5" />, path: '/staff/tasks' },
-    { title: 'Completed Tasks', icon: <CheckSquare className="w-5 h-5" />, path: '/staff/completed' },
+    { title: 'History', icon: <CheckSquare className="w-5 h-5" />, path: '/staff/completed' },
     { title: 'Profile', icon: <User className="w-5 h-5" />, path: '/staff/profile' },
   ];
 

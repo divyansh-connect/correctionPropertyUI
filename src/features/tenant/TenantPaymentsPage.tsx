@@ -20,6 +20,7 @@ export const TenantPaymentsPage: React.FC = () => {
   // Form states
   const [amount, setAmount] = useState('1250');
   const [method, setMethod] = useState<'ACH' | 'Credit Card' | 'Debit Card'>('ACH');
+  const [receiptNumber, setReceiptNumber] = useState('');
 
   // ACH Fields
   const [achHolderName, setAchHolderName] = useState('');
@@ -56,6 +57,7 @@ export const TenantPaymentsPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tenant-payments-list'] });
       queryClient.invalidateQueries({ queryKey: ['tenant-dashboard-metrics'] });
+      setReceiptNumber(`RCP-${Math.floor(100000 + Math.random() * 900000)}-ZTR`);
       setStep('receipt');
     },
     onError: () => {
@@ -63,6 +65,156 @@ export const TenantPaymentsPage: React.FC = () => {
       alert('Transaction authorization failed. Please try again.');
     }
   });
+
+  const handlePrint = () => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Payment Receipt - ${receiptNumber}</title>
+          <style>
+            body {
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+              color: #1f2937;
+              padding: 40px;
+              max-width: 480px;
+              margin: 0 auto;
+              background-color: #ffffff;
+            }
+            .receipt-card {
+              border: 1px solid #e5e7eb;
+              border-radius: 16px;
+              padding: 30px;
+              box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
+            }
+            .header {
+              text-align: center;
+              margin-bottom: 25px;
+            }
+            .logo {
+              font-size: 24px;
+              font-weight: 900;
+              letter-spacing: -0.05em;
+              color: #2563eb;
+              margin: 0;
+            }
+            .logo span {
+              color: #10b981;
+            }
+            .header h1 {
+              font-size: 16px;
+              font-weight: 800;
+              margin: 10px 0 0 0;
+              color: #111827;
+            }
+            .header p {
+              font-size: 11px;
+              color: #6b7280;
+              margin: 3px 0 0 0;
+            }
+            .success-stamp {
+              background-color: #d1fae5;
+              color: #065f46;
+              border: 1px solid #a7f3d0;
+              font-size: 10px;
+              font-weight: 800;
+              text-transform: uppercase;
+              padding: 4px 14px;
+              border-radius: 9999px;
+              display: inline-block;
+              margin-top: 12px;
+              letter-spacing: 0.05em;
+            }
+            .details-table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-top: 20px;
+            }
+            .details-table td {
+              padding: 12px 0;
+              border-bottom: 1px solid #f3f4f6;
+              font-size: 13px;
+            }
+            .details-table td.label {
+              color: #6b7280;
+              font-weight: 500;
+            }
+            .details-table td.value {
+              text-align: right;
+              font-weight: 600;
+              color: #1f2937;
+            }
+            .details-table tr.total td {
+              border-bottom: none;
+              padding-top: 15px;
+              font-size: 15px;
+              font-weight: 800;
+            }
+            .details-table tr.total td.value {
+              color: #10b981;
+            }
+            .footer {
+              text-align: center;
+              margin-top: 30px;
+              font-size: 11px;
+              color: #9ca3af;
+              border-top: 1px dashed #e5e7eb;
+              padding-top: 15px;
+              line-height: 1.5;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="receipt-card">
+            <div class="header">
+              <div class="logo">Door<span>Loop</span></div>
+              <h1>Official Rent Receipt</h1>
+              <p>Thank you for settling your balance</p>
+              <div class="success-stamp">PAID & CLEARED</div>
+            </div>
+            <table class="details-table">
+              <tr>
+                <td class="label">Receipt Number</td>
+                <td class="value">${receiptNumber}</td>
+              </tr>
+              <tr>
+                <td class="label">Payment Method</td>
+                <td class="value">${method}</td>
+              </tr>
+              <tr>
+                <td class="label">Date / Time</td>
+                <td class="value">${new Date().toLocaleString()}</td>
+              </tr>
+              <tr>
+                <td class="label">Base Rent</td>
+                <td class="value">$${amountNum.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+              </tr>
+              <tr>
+                <td class="label">Convenience Fee</td>
+                <td class="value">$${fee.toFixed(2)}</td>
+              </tr>
+              <tr class="total">
+                <td class="label" style="color: #111827;">Total Charged</td>
+                <td class="value">$${total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+              </tr>
+            </table>
+            <div class="footer">
+              DoorLoop Payments Gateway • Secured SSL Transaction<br>
+              © 2026 DoorLoop, Inc. All rights reserved.
+            </div>
+          </div>
+          <script>
+            window.onload = function() {
+              window.print();
+              setTimeout(function() { window.close(); }, 500);
+            }
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
 
   const handlePaymentSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -153,6 +305,7 @@ export const TenantPaymentsPage: React.FC = () => {
         setIsOpen(val);
         if (!val) {
           setStep('details');
+          setReceiptNumber('');
         }
       }} title={step === 'receipt' ? "Payment Receipt" : "Submit Rent Payment"}>
         {step === 'details' && (
@@ -327,7 +480,7 @@ export const TenantPaymentsPage: React.FC = () => {
             <div className="p-4 bg-secondary/15 rounded-xl border border-border space-y-3 font-semibold text-xs">
               <div className="flex justify-between border-b pb-2">
                 <span className="text-muted-foreground">Receipt Number</span>
-                <span className="font-mono text-foreground font-bold">RCP-{Math.floor(100000 + Math.random() * 900000)}-ZTR</span>
+                <span className="font-mono text-foreground font-bold">{receiptNumber}</span>
               </div>
               <div className="flex justify-between border-b pb-2">
                 <span className="text-muted-foreground">Payment Method</span>
@@ -352,7 +505,7 @@ export const TenantPaymentsPage: React.FC = () => {
             </div>
 
             <div className="flex justify-end space-x-2 pt-4 border-t">
-              <Button type="button" variant="outline" onClick={() => alert("Receipt sent to your printer queue.")} className="flex items-center gap-1.5 text-xs font-semibold">
+              <Button type="button" variant="outline" onClick={handlePrint} className="flex items-center gap-1.5 text-xs font-semibold">
                 <Printer className="w-4.5 h-4.5" /> Print Receipt
               </Button>
               <Button onClick={() => {
