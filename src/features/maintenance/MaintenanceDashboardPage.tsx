@@ -72,12 +72,14 @@ export const MaintenanceDashboardPage: React.FC = () => {
 
   // Staff Search filtering
   const filteredWorkOrders = localWorkOrders.filter((order: any) => {
+    const isActive = !['Completed', 'Closed', 'Rejected', 'Cancelled'].includes(order.status);
+
     const matchesSearch = 
       order.workOrderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.propertyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.unitNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (order.issue && order.issue.toLowerCase().includes(searchQuery.toLowerCase()));
-    return matchesSearch;
+    return isActive && matchesSearch;
   });
 
   // Staff summary counts
@@ -235,11 +237,12 @@ export const MaintenanceDashboardPage: React.FC = () => {
                     </div>
 
                     <Button
+                      variant="outline"
                       size="sm"
                       onClick={() => navigate({ to: `/staff/tasks/${order.id}` })}
-                      className="flex items-center gap-1.5 bg-secondary/80 hover:bg-secondary text-foreground h-9 font-bold px-4 rounded-xl border"
+                      className="flex items-center gap-1.5 h-9 font-bold px-4 rounded-xl border bg-background hover:bg-secondary/35 text-foreground"
                     >
-                      <Eye className="w-3.5 h-3.5" /> Details
+                      <Eye className="w-3.5 h-3.5 text-muted-foreground" /> Details
                     </Button>
                   </div>
                 </div>

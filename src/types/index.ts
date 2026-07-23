@@ -214,6 +214,9 @@ export interface WorkOrder {
   issue?: string;
   description?: string;
   priority?: 'Low' | 'Medium' | 'High' | 'Urgent';
+  rejectReason?: string;
+  extraExpenses?: number;
+  resolutionNotes?: string;
 }
 
 export interface PreventiveTask {
