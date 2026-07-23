@@ -200,7 +200,7 @@ export const MaintenanceDashboardPage: React.FC = () => {
                   <div className="mt-4 md:mt-0 flex flex-wrap items-center gap-2 w-full md:w-auto border-t pt-3 md:pt-0 md:border-0 justify-between">
                     <div className="flex gap-2">
                       {/* UI-only action triggers based on state */}
-                      {(order.status === 'New' || order.status === 'Assigned') && (
+                      {order.status === 'New' && (
                         <>
                           <button
                             onClick={() => updateLocalStatus(order.id, 'Assigned')}
@@ -217,7 +217,7 @@ export const MaintenanceDashboardPage: React.FC = () => {
                         </>
                       )}
 
-                      {['Assigned', 'Scheduled', 'Draft'].includes(order.status) && (
+                      {(order.status === 'Assigned' || order.status === 'Scheduled' || order.status === 'Draft') && (
                         <button
                           onClick={() => updateLocalStatus(order.id, 'In Progress')}
                           className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-[10px] font-extrabold bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 border border-amber-500/20 transition-all"
