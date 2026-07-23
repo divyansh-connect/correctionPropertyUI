@@ -189,6 +189,31 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     },
   ];
 
+  // --- COLLECTION MANAGER MENU ITEMS ---
+  const collectionManagerMenuItems: MenuItem[] = [
+    { title: 'Dashboard', icon: <LayoutDashboard className="w-5 h-5" />, path: '/' },
+    {
+      title: 'Tenant Payments',
+      icon: <CreditCard className="w-5 h-5" />,
+      path: '/payments',
+    },
+    {
+      title: 'Owner Payouts',
+      icon: <UserCheck className="w-5 h-5" />,
+      path: '/owners',
+    },
+    {
+      title: 'Vendor Bills',
+      icon: <Wrench className="w-5 h-5" />,
+      path: '/accounting/expenses',
+    },
+    {
+      title: 'Accounting Ledger',
+      icon: <BookOpen className="w-5 h-5" />,
+      path: '/accounting/income',
+    },
+  ];
+
   const { data: roles = [] } = useQuery({
     queryKey: ['rbac-roles-list'],
     queryFn: () => api.roles.getAll(),
@@ -204,6 +229,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
   const getFilteredMenuItems = () => {
     if (user?.role === 'Super Admin') return superAdminMenuItems;
+    if (user?.role === 'Collection Manager') return collectionManagerMenuItems;
 
     const filtered: MenuItem[] = [];
 
@@ -285,9 +311,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     }
   };
 
-  const isLinkActive = (path: string) => {
+  const isLinkActive = (path: string, itemTitle?: string) => {
     if (path === '/') return currentPath === '/';
-    return currentPath.startsWith(path);
+    if (itemTitle === 'Accounting Ledger') {
+      return currentPath === '/accounting' || currentPath.startsWith('/accounting/income') || currentPath === '/accounting/chart-of-accounts';
+    }
+    return currentPath === path || currentPath.startsWith(path + '/');
   };
 
   // Build Breadcrumbs from Path
@@ -333,7 +362,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           {visibleMenuItems.map((item) => {
             const hasSub = !!item.submenu;
             const isOpen = activeDropdown === item.title;
-            const active = isLinkActive(item.path);
+            const active = isLinkActive(item.path, item.title);
 
             return (
               <div key={item.title} className="space-y-1">
@@ -428,7 +457,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               {visibleMenuItems.map((item) => {
                 const hasSub = !!item.submenu;
                 const isOpen = activeDropdown === item.title;
-                const active = isLinkActive(item.path);
+                const active = isLinkActive(item.path, item.title);
 
                 return (
                   <div key={item.title}>

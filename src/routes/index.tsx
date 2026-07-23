@@ -31,6 +31,7 @@ import { ForgotPasswordPage } from '../features/auth/ForgotPasswordPage';
 import { ResetPasswordPage } from '../features/auth/ResetPasswordPage';
 import { DashboardPage } from '../features/dashboard/DashboardPage';
 import { SuperAdminDashboardPage } from '../features/dashboard/SuperAdminDashboardPage';
+import { CollectionDashboardPage } from '../features/dashboard/CollectionDashboardPage';
 
 // Properties & Buildings (Phase 2)
 import { PropertiesPage } from '../features/properties/PropertiesPage';
@@ -441,7 +442,13 @@ const indexRoute = createRoute({
     const { user } = useAuthStore();
     return (
       <ProtectedWrapper>
-        {user?.role === 'Super Admin' ? <SuperAdminDashboardPage /> : <DashboardPage />}
+        {user?.role === 'Super Admin' ? (
+          <SuperAdminDashboardPage />
+        ) : user?.role === 'Collection Manager' ? (
+          <CollectionDashboardPage />
+        ) : (
+          <DashboardPage />
+        )}
       </ProtectedWrapper>
     );
   },
@@ -2877,13 +2884,22 @@ const SubscriptionCouponsPage: React.FC = () => {
 
 // 5. PLATFORM USERS PAGE
 const PlatformUsersPage: React.FC = () => {
-  const usersList = [
+  const [usersList, setUsersList] = React.useState([
     { name: 'John Doe', email: 'admin@apexpm.com', role: 'Super Admin', company: 'SaaS Platform Owner', status: 'Active', lastLogin: '2026-07-20 05:12' },
     { name: 'Sarah Davis', email: 'manager@apexpm.com', role: 'Property Manager', company: 'Apex Property Management', status: 'Active', lastLogin: '2026-07-20 04:33' },
     { name: 'Lakeside Development', email: 'owner@apexpm.com', role: 'Owner', company: 'Lakeside Development Co', status: 'Active', lastLogin: '2026-07-19 14:02' },
     { name: 'Robert Johnson', email: 'tenant@apexpm.com', role: 'Tenant', company: 'Apex Rental Portfolio', status: 'Active', lastLogin: '2026-07-20 02:11' },
     { name: 'Alex Thompson', email: 'alex@sunsetvillas.com', role: 'Property Manager', company: 'Horizon Living', status: 'Suspended', lastLogin: '2026-06-12 11:24' }
-  ];
+  ]);
+
+  const toggleStatus = (email: string) => {
+    setUsersList(prev => prev.map(u => {
+      if (u.email === email) {
+        return { ...u, status: u.status === 'Active' ? 'Suspended' : 'Active' };
+      }
+      return u;
+    }));
+  };
 
   return (
     <div className="space-y-6">
@@ -2903,6 +2919,7 @@ const PlatformUsersPage: React.FC = () => {
                 <th className="p-4">Assigned Company</th>
                 <th className="p-4">Account Status</th>
                 <th className="p-4">Last Login</th>
+                <th className="p-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y font-medium text-foreground">
@@ -2918,6 +2935,20 @@ const PlatformUsersPage: React.FC = () => {
                     <StatusBadge status={u.status} />
                   </td>
                   <td className="p-4 text-muted-foreground font-mono">{u.lastLogin}</td>
+                  <td className="p-4 text-right">
+                    {u.role !== 'Super Admin' && (
+                      <button
+                        onClick={() => toggleStatus(u.email)}
+                        className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border transition ${
+                          u.status === 'Active'
+                            ? 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border-rose-500/20'
+                            : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border-emerald-500/20'
+                        }`}
+                      >
+                        {u.status === 'Active' ? 'Suspend' : 'Activate'}
+                      </button>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

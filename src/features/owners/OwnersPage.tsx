@@ -7,6 +7,7 @@ import { Plus, X, Loader2, Edit2, Trash2, Eye } from 'lucide-react';
 import api from '../../api';
 import { Owner } from '../../types';
 import { PageHeader } from '../../components/PageHeader';
+import { useAuthStore } from '../../store/useStore';
 import { DataTable } from '../../components/DataTable';
 import { ColumnDef } from '@tanstack/react-table';
 import { Input } from '../../components/ui/Input';
@@ -24,6 +25,8 @@ const ownerFormSchema = zod.object({
 type OwnerFormInputs = zod.infer<typeof ownerFormSchema>;
 
 export const OwnersPage: React.FC = () => {
+  const { user } = useAuthStore();
+  const isCollectionManager = user?.role === 'Collection Manager';
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingOwner, setEditingOwner] = useState<Owner | null>(null);
@@ -157,22 +160,26 @@ export const OwnersPage: React.FC = () => {
           >
             <Eye className="w-4 h-4 text-emerald-500" />
           </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => handleEditClick(row.original)}
-            title="Edit Owner"
-          >
-            <Edit2 className="w-4 h-4 text-primary" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => handleDeleteClick(row.original.id)}
-            title="Delete Owner"
-          >
-            <Trash2 className="w-4 h-4 text-rose-500" />
-          </Button>
+          {!isCollectionManager && (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleEditClick(row.original)}
+                title="Edit Owner"
+              >
+                <Edit2 className="w-4 h-4 text-primary" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleDeleteClick(row.original.id)}
+                title="Delete Owner"
+              >
+                <Trash2 className="w-4 h-4 text-rose-500" />
+              </Button>
+            </>
+          )}
         </div>
       ),
     },
@@ -187,7 +194,7 @@ export const OwnersPage: React.FC = () => {
           { label: 'Home', href: '/' },
           { label: 'Owners' },
         ]}
-        action={{
+        action={isCollectionManager ? undefined : {
           label: 'Add Owner',
           onClick: () => {
             setEditingOwner(null);

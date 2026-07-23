@@ -1560,7 +1560,8 @@ let rbacRolesList = [
     name: 'Maintenance',
     description: 'Field technicians and staff who resolve repair tickets.',
     permissions: generatePermissions({
-      'Maintenance': { view: true, edit: true },
+      'Dashboard': { view: true },
+      'Maintenance': { view: true, create: true, edit: true }
     })
   },
   {

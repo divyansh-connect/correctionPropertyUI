@@ -38,7 +38,10 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({ role, onTogg
       return ['Dashboard', 'Lease', 'Payments', 'Maintenance', 'Documents', 'Messages', 'Notifications', 'Profile'];
     }
     if (name.includes('maintenance') || name.includes('staff') || name.includes('maint')) {
-      return ['Dashboard'];
+      return ['Dashboard', 'Maintenance'];
+    }
+    if (name.includes('collection')) {
+      return ['Dashboard', 'Rent & Payments', 'Owners', 'Accounting'];
     }
     return [
       'Dashboard', 'Properties', 'Leasing', 'Tenants', 'Documents', 
@@ -49,6 +52,16 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({ role, onTogg
 
   const allowedModules = getModulesForRole(role.name);
   const filteredPermissions = role.permissions.filter(p => allowedModules.includes(p.module));
+
+  const getFriendlyModuleName = (moduleName: string) => {
+    switch (moduleName) {
+      case 'Owners': return 'Owners (Owner Payouts)';
+      case 'Rent & Payments': return 'Rent & Payments (Tenant Payments)';
+      case 'Accounting': return 'Accounting (Vendor Bills & Ledgers)';
+      case 'Maintenance': return 'Maintenance (My Tasks & Tickets)';
+      default: return moduleName;
+    }
+  };
 
   return (
     <Card className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
@@ -76,7 +89,7 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({ role, onTogg
           <tbody className="divide-y divide-border text-foreground">
             {filteredPermissions.map((p) => (
               <tr key={p.module} className="hover:bg-secondary/5 transition">
-                <td className="p-3 font-bold">{p.module}</td>
+                <td className="p-3 font-bold">{getFriendlyModuleName(p.module)}</td>
                 {actions.map((act) => {
                   const val = p[act];
                   return (
