@@ -13,7 +13,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/Ta
 import { FormDialog } from '../../components/FormDialog';
 import { 
   Building2, Home, User, CreditCard, Wrench, FileText, ArrowLeft, 
-  Plus, Upload, Loader2, Sparkles, Bed, Bath, DollarSign, Calendar 
+  Plus, Upload, Loader2, Sparkles, Bed, Bath, DollarSign, Calendar,
+  RefreshCw
 } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
 
@@ -25,6 +26,32 @@ export const UnitDetailsPage: React.FC = () => {
   const [isAssignOpen, setIsAssignOpen] = useState(false);
   const [selectedTenantId, setSelectedTenantId] = useState('');
   const [isDocOpen, setIsDocOpen] = useState(false);
+
+  // Local state for refreshing market valuation simulation
+  const [isRefreshingMarket, setIsRefreshingMarket] = useState(false);
+  const [marketUpdatedDate, setMarketUpdatedDate] = useState('24 Jul 2026');
+  const [marketData, setMarketData] = useState({
+    marketRent: 2150,
+    propertyValue: 345000,
+    status: 'Below Market', // 'Above Market' | 'At Market' | 'Below Market'
+  });
+
+  const handleRefreshMarket = () => {
+    setIsRefreshingMarket(true);
+    setTimeout(() => {
+      setIsRefreshingMarket(false);
+      const changeOptions = [
+        { marketRent: 2200, propertyValue: 350000, status: 'Below Market' },
+        { marketRent: unit?.rentAmount || 1850, propertyValue: 335000, status: 'At Market' },
+        { marketRent: 1750, propertyValue: 310000, status: 'Above Market' },
+      ];
+      const selected = changeOptions[Math.floor(Math.random() * changeOptions.length)];
+      setMarketData(selected);
+      const today = new Date();
+      const formatted = today.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+      setMarketUpdatedDate(formatted);
+    }, 1200);
+  };
 
   // Queries
   const { data: unit, isLoading: loadingUnit } = useQuery({
@@ -200,6 +227,80 @@ export const UnitDetailsPage: React.FC = () => {
                 No active tenant assigned.
               </p>
             )}
+          </Card>
+
+          {/* Market Valuation Card */}
+          <Card className="p-6 space-y-4 border-border text-foreground">
+            <div className="flex justify-between items-center border-b pb-2">
+              <h3 className="font-bold text-base uppercase tracking-wide">Market Valuation</h3>
+              <span className={`px-2 py-0.5 text-[9px] font-extrabold uppercase rounded-full ${
+                marketData.status === 'Below Market' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' :
+                marketData.status === 'Above Market' ? 'bg-blue-500/10 text-blue-500 border border-blue-500/20' :
+                'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
+              }`}>
+                {marketData.status}
+              </span>
+            </div>
+
+            <div className="space-y-4 text-xs font-semibold">
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground flex items-center gap-1">
+                  <DollarSign className="w-4 h-4 text-primary" /> Est. Market Rent
+                </span>
+                <span className="font-bold text-sm">${marketData.marketRent.toLocaleString()}/mo</span>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground flex items-center gap-1">
+                  <Building2 className="w-4 h-4 text-primary" /> Property Valuation
+                </span>
+                <span className="font-bold text-sm">${marketData.propertyValue.toLocaleString()}</span>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground flex items-center gap-1">
+                  <CreditCard className="w-4 h-4 text-primary" /> Current Rent
+                </span>
+                <span className="font-bold text-sm">${unit.rentAmount.toLocaleString()}/mo</span>
+              </div>
+
+              {(() => {
+                const diffRent = unit.rentAmount - marketData.marketRent;
+                return (
+                  <div className="flex justify-between items-center p-2.5 bg-secondary/20 rounded-xl border border-border/40">
+                    <span className="text-muted-foreground">Rent Gaps / Delta</span>
+                    <span className={`font-black ${diffRent < 0 ? 'text-amber-500' : diffRent > 0 ? 'text-blue-500' : 'text-emerald-500'}`}>
+                      {diffRent < 0 ? `-$${Math.abs(diffRent)}` : diffRent > 0 ? `+$${diffRent}` : '$0'}
+                    </span>
+                  </div>
+                );
+              })()}
+
+              <div className="pt-2 border-t border-border/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="text-[10px] text-muted-foreground">
+                  Last Updated: <span className="font-mono">{marketUpdatedDate}</span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-[10px] py-1 px-2 font-bold h-7 flex items-center justify-center"
+                  onClick={handleRefreshMarket}
+                  disabled={isRefreshingMarket}
+                >
+                  {isRefreshingMarket ? (
+                    <>
+                      <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                      Updating...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="w-3 h-3 mr-1" />
+                      Refresh Value
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
           </Card>
         </div>
 
