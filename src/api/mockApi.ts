@@ -1562,12 +1562,14 @@ let rbacRolesList = [
   {
     id: 'role-collection-manager',
     name: 'Collection Manager',
-    description: 'Limited access to pending collections, tenant balances, and maintenance requests.',
+    description: 'Access to tenant collections, dues, owner payouts, and vendor/maintenance payments.',
     permissions: generatePermissions({
       'Dashboard': { view: true },
-      'Rent & Payments': { view: true, create: true, edit: true },
+      'Rent & Payments': { view: true, create: true, edit: true, approve: true, export: true },
       'Maintenance': { view: true, create: true, edit: true },
-      'Tenants': { view: true }
+      'Tenants': { view: true },
+      'Owners': { view: true, edit: true },
+      'Accounting': { view: true, create: true, edit: true }
     })
   }
 ];
