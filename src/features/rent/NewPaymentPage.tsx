@@ -74,6 +74,8 @@ export const NewPaymentPage: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['payments-list'] });
+      queryClient.invalidateQueries({ queryKey: ['invoices-list'] });
+      queryClient.invalidateQueries({ queryKey: ['tenant-dashboard-metrics'] });
       setSuccess(true);
       setTimeout(() => navigate({ to: '/payments' }), 2000);
     },

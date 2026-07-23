@@ -17,8 +17,18 @@ export const TenantPaymentsPage: React.FC = () => {
   const [step, setStep] = useState<'details' | 'processing' | 'receipt'>('details');
   const [processingMsg, setProcessingMsg] = useState('Initializing SSL handshaking...');
 
+  // Queries
+  const { data: metrics } = useQuery({
+    queryKey: ['tenant-dashboard-metrics'],
+    queryFn: () => api.tenantPortal.getMetrics(),
+  });
+  const { data: payments = [], isLoading } = useQuery({ queryKey: ['tenant-payments-list'], queryFn: () => api.tenantPayments.getAll() });
+
+  const outstandingBalance = metrics?.outstandingBalance ?? 0;
+
   // Form states
-  const [amount, setAmount] = useState('1250');
+  const [paymentOption, setPaymentOption] = useState<'full' | 'partial'>('full');
+  const [amount, setAmount] = useState('1850');
   const [method, setMethod] = useState<'ACH' | 'Credit Card' | 'Debit Card'>('ACH');
 
   // ACH Fields
@@ -35,6 +45,13 @@ export const TenantPaymentsPage: React.FC = () => {
   const [cardCvv, setCardCvv] = useState('');
   const [cardZip, setCardZip] = useState('');
 
+  // Sync amount with option
+  React.useEffect(() => {
+    if (paymentOption === 'full') {
+      setAmount(outstandingBalance.toString());
+    }
+  }, [outstandingBalance, paymentOption]);
+
   const amountNum = Number(amount) || 0;
   const fee = method === 'ACH' 
     ? 0 
@@ -43,13 +60,11 @@ export const TenantPaymentsPage: React.FC = () => {
       : 4.99;
   const total = amountNum + fee;
 
-  // Queries
-  const { data: payments = [], isLoading } = useQuery({ queryKey: ['tenant-payments-list'], queryFn: () => api.tenantPayments.getAll() });
-
   const payMutation = useMutation({
     mutationFn: () => {
       return api.tenantPayments.payRent({
         amount: total,
+        baseAmount: amountNum,
         method,
       });
     },
@@ -119,14 +134,22 @@ export const TenantPaymentsPage: React.FC = () => {
         <Card className="md:col-span-2 p-5 border bg-card flex justify-between items-center text-xs font-semibold">
           <div>
             <h4 className="font-extrabold uppercase text-muted-foreground text-[10px]">Outstanding balance due</h4>
-            <p className="text-3xl font-black mt-2 text-emerald-500 flex items-center gap-1.5">
-              $0.00
-              <CheckCircle className="w-5 h-5 text-emerald-500" />
+            <p className={`text-3xl font-black mt-2 flex items-center gap-1.5 ${outstandingBalance > 0 ? 'text-rose-500' : 'text-emerald-500'}`}>
+              ${outstandingBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              {outstandingBalance === 0 && <CheckCircle className="w-5 h-5 text-emerald-500" />}
             </p>
             <p className="text-[10px] text-muted-foreground mt-1">Next rent period invoices generate on August 1st.</p>
           </div>
-          <Button disabled variant="outline" className="border-slate-200 dark:border-white/10 text-muted-foreground bg-transparent">
-            No Balance Due
+          <Button 
+            disabled={outstandingBalance === 0} 
+            onClick={() => {
+              setPaymentOption('full');
+              setIsOpen(true);
+            }}
+            variant={outstandingBalance > 0 ? 'default' : 'outline'} 
+            className={outstandingBalance > 0 ? '' : 'border-slate-200 dark:border-white/10 text-muted-foreground bg-transparent'}
+          >
+            {outstandingBalance > 0 ? 'Pay Rent' : 'No Balance Due'}
           </Button>
         </Card>
 
@@ -158,9 +181,64 @@ export const TenantPaymentsPage: React.FC = () => {
         {step === 'details' && (
           <form onSubmit={handlePaymentSubmit} className="space-y-4 pt-2 text-xs font-semibold text-foreground">
             
+            {/* Payment Option Selector */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-muted-foreground uppercase block">Payment Option</label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  key="opt-full"
+                  type="button"
+                  onClick={() => setPaymentOption('full')}
+                  className={`p-3 border rounded-xl flex flex-col items-center justify-center text-center gap-1 transition ${
+                    paymentOption === 'full' ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50'
+                  }`}
+                >
+                  <span className="font-extrabold text-[10px] uppercase">Pay in Full</span>
+                  <span className="text-[9px] text-muted-foreground font-semibold">
+                    ${outstandingBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </span>
+                </button>
+                <button
+                  key="opt-partial"
+                  type="button"
+                  onClick={() => {
+                    setPaymentOption('partial');
+                    setAmount((outstandingBalance * 0.5).toFixed(0));
+                  }}
+                  className={`p-3 border rounded-xl flex flex-col items-center justify-center text-center gap-1 transition ${
+                    paymentOption === 'partial' ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50'
+                  }`}
+                >
+                  <span className="font-extrabold text-[10px] uppercase">Partial Payment</span>
+                  <span className="text-[9px] text-muted-foreground font-semibold">Pay custom amount</span>
+                </button>
+              </div>
+            </div>
+
             <div className="space-y-1">
-              <label className="text-xs font-bold text-muted-foreground uppercase">Rent Amount</label>
-              <Input type="number" required min="1" value={amount} onChange={(e) => setAmount(e.target.value)} />
+              <label className="text-xs font-bold text-muted-foreground uppercase">Payment Amount</label>
+              <Input 
+                type="number" 
+                required 
+                min="1" 
+                max={outstandingBalance} 
+                disabled={paymentOption === 'full'}
+                value={amount} 
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (Number(val) > outstandingBalance) {
+                    setAmount(outstandingBalance.toString());
+                  } else {
+                    setAmount(val);
+                  }
+                }} 
+              />
+              {paymentOption === 'partial' && (
+                <div className="flex justify-between text-[10px] text-muted-foreground mt-1 font-semibold">
+                  <span>Max: ${outstandingBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                  <span>Remaining balance: <span className="text-amber-500 font-bold">${Math.max(0, outstandingBalance - amountNum).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span></span>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -294,7 +372,7 @@ export const TenantPaymentsPage: React.FC = () => {
 
             <div className="flex justify-end space-x-2 pt-4 border-t">
               <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
-              <Button type="submit">
+              <Button type="submit" disabled={amountNum <= 0 || amountNum > outstandingBalance}>
                 Pay Rent
               </Button>
             </div>

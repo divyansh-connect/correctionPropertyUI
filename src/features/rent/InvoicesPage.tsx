@@ -131,6 +131,7 @@ export const InvoicesPage: React.FC = () => {
             placeholder: 'All Statuses',
             options: [
               { label: 'Paid', value: 'Paid' },
+              { label: 'Partially Paid', value: 'Partially Paid' },
               { label: 'Sent', value: 'Sent' },
               { label: 'Overdue', value: 'Overdue' },
               { label: 'Draft', value: 'Draft' },

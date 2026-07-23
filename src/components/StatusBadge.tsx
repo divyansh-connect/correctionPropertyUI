@@ -22,6 +22,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className }) =
       case 'in progress':
       case 'contacted':
       case 'partial':
+      case 'partially paid':
       case 'medium':
         return 'bg-amber-500/10 text-amber-500 border-amber-500/20 dark:bg-amber-500/20';
       case 'vacant':

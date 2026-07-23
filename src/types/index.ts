@@ -352,7 +352,7 @@ export interface Invoice {
   amount: number;
   paidAmount: number;
   balance: number;
-  status: 'Draft' | 'Sent' | 'Paid' | 'Overdue' | 'Cancelled';
+  status: 'Draft' | 'Sent' | 'Paid' | 'Partially Paid' | 'Overdue' | 'Cancelled';
   lineItems: { description: string; amount: number }[];
   notes?: string;
 }

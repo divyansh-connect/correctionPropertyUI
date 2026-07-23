@@ -38,6 +38,7 @@ let charges: Charge[] = [];
 let deposits: SecurityDeposit[] = [];
 let paymentPlans: PaymentPlan[] = [];
 let refunds: Refund[] = [];
+let tenantOutstandingBalance = 1850.00;
 
 let coaAccounts: CoAAccount[] = [];
 let journalEntries: JournalEntry[] = [];
@@ -1719,6 +1720,36 @@ export const mockApi = {
         createdBy: 'Manager',
       };
       rentPayments.unshift(newPay);
+
+      // Reconcile invoices for this tenant
+      let remainingPayment = Number(data.amount) || 0;
+      if (data.tenantId) {
+        // Find unpaid/overdue/partially paid invoices for this tenant
+        const tenantInvoices = invoices.filter(
+          (inv) => inv.tenantId === data.tenantId && inv.status !== 'Paid' && inv.status !== 'Cancelled'
+        );
+        // Sort by due date ascending so oldest gets paid first
+        tenantInvoices.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+
+        for (const inv of tenantInvoices) {
+          if (remainingPayment <= 0) break;
+          const unpaidAmt = inv.amount - (inv.paidAmount || 0);
+          if (unpaidAmt > 0) {
+            if (remainingPayment >= unpaidAmt) {
+              inv.paidAmount = inv.amount;
+              inv.balance = 0;
+              inv.status = 'Paid';
+              remainingPayment -= unpaidAmt;
+            } else {
+              inv.paidAmount = (inv.paidAmount || 0) + remainingPayment;
+              inv.balance = inv.amount - inv.paidAmount;
+              inv.status = 'Partially Paid';
+              remainingPayment = 0;
+            }
+          }
+        }
+      }
+
       return newPay;
     },
     update: async (id: string, data: any) => {
@@ -2758,13 +2789,13 @@ export const mockApi = {
       await delay(150);
       return {
         currentRent: 1250,
-        outstandingBalance: 0,
+        outstandingBalance: tenantOutstandingBalance,
         nextDueDate: '2026-08-01',
-        leaseExpiration: '2027-04-30',
-        openMaintenanceRequests: tenantSupportTicketsList.filter(t => t.status === 'Open').length + 1,
         unreadMessages: tenantConversationsList.filter(m => !m.read).length,
         packagesWaiting: tenantPackagesList.filter(p => p.pickupStatus === 'Pending').length,
         activeVisitors: tenantVisitorsList.filter(v => v.status === 'Scheduled').length,
+        leaseExpiration: '2027-04-30',
+        openMaintenanceRequests: tenantSupportTicketsList.filter(t => t.status === 'Open').length + 1,
       };
     },
     getSupportTickets: async () => {
@@ -2804,12 +2835,13 @@ export const mockApi = {
     getAll: async () => { await delay(100); return [...rentPayments].slice(0, 30); },
     payRent: async (data: any) => {
       await delay(250);
+      tenantOutstandingBalance = Math.max(0, tenantOutstandingBalance - (data.baseAmount || data.amount));
       const newPay = {
         id: `pay-${rentPayments.length + 1}`,
         tenantName: 'Sarah Connor',
         propertyName: 'Skyline Luxury Lofts',
         unitNumber: '304',
-        amount: data.amount,
+        amount: data.baseAmount || data.amount,
         date: new Date().toISOString().split('T')[0],
         method: data.method,
         status: 'Paid',
