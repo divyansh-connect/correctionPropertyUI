@@ -716,6 +716,10 @@ for (let sr = 1; sr <= 2010; sr++) {
     assignedVendorId: `ven-${(sr % 200) + 1}`,
     assignedVendorName: `Pro Maintenance Partner ${(sr % 200) + 1}`,
     createdAt: `2026-07-${(sr % 28) + 1}`,
+    messages: [
+      { id: `msg-${sr}-1`, senderName: `${tenant.firstName} ${tenant.lastName}`, role: 'Tenant', text: `Hi, I submitted this request because the ${category.toLowerCase()} is not working.`, timestamp: `2026-07-${(sr % 28) + 1} 10:00 AM` },
+      { id: `msg-${sr}-2`, senderName: 'Property Manager Staff', role: 'Manager', text: `Thanks for reporting. We have received your request and set the priority to ${priority}.`, timestamp: `2026-07-${(sr % 28) + 1} 11:30 AM` }
+    ]
   });
 }
 
@@ -2463,6 +2467,7 @@ export const mockApi = {
         id: `sr-${maintenanceRequests.length + 1}`,
         status: 'New',
         createdAt: new Date().toISOString().split('T')[0],
+        messages: data.messages || [],
       };
       maintenanceRequests.unshift(newReq);
       return newReq;
@@ -2471,6 +2476,21 @@ export const mockApi = {
       await delay(200);
       const idx = maintenanceRequests.findIndex(r => r.id === id);
       if (idx !== -1) {
+        if (data.newMessage) {
+          const currentMsgs = maintenanceRequests[idx].messages || [];
+          maintenanceRequests[idx].messages = [
+            ...currentMsgs,
+            {
+              id: `msg-${Date.now()}`,
+              senderName: data.newMessage.senderName,
+              role: data.newMessage.role,
+              text: data.newMessage.text,
+              timestamp: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            }
+          ];
+          delete data.newMessage;
+        }
+
         maintenanceRequests[idx] = { ...maintenanceRequests[idx], ...data };
         
         // Auto-create a corresponding Work Order when a Service Request is assigned a Vendor & Cost

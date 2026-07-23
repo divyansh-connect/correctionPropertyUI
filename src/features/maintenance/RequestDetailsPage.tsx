@@ -8,7 +8,7 @@ import { Button } from '../../components/ui/Button';
 import { LoadingSkeleton } from '../../components/LoadingSkeleton';
 import { RequestPriorityBadge } from '../../components/MaintenanceComponents';
 import { StatusBadge } from '../../components/StatusBadge';
-import { CheckCircle, AlertTriangle, User, Calendar, Clock, Lock } from 'lucide-react';
+import { CheckCircle, AlertTriangle, User, Calendar, Clock, Lock, MessageSquare, Phone, Mail, Send } from 'lucide-react';
 
 export const RequestDetailsPage: React.FC = () => {
   const { id } = useParams({ from: '/maintenance/requests/$id' });
@@ -17,6 +17,7 @@ export const RequestDetailsPage: React.FC = () => {
 
   const [selectedVendorId, setSelectedVendorId] = useState<string>('');
   const [assignedCost, setAssignedCost] = useState<string>('');
+  const [newText, setNewText] = useState('');
 
   // Queries
   const { data: request, isLoading } = useQuery({
@@ -25,6 +26,22 @@ export const RequestDetailsPage: React.FC = () => {
   });
 
   const { data: vendorsList = [] } = useQuery({ queryKey: ['vendors-list'], queryFn: () => api.vendors.getAll() });
+
+  const postMessageMutation = useMutation({
+    mutationFn: (text: string) => {
+      return api.serviceRequests.update(id, {
+        newMessage: {
+          senderName: 'Property Manager Staff',
+          role: 'Manager',
+          text,
+        }
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['service-request-detail', id] });
+      setNewText('');
+    }
+  });
 
   const approveMutation = useMutation({
     mutationFn: () => api.serviceRequests.update(id, { status: 'Approved' }),
@@ -145,6 +162,56 @@ export const RequestDetailsPage: React.FC = () => {
               <p className="font-bold text-sm mt-1">{request.tenantName}</p>
             </div>
           </div>
+
+          {/* Discussion log / comments thread */}
+          <div className="border-t pt-6 space-y-4">
+            <h4 className="font-extrabold text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+              <MessageSquare className="w-4 h-4 text-primary" /> In-App Tenant Message Thread
+            </h4>
+            
+            <div className="space-y-3 max-h-72 overflow-y-auto p-4 bg-secondary/15 rounded-xl border border-border/40 flex flex-col">
+              {request.messages && request.messages.length > 0 ? (
+                request.messages.map((m) => (
+                  <div 
+                    key={m.id} 
+                    className={`flex flex-col space-y-1 p-3 rounded-xl max-w-[85%] text-xs font-semibold ${
+                      m.role === 'Manager' ? 'bg-primary/10 border border-primary/20 self-end ml-auto' : 'bg-card border self-start'
+                    }`}
+                  >
+                    <div className="flex justify-between items-center gap-4 border-b border-border/20 pb-1 mb-1">
+                      <span className="font-black uppercase text-[10px] text-primary">{m.senderName}</span>
+                      <span className="text-[9px] text-muted-foreground font-mono">{m.timestamp}</span>
+                    </div>
+                    <p className="text-foreground leading-relaxed font-semibold">{m.text}</p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-xs text-muted-foreground italic text-center font-semibold">No messages on this request yet.</p>
+              )}
+            </div>
+
+            <form 
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (newText.trim()) {
+                  postMessageMutation.mutate(newText);
+                }
+              }}
+              className="flex gap-2"
+            >
+              <input
+                type="text"
+                placeholder="Type message update to resident..."
+                value={newText}
+                onChange={e => setNewText(e.target.value)}
+                className="flex-1 text-xs p-2.5 rounded-xl border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-semibold"
+                required
+              />
+              <Button type="submit" size="sm" disabled={postMessageMutation.isPending || !newText.trim()} className="flex items-center gap-1 h-10">
+                <Send className="w-3.5 h-3.5" /> Send
+              </Button>
+            </form>
+          </div>
         </Card>
 
         {/* Right Column - Auditing */}
@@ -181,6 +248,47 @@ export const RequestDetailsPage: React.FC = () => {
                 <p className="font-bold text-emerald-500 mt-0.5">${request.cost}</p>
               </div>
             )}
+
+            {/* Resident contact details */}
+            <div className="border-t pt-4 mt-4 space-y-3">
+              <p className="text-[10px] text-muted-foreground uppercase font-black">Direct Contact Channels</p>
+              <div className="flex flex-col gap-2 pt-1.5 font-bold text-xs">
+                <a 
+                  href={`sms:5550199`} 
+                  className="flex items-center justify-between p-2.5 bg-secondary/20 hover:bg-secondary/40 border border-border/40 rounded-xl transition text-foreground"
+                >
+                  <div className="flex items-center gap-2">
+                    <MessageSquare className="w-4 h-4 text-primary" />
+                    <span>SMS Tenant</span>
+                  </div>
+                  <span className="text-[10px] font-mono text-muted-foreground">555-0199</span>
+                </a>
+                <a 
+                  href={`mailto:${request.tenantName.toLowerCase().replace(' ', '')}@rentals.com`} 
+                  className="flex items-center justify-between p-2.5 bg-secondary/20 hover:bg-secondary/40 border border-border/40 rounded-xl transition text-foreground"
+                >
+                  <div className="flex items-center gap-2">
+                    <Mail className="w-4 h-4 text-primary" />
+                    <span>Email Tenant</span>
+                  </div>
+                  <span className="text-[10px] font-mono text-muted-foreground truncate max-w-[100px]">
+                    {request.tenantName.toLowerCase().replace(' ', '')}@rentals.com
+                  </span>
+                </a>
+                <a 
+                  href={`https://wa.me/5550199`} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="flex items-center justify-between p-2.5 bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/10 rounded-xl transition text-foreground"
+                >
+                  <div className="flex items-center gap-2">
+                    <MessageSquare className="w-4 h-4 text-emerald-500" />
+                    <span>WhatsApp Chat</span>
+                  </div>
+                  <span className="text-[10px] font-mono text-emerald-500 font-bold">WhatsApp</span>
+                </a>
+              </div>
+            </div>
           </div>
         </Card>
 

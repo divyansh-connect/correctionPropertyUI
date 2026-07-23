@@ -178,6 +178,7 @@ export interface MaintenanceRequest {
   createdAt: string;
   preferredTime?: string;
   cost?: number;
+  messages?: { id: string; senderName: string; role: 'Tenant' | 'Manager'; text: string; timestamp: string }[];
 }
 
 export interface Vendor {

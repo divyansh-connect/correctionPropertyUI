@@ -7,7 +7,7 @@ import { Button } from '../../components/ui/Button';
 import { LoadingSkeleton } from '../../components/LoadingSkeleton';
 import { ChannelBadge } from '../../components/CommunicationComponents';
 import { OwnerMessageThread } from '../../components/OwnerComponents';
-import { User, MessageSquare, Shield, Landmark } from 'lucide-react';
+import { User, MessageSquare, Shield, Landmark, Phone, Mail } from 'lucide-react';
 
 export const CommInboxPage: React.FC = () => {
   const queryClient = useQueryClient();
@@ -112,6 +112,47 @@ export const CommInboxPage: React.FC = () => {
             <div className="space-y-1 border-t pt-2.5">
               <span className="text-[10px] text-muted-foreground uppercase">Assigned User Agent</span>
               <p className="font-bold">{activeConv.assignedUser}</p>
+            </div>
+            
+            {/* Quick Contact Channels */}
+            <div className="space-y-2 border-t pt-3">
+              <span className="text-[10px] text-muted-foreground uppercase font-black">Direct Channels</span>
+              <div className="flex flex-col gap-2 pt-1 font-bold text-xs">
+                <a 
+                  href={`sms:5550199`} 
+                  className="flex items-center justify-between p-2.5 bg-secondary/20 hover:bg-secondary/40 border border-border/40 rounded-xl transition text-foreground"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <MessageSquare className="w-3.5 h-3.5 text-primary" />
+                    <span>SMS Client</span>
+                  </div>
+                  <span className="text-[9px] font-mono text-muted-foreground">555-0199</span>
+                </a>
+                <a 
+                  href={`mailto:${activeConv.contactName.toLowerCase().replace(' ', '')}@rentals.com`} 
+                  className="flex items-center justify-between p-2.5 bg-secondary/20 hover:bg-secondary/40 border border-border/40 rounded-xl transition text-foreground"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <Mail className="w-3.5 h-3.5 text-primary" />
+                    <span>Send Email</span>
+                  </div>
+                  <span className="text-[9px] font-mono text-muted-foreground truncate max-w-[80px]">
+                    {activeConv.contactName.toLowerCase().replace(' ', '')}@rentals.com
+                  </span>
+                </a>
+                <a 
+                  href={`https://wa.me/5550199`} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="flex items-center justify-between p-2.5 bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/10 rounded-xl transition text-foreground"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <MessageSquare className="w-3.5 h-3.5 text-emerald-500" />
+                    <span>WhatsApp</span>
+                  </div>
+                  <span className="text-[9px] font-mono text-emerald-500 font-bold">WhatsApp</span>
+                </a>
+              </div>
             </div>
           </div>
         </Card>
