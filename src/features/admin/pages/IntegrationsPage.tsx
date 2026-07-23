@@ -36,7 +36,7 @@ export const IntegrationsPage: React.FC = () => {
 
       {/* Category Tabs */}
       <div className="flex space-x-2 border-b border-border pb-2 overflow-x-auto">
-        {['All', 'Payments', 'Accounting', 'Storage'].map((cat) => (
+        {['All', 'Payments', 'Accounting', 'Storage', 'Government'].map((cat) => (
           <Button
             key={cat}
             variant={activeCategory === cat ? 'default' : 'outline'}

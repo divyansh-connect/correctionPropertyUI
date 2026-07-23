@@ -217,6 +217,10 @@ export interface WorkOrder {
   rejectReason?: string;
   extraExpenses?: number;
   resolutionNotes?: string;
+  advancePaymentAmount?: number;
+  advancePaymentMethod?: string;
+  advancePaymentDate?: string;
+  advancePaymentRef?: string;
 }
 
 export interface PreventiveTask {
@@ -976,6 +980,21 @@ export interface ForecastDataPoint {
   forecast: number;
   lower: number;
   upper: number;
+}
+
+export interface Violation {
+  id: string;
+  propertyId: string;
+  propertyName: string;
+  unitNumber?: string;
+  violationCode: string;
+  issuingAuthority: string;
+  description: string;
+  fineAmount: number;
+  dueDate: string;
+  severity: 'Critical' | 'Warning';
+  status: 'Open' | 'Resolved' | 'Disputed';
+  workOrderId?: string;
 }
 
 

@@ -11,7 +11,7 @@ import { LoadingSkeleton } from '../../components/LoadingSkeleton';
 import { 
   ArrowLeft, CheckCircle2, Play, AlertCircle, XCircle, Clock, 
   MapPin, User, Tag, Calendar, DollarSign, Image as ImageIcon,
-  Wrench, Check, AlertTriangle, X
+  Wrench, Check, AlertTriangle, X, Coins
 } from 'lucide-react';
 
 export const StaffTaskDetailsPage: React.FC = () => {
@@ -209,6 +209,24 @@ export const StaffTaskDetailsPage: React.FC = () => {
                 </div>
               </div>
             </div>
+            
+            {/* Advance payment received details */}
+            {task.advancePaymentAmount && task.advancePaymentAmount > 0 && (
+              <div className="p-4 bg-amber-500/5 border border-amber-500/10 text-amber-500 rounded-2xl text-xs font-semibold flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <Coins className="w-5 h-5 shrink-0" />
+                  <div>
+                    <p className="font-bold text-amber-500">Advance Payment Received</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      Paid via {task.advancePaymentMethod} on {task.advancePaymentDate} {task.advancePaymentRef ? `(Ref: ${task.advancePaymentRef})` : ''}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-extrabold text-amber-500">${task.advancePaymentAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                </div>
+              </div>
+            )}
 
             {/* Reject reason details */}
             {localStatus === 'Rejected' && rejectReason && (

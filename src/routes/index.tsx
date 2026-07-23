@@ -100,6 +100,7 @@ import { NewRequestPage } from '../features/maintenance/NewRequestPage';
 import { RequestDetailsPage } from '../features/maintenance/RequestDetailsPage';
 import { WorkOrdersPage } from '../features/maintenance/WorkOrdersPage';
 import { WorkOrderDetailsPage } from '../features/maintenance/WorkOrderDetailsPage';
+import { ViolationsPage } from '../features/maintenance/ViolationsPage';
 import { PreventivePage } from '../features/maintenance/PreventivePage';
 import { AssetsPage } from '../features/maintenance/AssetsPage';
 import { InventoryPage } from '../features/maintenance/InventoryPage';
@@ -1048,6 +1049,16 @@ const workOrderDetailsRoute = createRoute({
   component: () => (
     <ProtectedWrapper>
       <WorkOrderDetailsPage />
+    </ProtectedWrapper>
+  ),
+});
+
+const violationsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/maintenance/violations',
+  component: () => (
+    <ProtectedWrapper>
+      <ViolationsPage />
     </ProtectedWrapper>
   ),
 });
@@ -2012,7 +2023,7 @@ const NewCompanyPage: React.FC = () => {
     const plan = (target.elements.namedItem('plan') as HTMLSelectElement).value;
 
     const stored = localStorage.getItem('companies');
-    let companiesList = [];
+    let companiesList: any[] = [];
     if (stored) {
       companiesList = JSON.parse(stored);
     } else {
@@ -2044,7 +2055,7 @@ const NewCompanyPage: React.FC = () => {
 
     // Also register the primary contact person as the first administrator user for this company
     const storedUsers = localStorage.getItem('company_users');
-    let usersList = [];
+    let usersList: any[] = [];
     if (storedUsers) {
       usersList = JSON.parse(storedUsers);
     } else {
@@ -4785,6 +4796,7 @@ const routeTree = rootRoute.addChildren([
   requestDetailsRoute,
   workOrdersRoute,
   workOrderDetailsRoute,
+  violationsRoute,
   preventiveRoute,
   assetsRoute,
   inventoryRoute,

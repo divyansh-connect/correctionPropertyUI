@@ -10,7 +10,7 @@ import {
   CommMessage, CommEmail, CommSMS, CommAnnouncement, CommCampaign, CommTemplate, CommContact, CommConversation, CommNotification, CommActivity,
   DmsDocument, DmsFolder, DmsTemplate, DmsSignatureRequest, DmsFileVersion, DmsPermission, DmsDocumentRequest, DmsAuditRecord, DmsShare,
   PropertyAnalyticsRecord, TenantAnalyticsRecord, VendorPerformanceRecord,
-  ReportDefinition, SavedReport, ScheduledReport, CustomDashboard, ExportRecord, ForecastDataPoint
+  ReportDefinition, SavedReport, ScheduledReport, CustomDashboard, ExportRecord, ForecastDataPoint, Violation
 } from '../types';
 
 // Helper to simulate delay
@@ -1565,6 +1565,48 @@ let propertyAssignments: any[] = [];
 let unitAssignments: any[] = [];
 let maintenanceAssignments: any[] = [];
 
+let violationsList: Violation[] = [
+  {
+    id: 'viol-1',
+    propertyId: 'prop-1',
+    propertyName: 'Oakridge Heights',
+    unitNumber: '101',
+    violationCode: 'DOB-3829-S',
+    issuingAuthority: 'Department of Buildings',
+    description: 'Blocked second floor emergency fire escape walkway due to trash bin storage.',
+    fineAmount: 250.00,
+    dueDate: '2026-08-15',
+    severity: 'Critical',
+    status: 'Open'
+  },
+  {
+    id: 'viol-2',
+    propertyId: 'prop-2',
+    propertyName: 'Sycamore Gardens',
+    unitNumber: '402',
+    violationCode: 'FIRE-9083-B',
+    issuingAuthority: 'State Fire Marshal Office',
+    description: 'Exposed wiring detected in electrical panel room next to main HVAC riser.',
+    fineAmount: 500.00,
+    dueDate: '2026-08-10',
+    severity: 'Critical',
+    status: 'Open'
+  },
+  {
+    id: 'viol-3',
+    propertyId: 'prop-1',
+    propertyName: 'Oakridge Heights',
+    unitNumber: '205',
+    violationCode: 'HLTH-4491-A',
+    issuingAuthority: 'City Health Department',
+    description: 'Minor mold residue identified near hot water tank ventilation outlets.',
+    fineAmount: 100.00,
+    dueDate: '2026-08-25',
+    severity: 'Warning',
+    status: 'Disputed'
+  }
+];
+
 let usersList: any[] = [
   { id: 'usr-1', name: 'John Doe', email: 'john@apex.com', role: 'Super Admin', team: 'Property Management', status: 'Active', lastLogin: '2026-07-19 09:30', departments: [] },
   { id: 'usr-2', name: 'Jane Smith', email: 'jane@apex.com', role: 'Accountant', team: 'Accounting', status: 'Active', lastLogin: '2026-07-18 17:45', departments: [] },
@@ -2469,6 +2511,22 @@ export const mockApi = {
       await delay(200);
       const idx = workOrders.findIndex(w => w.id === id);
       if (idx !== -1) {
+        // If an advance payment is being newly recorded
+        if (data.advancePaymentAmount && !workOrders[idx].advancePaymentAmount) {
+          expensesList.unshift({
+            id: `exp-${Date.now()}`,
+            vendorName: workOrders[idx].vendorName || 'Maintenance Personnel',
+            propertyId: workOrders[idx].propertyId || 'prop-1',
+            propertyName: workOrders[idx].propertyName || 'Property',
+            category: 'Repairs',
+            date: data.advancePaymentDate || new Date().toISOString().split('T')[0],
+            amount: Number(data.advancePaymentAmount),
+            tax: 0,
+            paymentMethod: data.advancePaymentMethod || 'Check',
+            status: 'Approved',
+          });
+        }
+
         workOrders[idx] = { ...workOrders[idx], ...data };
         
         // Sync Work Order Completion back to the original Service Request
@@ -2495,6 +2553,43 @@ export const mockApi = {
         workOrders[idx].scheduledDate = date;
       }
       return workOrders[idx];
+    }
+  },
+
+  violations: {
+    getAll: async () => { await delay(150); return [...violationsList]; },
+    getById: async (id: string) => { await delay(50); return violationsList.find(v => v.id === id); },
+    createWorkOrder: async (id: string) => {
+      await delay(200);
+      const vIdx = violationsList.findIndex(v => v.id === id);
+      if (vIdx !== -1) {
+        const violation = violationsList[vIdx];
+        const newWoId = `wo-viol-${Date.now()}`;
+        
+        // Spawn a corrective work order
+        const newWo = {
+          id: newWoId,
+          workOrderNumber: `WO-${40000 + workOrders.length + 1}`,
+          propertyId: violation.propertyId,
+          propertyName: violation.propertyName,
+          unitNumber: violation.unitNumber || 'All Building',
+          vendorId: 'vend-1', // Default first vendor
+          vendorName: 'Service Pro Contracting',
+          assignedTechnician: 'Compliance Inspector Spec',
+          scheduledDate: new Date().toISOString().split('T')[0],
+          estimatedCost: violation.fineAmount * 0.8, // Estimate repair cost
+          actualCost: 0,
+          status: 'Assigned' as const,
+          issue: `Fix Violation: ${violation.violationCode}`,
+          description: `Corrective actions to address violation: ${violation.description}. Authority: ${violation.issuingAuthority}. compliance target: ${violation.dueDate}`,
+          priority: 'Urgent' as const,
+        };
+
+        workOrders.unshift(newWo);
+        violationsList[vIdx].workOrderId = newWoId;
+        violationsList[vIdx].status = 'Resolved'; // Marks resolved once work order is created and dispatched
+      }
+      return true;
     }
   },
 
@@ -4132,6 +4227,7 @@ export const mockApi = {
         { id: 'int-1', name: 'Stripe Pay', category: 'Payments', description: 'Accept credit card and ACH payments directly from tenants.', status: 'Connected', logo: '💳' },
         { id: 'int-2', name: 'QuickBooks Sync', category: 'Accounting', description: 'Export accounting ledger entries dynamically to QuickBooks.', status: 'Disconnected', logo: '📊' },
         { id: 'int-3', name: 'AWS S3 Cloud', category: 'Storage', description: 'Store tenant leases and contracts inside AWS.', status: 'Connected', logo: '☁️' },
+        { id: 'int-4', name: 'DOB Code Compliance', category: 'Government', description: 'Pushes municipal and state building/fire code violations automatically.', status: 'Connected', logo: '🏛️' }
       ];
     },
     toggle: async (id: string) => {

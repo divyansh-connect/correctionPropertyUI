@@ -154,6 +154,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         { title: 'Dashboard', path: '/maintenance' },
         { title: 'Service Requests', path: '/maintenance/requests' },
         { title: 'Work Orders', path: '/maintenance/work-orders' },
+        { title: 'Violations & Code', path: '/maintenance/violations' },
         { title: 'Inspections', path: '/inspections' },
         { title: 'Vendors', path: '/vendors' },
       ],

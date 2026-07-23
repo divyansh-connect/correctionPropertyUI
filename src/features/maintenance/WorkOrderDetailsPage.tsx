@@ -8,12 +8,22 @@ import { Button } from '../../components/ui/Button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/Tabs';
 import { LoadingSkeleton } from '../../components/LoadingSkeleton';
 import { StatusBadge } from '../../components/StatusBadge';
-import { Printer, Calendar, DollarSign, User, Wrench, ShieldAlert } from 'lucide-react';
+import { FormDialog } from '../../components/FormDialog';
+import { Input } from '../../components/ui/Input';
+import { Select } from '../../components/ui/Select';
+import { Printer, Calendar, DollarSign, User, Wrench, ShieldAlert, Coins } from 'lucide-react';
 
 export const WorkOrderDetailsPage: React.FC = () => {
   const { id } = useParams({ from: '/maintenance/work-orders/$id' });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
+  // Advance Payment Modal States
+  const [isAdvanceOpen, setIsAdvanceOpen] = useState(false);
+  const [advanceAmount, setAdvanceAmount] = useState('');
+  const [advanceMethod, setAdvanceMethod] = useState('Check');
+  const [advanceRef, setAdvanceRef] = useState('');
+  const [advanceDate, setAdvanceDate] = useState(new Date().toISOString().split('T')[0]);
 
   // Queries
   const { data: wo, isLoading } = useQuery({
@@ -22,6 +32,22 @@ export const WorkOrderDetailsPage: React.FC = () => {
   });
 
   const { data: vendorsList = [] } = useQuery({ queryKey: ['vendors-list'], queryFn: () => api.vendors.getAll() });
+
+  const recordAdvanceMutation = useMutation({
+    mutationFn: (values: { amount: number; method: string; ref: string; date: string }) => {
+      return api.workOrders.update(id, {
+        advancePaymentAmount: values.amount,
+        advancePaymentMethod: values.method,
+        advancePaymentRef: values.ref,
+        advancePaymentDate: values.date,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['work-order-detail', id] });
+      queryClient.invalidateQueries({ queryKey: ['expenses-list'] });
+      setIsAdvanceOpen(false);
+    },
+  });
 
   const assignMutation = useMutation({
     mutationFn: (vendorId: string) => {
@@ -173,20 +199,164 @@ export const WorkOrderDetailsPage: React.FC = () => {
         </TabsContent>
 
         {/* INVOICES */}
-        <TabsContent value="invoices" className="mt-4">
+        <TabsContent value="invoices" className="mt-4 space-y-6">
+          {/* ADVANCE PAYMENT LEDGER */}
+          <Card className="p-6 border bg-card space-y-4">
+            <div className="flex justify-between items-center border-b pb-2">
+              <h3 className="text-sm font-extrabold uppercase">Advance Payment Ledger</h3>
+              {!wo.advancePaymentAmount && wo.status !== 'Completed' && wo.status !== 'Closed' && (
+                <Button 
+                  size="sm" 
+                  onClick={() => {
+                    setAdvanceAmount((wo.estimatedCost * 0.2).toFixed(0)); // default 20% estimated cost
+                    setIsAdvanceOpen(true);
+                  }}
+                  className="flex items-center gap-1 text-xs"
+                >
+                  <Coins className="w-3.5 h-3.5" /> Record Advance Payment
+                </Button>
+              )}
+            </div>
+
+            {wo.advancePaymentAmount ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-semibold">
+                <div className="p-3.5 bg-amber-500/5 rounded-xl border border-amber-500/10 space-y-2">
+                  <p className="text-[10px] uppercase text-amber-500 font-bold">Advance Details</p>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Amount Disbursed:</span>
+                    <span className="font-extrabold text-amber-500">${wo.advancePaymentAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Payment Date:</span>
+                    <span>{wo.advancePaymentDate}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Payment Method:</span>
+                    <span>{wo.advancePaymentMethod}</span>
+                  </div>
+                  {wo.advancePaymentRef && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Reference / Check #:</span>
+                      <span className="font-mono">{wo.advancePaymentRef}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="p-3.5 bg-secondary/15 rounded-xl border space-y-2 flex flex-col justify-center">
+                  <p className="text-[10px] uppercase text-muted-foreground font-bold">Financial Reconciliation Summary</p>
+                  <div className="flex justify-between">
+                    <span>Estimated Cost:</span>
+                    <span>${wo.estimatedCost.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between text-rose-500 font-bold border-t pt-1.5 mt-1.5">
+                    <span>Advance Deduction:</span>
+                    <span>-${wo.advancePaymentAmount.toLocaleString()}</span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground italic font-semibold">No advance payment has been issued for this work order.</p>
+            )}
+          </Card>
+
+          {/* LINKED VENDOR INVOICES */}
           <Card className="p-6 border bg-card space-y-4">
             <h3 className="text-sm font-extrabold uppercase border-b pb-2">Linked Vendor Invoices</h3>
-            <div className="p-4 bg-secondary/15 rounded-xl border flex justify-between items-center text-xs font-semibold">
-              <div>
-                <p className="font-bold">Vendor Billing Invoice</p>
-                <p className="text-[10px] text-muted-foreground">Reference Work Order: {wo.workOrderNumber}</p>
+            <div className="p-4 bg-secondary/15 rounded-xl border text-xs font-semibold space-y-3.5">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="font-bold">Vendor Billing Invoice</p>
+                  <p className="text-[10px] text-muted-foreground">Reference Work Order: {wo.workOrderNumber}</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-extrabold text-sm">${wo.actualCost.toLocaleString()}</p>
+                  <StatusBadge status={wo.status === 'Closed' ? 'Paid' : 'Approved'} />
+                </div>
               </div>
-              <div className="text-right">
-                <p className="font-extrabold">${wo.actualCost.toLocaleString()}</p>
-                <StatusBadge status={wo.status === 'Closed' ? 'Paid' : 'Approved'} />
-              </div>
+
+              {wo.advancePaymentAmount ? (
+                <div className="border-t pt-3 space-y-1 bg-secondary/10 p-3 rounded-lg">
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Gross Services Cost</span>
+                    <span>${wo.actualCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                  </div>
+                  <div className="flex justify-between text-amber-500 font-bold">
+                    <span>Less: Advance Payment</span>
+                    <span>-${wo.advancePaymentAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                  </div>
+                  <div className="flex justify-between text-foreground font-black border-t pt-1 mt-1 text-sm">
+                    <span>Net Balance Due</span>
+                    <span className="text-rose-500">${(wo.actualCost - wo.advancePaymentAmount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                  </div>
+                </div>
+              ) : null}
             </div>
           </Card>
+
+          {/* ADVANCE RECORDING FORM DIALOG */}
+          <FormDialog open={isAdvanceOpen} onOpenChange={setIsAdvanceOpen} title="Record Advance Payment">
+            <form 
+              onSubmit={(e) => {
+                e.preventDefault();
+                recordAdvanceMutation.mutate({
+                  amount: Number(advanceAmount) || 0,
+                  method: advanceMethod,
+                  ref: advanceRef,
+                  date: advanceDate
+                });
+              }}
+              className="space-y-4 pt-2 text-xs font-semibold text-foreground"
+            >
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold text-muted-foreground">Advance Amount ($)</label>
+                  <Input 
+                    type="number" 
+                    required 
+                    min="1" 
+                    value={advanceAmount} 
+                    onChange={e => setAdvanceAmount(e.target.value)} 
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold text-muted-foreground">Payment Method</label>
+                  <Select value={advanceMethod} onChange={e => setAdvanceMethod(e.target.value)}>
+                    <option value="Check">Check</option>
+                    <option value="Cash">Cash</option>
+                    <option value="ACH">ACH Transfer</option>
+                    <option value="Bank Wire">Bank Wire</option>
+                    <option value="Credit Card">Credit Card</option>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold text-muted-foreground">Payment Date</label>
+                  <Input 
+                    type="date" 
+                    required 
+                    value={advanceDate} 
+                    onChange={e => setAdvanceDate(e.target.value)} 
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold text-muted-foreground">Reference / Check #</label>
+                  <Input 
+                    placeholder="E.g. Check #4802" 
+                    value={advanceRef} 
+                    onChange={e => setAdvanceRef(e.target.value)} 
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-2 pt-4 border-t">
+                <Button type="button" variant="outline" onClick={() => setIsAdvanceOpen(false)}>Cancel</Button>
+                <Button type="submit" disabled={recordAdvanceMutation.isPending || !advanceAmount}>
+                  {recordAdvanceMutation.isPending ? 'Saving...' : 'Disburse Advance'}
+                </Button>
+              </div>
+            </form>
+          </FormDialog>
         </TabsContent>
       </Tabs>
     </div>
