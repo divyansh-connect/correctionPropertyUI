@@ -51,7 +51,7 @@ export const TenantNotificationsPage: React.FC = () => {
               key={n.id} 
               onClick={() => {
                 markAsRead(n.id);
-                const path = getNotificationRedirectPath(n.title, n.message, user?.role || 'Tenant');
+                const path = getNotificationRedirectPath(n.title, n.message, user?.role || 'Tenant', n.targetId);
                 if (path) {
                   navigate({ to: path });
                 }

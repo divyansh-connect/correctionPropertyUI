@@ -116,11 +116,12 @@ export interface NotificationItem {
   read: boolean;
   type: 'info' | 'warning' | 'success';
   role: string;
+  targetId?: string;
 }
 
 interface NotificationState {
   notifications: NotificationItem[];
-  addNotification: (notification: Omit<NotificationItem, 'id' | 'time' | 'read' | 'role'> & { role?: string }) => void;
+  addNotification: (notification: Omit<NotificationItem, 'id' | 'time' | 'read' | 'role'> & { role?: string; targetId?: string }) => void;
   markAsRead: (id: string) => void;
   markAllAsRead: (role?: string) => void;
   clearAll: (role?: string) => void;
@@ -129,9 +130,9 @@ interface NotificationState {
 export const useNotificationStore = create<NotificationState>((set) => ({
   notifications: [
     // Property Manager
-    { id: 'notif-1', title: 'New Maintenance Request', message: 'AC Not Cooling in Unit 301 (Sunset Villas)', time: '10m ago', read: false, type: 'warning', role: 'Property Manager' },
-    { id: 'notif-2', title: 'Payment Received', message: 'John Doe paid $1,850 rent for Unit 101', time: '1h ago', read: false, type: 'success', role: 'Property Manager' },
-    { id: 'notif-3', title: 'Lease Expiring Soon', message: 'Jane Smith (Unit 102) lease expires in 12 days', time: '1d ago', read: true, type: 'info', role: 'Property Manager' },
+    { id: 'notif-1', title: 'New Maintenance Request', message: 'AC Not Cooling in Unit 301 (Sunset Villas)', time: '10m ago', read: false, type: 'warning', role: 'Property Manager', targetId: 'sr-1' },
+    { id: 'notif-2', title: 'Payment Received', message: 'John Doe paid $1,850 rent for Unit 101', time: '1h ago', read: false, type: 'success', role: 'Property Manager', targetId: 'pay-8001' },
+    { id: 'notif-3', title: 'Lease Expiring Soon', message: 'Jane Smith (Unit 102) lease expires in 12 days', time: '1d ago', read: true, type: 'info', role: 'Property Manager', targetId: 'lease-1' },
 
     // Super Admin
     { id: 'notif-13', title: 'New Company Registered', message: 'Acme Corp registered on the platform', time: '10m ago', read: false, type: 'success', role: 'Super Admin' },
@@ -139,9 +140,9 @@ export const useNotificationStore = create<NotificationState>((set) => ({
     { id: 'notif-15', title: 'System Maintenance Scheduled', message: 'Database backup and optimization completed', time: '5h ago', read: true, type: 'info', role: 'Super Admin' },
 
     // Tenant
-    { id: 'notif-4', title: 'Rent Payment Due', message: 'Your rent of $1,850 for Unit 301 is due in 3 days', time: '2h ago', read: false, type: 'warning', role: 'Tenant' },
-    { id: 'notif-5', title: 'Maintenance Update', message: 'AC Maintenance scheduled for tomorrow at 10:00 AM', time: '5h ago', read: false, type: 'info', role: 'Tenant' },
-    { id: 'notif-6', title: 'Receipt Confirmed', message: 'Payment of $1,850 for June Rent has been processed', time: '2d ago', read: true, type: 'success', role: 'Tenant' },
+    { id: 'notif-4', title: 'Rent Payment Due', message: 'Your rent of $1,850 for Unit 301 is due in 3 days', time: '2h ago', read: false, type: 'warning', role: 'Tenant', targetId: 'tenant-pay-1' },
+    { id: 'notif-5', title: 'Maintenance Update', message: 'AC Maintenance scheduled for tomorrow at 10:00 AM', time: '5h ago', read: false, type: 'info', role: 'Tenant', targetId: 'tenant-sr-1' },
+    { id: 'notif-6', title: 'Receipt Confirmed', message: 'Payment of $1,850 for June Rent has been processed', time: '2d ago', read: true, type: 'success', role: 'Tenant', targetId: 'tenant-pay-2' },
 
     // Owner
     { id: 'notif-7', title: 'Monthly Distribution Ready', message: 'Owner payout of $4,500 has been sent to your account', time: '3h ago', read: false, type: 'success', role: 'Owner' },
@@ -149,9 +150,9 @@ export const useNotificationStore = create<NotificationState>((set) => ({
     { id: 'notif-9', title: 'Approval Required', message: 'Urgent: Roof leak repair estimate of $850 requires your approval', time: '3d ago', read: true, type: 'warning', role: 'Owner' },
 
     // Maintenance Staff
-    { id: 'notif-10', title: 'New Job Assigned', message: 'AC Not Cooling - Unit 301 (Sunset Villas)', time: '15m ago', read: false, type: 'warning', role: 'Maintenance Staff' },
-    { id: 'notif-11', title: 'Urgent Task', message: 'Water leakage in kitchen - Unit 102', time: '2h ago', read: false, type: 'warning', role: 'Maintenance Staff' },
-    { id: 'notif-12', title: 'Task Rescheduled', message: 'Electrical Inspection - Unit 204 moved to July 25th', time: '1d ago', read: true, type: 'info', role: 'Maintenance Staff' },
+    { id: 'notif-10', title: 'New Job Assigned', message: 'AC Not Cooling - Unit 301 (Sunset Villas)', time: '15m ago', read: false, type: 'warning', role: 'Maintenance Staff', targetId: 'wo-4001' },
+    { id: 'notif-11', title: 'Urgent Task', message: 'Water leakage in kitchen - Unit 102', time: '2h ago', read: false, type: 'warning', role: 'Maintenance Staff', targetId: 'wo-4002' },
+    { id: 'notif-12', title: 'Task Rescheduled', message: 'Electrical Inspection - Unit 204 moved to July 25th', time: '1d ago', read: true, type: 'info', role: 'Maintenance Staff', targetId: 'wo-4003' },
   ],
   addNotification: (n) => set((state) => ({
     notifications: [
@@ -160,7 +161,8 @@ export const useNotificationStore = create<NotificationState>((set) => ({
         id: `notif-${Date.now()}`,
         time: 'Just now',
         read: false,
-        role: n.role || 'Property Manager'
+        role: n.role || 'Property Manager',
+        targetId: n.targetId,
       },
       ...state.notifications
     ]

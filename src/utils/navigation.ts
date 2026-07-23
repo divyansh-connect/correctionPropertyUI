@@ -4,7 +4,8 @@
 export const getNotificationRedirectPath = (
   title: string,
   message: string,
-  userRole: string
+  userRole: string,
+  targetId?: string
 ): string | null => {
   const lowerTitle = title.toLowerCase();
   const lowerMessage = message.toLowerCase();
@@ -48,7 +49,10 @@ export const getNotificationRedirectPath = (
 
   // Maintenance Staff Portal Redirects
   if (userRole === 'Maintenance Staff') {
-    return '/staff/maintenance';
+    if (targetId) {
+      return `/staff/tasks/${targetId}`;
+    }
+    return '/staff/tasks';
   }
 
   // Super Admin Portal Redirects
@@ -67,9 +71,18 @@ export const getNotificationRedirectPath = (
 
   // Admin / Property Manager Redirects
   if (userRole === 'Property Manager') {
-    if (isPayment) return '/payments';
-    if (isMaintenance) return '/maintenance/requests';
-    if (isLease) return '/leasing/leases';
+    if (isPayment) {
+      if (targetId) return `/rent/payments/${targetId}`;
+      return '/payments';
+    }
+    if (isMaintenance) {
+      if (targetId) return `/maintenance/requests/${targetId}`;
+      return '/maintenance/requests';
+    }
+    if (isLease) {
+      if (targetId) return `/leasing/leases/${targetId}`;
+      return '/leasing/leases';
+    }
     return '/';
   }
 

@@ -208,7 +208,7 @@ export const OwnerLayout: React.FC<OwnerLayoutProps> = ({
                           onClick={() => {
                             markAsRead(n.id);
                             setShowNotifications(false);
-                            const path = getNotificationRedirectPath(n.title, n.message, user?.role || 'Owner');
+                            const path = getNotificationRedirectPath(n.title, n.message, user?.role || 'Owner', n.targetId);
                             if (path) {
                               navigate(path);
                             }
