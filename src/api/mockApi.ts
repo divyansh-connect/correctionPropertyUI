@@ -1558,6 +1558,17 @@ let rbacRolesList = [
     permissions: generatePermissions({
       'Maintenance': { view: true, edit: true },
     })
+  },
+  {
+    id: 'role-collection-manager',
+    name: 'Collection Manager',
+    description: 'Limited access to pending collections, tenant balances, and maintenance requests.',
+    permissions: generatePermissions({
+      'Dashboard': { view: true },
+      'Rent & Payments': { view: true, create: true, edit: true },
+      'Maintenance': { view: true, create: true, edit: true },
+      'Tenants': { view: true }
+    })
   }
 ];
 

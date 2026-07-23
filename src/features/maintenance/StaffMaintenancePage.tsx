@@ -15,6 +15,21 @@ import {
   AlertTriangle, FileText, MapPin
 } from 'lucide-react';
 
+const formatDate = (dateStr?: string) => {
+  if (!dateStr) return 'TBD';
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return dateStr;
+    const day = date.getDate();
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const month = months[date.getMonth()];
+    const year = date.getFullYear();
+    return `${day} ${month} ${year}`;
+  } catch {
+    return dateStr;
+  }
+};
+
 export const StaffMaintenancePage: React.FC = () => {
   const { user } = useAuthStore();
   const navigate = useNavigate();
@@ -179,10 +194,10 @@ export const StaffMaintenancePage: React.FC = () => {
               return (
                 <Card 
                   key={order.id} 
-                  className={`p-5 border border-l-4 ${priorityBorderColor} bg-card hover:shadow-md transition-all duration-200 group relative overflow-hidden`}
+                  className={`p-4 border border-l-4 ${priorityBorderColor} bg-card hover:border-muted-foreground/30 hover:shadow-lg hover:shadow-black/20 transition-all duration-200 group relative overflow-hidden`}
                 >
                   <div className="space-y-3.5">
-                    {/* Top Header Row */}
+                    {/* Row 1: justify-between */}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         <span className="font-mono font-black text-primary text-xs uppercase bg-primary/10 px-2 py-0.5 rounded">
@@ -203,131 +218,126 @@ export const StaffMaintenancePage: React.FC = () => {
                       )}
                     </div>
 
-                    {/* Location & Title */}
-                    <div className="space-y-1">
-                      <h4 className="font-black text-base text-foreground group-hover:text-primary transition-colors duration-200">
-                        {order.issue || 'Standard Maintenance Task'}
-                      </h4>
-                      <p className="text-xs text-muted-foreground font-semibold flex items-center gap-1.5">
-                        <MapPin className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                        {order.propertyName} • <span className="text-foreground">Unit {order.unitNumber}</span>
-                      </p>
-                      {order.description && (
-                        <p className="text-xs text-muted-foreground/80 line-clamp-2 mt-1.5 leading-relaxed font-medium">
-                          {order.description}
+                    {/* Row 2: Split 70% / 30% */}
+                    <div className="grid grid-cols-1 md:grid-cols-10 gap-4 items-start">
+                      {/* Left: 70% */}
+                      <div className="md:col-span-7 space-y-1">
+                        <h4 className="font-bold text-sm text-foreground group-hover:text-primary transition-colors duration-200">
+                          {order.issue || 'Standard Maintenance Task'}
+                        </h4>
+                        <p className="text-xs text-muted-foreground/80 font-medium flex items-center gap-1.5">
+                          <MapPin className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                          {order.propertyName} • <span className="text-foreground">Unit {order.unitNumber}</span>
                         </p>
-                      )}
+                        {order.description && (
+                          <p className="text-xs text-muted-foreground/60 line-clamp-2 mt-1.5 leading-relaxed">
+                            {order.description}
+                          </p>
+                        )}
+                        
+                        {/* Reject Info Box */}
+                        {order.status === 'Rejected' && order.rejectReason && (
+                          <div className="p-3 bg-rose-500/5 border border-rose-500/20 text-rose-500 rounded-xl text-[11px] font-semibold space-y-0.5 mt-2">
+                            <p className="uppercase text-[8px] text-muted-foreground font-bold tracking-wide">Reason for Rejection</p>
+                            <p className="leading-relaxed italic">"{order.rejectReason}"</p>
+                          </div>
+                        )}
+
+                        {/* Resolution Info Box */}
+                        {order.status === 'Completed' && order.resolutionNotes && (
+                          <div className="p-3 bg-emerald-500/5 border border-emerald-500/20 text-emerald-600 rounded-xl text-[11px] font-semibold space-y-0.5 mt-2">
+                            <p className="uppercase text-[8px] text-muted-foreground font-bold tracking-wide">Resolution Summary</p>
+                            <p className="leading-relaxed italic">"{order.resolutionNotes}"</p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Right: 30% - Vertical info */}
+                      <div className="md:col-span-3 text-[11px] space-y-3 shrink-0 md:pl-4">
+                        {/* Scheduled Date */}
+                        <div className="space-y-0.5">
+                          <span className="text-muted-foreground uppercase text-[8px] tracking-wider block font-bold leading-none">
+                            📅 Scheduled Date
+                          </span>
+                          <span className="text-foreground font-black text-sm block">
+                            {formatDate(order.scheduledDate)}
+                          </span>
+                        </div>
+                        {/* Budget */}
+                        <div className="space-y-0.5">
+                          <span className="text-muted-foreground uppercase text-[8px] tracking-wider block font-bold leading-none">
+                            💰 {isCompletedView ? 'Final Cost' : 'Estimated Budget'}
+                          </span>
+                          <span className="text-foreground font-black text-sm block">
+                            {isCompletedView ? (
+                              <span className="text-emerald-500">
+                                ${order.actualCost}
+                                {order.extraExpenses > 0 && <span className="text-[8px] text-muted-foreground font-normal"> (+${order.extraExpenses})</span>}
+                              </span>
+                            ) : (
+                              `$${order.estimatedCost}`
+                            )}
+                          </span>
+                        </div>
+                      </div>
                     </div>
 
-                    {/* Metric Grid Box */}
-                    <div className="grid grid-cols-2 gap-4 bg-secondary/15 p-3.5 rounded-2xl border border-border/40 text-xs font-bold">
-                      <div className="flex items-center space-x-2">
-                        <div className="p-1.5 bg-emerald-500/10 text-emerald-500 rounded-lg">
-                          <DollarSign className="w-3.5 h-3.5" />
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground uppercase text-[8px] tracking-wider leading-none">Est. Budget</p>
-                          <p className="text-foreground mt-0.5 text-xs font-extrabold">${order.estimatedCost}</p>
-                        </div>
-                      </div>
+                    {/* Row 3: justify-between */}
+                    <div className="pt-2.5 border-t border-border/40 flex justify-between items-center gap-2">
+                      <div className="flex gap-2.5">
+                        {/* Primary action buttons */}
+                        {order.status === 'New' && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => handleAccept(order.id)}
+                              className="h-8 px-4 rounded-xl text-xs font-bold bg-primary text-white hover:bg-primary/95 transition-all shadow-sm"
+                            >
+                              Accept
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setRejectTaskId(order.id)}
+                              className="h-8 px-4 rounded-xl text-xs font-bold bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/20 transition-all"
+                            >
+                              Reject
+                            </button>
+                          </>
+                        )}
 
-                      {isCompletedView ? (
-                        <div className="flex items-center space-x-2 border-l pl-4 border-border/30">
-                          <div className="p-1.5 bg-primary/10 text-primary rounded-lg">
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground uppercase text-[8px] tracking-wider leading-none">Final Cost</p>
-                            <p className="text-emerald-500 mt-0.5 text-xs font-extrabold">
-                              ${order.actualCost}
-                              {order.extraExpenses > 0 && <span className="text-[9px] text-muted-foreground font-semibold"> (+${order.extraExpenses})</span>}
-                            </p>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex items-center space-x-2 border-l pl-4 border-border/30">
-                          <div className="p-1.5 bg-amber-500/10 text-amber-500 rounded-lg">
-                            <Calendar className="w-3.5 h-3.5" />
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground uppercase text-[8px] tracking-wider leading-none">Sch. Date</p>
-                            <p className="text-foreground mt-0.5 text-xs font-extrabold">{order.scheduledDate || 'TBD'}</p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Reject Info Box */}
-                    {order.status === 'Rejected' && order.rejectReason && (
-                      <div className="p-3 bg-rose-500/5 border border-rose-500/20 text-rose-500 rounded-xl text-[11px] font-semibold space-y-0.5">
-                        <p className="uppercase text-[8px] text-muted-foreground font-bold tracking-wide">Reason for Rejection</p>
-                        <p className="leading-relaxed italic">"{order.rejectReason}"</p>
-                      </div>
-                    )}
-
-                    {/* Resolution Info Box */}
-                    {order.status === 'Completed' && order.resolutionNotes && (
-                      <div className="p-3 bg-emerald-500/5 border border-emerald-500/20 text-emerald-600 rounded-xl text-[11px] font-semibold space-y-0.5">
-                        <p className="uppercase text-[8px] text-muted-foreground font-bold tracking-wide">Resolution Summary</p>
-                        <p className="leading-relaxed italic">"{order.resolutionNotes}"</p>
-                      </div>
-                    )}
-                  </div>
-                  {/* Card footer action buttons */}
-                  <div className="mt-5 pt-3.5 border-t border-border/40 flex justify-between items-center gap-2">
-                    <div className="flex gap-2.5">
-                      {/* UI-only actions */}
-                      {order.status === 'New' && (
-                        <>
+                        {(order.status === 'Assigned' || order.status === 'Scheduled' || order.status === 'Draft') && (
                           <button
                             type="button"
-                            onClick={() => handleAccept(order.id)}
-                            className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-primary text-white hover:bg-primary/95 transition-all shadow-sm"
+                            onClick={() => handleStartWork(order.id)}
+                            className="flex items-center gap-1.5 h-8 px-4 rounded-xl text-xs font-bold bg-amber-500 text-white hover:bg-amber-600 transition-all shadow-sm shadow-amber-500/15"
                           >
-                            Accept
+                            <Play className="w-3.5 h-3.5 fill-white" /> Start Work
                           </button>
+                        )}
+
+                        {order.status === 'In Progress' && (
                           <button
                             type="button"
-                            onClick={() => setRejectTaskId(order.id)}
-                            className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/20 transition-all"
+                            onClick={() => {
+                              setCompleteTaskId(order.id);
+                              setActualCostVal(order.estimatedCost.toString());
+                            }}
+                            className="flex items-center gap-1.5 h-8 px-4 rounded-xl text-xs font-bold bg-emerald-500 text-white hover:bg-emerald-600 transition-all shadow-sm shadow-emerald-500/15"
                           >
-                            Reject
+                            <Check className="w-3.5 h-3.5" /> Mark Completed
                           </button>
-                        </>
-                      )}
+                        )}
+                      </div>
 
-                      {(order.status === 'Assigned' || order.status === 'Scheduled' || order.status === 'Draft') && (
-                        <button
-                          type="button"
-                          onClick={() => handleStartWork(order.id)}
-                          className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-bold bg-amber-500 text-white hover:bg-amber-600 transition-all shadow-sm shadow-amber-500/15"
-                        >
-                          <Play className="w-3.5 h-3.5 fill-white" /> Start Work
-                        </button>
-                      )}
-
-                      {order.status === 'In Progress' && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setCompleteTaskId(order.id);
-                            setActualCostVal(order.estimatedCost.toString());
-                          }}
-                          className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-bold bg-emerald-500 text-white hover:bg-emerald-600 transition-all shadow-sm shadow-emerald-500/15"
-                        >
-                          <Check className="w-3.5 h-3.5" /> Mark Completed
-                        </button>
-                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate({ to: `/staff/tasks/${order.id}` })}
+                        className="flex items-center gap-1 h-8 font-bold px-3.5 rounded-xl text-xs border bg-background hover:bg-secondary/35 text-foreground"
+                      >
+                        <Eye className="w-3.5 h-3.5 text-muted-foreground" /> Details
+                      </Button>
                     </div>
-
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate({ to: `/staff/tasks/${order.id}` })}
-                      className="flex items-center gap-1 h-9 font-bold px-3.5 rounded-xl text-[11px] border bg-background hover:bg-secondary/35 text-foreground"
-                    >
-                      <Eye className="w-3.5 h-3.5 text-muted-foreground" /> Details
-                    </Button>
                   </div>
                 </Card>
               );

@@ -195,7 +195,7 @@ export const TenantLayout: React.FC<TenantLayoutProps> = ({
                           onClick={() => {
                             markAsRead(n.id);
                             setShowNotifications(false);
-                            const path = getNotificationRedirectPath(n.title, n.message, user?.role || 'Tenant');
+                            const path = getNotificationRedirectPath(n.title, n.message, user?.role || 'Tenant', n.targetId);
                             if (path) {
                               navigate(path);
                             }

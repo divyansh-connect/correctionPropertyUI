@@ -563,7 +563,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                           onClick={() => {
                             markAsRead(n.id);
                             setShowNotifications(false);
-                            const path = getNotificationRedirectPath(n.title, n.message, user?.role || 'Property Manager');
+                            const path = getNotificationRedirectPath(n.title, n.message, user?.role || 'Property Manager', n.targetId);
                             if (path) {
                               navigate(path);
                             }

@@ -194,9 +194,20 @@ export const LoginPage: React.FC<LoginPageProps> = ({ navigate }) => {
                 setValue('password', 'password123');
                 onSubmit({ email: 'staff@apexpm.com', password: 'password123' });
               }}
-              className="bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 dark:text-amber-400 border border-amber-500/20 p-2 rounded-xl transition text-center col-span-2"
+              className="bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 dark:text-amber-400 border border-amber-500/20 p-2 rounded-xl transition text-center"
             >
               🛠️ Maintenance Staff
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setValue('email', 'collection@apexpm.com');
+                setValue('password', 'password123');
+                onSubmit({ email: 'collection@apexpm.com', password: 'password123' });
+              }}
+              className="bg-purple-500/10 hover:bg-purple-500/20 text-purple-500 dark:text-purple-400 border border-purple-500/20 p-2 rounded-xl transition text-center"
+            >
+              📊 Collection Manager
             </button>
           </div>
         </div>

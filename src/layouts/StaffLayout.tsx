@@ -200,7 +200,7 @@ export const StaffLayout: React.FC<StaffLayoutProps> = ({
                           onClick={() => {
                             markAsRead(n.id);
                             setShowNotifications(false);
-                            const path = getNotificationRedirectPath(n.title, n.message, user?.role || 'Maintenance Staff');
+                            const path = getNotificationRedirectPath(n.title, n.message, user?.role || 'Maintenance Staff', n.targetId);
                             if (path) {
                               navigate(path);
                             }
