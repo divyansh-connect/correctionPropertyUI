@@ -57,7 +57,7 @@ export const DashboardPage: React.FC = () => {
 
       {/* --- METRIC CARDS GRID --- */}
       {isCollectionManager ? (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatsCard
             title="Monthly Revenue"
             value={`$${(metrics?.monthlyRevenue ?? 0).toLocaleString()}`}
@@ -74,6 +74,13 @@ export const DashboardPage: React.FC = () => {
             trend="down"
             trendLabel="-8.5%"
             description="outstanding balances"
+            loading={loadingMetrics}
+          />
+          <StatsCard
+            title="Expenses"
+            value={`$${(metrics?.expenses ?? 0).toLocaleString()}`}
+            icon={<DollarSign className="w-5 h-5" />}
+            description="Invoices paid this month"
             loading={loadingMetrics}
           />
           <StatsCard
