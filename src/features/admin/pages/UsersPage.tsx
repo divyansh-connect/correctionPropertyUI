@@ -7,6 +7,7 @@ import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { Select } from '../../../components/ui/Select';
 import { Sparkles, UserPlus, Trash2, ShieldCheck, Mail, Eye, Edit3, Settings, Key, Building2, MapPin, Layers } from 'lucide-react';
+import { useAuthStore } from '../../../store/useStore';
 
 export const UsersPage: React.FC = () => {
   const queryClient = useQueryClient();
@@ -18,13 +19,16 @@ export const UsersPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<any>(null); // null means creating
 
+  const { user } = useAuthStore();
+  const defaultRole = user?.role === 'Super Admin' ? 'Property Manager' : 'Maintenance';
+
   // Form States
   const [formName, setFormName] = useState('');
   const [formEmail, setFormEmail] = useState('');
   const [formPhone, setFormPhone] = useState('');
   const [formPassword, setFormPassword] = useState('');
   const [formStatus, setFormStatus] = useState('Active');
-  const [formRole, setFormRole] = useState('Property Manager');
+  const [formRole, setFormRole] = useState(defaultRole);
   const [assignedProperties, setAssignedProperties] = useState<string[]>([]);
   const [assignedUnit, setAssignedUnit] = useState('');
   const [assignedBuildings, setAssignedBuildings] = useState<string[]>([]);
@@ -154,7 +158,7 @@ export const UsersPage: React.FC = () => {
     setFormPhone('');
     setFormPassword('');
     setFormStatus('Active');
-    setFormRole('Property Manager');
+    setFormRole(defaultRole);
     setAssignedProperties([]);
     setAssignedUnit('');
     setAssignedBuildings([]);
@@ -394,7 +398,7 @@ export const UsersPage: React.FC = () => {
                         <span className="text-[10px] text-muted-foreground font-semibold uppercase block">Assigned Rental Unit:</span>
                         <div className="flex flex-wrap gap-1">
                           {userAssignments.units.map((uid: string) => {
-                            const uName = units.find((u: any) => u.id === uid)?.name || uid;
+                            const uName = units.find((u: any) => u.id === uid)?.unitNumber || uid;
                             return (
                               <span key={uid} className="px-2 py-0.5 bg-teal-500/10 text-teal-600 text-[10px] font-bold rounded flex items-center gap-0.5">
                                 <MapPin className="w-2.5 h-2.5" /> Unit: {uName}
@@ -526,9 +530,16 @@ export const UsersPage: React.FC = () => {
                 <div className="space-y-1.5">
                   <label className="text-[10px] uppercase font-bold text-muted-foreground">Role</label>
                   <Select value={formRole} onChange={(e) => setFormRole(e.target.value)}>
-                    {roles.map((r: any) => (
-                      <option key={r.id} value={r.name}>{r.name}</option>
-                    ))}
+                    {roles
+                      .filter((r: any) => 
+                        user?.role === 'Super Admin' 
+                          ? r.name === 'Property Manager' 
+                          : ['Maintenance', 'Collection Manager'].includes(r.name)
+                      )
+                      .map((r: any) => (
+                        <option key={r.id} value={r.name}>{r.name}</option>
+                      ))
+                    }
                   </Select>
                 </div>
               </div>

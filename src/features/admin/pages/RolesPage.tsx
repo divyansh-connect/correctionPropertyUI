@@ -57,9 +57,6 @@ export const RolesPage: React.FC = () => {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['rbac-roles-list'] });
       setSelectedRoleId(data.id);
-      setIsCreateOpen(false);
-      setNewRoleName('');
-      setNewRoleDesc('');
       triggerNotification(`Custom role "${data.name}" created successfully!`);
     },
   });
@@ -70,8 +67,6 @@ export const RolesPage: React.FC = () => {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['rbac-roles-list'] });
       setSelectedRoleId(data.id);
-      setIsCloneOpen(false);
-      setCloneName('');
       triggerNotification(`Role cloned successfully as "${data.name}"!`);
     },
   });
