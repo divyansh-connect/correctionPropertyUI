@@ -8,7 +8,7 @@ import { Button } from '../../components/ui/Button';
 import { StatusBadge } from '../../components/StatusBadge';
 import { ReceiptPreview } from '../../components/Phase4Components';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/Tabs';
-import { ArrowLeft, Loader2, Printer, Download, RefreshCw, AlertOctagon } from 'lucide-react';
+import { ArrowLeft, Loader2, Printer, Download, RefreshCw, AlertOctagon, Mail, MessageSquare } from 'lucide-react';
 
 export const PaymentDetailsPage: React.FC = () => {
   const { id } = useParams({ from: '/payments/$id' });
@@ -82,10 +82,40 @@ export const PaymentDetailsPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button variant="outline" size="sm" onClick={handlePrint} className="flex items-center gap-1">
             <Printer className="w-4 h-4" /> Print Receipt
           </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => {
+              setMsg(`Receipt ${payment.id} dispatched to ${payment.tenantName}'s registered email.`);
+              setTimeout(() => setMsg(''), 3000);
+            }} 
+            className="flex items-center gap-1.5"
+          >
+            <Mail className="w-4 h-4 text-primary" /> Email Receipt
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => {
+              setMsg(`SMS payment receipt alert sent to ${payment.tenantName}'s phone number.`);
+              setTimeout(() => setMsg(''), 3000);
+            }} 
+            className="flex items-center gap-1.5"
+          >
+            <MessageSquare className="w-4 h-4 text-primary" /> SMS Receipt
+          </Button>
+          <a 
+            href={`https://wa.me/5550199?text=${encodeURIComponent(`Thank you ${payment.tenantName}! Your payment of $${payment.amount.toLocaleString()} for ${payment.propertyName} Unit ${payment.unitNumber} has been received. Receipt ID: ${payment.id}. Payment Method: ${payment.paymentMethod}.`)}`} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/10 rounded-lg text-xs font-semibold transition text-foreground"
+          >
+            <MessageSquare className="w-4 h-4 text-emerald-500" /> WhatsApp
+          </a>
           {payment.status === 'Paid' && (
             <>
               <Button

@@ -10,7 +10,7 @@ import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { FormDialog } from '../../components/FormDialog';
 import { Button } from '../../components/ui/Button';
 import { StatusBadge } from '../../components/StatusBadge';
-import { Plus, Eye, Trash2, Download } from 'lucide-react';
+import { Plus, Eye, Trash2, Download, Mail, MessageSquare } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
 
 export const InvoicesPage: React.FC = () => {
@@ -187,6 +187,40 @@ export const InvoicesPage: React.FC = () => {
             <div className="border-t border-dashed pt-4 flex justify-between items-center text-sm font-black">
               <span>Total Balance Due</span>
               <span className="text-lg text-rose-500">${selectedInvoice.balance.toLocaleString()}</span>
+            </div>
+
+            {/* Share / Send Invoice options */}
+            <div className="border-t pt-4 space-y-2">
+              <p className="text-[10px] uppercase text-muted-foreground tracking-wide font-black">Direct Invoice Delivery</p>
+              <div className="flex gap-2 font-bold text-xs">
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={() => alert(`Invoice ${selectedInvoice.id} sent to ${selectedInvoice.tenantName}'s registered email!`)}
+                  className="flex-1 flex items-center justify-center gap-1.5 h-9"
+                >
+                  <Mail className="w-3.5 h-3.5 text-primary" />
+                  <span>Send Email</span>
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={() => alert(`Invoice alert text message dispatched to ${selectedInvoice.tenantName}'s phone number!`)}
+                  className="flex-1 flex items-center justify-center gap-1.5 h-9"
+                >
+                  <MessageSquare className="w-3.5 h-3.5 text-primary" />
+                  <span>Send SMS</span>
+                </Button>
+                <a 
+                  href={`https://wa.me/5550199?text=${encodeURIComponent(`Hi ${selectedInvoice.tenantName}, here is your outstanding statement balance details for ${selectedInvoice.propertyName} Unit ${selectedInvoice.unitNumber}. Total amount due: $${selectedInvoice.balance.toLocaleString()}. Please view details and complete payment: http://localhost:5173/tenant/payments`)}`} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/10 rounded-xl transition text-foreground"
+                >
+                  <MessageSquare className="w-3.5 h-3.5 text-emerald-500" />
+                  <span>WhatsApp</span>
+                </a>
+              </div>
             </div>
 
             <div className="flex justify-end space-x-2 pt-4 border-t">

@@ -182,6 +182,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         { title: 'Company Profile', path: '/admin/company-settings' },
         { title: 'Users & Roles', path: '/admin/users' },
         { title: 'Roles & Permissions', path: '/admin/roles' },
+        { title: 'Payment Settings', path: '/admin/payment-settings' },
         { title: 'Integrations Marketplace', path: '/admin/integrations' },
         { title: 'Connected Apps (QuickBooks)', path: '/platform-integrations/connected' },
       ],
