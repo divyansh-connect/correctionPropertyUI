@@ -95,6 +95,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       submenu: [
         { title: 'Leads', path: '/leasing/leads' },
         { title: 'Applications', path: '/leasing/applications' },
+        { title: 'Tenant Screening', path: '/leasing/screening' },
         { title: 'Leases', path: '/leasing/leases' },
         { title: 'Renewals', path: '/leasing/renewals' },
         { title: 'Move In', path: '/leasing/move-in' },

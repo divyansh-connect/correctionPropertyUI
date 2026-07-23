@@ -10,7 +10,7 @@ import {
   CommMessage, CommEmail, CommSMS, CommAnnouncement, CommCampaign, CommTemplate, CommContact, CommConversation, CommNotification, CommActivity,
   DmsDocument, DmsFolder, DmsTemplate, DmsSignatureRequest, DmsFileVersion, DmsPermission, DmsDocumentRequest, DmsAuditRecord, DmsShare,
   PropertyAnalyticsRecord, TenantAnalyticsRecord, VendorPerformanceRecord,
-  ReportDefinition, SavedReport, ScheduledReport, CustomDashboard, ExportRecord, ForecastDataPoint, Violation
+  ReportDefinition, SavedReport, ScheduledReport, CustomDashboard, ExportRecord, ForecastDataPoint, Violation, ScreeningCheck
 } from '../types';
 
 // Helper to simulate delay
@@ -1624,6 +1624,62 @@ let violationsList: Violation[] = [
   }
 ];
 
+let screeningChecksList: ScreeningCheck[] = [
+  {
+    id: 'sc-1',
+    applicantId: 'appl-1',
+    applicationId: 'ap-1',
+    applicantName: 'Michael Jordan',
+    applicantEmail: 'jordan@chicagobulls.com',
+    applicantPhone: '555-0123',
+    propertyId: 'prop-1',
+    propertyName: 'Oakridge Heights',
+    unitId: 'unit-1',
+    unitNumber: '101',
+    screeningPackage: 'Comprehensive',
+    paymentResponsibility: 'Applicant',
+    paymentStatus: 'Paid',
+    applicantStatus: 'Submitted',
+    screeningStatus: 'Completed',
+    identityVerificationStatus: 'Verified',
+    creditScore: 720,
+    creditRecommendation: 'Approved',
+    criminalStatus: 'No Records Found',
+    evictionStatus: 'No Records Found',
+    incomeVerified: true,
+    screeningProvider: 'TransUnion',
+    invitationSentAt: '2026-07-20',
+    consentSubmittedAt: '2026-07-21',
+    paymentCompletedAt: '2026-07-21',
+    reportGeneratedAt: '2026-07-21',
+    creditReportUrl: 'mock_credit_report.pdf',
+    criminalReportUrl: 'mock_criminal_report.pdf',
+    evictionReportUrl: 'mock_eviction_report.pdf',
+  },
+  {
+    id: 'sc-2',
+    applicantId: 'appl-2',
+    applicationId: 'ap-2',
+    applicantName: 'Serena Williams',
+    applicantEmail: 'serena@tennis.com',
+    applicantPhone: '555-0987',
+    propertyId: 'prop-2',
+    propertyName: 'Sycamore Gardens',
+    unitId: 'unit-3',
+    unitNumber: '402',
+    screeningPackage: 'Basic',
+    paymentResponsibility: 'Manager',
+    paymentStatus: 'Waived',
+    applicantStatus: 'Invited',
+    screeningStatus: 'Pending',
+    identityVerificationStatus: 'Pending',
+    criminalStatus: 'Pending',
+    evictionStatus: 'Pending',
+    screeningProvider: 'TransUnion',
+    invitationSentAt: '2026-07-22',
+  }
+];
+
 let usersList: any[] = [
   { id: 'usr-1', name: 'John Doe', email: 'john@apex.com', role: 'Super Admin', team: 'Property Management', status: 'Active', lastLogin: '2026-07-19 09:30', departments: [] },
   { id: 'usr-2', name: 'Jane Smith', email: 'jane@apex.com', role: 'Accountant', team: 'Accounting', status: 'Active', lastLogin: '2026-07-18 17:45', departments: [] },
@@ -2623,6 +2679,124 @@ export const mockApi = {
         violationsList[vIdx].status = 'Resolved'; // Marks resolved once work order is created and dispatched
       }
       return true;
+    }
+  },
+
+  screening: {
+    getAll: async () => { await delay(150); return [...screeningChecksList]; },
+    getById: async (id: string) => { await delay(50); return screeningChecksList.find(s => s.id === id); },
+    create: async (data: any) => {
+      await delay(200);
+      const newCheck: ScreeningCheck = {
+        id: `sc-${screeningChecksList.length + 1}`,
+        applicantId: `appl-${Date.now()}`,
+        applicationId: `ap-${Date.now()}`,
+        applicantName: `${data.firstName} ${data.lastName}`,
+        applicantEmail: data.email,
+        applicantPhone: data.phoneNumber || '',
+        propertyId: data.propertyId || 'prop-1',
+        propertyName: data.propertyName || 'Oakridge Heights',
+        unitId: data.unitId || 'unit-1',
+        unitNumber: data.unitNumber || '101',
+        screeningPackage: data.screeningPackage || 'Basic',
+        paymentResponsibility: data.paymentResponsibility || 'Applicant',
+        paymentStatus: data.paymentResponsibility === 'Manager' ? 'Waived' : 'Pending',
+        applicantStatus: 'Invited',
+        screeningStatus: 'Pending',
+        identityVerificationStatus: 'Pending',
+        criminalStatus: 'Pending',
+        evictionStatus: 'Pending',
+        screeningProvider: 'TransUnion',
+        invitationSentAt: new Date().toISOString().split('T')[0],
+      };
+      screeningChecksList.unshift(newCheck);
+      return newCheck;
+    },
+    sendInvitation: async (id: string) => {
+      await delay(150);
+      const idx = screeningChecksList.findIndex(s => s.id === id);
+      if (idx !== -1) {
+        screeningChecksList[idx].applicantStatus = 'Invited';
+        screeningChecksList[idx].screeningStatus = 'Pending';
+      }
+      return screeningChecksList[idx];
+    },
+    submitConsent: async (id: string) => {
+      await delay(150);
+      const idx = screeningChecksList.findIndex(s => s.id === id);
+      if (idx !== -1) {
+        screeningChecksList[idx].applicantStatus = 'Submitted';
+        screeningChecksList[idx].consentSubmittedAt = new Date().toISOString().split('T')[0];
+        if (screeningChecksList[idx].paymentResponsibility === 'Manager') {
+          screeningChecksList[idx].screeningStatus = 'Processing';
+        } else {
+          screeningChecksList[idx].screeningStatus = 'Processing';
+        }
+      }
+      return screeningChecksList[idx];
+    },
+    submitPayment: async (id: string) => {
+      await delay(150);
+      const idx = screeningChecksList.findIndex(s => s.id === id);
+      if (idx !== -1) {
+        screeningChecksList[idx].paymentStatus = 'Paid';
+        screeningChecksList[idx].paymentCompletedAt = new Date().toISOString().split('T')[0];
+        screeningChecksList[idx].screeningStatus = 'Processing';
+      }
+      return screeningChecksList[idx];
+    },
+    generateReport: async (id: string) => {
+      await delay(1000);
+      const idx = screeningChecksList.findIndex(s => s.id === id);
+      if (idx !== -1) {
+        screeningChecksList[idx].identityVerificationStatus = 'Verified';
+        screeningChecksList[idx].creditScore = 720;
+        screeningChecksList[idx].creditRecommendation = 'Approved';
+        screeningChecksList[idx].criminalStatus = 'No Records Found';
+        screeningChecksList[idx].evictionStatus = 'No Records Found';
+        screeningChecksList[idx].incomeVerified = true;
+        screeningChecksList[idx].screeningStatus = 'Completed';
+        screeningChecksList[idx].reportGeneratedAt = new Date().toISOString().split('T')[0];
+        screeningChecksList[idx].creditReportUrl = 'mock_credit_report.pdf';
+        screeningChecksList[idx].criminalReportUrl = 'mock_criminal_report.pdf';
+        screeningChecksList[idx].evictionReportUrl = 'mock_eviction_report.pdf';
+      }
+      return screeningChecksList[idx];
+    },
+    approve: async (id: string) => {
+      await delay(200);
+      const idx = screeningChecksList.findIndex(s => s.id === id);
+      if (idx !== -1) {
+        screeningChecksList[idx].screeningStatus = 'Approved';
+        screeningChecksList[idx].approvedAt = new Date().toISOString().split('T')[0];
+        
+        const check = screeningChecksList[idx];
+        const names = check.applicantName.split(' ');
+        const firstName = names[0];
+        const lastName = names.slice(1).join(' ') || 'Applicant';
+        tenants.unshift({
+          id: check.applicantId,
+          firstName,
+          lastName,
+          email: check.applicantEmail,
+          phone: check.applicantPhone,
+          propertyId: check.propertyId,
+          propertyName: check.propertyName,
+          unitId: check.unitId,
+          unitNumber: check.unitNumber,
+          status: 'Active',
+        });
+      }
+      return screeningChecksList[idx];
+    },
+    decline: async (id: string) => {
+      await delay(200);
+      const idx = screeningChecksList.findIndex(s => s.id === id);
+      if (idx !== -1) {
+        screeningChecksList[idx].screeningStatus = 'Declined';
+        screeningChecksList[idx].declinedAt = new Date().toISOString().split('T')[0];
+      }
+      return screeningChecksList[idx];
     }
   },
 

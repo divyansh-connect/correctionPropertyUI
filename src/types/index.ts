@@ -776,7 +776,7 @@ export interface DmsTemplate {
   id: string;
   name: string;
   type: 'Lease Agreement' | 'Rental Application' | 'Owner Agreement' | 'Vendor Contract'
-    | 'Inspection Report' | 'Notice' | 'Invoice' | 'Receipt' | 'Statement' | 'Other';
+  | 'Inspection Report' | 'Notice' | 'Invoice' | 'Receipt' | 'Statement' | 'Other';
   body: string;
   createdAt: string;
 }
@@ -836,7 +836,7 @@ export interface DmsAuditRecord {
   documentId: string;
   documentName: string;
   action: 'Upload' | 'Download' | 'Preview' | 'Edit' | 'Delete' | 'Share'
-    | 'Signature Sent' | 'Signature Completed' | 'Permission Changed';
+  | 'Signature Sent' | 'Signature Completed' | 'Permission Changed';
   performedBy: string;
   property?: string;
   timestamp: string;
@@ -996,6 +996,40 @@ export interface Violation {
   severity: 'Critical' | 'Warning';
   status: 'Open' | 'Resolved' | 'Disputed';
   workOrderId?: string;
+}
+
+export interface ScreeningCheck {
+  id: string;
+  applicantId: string;
+  applicationId: string;
+  applicantName: string;
+  applicantEmail: string;
+  applicantPhone: string;
+  propertyId: string;
+  propertyName: string;
+  unitId: string;
+  unitNumber: string;
+  screeningPackage: 'Basic' | 'Comprehensive';
+  paymentResponsibility: 'Applicant' | 'Manager';
+  paymentStatus?: 'Pending' | 'Paid' | 'Waived';
+  applicantStatus: 'Invited' | 'Started' | 'Submitted';
+  screeningStatus: 'Pending' | 'Processing' | 'Completed' | 'Approved' | 'Declined';
+  identityVerificationStatus: 'Pending' | 'Verified' | 'Failed';
+  creditScore?: number;
+  creditRecommendation?: 'Approved' | 'Conditional' | 'Review Recommended' | 'Declined';
+  criminalStatus: 'No Records Found' | 'Records Found' | 'Pending';
+  evictionStatus: 'No Records Found' | 'Records Found' | 'Pending';
+  incomeVerified?: boolean;
+  screeningProvider?: string;
+  invitationSentAt: string;
+  consentSubmittedAt?: string;
+  paymentCompletedAt?: string;
+  reportGeneratedAt?: string;
+  approvedAt?: string;
+  declinedAt?: string;
+  creditReportUrl?: string;
+  criminalReportUrl?: string;
+  evictionReportUrl?: string;
 }
 
 

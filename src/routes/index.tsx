@@ -1,18 +1,18 @@
-import { 
-  createRootRoute, 
-  createRoute, 
-  createRouter, 
-  Outlet, 
-  useNavigate, 
-  useLocation 
+import {
+  createRootRoute,
+  createRoute,
+  createRouter,
+  Outlet,
+  useNavigate,
+  useLocation
 } from '@tanstack/react-router';
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../api';
 import { useAuthStore } from '../store/useStore';
-import { 
-  Plus, Search, Eye, Edit, Power, Ban, CheckCircle, XCircle, Lock, Settings, Key, 
-  Database, Mail, FileText, Globe, Building2, Users, CreditCard, BarChart3, 
+import {
+  Plus, Search, Eye, Edit, Power, Ban, CheckCircle, XCircle, Lock, Settings, Key,
+  Database, Mail, FileText, Globe, Building2, Users, CreditCard, BarChart3,
   LifeBuoy, Shield, Activity, Sparkles, Clock, ArrowRight, ShieldAlert, Check, X,
   Trash2, HelpCircle
 } from 'lucide-react';
@@ -56,6 +56,8 @@ import { RenewalsPage } from '../features/leasing/RenewalsPage';
 import { MoveInOutPage } from '../features/leasing/MoveInOutPage';
 import { ApplicationsPage } from '../features/leasing/ApplicationsPage';
 import { NewApplicationPage } from '../features/leasing/NewApplicationPage';
+import { TenantScreeningPage } from '../features/leasing/TenantScreeningPage';
+import { ApplicantScreeningWizard } from '../features/leasing/ApplicantScreeningWizard';
 
 // CRM & Leads Module (Phase 3)
 import { CRMDashboardPage } from '../features/crm/CRMDashboardPage';
@@ -286,8 +288,8 @@ const ProtectedWrapper: React.FC<{ children: React.ReactNode }> = ({ children })
   const isOwnerPath = location.pathname === '/owner' || location.pathname.startsWith('/owner/');
   const isTenantPath = location.pathname === '/tenant' || location.pathname.startsWith('/tenant/');
   const isStaffPath = location.pathname === '/staff' || location.pathname.startsWith('/staff/');
-  const isIntegrationsPath = 
-    location.pathname.startsWith('/admin/integrations') || 
+  const isIntegrationsPath =
+    location.pathname.startsWith('/admin/integrations') ||
     location.pathname.startsWith('/platform-integrations');
 
   // Role Access Guard
@@ -373,8 +375,8 @@ const ProtectedWrapper: React.FC<{ children: React.ReactNode }> = ({ children })
   }
 
   return (
-    <DashboardLayout 
-      currentPath={location.pathname} 
+    <DashboardLayout
+      currentPath={location.pathname}
       navigate={(path) => navigate({ to: path })}
     >
       {children}
@@ -667,6 +669,16 @@ const crmDashboardRoute = createRoute({
   component: () => (
     <ProtectedWrapper>
       <CRMDashboardPage />
+    </ProtectedWrapper>
+  ),
+});
+
+const applicantScreeningWizardRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/tenant/screening/$screeningId',
+  component: () => (
+    <ProtectedWrapper>
+      <ApplicantScreeningWizard />
     </ProtectedWrapper>
   ),
 });
@@ -2490,29 +2502,29 @@ const SubscriptionPlansPage: React.FC = () => {
           <div className="grid grid-cols-2 gap-4 text-xs">
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-muted-foreground uppercase">Plan Name</label>
-              <input 
-                required 
-                value={newPlan.name} 
+              <input
+                required
+                value={newPlan.name}
                 onChange={e => setNewPlan(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="e.g. Pro Plus Plan" 
-                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold" 
+                placeholder="e.g. Pro Plus Plan"
+                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold"
               />
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-muted-foreground uppercase">Monthly Price ($)</label>
-              <input 
-                required 
-                type="number" 
-                value={newPlan.price} 
+              <input
+                required
+                type="number"
+                value={newPlan.price}
                 onChange={e => setNewPlan(prev => ({ ...prev, price: e.target.value }))}
-                placeholder="e.g. 199" 
-                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold" 
+                placeholder="e.g. 199"
+                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold"
               />
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-muted-foreground uppercase">Billing Cycle</label>
-              <select 
-                value={newPlan.cycle} 
+              <select
+                value={newPlan.cycle}
                 onChange={e => setNewPlan(prev => ({ ...prev, cycle: e.target.value }))}
                 className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold focus:outline-none"
               >
@@ -2522,30 +2534,30 @@ const SubscriptionPlansPage: React.FC = () => {
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-muted-foreground uppercase">Max Units Limit</label>
-              <input 
-                value={newPlan.units} 
+              <input
+                value={newPlan.units}
                 onChange={e => setNewPlan(prev => ({ ...prev, units: e.target.value }))}
-                placeholder="e.g. Up to 500 Units" 
-                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold" 
+                placeholder="e.g. Up to 500 Units"
+                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold"
               />
             </div>
             <div className="space-y-1 text-xs col-span-2">
               <label className="text-[10px] font-bold text-muted-foreground uppercase">Storage Capacity</label>
-              <input 
-                value={newPlan.storage} 
+              <input
+                value={newPlan.storage}
                 onChange={e => setNewPlan(prev => ({ ...prev, storage: e.target.value }))}
-                placeholder="e.g. 100 GB" 
-                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold" 
+                placeholder="e.g. 100 GB"
+                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold"
               />
             </div>
             <div className="space-y-1 text-xs col-span-2">
               <label className="text-[10px] font-bold text-muted-foreground uppercase">Included Features & Details</label>
-              <textarea 
-                value={newPlan.features} 
+              <textarea
+                value={newPlan.features}
                 onChange={e => setNewPlan(prev => ({ ...prev, features: e.target.value }))}
-                placeholder="List features separated by commas..." 
-                rows={2} 
-                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold" 
+                placeholder="List features separated by commas..."
+                rows={2}
+                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold"
               />
             </div>
           </div>
@@ -2794,28 +2806,28 @@ const SubscriptionCouponsPage: React.FC = () => {
           <div className="grid grid-cols-1 gap-3 text-xs">
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-muted-foreground uppercase">Promo Code</label>
-              <input 
-                required 
-                value={newCoupon.code} 
+              <input
+                required
+                value={newCoupon.code}
                 onChange={e => setNewCoupon(prev => ({ ...prev, code: e.target.value }))}
-                placeholder="e.g. APEXSTART" 
-                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold" 
+                placeholder="e.g. APEXSTART"
+                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold"
               />
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-muted-foreground uppercase">Discount Value (e.g. 50% or $20)</label>
-              <input 
-                required 
-                value={newCoupon.discount} 
+              <input
+                required
+                value={newCoupon.discount}
                 onChange={e => setNewCoupon(prev => ({ ...prev, discount: e.target.value }))}
-                placeholder="e.g. 20% or $15" 
-                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold" 
+                placeholder="e.g. 20% or $15"
+                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold"
               />
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-muted-foreground uppercase">Duration</label>
-              <select 
-                value={newCoupon.duration} 
+              <select
+                value={newCoupon.duration}
                 onChange={e => setNewCoupon(prev => ({ ...prev, duration: e.target.value }))}
                 className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold focus:outline-none"
               >
@@ -2827,12 +2839,12 @@ const SubscriptionCouponsPage: React.FC = () => {
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-muted-foreground uppercase">Max Usage Limit</label>
-              <input 
-                type="number" 
-                value={newCoupon.maxUses} 
+              <input
+                type="number"
+                value={newCoupon.maxUses}
                 onChange={e => setNewCoupon(prev => ({ ...prev, maxUses: e.target.value }))}
-                placeholder="e.g. 100" 
-                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold" 
+                placeholder="e.g. 100"
+                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold"
               />
             </div>
           </div>
@@ -3284,7 +3296,7 @@ const PlatformIntegrationsKeysView: React.FC = () => {
         breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Integrations' }, { label: 'API Keys' }]}
         action={{
           label: 'Generate API Key',
-          onClick: () => {},
+          onClick: () => { },
           icon: <Plus className="w-4 h-4" />
         }}
       />
@@ -3333,7 +3345,7 @@ const PlatformIntegrationsWebhooksView: React.FC = () => {
         breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Integrations' }, { label: 'Webhooks' }]}
         action={{
           label: 'Add Webhook Endpoint',
-          onClick: () => {},
+          onClick: () => { },
           icon: <Plus className="w-4 h-4" />
         }}
       />
@@ -3598,18 +3610,18 @@ const AmenitiesPage: React.FC = () => {
           <div className="grid grid-cols-2 gap-4 text-xs">
             <div className="space-y-1 col-span-2">
               <label className="text-[10px] font-bold text-muted-foreground uppercase">Amenity Name</label>
-              <input 
-                required 
-                value={form.name} 
+              <input
+                required
+                value={form.name}
                 onChange={e => setForm(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="e.g. Storage Unit A" 
-                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold" 
+                placeholder="e.g. Storage Unit A"
+                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold"
               />
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-muted-foreground uppercase">Category</label>
-              <select 
-                value={form.category} 
+              <select
+                value={form.category}
                 onChange={e => setForm(prev => ({ ...prev, category: e.target.value }))}
                 className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold focus:outline-none"
               >
@@ -3621,18 +3633,18 @@ const AmenitiesPage: React.FC = () => {
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-muted-foreground uppercase">Monthly Fee ($)</label>
-              <input 
-                type="number" 
-                value={form.fee} 
+              <input
+                type="number"
+                value={form.fee}
                 onChange={e => setForm(prev => ({ ...prev, fee: e.target.value }))}
-                placeholder="e.g. 0" 
-                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold" 
+                placeholder="e.g. 0"
+                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold"
               />
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-muted-foreground uppercase">Rent Included?</label>
-              <select 
-                value={form.included} 
+              <select
+                value={form.included}
                 onChange={e => setForm(prev => ({ ...prev, included: e.target.value }))}
                 className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold focus:outline-none"
               >
@@ -3642,8 +3654,8 @@ const AmenitiesPage: React.FC = () => {
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-muted-foreground uppercase">Status</label>
-              <select 
-                value={form.status} 
+              <select
+                value={form.status}
                 onChange={e => setForm(prev => ({ ...prev, status: e.target.value }))}
                 className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold focus:outline-none"
               >
@@ -3653,12 +3665,12 @@ const AmenitiesPage: React.FC = () => {
             </div>
             <div className="space-y-1 col-span-2">
               <label className="text-[10px] font-bold text-muted-foreground uppercase">Description</label>
-              <textarea 
-                value={form.desc} 
+              <textarea
+                value={form.desc}
                 onChange={e => setForm(prev => ({ ...prev, desc: e.target.value }))}
-                placeholder="Describe amenity features..." 
+                placeholder="Describe amenity features..."
                 rows={2}
-                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold" 
+                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold"
               />
             </div>
           </div>
@@ -3800,72 +3812,72 @@ const FloorPlansPage: React.FC = () => {
           <div className="grid grid-cols-2 gap-4 text-xs">
             <div className="space-y-1 col-span-2">
               <label className="text-[10px] font-bold text-muted-foreground uppercase">Floor Plan Name</label>
-              <input 
-                required 
-                value={form.name} 
+              <input
+                required
+                value={form.name}
                 onChange={e => setForm(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="e.g. 1B/1B Deluxe Loft" 
-                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold" 
+                placeholder="e.g. 1B/1B Deluxe Loft"
+                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold"
               />
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-muted-foreground uppercase">Bedrooms Count</label>
-              <input 
-                type="number" 
-                value={form.beds} 
+              <input
+                type="number"
+                value={form.beds}
                 onChange={e => setForm(prev => ({ ...prev, beds: e.target.value }))}
-                placeholder="e.g. 1" 
-                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold" 
+                placeholder="e.g. 1"
+                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold"
               />
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-muted-foreground uppercase">Bathrooms Count</label>
-              <input 
-                type="number" 
-                value={form.baths} 
+              <input
+                type="number"
+                value={form.baths}
                 onChange={e => setForm(prev => ({ ...prev, baths: e.target.value }))}
-                placeholder="e.g. 1" 
-                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold" 
+                placeholder="e.g. 1"
+                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold"
               />
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-muted-foreground uppercase">Size (Sq Ft)</label>
-              <input 
-                type="number" 
-                value={form.sqft} 
+              <input
+                type="number"
+                value={form.sqft}
                 onChange={e => setForm(prev => ({ ...prev, sqft: e.target.value }))}
-                placeholder="e.g. 750" 
-                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold" 
+                placeholder="e.g. 750"
+                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold"
               />
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-muted-foreground uppercase">Market Price Rent ($)</label>
-              <input 
-                type="number" 
-                value={form.rent} 
+              <input
+                type="number"
+                value={form.rent}
                 onChange={e => setForm(prev => ({ ...prev, rent: e.target.value }))}
-                placeholder="e.g. 1200" 
-                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold" 
+                placeholder="e.g. 1200"
+                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold"
               />
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-muted-foreground uppercase">Required Deposit ($)</label>
-              <input 
-                type="number" 
-                value={form.deposit} 
+              <input
+                type="number"
+                value={form.deposit}
                 onChange={e => setForm(prev => ({ ...prev, deposit: e.target.value }))}
-                placeholder="e.g. 1200" 
-                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold" 
+                placeholder="e.g. 1200"
+                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold"
               />
             </div>
             <div className="space-y-1 col-span-2">
               <label className="text-[10px] font-bold text-muted-foreground uppercase">Description</label>
-              <textarea 
-                value={form.desc} 
+              <textarea
+                value={form.desc}
                 onChange={e => setForm(prev => ({ ...prev, desc: e.target.value }))}
-                placeholder="Describe floor plan features..." 
+                placeholder="Describe floor plan features..."
                 rows={2}
-                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold" 
+                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold"
               />
             </div>
           </div>
@@ -4006,38 +4018,38 @@ const ScreeningPage: React.FC = () => {
           <div className="grid grid-cols-2 gap-4 text-xs">
             <div className="space-y-1 col-span-2">
               <label className="text-[10px] font-bold text-muted-foreground uppercase">Applicant Name</label>
-              <input 
-                required 
-                value={form.applicant} 
+              <input
+                required
+                value={form.applicant}
                 onChange={e => setForm(prev => ({ ...prev, applicant: e.target.value }))}
-                placeholder="e.g. John Doe" 
-                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold" 
+                placeholder="e.g. John Doe"
+                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold"
               />
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-muted-foreground uppercase">Credit Score</label>
-              <input 
-                type="number" 
-                required 
-                value={form.creditScore} 
+              <input
+                type="number"
+                required
+                value={form.creditScore}
                 onChange={e => setForm(prev => ({ ...prev, creditScore: e.target.value }))}
-                placeholder="e.g. 720" 
-                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold" 
+                placeholder="e.g. 720"
+                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold"
               />
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-muted-foreground uppercase">Employment Status</label>
-              <input 
-                value={form.status} 
+              <input
+                value={form.status}
                 onChange={e => setForm(prev => ({ ...prev, status: e.target.value }))}
-                placeholder="e.g. Employed" 
-                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold" 
+                placeholder="e.g. Employed"
+                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold"
               />
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-muted-foreground uppercase">Background Check</label>
-              <select 
-                value={form.background} 
+              <select
+                value={form.background}
                 onChange={e => setForm(prev => ({ ...prev, background: e.target.value }))}
                 className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold focus:outline-none"
               >
@@ -4047,17 +4059,17 @@ const ScreeningPage: React.FC = () => {
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-muted-foreground uppercase">Income status (e.g. Verified ($5k/mo))</label>
-              <input 
-                value={form.income} 
+              <input
+                value={form.income}
                 onChange={e => setForm(prev => ({ ...prev, income: e.target.value }))}
-                placeholder="e.g. Verified ($4k/mo)" 
-                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold" 
+                placeholder="e.g. Verified ($4k/mo)"
+                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold"
               />
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-muted-foreground uppercase">Eviction Records</label>
-              <select 
-                value={form.eviction} 
+              <select
+                value={form.eviction}
                 onChange={e => setForm(prev => ({ ...prev, eviction: e.target.value }))}
                 className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold focus:outline-none"
               >
@@ -4067,8 +4079,8 @@ const ScreeningPage: React.FC = () => {
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-muted-foreground uppercase">Decision Status</label>
-              <select 
-                value={form.decision} 
+              <select
+                value={form.decision}
                 onChange={e => setForm(prev => ({ ...prev, decision: e.target.value }))}
                 className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold focus:outline-none"
               >
@@ -4589,7 +4601,7 @@ const floorPlansRoute = createRoute({
 const screeningRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/leasing/screening',
-  component: () => (<ProtectedWrapper><ScreeningPage /></ProtectedWrapper>),
+  component: () => (<ProtectedWrapper><TenantScreeningPage /></ProtectedWrapper>),
 });
 const moveInRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -4644,7 +4656,7 @@ const routeTree = rootRoute.addChildren([
   loginRoute,
   forgotPasswordRoute,
   resetPasswordRoute,
-  
+
   // Super Admin Routes
   companiesRoute,
   newCompanyRoute,
@@ -4696,7 +4708,7 @@ const routeTree = rootRoute.addChildren([
   unitsRoute,
   newUnitRoute,
   unitDetailsRoute,
-  
+
   // Tenants
   tenantsRoute,
   activeTenantsRoute,
@@ -4705,7 +4717,7 @@ const routeTree = rootRoute.addChildren([
   newTenantRoute,
   editTenantRoute,
   tenantDetailsRoute,
-  
+
   // Leasing
   leasesRoute,
   newLeaseRoute,
@@ -4714,7 +4726,8 @@ const routeTree = rootRoute.addChildren([
   moveInOutRoute,
   applicationsRoute,
   newApplicationRoute,
-  
+  applicantScreeningWizardRoute,
+
   // CRM
   crmDashboardRoute,
   leadsRoute,
@@ -4735,7 +4748,7 @@ const routeTree = rootRoute.addChildren([
   newPaymentPlanRoute,
   refundsRoute,
   paymentMethodsRoute,
-  
+
   // Other
   ownersRoute,
   accountingRoute,
@@ -4753,7 +4766,7 @@ const routeTree = rootRoute.addChildren([
   taxesRoute,
   financialReportsRoute,
   yearEndRoute,
-  
+
   // Owner Portal (Phase 7)
   ownerDashboardRoute,
   ownerPropertiesRoute,
