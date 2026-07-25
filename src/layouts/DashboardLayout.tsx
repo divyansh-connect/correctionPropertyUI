@@ -194,24 +194,19 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const collectionManagerMenuItems: MenuItem[] = [
     { title: 'Dashboard', icon: <LayoutDashboard className="w-5 h-5" />, path: '/' },
     {
-      title: 'Tenant Payments',
+      title: 'Tenant Invoices',
+      icon: <FileText className="w-5 h-5" />,
+      path: '/invoices',
+    },
+    {
+      title: 'Payment History',
       icon: <CreditCard className="w-5 h-5" />,
       path: '/payments',
     },
     {
-      title: 'Owner Payouts',
-      icon: <UserCheck className="w-5 h-5" />,
-      path: '/owners',
-    },
-    {
-      title: 'Vendor Bills',
-      icon: <Wrench className="w-5 h-5" />,
-      path: '/accounting/expenses',
-    },
-    {
-      title: 'Accounting Ledger',
+      title: 'Tenant Ledger',
       icon: <BookOpen className="w-5 h-5" />,
-      path: '/accounting/income',
+      path: '/rent-ledger',
     },
   ];
 

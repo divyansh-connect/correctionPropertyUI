@@ -338,7 +338,15 @@ export const TenantDetailsPage: React.FC = () => {
             {/* PAYMENTS TAB */}
             <TabsContent value="payments" className="space-y-4">
               <style>{`
+                @page {
+                  size: A4 portrait;
+                  margin: 15mm 15mm 15mm 15mm;
+                }
                 @media print {
+                  body {
+                    background: white !important;
+                    color: black !important;
+                  }
                   body * {
                     visibility: hidden !important;
                   }
@@ -354,9 +362,23 @@ export const TenantDetailsPage: React.FC = () => {
                     box-shadow: none !important;
                     background: white !important;
                     color: black !important;
+                    padding: 0 !important;
+                    margin: 0 !important;
                   }
                   .no-print {
                     display: none !important;
+                  }
+                  table {
+                    width: 100% !important;
+                    border-collapse: collapse !important;
+                  }
+                  th, td {
+                    border-bottom: 1px solid #e2e8f0 !important;
+                    padding: 8px 4px !important;
+                    color: black !important;
+                  }
+                  th {
+                    font-weight: 800 !important;
                   }
                 }
               `}</style>
@@ -377,7 +399,7 @@ export const TenantDetailsPage: React.FC = () => {
                     <p className="text-muted-foreground text-[10px] uppercase font-bold">Statement Recipient</p>
                     <p className="font-extrabold text-foreground text-sm">{tenant.firstName} {tenant.lastName}</p>
                     <p className="text-muted-foreground text-[10px] leading-relaxed">
-                      Phone: {tenant.phone || 'N/A'}<br />
+                      Phone: {tenant.phone || 'N/A'} • Email: {tenant.email || 'N/A'}<br />
                       {tenant.propertyName ? `${tenant.propertyName} • Unit ${tenant.unitNumber}` : 'Unassigned Portfolio Resident'}
                     </p>
                   </div>

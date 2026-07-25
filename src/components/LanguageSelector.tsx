@@ -65,18 +65,39 @@ export const LanguageSelector: React.FC = () => {
       return;
     }
 
-    const cookieValue = `/en/${lang}`;
     const domain = window.location.hostname;
 
-    // Set cookies across root and domain settings for robustness
-    document.cookie = `googtrans=${cookieValue}; path=/;`;
-    document.cookie = `googtrans=${cookieValue}; path=/; domain=${domain};`;
-    
-    if (domain.includes('.')) {
-      const parts = domain.split('.');
-      if (parts.length > 2) {
-        const parentDomain = parts.slice(-2).join('.');
-        document.cookie = `googtrans=${cookieValue}; path=/; domain=.${parentDomain};`;
+    if (lang === 'en') {
+      // Clear/delete the googtrans cookie to revert to English (original)
+      const deleteCookie = (name: string, domainStr?: string) => {
+        const d = domainStr ? `; domain=${domainStr}` : '';
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;${d}`;
+      };
+
+      deleteCookie('googtrans');
+      deleteCookie('googtrans', domain);
+      deleteCookie('googtrans', `.${domain}`);
+      
+      if (domain.includes('.')) {
+        const parts = domain.split('.');
+        if (parts.length > 2) {
+          const parentDomain = parts.slice(-2).join('.');
+          deleteCookie('googtrans', `.${parentDomain}`);
+          deleteCookie('googtrans', parentDomain);
+        }
+      }
+    } else {
+      const cookieValue = `/en/${lang}`;
+      // Set cookies across root and domain settings for robustness
+      document.cookie = `googtrans=${cookieValue}; path=/;`;
+      document.cookie = `googtrans=${cookieValue}; path=/; domain=${domain};`;
+      
+      if (domain.includes('.')) {
+        const parts = domain.split('.');
+        if (parts.length > 2) {
+          const parentDomain = parts.slice(-2).join('.');
+          document.cookie = `googtrans=${cookieValue}; path=/; domain=.${parentDomain};`;
+        }
       }
     }
 
