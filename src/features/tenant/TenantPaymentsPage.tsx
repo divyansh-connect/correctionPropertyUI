@@ -22,9 +22,90 @@ export const TenantPaymentsPage: React.FC = () => {
     queryKey: ['tenant-dashboard-metrics'],
     queryFn: () => api.tenantPortal.getMetrics(),
   });
-  const { data: payments = [], isLoading } = useQuery({ queryKey: ['tenant-payments-list'], queryFn: () => api.tenantPayments.getAll() });
+  const { data: allPayments = [], isLoading } = useQuery({ queryKey: ['tenant-payments-list'], queryFn: () => api.rent.getAll() });
+
+  const { data: profile } = useQuery({
+    queryKey: ['tenant-profile'],
+    queryFn: () => api.tenantProfile.get(),
+  });
+
+  const { data: allInvoices = [] } = useQuery({
+    queryKey: ['invoices-list'],
+    queryFn: () => api.invoices.getAll(),
+  });
 
   const outstandingBalance = metrics?.outstandingBalance ?? 0;
+
+  const tenantName = profile ? `${profile.firstName} ${profile.lastName}` : 'Sarah Connor';
+
+  const tenantInvoices = React.useMemo(() => {
+    return allInvoices.filter((inv) => inv.tenantName === tenantName);
+  }, [allInvoices, tenantName]);
+
+  const tenantPayments = React.useMemo(() => {
+    return allPayments.filter((pay) => pay.tenantName === tenantName);
+  }, [allPayments, tenantName]);
+
+  const ledgerEntries = React.useMemo(() => {
+    const entries: Array<{
+      date: string;
+      desc: string;
+      ref: string;
+      debit: number;
+      credit: number;
+      balance: number;
+      type: 'Charge' | 'Payment';
+      status?: string;
+    }> = [];
+
+    let runningBalance = 0;
+
+    // 1. Add invoices (charges)
+    tenantInvoices.forEach((inv) => {
+      entries.push({
+        date: inv.dueDate || inv.date,
+        desc: inv.description || 'Rent Assessment Charge',
+        ref: inv.id,
+        debit: inv.amount,
+        credit: 0,
+        balance: 0,
+        type: 'Charge',
+        status: inv.status
+      });
+    });
+
+    // 2. Add payments (credits)
+    tenantPayments.forEach((pay) => {
+      if (pay.status === 'Paid') {
+        entries.push({
+          date: pay.date || pay.paidDate || new Date().toISOString().split('T')[0],
+          desc: `ACH Payment - Received (${pay.paymentMethod || pay.method || 'Bank'})`,
+          ref: pay.id,
+          debit: 0,
+          credit: pay.amount,
+          balance: 0,
+          type: 'Payment',
+          status: 'Cleared'
+        });
+      }
+    });
+
+    // Sort by date ascending to calculate running balance
+    entries.sort((a, b) => a.date.localeCompare(b.date));
+
+    // Calculate running balance
+    return entries.map((entry) => {
+      if (entry.type === 'Charge') {
+        runningBalance += entry.debit;
+      } else {
+        runningBalance -= entry.credit;
+      }
+      return {
+        ...entry,
+        balance: runningBalance
+      };
+    });
+  }, [tenantInvoices, tenantPayments]);
 
   // Form states
   const [paymentOption, setPaymentOption] = useState<'full' | 'partial'>('full');
@@ -148,83 +229,75 @@ export const TenantPaymentsPage: React.FC = () => {
             }
             .details-table td {
               padding: 12px 0;
-              border-bottom: 1px solid #f3f4f6;
-              font-size: 13px;
+              border-bottom: 1px dashed #e5e7eb;
+              font-size: 11px;
             }
-            .details-table td.label {
-              color: #6b7280;
-              font-weight: 500;
-            }
-            .details-table td.value {
-              text-align: right;
-              font-weight: 600;
-              color: #1f2937;
-            }
-            .details-table tr.total td {
+            .details-table tr:last-child td {
               border-bottom: none;
-              padding-top: 15px;
-              font-size: 15px;
-              font-weight: 800;
             }
-            .details-table tr.total td.value {
+            .label {
+              color: #6b7280;
+              font-weight: 600;
+            }
+            .val {
+              text-align: right;
+              font-weight: 700;
+              color: #111827;
+            }
+            .total-val {
               color: #10b981;
+              font-size: 13px;
+              font-weight: 900;
             }
             .footer {
               text-align: center;
-              margin-top: 30px;
-              font-size: 11px;
+              font-size: 9px;
               color: #9ca3af;
-              border-top: 1px dashed #e5e7eb;
-              padding-top: 15px;
-              line-height: 1.5;
+              margin-top: 25px;
+            }
+            @media print {
+              body { padding: 0; }
+              .no-print { display: none; }
             }
           </style>
         </head>
         <body>
           <div class="receipt-card">
             <div class="header">
-              <div class="logo">Door<span>Loop</span></div>
-              <h1>Official Rent Receipt</h1>
-              <p>Thank you for settling your balance</p>
-              <div class="success-stamp">PAID & CLEARED</div>
+              <h3 class="logo">Apex<span>Living</span></h3>
+              <h1>Payment Receipt</h1>
+              <p>Reference ID: ${receiptNumber}</p>
+              <span class="success-stamp">Paid & Cleared</span>
             </div>
             <table class="details-table">
               <tr>
-                <td class="label">Receipt Number</td>
-                <td class="value">${receiptNumber}</td>
+                <td class="label">Date / Time</td>
+                <td class="val">${new Date().toLocaleString()}</td>
               </tr>
               <tr>
                 <td class="label">Payment Method</td>
-                <td class="value">${method}</td>
-              </tr>
-              <tr>
-                <td class="label">Date / Time</td>
-                <td class="value">${new Date().toLocaleString()}</td>
+                <td class="val">${method}</td>
               </tr>
               <tr>
                 <td class="label">Base Rent</td>
-                <td class="value">$${amountNum.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                <td class="val">$${amountNum.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
               </tr>
               <tr>
-                <td class="label">Convenience Fee</td>
-                <td class="value">$${fee.toFixed(2)}</td>
+                <td class="label">Processing Fee</td>
+                <td class="val">$${fee.toFixed(2)}</td>
               </tr>
-              <tr class="total">
-                <td class="label" style="color: #111827;">Total Charged</td>
-                <td class="value">$${total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+              <tr style="border-top: 1px solid #e5e7eb;">
+                <td class="label" style="font-size:12px; font-weight:800; color:#111827;">Total Charged</td>
+                <td class="val total-val">$${total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
               </tr>
             </table>
             <div class="footer">
-              DoorLoop Payments Gateway • Secured SSL Transaction<br>
-              © 2026 DoorLoop, Inc. All rights reserved.
+              Thank you for your rent payment!<br>Apex Property Management System
             </div>
           </div>
-          <script>
-            window.onload = function() {
-              window.print();
-              setTimeout(function() { window.close(); }, 500);
-            }
-          </script>
+          <div style="text-align:center; margin-top:20px;" class="no-print">
+            <button onclick="window.print()" style="padding:8px 16px; font-size:12px; font-weight:bold; cursor:pointer;">Print Receipt</button>
+          </div>
         </body>
       </html>
     `);
@@ -248,19 +321,47 @@ export const TenantPaymentsPage: React.FC = () => {
   };
 
   const columns: ColumnDef<any>[] = [
-    { accessorKey: 'date', header: 'Payment Date', id: 'date' },
-    { accessorKey: 'method', header: 'Payment Method', id: 'method' },
+    { accessorKey: 'date', header: 'Date', id: 'date' },
+    { accessorKey: 'desc', header: 'Description', id: 'desc' },
+    { accessorKey: 'ref', header: 'Reference ID', id: 'ref', cell: ({ row }) => <span className="font-mono text-[10px]">{row.original.ref}</span> },
     {
-      accessorKey: 'amount',
-      header: 'Amount Paid',
-      id: 'amount',
-      cell: ({ row }) => <span className="font-extrabold text-emerald-500">${row.original.amount.toLocaleString()}</span>,
+      accessorKey: 'debit',
+      header: 'Debit (+)',
+      id: 'debit',
+      cell: ({ row }) => row.original.debit > 0 ? <span className="text-rose-500 font-bold">+${row.original.debit.toLocaleString()}</span> : '-',
+    },
+    {
+      accessorKey: 'credit',
+      header: 'Credit (-)',
+      id: 'credit',
+      cell: ({ row }) => row.original.credit > 0 ? <span className="text-emerald-500 font-bold">-${row.original.credit.toLocaleString()}</span> : '-',
+    },
+    {
+      accessorKey: 'balance',
+      header: 'Running Balance',
+      id: 'balance',
+      cell: ({ row }) => (
+        <span className={row.original.balance > 0 ? 'text-rose-500 font-black' : 'text-emerald-500 font-black'}>
+          ${row.original.balance.toLocaleString()}
+        </span>
+      ),
     },
     {
       accessorKey: 'status',
-      header: 'Clearing Status',
+      header: 'Status',
       id: 'status',
-      cell: ({ row }) => <span className="text-[10px] font-black text-emerald-500 bg-emerald-500/10 px-2.5 py-0.5 rounded border border-emerald-500/20">Cleared</span>,
+      cell: ({ row }) => (
+        <span className={clsx(
+          "text-[10px] font-black px-2.5 py-0.5 rounded border",
+          row.original.type === 'Charge' 
+            ? row.original.status === 'Paid' 
+              ? "text-emerald-500 bg-emerald-500/10 border-emerald-500/20"
+              : "text-amber-500 bg-amber-500/10 border-amber-500/20"
+            : "text-emerald-500 bg-emerald-500/10 border-emerald-500/20"
+        )}>
+          {row.original.type === 'Charge' ? (row.original.status === 'Paid' ? 'Paid' : 'Pending') : 'Cleared'}
+        </span>
+      ),
     },
   ];
 
@@ -320,8 +421,58 @@ export const TenantPaymentsPage: React.FC = () => {
 
       </div>
 
-      <div className="mb-3 text-xs font-bold text-muted-foreground uppercase">Payment history ledger</div>
-      <DataTable columns={columns} data={payments} loading={isLoading} />
+      <div className="mb-3 text-xs font-bold text-muted-foreground uppercase flex justify-between items-center">
+        <span>Payment history ledger</span>
+        <Button variant="outline" size="sm" onClick={() => window.print()} className="text-[10px] font-bold flex items-center gap-1.5 h-8">
+          <Printer className="w-3.5 h-3.5" /> Print Ledger
+        </Button>
+      </div>
+
+      <div id="printable-tenant-ledger-area">
+        <style>{`
+          @page {
+            size: A4 portrait;
+            margin: 15mm 15mm 15mm 15mm;
+          }
+          @media print {
+            body {
+              background: white !important;
+              color: black !important;
+            }
+            body * {
+              visibility: hidden !important;
+            }
+            #printable-tenant-ledger-area, #printable-tenant-ledger-area * {
+              visibility: visible !important;
+            }
+            #printable-tenant-ledger-area {
+              position: absolute !important;
+              left: 0 !important;
+              top: 0 !important;
+              width: 100% !important;
+              border: none !important;
+              box-shadow: none !important;
+              background: white !important;
+              color: black !important;
+              padding: 0 !important;
+              margin: 0 !important;
+            }
+            table {
+              width: 100% !important;
+              border-collapse: collapse !important;
+            }
+            th, td {
+              border-bottom: 1px solid #e2e8f0 !important;
+              padding: 8px 4px !important;
+              color: black !important;
+            }
+            th {
+              font-weight: 800 !important;
+            }
+          }
+        `}</style>
+        <DataTable columns={columns} data={ledgerEntries} loading={isLoading} />
+      </div>
 
       {/* RENT PAYMENT DIALOG */}
       <FormDialog open={isOpen} onOpenChange={(val) => {
