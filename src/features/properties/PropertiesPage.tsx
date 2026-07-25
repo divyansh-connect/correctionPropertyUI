@@ -11,10 +11,12 @@ import { StatusBadge } from '../../components/StatusBadge';
 import { Plus, Trash2, Edit, Copy, Eye, Download } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
 import { useNavigate } from '@tanstack/react-router';
+import { useTranslation } from 'react-i18next';
 
 export const PropertiesPage: React.FC = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
@@ -103,7 +105,7 @@ export const PropertiesPage: React.FC = () => {
   const columns: ColumnDef<Property>[] = [
     {
       accessorKey: 'name',
-      header: 'Property Name',
+      header: t('properties.columns.name'),
       id: 'name',
       cell: ({ row }) => (
         <span className="font-bold text-foreground hover:text-primary transition-colors cursor-pointer" onClick={() => navigate({ to: `/properties/${row.original.id}` })}>
@@ -113,31 +115,31 @@ export const PropertiesPage: React.FC = () => {
     },
     {
       accessorKey: 'type',
-      header: 'Type',
+      header: t('properties.columns.type'),
       id: 'type',
       cell: ({ row }) => <StatusBadge status={row.original.type} />,
     },
     {
       accessorKey: 'owner',
-      header: 'Owner',
+      header: t('properties.columns.owner'),
       id: 'owner',
       cell: ({ row }) => <span className="text-muted-foreground text-xs font-semibold">{row.original.owner}</span>,
     },
     {
       accessorKey: 'address',
-      header: 'Address',
+      header: t('properties.columns.address'),
       id: 'address',
       cell: ({ row }) => <span className="text-muted-foreground text-xs truncate max-w-[150px] inline-block">{row.original.address}</span>,
     },
     {
       accessorKey: 'unitsCount',
-      header: 'Units',
+      header: t('properties.columns.units'),
       id: 'units',
       cell: ({ row }) => <span>{row.original.unitsCount}</span>,
     },
     {
       accessorKey: 'occupancyRate',
-      header: 'Occupancy',
+      header: t('properties.columns.occupancy'),
       id: 'occupancy',
       cell: ({ row }) => (
         <div className="flex items-center space-x-1.5">
@@ -150,32 +152,32 @@ export const PropertiesPage: React.FC = () => {
     },
     {
       accessorKey: 'monthlyRevenue',
-      header: 'Revenue',
+      header: t('properties.columns.revenue'),
       id: 'revenue',
       cell: ({ row }) => <span className="font-semibold text-emerald-500">${row.original.monthlyRevenue.toLocaleString()}</span>,
     },
     {
       accessorKey: 'status',
-      header: 'Status',
+      header: t('properties.columns.status'),
       id: 'status',
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
     {
       accessorKey: 'createdAt',
-      header: 'Created Date',
+      header: t('properties.columns.createdAt'),
       id: 'createdAt',
       cell: ({ row }) => <span className="text-xs text-muted-foreground">{row.original.createdAt}</span>,
     },
     {
       id: 'actions',
-      header: 'Actions',
+      header: t('properties.columns.actions'),
       cell: ({ row }) => (
         <div className="flex space-x-1">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => navigate({ to: `/properties/${row.original.id}` })}
-            title="View Details"
+            title={t('properties.actions.view')}
           >
             <Eye className="w-4 h-4" />
           </Button>
@@ -183,7 +185,7 @@ export const PropertiesPage: React.FC = () => {
             variant="ghost"
             size="icon"
             onClick={() => duplicateMutation.mutate(row.original)}
-            title="Duplicate"
+            title={t('properties.actions.duplicate')}
           >
             <Copy className="w-4 h-4" />
           </Button>
@@ -192,7 +194,7 @@ export const PropertiesPage: React.FC = () => {
             size="icon"
             onClick={() => setDeleteId(row.original.id)}
             className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-            title="Delete"
+            title={t('properties.actions.delete')}
           >
             <Trash2 className="w-4 h-4" />
           </Button>
@@ -204,14 +206,14 @@ export const PropertiesPage: React.FC = () => {
   return (
     <div>
       <PageHeader
-        title="Properties List"
-        description="Oversee housing assets, check occupancy levels, and run financial audits."
+        title={t('properties.title')}
+        description={t('properties.desc')}
         breadcrumbs={[
-          { label: 'Home', href: '/' },
-          { label: 'Properties' },
+          { label: t('ai.breadcrumbs.home'), href: '/' },
+          { label: t('owner.nav.properties') },
         ]}
         action={{
-          label: 'Add Property',
+          label: t('properties.addProperty'),
           onClick: () => navigate({ to: '/properties/new' }),
           icon: <Plus className="w-4.5 h-4.5" />,
         }}
@@ -219,46 +221,46 @@ export const PropertiesPage: React.FC = () => {
 
       <div className="flex justify-between items-center mb-3">
         <span className="text-xs font-bold text-muted-foreground uppercase">
-          Showing {filteredProperties.length} Properties
+          {t('properties.showing', { count: filteredProperties.length })}
         </span>
         <Button variant="outline" size="sm" onClick={handleExport} className="text-xs font-semibold flex items-center gap-1.5">
           <Download className="w-3.5 h-3.5" />
-          Export CSV
+          {t('properties.exportCsv')}
         </Button>
       </div>
 
       <FilterBar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        searchPlaceholder="Search properties by name, city, or street..."
+        searchPlaceholder={t('properties.searchPlaceholder')}
         filters={[
           {
             key: 'type',
             value: typeFilter,
-            placeholder: 'Property Type',
+            placeholder: t('properties.typePlaceholder'),
             options: [
-              { label: 'Apartment', value: 'Apartment' },
-              { label: 'Commercial', value: 'Commercial' },
-              { label: 'Single Family', value: 'Single Family' },
-              { label: 'Multi Family', value: 'Multi Family' },
-              { label: 'HOA', value: 'HOA' },
+              { label: t('properties.types.apartment'), value: 'Apartment' },
+              { label: t('properties.types.commercial'), value: 'Commercial' },
+              { label: t('properties.types.singleFamily'), value: 'Single Family' },
+              { label: t('properties.types.multiFamily'), value: 'Multi Family' },
+              { label: t('properties.types.hoa'), value: 'HOA' },
             ],
           },
           {
             key: 'status',
             value: statusFilter,
-            placeholder: 'Property Status',
+            placeholder: t('properties.statusPlaceholder'),
             options: [
-              { label: 'Active', value: 'Active' },
-              { label: 'Inactive', value: 'Inactive' },
-              { label: 'Under Review', value: 'Under Review' },
-              { label: 'Archived', value: 'Archived' },
+              { label: t('properties.statuses.active'), value: 'Active' },
+              { label: t('properties.statuses.inactive'), value: 'Inactive' },
+              { label: t('properties.statuses.underReview'), value: 'Under Review' },
+              { label: t('properties.statuses.archived'), value: 'Archived' },
             ],
           },
           {
             key: 'owner',
             value: ownerFilter,
-            placeholder: 'Select Owner',
+            placeholder: t('properties.ownerPlaceholder'),
             options: owners.map((o) => ({
               label: `${o.firstName} ${o.lastName}`,
               value: `${o.firstName} ${o.lastName}`,
@@ -288,9 +290,9 @@ export const PropertiesPage: React.FC = () => {
       <ConfirmDialog
         open={!!deleteId}
         onOpenChange={(open) => !open && setDeleteId(null)}
-        title="Delete Property"
-        description="Are you sure you want to delete this property? This will permanently remove all associated units and historical records."
-        confirmText="Delete Property"
+        title={t('properties.deleteDialog.title')}
+        description={t('properties.deleteDialog.desc')}
+        confirmText={t('properties.deleteDialog.confirm')}
         variant="destructive"
         onConfirm={() => deleteId && deleteMutation.mutate(deleteId)}
       />

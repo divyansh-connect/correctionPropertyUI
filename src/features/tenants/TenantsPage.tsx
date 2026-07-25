@@ -12,10 +12,12 @@ import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { Button } from '../../components/ui/Button';
 import { Plus, Eye, Edit, Trash2, Download } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
+import { useTranslation } from 'react-i18next';
 
 export const TenantsPage: React.FC<{ filterStatus?: string }> = ({ filterStatus }) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [propertyFilter, setPropertyFilter] = useState('');
@@ -78,14 +80,14 @@ export const TenantsPage: React.FC<{ filterStatus?: string }> = ({ filterStatus 
   const columns: ColumnDef<Tenant>[] = [
     {
       id: 'avatar',
-      header: 'Avatar',
+      header: t('tenants.columns.avatar'),
       cell: ({ row }) => (
         <TenantAvatar name={`${row.original.firstName} ${row.original.lastName}`} size="sm" />
       ),
     },
     {
       accessorKey: 'firstName',
-      header: 'Tenant Name',
+      header: t('tenants.columns.name'),
       id: 'name',
       cell: ({ row }) => (
         <span
@@ -96,23 +98,23 @@ export const TenantsPage: React.FC<{ filterStatus?: string }> = ({ filterStatus 
         </span>
       ),
     },
-    { accessorKey: 'email', header: 'Email', id: 'email' },
-    { accessorKey: 'phone', header: 'Phone', id: 'phone' },
+    { accessorKey: 'email', header: t('tenants.columns.email'), id: 'email' },
+    { accessorKey: 'phone', header: t('tenants.columns.phone'), id: 'phone' },
     {
       accessorKey: 'propertyName',
-      header: 'Property',
+      header: t('tenants.columns.property'),
       id: 'property',
-      cell: ({ row }) => row.original.propertyName || <span className="text-muted-foreground italic text-xs">Unassigned</span>,
+      cell: ({ row }) => row.original.propertyName || <span className="text-muted-foreground italic text-xs">{t('tenants.unassigned')}</span>,
     },
     {
       accessorKey: 'unitNumber',
-      header: 'Unit #',
+      header: t('tenants.columns.unit'),
       id: 'unit',
       cell: ({ row }) => row.original.unitNumber || '-',
     },
     {
       id: 'balance',
-      header: 'Balance Due',
+      header: t('tenants.columns.balance'),
       cell: ({ row }) => {
         const hasBalance = parseInt(row.original.id.split('-').pop() || '0') % 3 === 0;
         return (
@@ -124,20 +126,20 @@ export const TenantsPage: React.FC<{ filterStatus?: string }> = ({ filterStatus 
     },
     {
       accessorKey: 'status',
-      header: 'Status',
+      header: t('tenants.columns.status'),
       id: 'status',
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
     {
       id: 'actions',
-      header: 'Actions',
+      header: t('tenants.columns.actions'),
       cell: ({ row }) => (
         <div className="flex space-x-1">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => navigate({ to: `/tenants/${row.original.id}` })}
-            title="View Details"
+            title={t('tenants.actions.view')}
           >
             <Eye className="w-4 h-4" />
           </Button>
@@ -145,7 +147,7 @@ export const TenantsPage: React.FC<{ filterStatus?: string }> = ({ filterStatus 
             variant="ghost"
             size="icon"
             onClick={() => navigate({ to: `/tenants/${row.original.id}/edit` })}
-            title="Edit Tenant"
+            title={t('tenants.actions.edit')}
           >
             <Edit className="w-4 h-4" />
           </Button>
@@ -154,7 +156,7 @@ export const TenantsPage: React.FC<{ filterStatus?: string }> = ({ filterStatus 
             size="icon"
             onClick={() => setDeleteId(row.original.id)}
             className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-            title="Delete"
+            title={t('tenants.actions.delete')}
           >
             <Trash2 className="w-4 h-4" />
           </Button>
@@ -166,14 +168,14 @@ export const TenantsPage: React.FC<{ filterStatus?: string }> = ({ filterStatus 
   return (
     <div>
       <PageHeader
-        title={filterStatus ? `${filterStatus} Tenants` : 'Tenant Directory'}
-        description="Verify occupant contact channels, active lease alignments, and rent balances."
+        title={filterStatus ? t('tenants.titleFiltered', { status: filterStatus }) : t('tenants.title')}
+        description={t('tenants.desc')}
         breadcrumbs={[
-          { label: 'Home', href: '/' },
-          { label: 'Tenants' },
+          { label: t('ai.breadcrumbs.home'), href: '/' },
+          { label: t('nav.tenants') },
         ]}
         action={{
-          label: 'Add Tenant',
+          label: t('tenants.addTenant'),
           onClick: () => navigate({ to: '/tenants/new' }),
           icon: <Plus className="w-4.5 h-4.5" />,
         }}
@@ -181,42 +183,42 @@ export const TenantsPage: React.FC<{ filterStatus?: string }> = ({ filterStatus 
 
       <div className="flex justify-between items-center mb-3">
         <span className="text-xs font-bold text-muted-foreground uppercase">
-          Total: {filteredTenants.length} Residents
+          {t('tenants.total', { count: filteredTenants.length })}
         </span>
         <Button variant="outline" size="sm" onClick={handleExport} className="text-xs font-semibold flex items-center gap-1.5">
           <Download className="w-3.5 h-3.5" />
-          Export CSV
+          {t('tenants.exportCsv')}
         </Button>
       </div>
 
       <FilterBar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        searchPlaceholder="Search tenants by name or email..."
+        searchPlaceholder={t('tenants.searchPlaceholder')}
         filters={[
           {
             key: 'property',
             value: propertyFilter,
-            placeholder: 'All Properties',
+            placeholder: t('tenants.propertyPlaceholder'),
             options: properties.map((p) => ({ label: p.name, value: p.id })),
           },
           {
             key: 'status',
             value: statusFilter,
-            placeholder: 'All Statuses',
+            placeholder: t('tenants.statusPlaceholder'),
             options: [
-              { label: 'Active', value: 'Active' },
-              { label: 'Pending', value: 'Pending' },
-              { label: 'Inactive', value: 'Inactive' },
+              { label: t('tenants.statuses.active'), value: 'Active' },
+              { label: t('tenants.statuses.pending'), value: 'Pending' },
+              { label: t('tenants.statuses.inactive'), value: 'Inactive' },
             ],
           },
           {
             key: 'balance',
             value: balanceFilter,
-            placeholder: 'All Balances',
+            placeholder: t('tenants.balancePlaceholder'),
             options: [
-              { label: 'Has Outstanding Balance', value: 'has-balance' },
-              { label: 'No Balance Due', value: 'no-balance' },
+              { label: t('tenants.balances.hasBalance'), value: 'has-balance' },
+              { label: t('tenants.balances.noBalance'), value: 'no-balance' },
             ],
           },
         ]}
@@ -238,9 +240,9 @@ export const TenantsPage: React.FC<{ filterStatus?: string }> = ({ filterStatus 
       <ConfirmDialog
         open={!!deleteId}
         onOpenChange={(open) => !open && setDeleteId(null)}
-        title="Delete Tenant"
-        description="Are you sure you want to delete this tenant record? This action is irreversible."
-        confirmText="Delete Tenant"
+        title={t('tenants.deleteDialog.title')}
+        description={t('tenants.deleteDialog.desc')}
+        confirmText={t('tenants.deleteDialog.confirm')}
         variant="destructive"
         onConfirm={() => deleteId && deleteMutation.mutate(deleteId)}
       />

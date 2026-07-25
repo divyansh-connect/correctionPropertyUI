@@ -13,9 +13,11 @@ import { StatusBadge } from '../../components/StatusBadge';
 import { RequestPriorityBadge } from '../../components/MaintenanceComponents';
 import { Eye, Plus, Loader2, Phone, Mail, MessageSquare, Send } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
+import { useTranslation } from 'react-i18next';
 
 export const TenantMaintenancePage: React.FC = () => {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRequest, setSelectedRequest] = useState<MaintenanceRequest | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -71,25 +73,25 @@ export const TenantMaintenancePage: React.FC = () => {
   );
 
   const columns: ColumnDef<MaintenanceRequest>[] = [
-    { accessorKey: 'createdAt', header: 'Submitted Date', id: 'date' },
-    { accessorKey: 'title', header: 'Subject Issue', id: 'title', cell: ({ row }) => <span className="font-bold">{row.original.title}</span> },
+    { accessorKey: 'createdAt', header: t('tenantMaintenance.submittedDate'), id: 'date' },
+    { accessorKey: 'title', header: t('tenantMaintenance.subjectIssue'), id: 'title', cell: ({ row }) => <span className="font-bold">{row.original.title}</span> },
     {
       accessorKey: 'priority',
-      header: 'Priority',
+      header: t('tenantMaintenance.priority'),
       id: 'priority',
       cell: ({ row }) => <RequestPriorityBadge priority={row.original.priority as any} />,
     },
     {
       accessorKey: 'status',
-      header: 'Status',
+      header: t('tenantMaintenance.status'),
       id: 'status',
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
     {
       id: 'actions',
-      header: 'Actions',
+      header: t('tenantMaintenance.actions'),
       cell: ({ row }) => (
-        <Button variant="ghost" size="icon" onClick={() => setSelectedRequest(row.original)} title="View Progress">
+        <Button variant="ghost" size="icon" onClick={() => setSelectedRequest(row.original)} title={t('tenantMaintenance.viewProgress')}>
           <Eye className="w-4 h-4" />
         </Button>
       ),
@@ -99,14 +101,14 @@ export const TenantMaintenancePage: React.FC = () => {
   return (
     <div>
       <PageHeader
-        title="Maintenance Request logs"
-        description="Verify manager dispatch timelines, contractor schedules, or file a new service request."
+        title={t('tenantMaintenance.title')}
+        description={t('tenantMaintenance.desc')}
         breadcrumbs={[
-          { label: 'Home', href: '/tenant' },
-          { label: 'Maintenance' },
+          { label: t('ai.breadcrumbs.home'), href: '/tenant' },
+          { label: t('tenant.nav.maintenance') },
         ]}
         action={{
-          label: 'Create Maintenance Request',
+          label: t('tenantMaintenance.createRequest'),
           onClick: () => setIsFormOpen(true),
           icon: <Plus className="w-4.5 h-4.5" />,
         }}
@@ -115,39 +117,39 @@ export const TenantMaintenancePage: React.FC = () => {
       <FilterBar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        searchPlaceholder="Search service requests..."
+        searchPlaceholder={t('tenantMaintenance.searchPlaceholder')}
         onReset={() => setSearchQuery('')}
       />
 
       <DataTable columns={columns} data={filteredMaint} loading={isLoading} />
 
       {/* DETAIL DIALOG */}
-      <FormDialog open={!!selectedRequest} onOpenChange={(open) => !open && setSelectedRequest(null)} title="Service Request Details">
+      <FormDialog open={!!selectedRequest} onOpenChange={(open) => !open && setSelectedRequest(null)} title={t('tenantMaintenance.detailsTitle')}>
         {selectedRequest && (
           <div className="space-y-4 pt-2 text-xs font-semibold text-foreground">
             <div className="flex justify-between items-center border-b pb-2">
               <div>
-                <p className="font-extrabold text-sm uppercase">Request Details</p>
+                <p className="font-extrabold text-sm uppercase">{t('tenantMaintenance.requestDetails')}</p>
                 <p className="text-muted-foreground mt-0.5">{selectedRequest.title}</p>
               </div>
               <StatusBadge status={selectedRequest.status} />
             </div>
 
             <div className="space-y-2">
-              <p className="text-muted-foreground text-[10px] uppercase">Description</p>
+              <p className="text-muted-foreground text-[10px] uppercase">{t('tenantMaintenance.description')}</p>
               <p className="leading-relaxed bg-secondary/15 p-3 rounded-lg border font-medium">{selectedRequest.description}</p>
             </div>
 
             {selectedRequest.preferredTime && (
               <div>
-                <p className="text-muted-foreground text-[10px] uppercase">Preferred Visit Time</p>
+                <p className="text-muted-foreground text-[10px] uppercase">{t('tenantMaintenance.preferredTime')}</p>
                 <p className="font-bold">{selectedRequest.preferredTime}</p>
               </div>
             )}
 
             {/* Discussion / Comments thread */}
             <div className="border-t pt-4 space-y-3">
-              <p className="text-muted-foreground text-[10px] uppercase font-black">Discussion & Updates</p>
+              <p className="text-muted-foreground text-[10px] uppercase font-black">{t('tenantMaintenance.discussionUpdates')}</p>
               
               <div className="space-y-2.5 max-h-52 overflow-y-auto p-3 bg-secondary/15 rounded-lg border flex flex-col">
                 {selectedRequest.messages && selectedRequest.messages.length > 0 ? (
@@ -166,7 +168,7 @@ export const TenantMaintenancePage: React.FC = () => {
                     </div>
                   ))
                 ) : (
-                  <p className="text-[10px] text-muted-foreground italic text-center font-semibold">No discussions logged yet.</p>
+                  <p className="text-[10px] text-muted-foreground italic text-center font-semibold">{t('tenantMaintenance.noDiscussions')}</p>
                 )}
               </div>
 
@@ -181,35 +183,35 @@ export const TenantMaintenancePage: React.FC = () => {
               >
                 <input
                   type="text"
-                  placeholder="Ask a question or update manager..."
+                  placeholder={t('tenantMaintenance.askQuestion')}
                   value={newText}
                   onChange={e => setNewText(e.target.value)}
                   className="flex-1 text-xs p-2 rounded-lg border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-semibold"
                   required
                 />
                 <Button type="submit" size="sm" disabled={postMessageMutation.isPending || !newText.trim()} className="flex items-center gap-1 h-8">
-                  <Send className="w-3 h-3" /> Send
+                  <Send className="w-3 h-3" /> {t('tenantMaintenance.send')}
                 </Button>
               </form>
             </div>
 
             {/* Landlord contact channels */}
             <div className="border-t pt-4 mt-4 space-y-3">
-              <p className="text-[10px] text-muted-foreground uppercase font-black">Direct Contact Channels</p>
+              <p className="text-[10px] text-muted-foreground uppercase font-black">{t('tenantMaintenance.directContact')}</p>
               <div className="flex gap-2 pt-1 font-bold text-xs">
                 <a 
                   href={`sms:5550199`} 
                   className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-secondary/20 hover:bg-secondary/40 border border-border/40 rounded-xl transition text-foreground"
                 >
                   <MessageSquare className="w-3.5 h-3.5 text-primary" />
-                  <span>SMS</span>
+                  <span>{t('tenantMaintenance.sms')}</span>
                 </a>
                 <a 
                   href={`mailto:manager@apexpm.com`} 
                   className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-secondary/20 hover:bg-secondary/40 border border-border/40 rounded-xl transition text-foreground"
                 >
                   <Mail className="w-3.5 h-3.5 text-primary" />
-                  <span>Email</span>
+                  <span>{t('tenantMaintenance.email')}</span>
                 </a>
                 <a 
                   href={`https://wa.me/5550199`} 
@@ -218,30 +220,30 @@ export const TenantMaintenancePage: React.FC = () => {
                   className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/10 rounded-xl transition text-foreground"
                 >
                   <MessageSquare className="w-3.5 h-3.5 text-emerald-500" />
-                  <span>WhatsApp</span>
+                  <span>{t('tenantMaintenance.whatsapp')}</span>
                 </a>
               </div>
             </div>
 
             <div className="flex justify-end pt-4 border-t">
-              <Button variant="outline" onClick={() => setSelectedRequest(null)}>Close</Button>
+              <Button variant="outline" onClick={() => setSelectedRequest(null)}>{t('tenantMaintenance.close')}</Button>
             </div>
           </div>
         )}
       </FormDialog>
 
       {/* CREATE REQUEST DIALOG */}
-      <FormDialog open={isFormOpen} onOpenChange={setIsFormOpen} title="Submit Repair Request">
+      <FormDialog open={isFormOpen} onOpenChange={setIsFormOpen} title={t('tenantMaintenance.submitRepair')}>
         <div className="space-y-4 pt-2 text-xs font-semibold text-foreground">
           
           <div className="space-y-1">
-            <label className="text-xs font-bold text-muted-foreground uppercase">Problem Summary</label>
-            <Input placeholder="E.g., Dishwasher kitchen leakage" value={title} onChange={(e) => setTitle(e.target.value)} />
+            <label className="text-xs font-bold text-muted-foreground uppercase">{t('tenantMaintenance.problemSummary')}</label>
+            <Input placeholder={t('tenantMaintenance.problemPlaceholder')} value={title} onChange={(e) => setTitle(e.target.value)} />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-xs font-bold text-muted-foreground uppercase">Priority Level</label>
+              <label className="text-xs font-bold text-muted-foreground uppercase">{t('tenantMaintenance.priorityLevel')}</label>
               <Select value={priority} onChange={(e: any) => setPriority(e.target.value)}>
                 <option value="Low">Low</option>
                 <option value="Medium">Medium</option>
@@ -252,26 +254,26 @@ export const TenantMaintenancePage: React.FC = () => {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-bold text-muted-foreground uppercase">Preferred Visit Window</label>
-              <Input placeholder="E.g., Mon/Wed Morning" value={preferredTime} onChange={(e) => setPreferredTime(e.target.value)} />
+              <label className="text-xs font-bold text-muted-foreground uppercase">{t('tenantMaintenance.preferredWindow')}</label>
+              <Input placeholder={t('tenantMaintenance.preferredPlaceholder')} value={preferredTime} onChange={(e) => setPreferredTime(e.target.value)} />
             </div>
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-bold text-muted-foreground uppercase">In-Depth Description</label>
+            <label className="text-xs font-bold text-muted-foreground uppercase">{t('tenantMaintenance.inDepthDescription')}</label>
             <textarea
               className="w-full min-h-[100px] p-2.5 rounded-lg border bg-card text-foreground"
-              placeholder="Describe what occurred, exact locations, and appliance models..."
+              placeholder={t('tenantMaintenance.descriptionPlaceholder')}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
           </div>
 
           <div className="flex justify-end space-x-2 pt-4 border-t">
-            <Button variant="outline" onClick={() => setIsFormOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setIsFormOpen(false)}>{t('tenantMaintenance.cancel')}</Button>
             <Button onClick={() => createMutation.mutate()} disabled={!title || !description || createMutation.isPending}>
               {createMutation.isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-              Submit Request
+              {t('tenantMaintenance.submitRequest')}
             </Button>
           </div>
 

@@ -8,9 +8,11 @@ import { Button } from '../../components/ui/Button';
 import { LoadingSkeleton } from '../../components/LoadingSkeleton';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Download, Building2, CreditCard, MessageSquare, Wrench } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export const OwnerDashboardPage: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   // Queries
   const { data: metrics, isLoading } = useQuery({
@@ -35,27 +37,27 @@ export const OwnerDashboardPage: React.FC = () => {
   return (
     <div className="space-y-6 text-foreground">
       <PageHeader
-        title="Owner Portfolio Dashboard"
-        description="Verify monthly portfolio incomes, occupancy trends, net profits, and contractor dispatches."
+        title={t('owner.dashboard.title')}
+        description={t('owner.dashboard.desc')}
         breadcrumbs={[
-          { label: 'Home', href: '/owner' },
-          { label: 'Dashboard' },
+          { label: t('ai.breadcrumbs.home'), href: '/owner' },
+          { label: t('owner.nav.dashboard') },
         ]}
       />
 
       {/* QUICK ACTIONS BAR */}
       <div className="flex flex-wrap gap-2.5 p-3.5 bg-card border rounded-2xl">
         <Button size="sm" onClick={() => navigate({ to: '/owner/statements' })} className="flex items-center gap-1">
-          <Download className="w-4 h-4" /> Download Statement
+          <Download className="w-4 h-4" /> {t('owner.dashboard.downloadStatement')}
         </Button>
         <Button size="sm" variant="outline" onClick={() => navigate({ to: '/owner/properties' })} className="flex items-center gap-1">
-          <Building2 className="w-4 h-4" /> My Properties
+          <Building2 className="w-4 h-4" /> {t('owner.dashboard.myProperties')}
         </Button>
         <Button size="sm" variant="outline" onClick={() => navigate({ to: '/owner/messages' })} className="flex items-center gap-1">
-          <MessageSquare className="w-4 h-4" /> Contact Manager
+          <MessageSquare className="w-4 h-4" /> {t('owner.dashboard.contactManager')}
         </Button>
         <Button size="sm" variant="outline" onClick={() => navigate({ to: '/owner/documents' })} className="flex items-center gap-1">
-          <Download className="w-4 h-4" /> Tax Documents
+          <Download className="w-4 h-4" /> {t('owner.dashboard.taxDocuments')}
         </Button>
       </div>
 
@@ -63,34 +65,34 @@ export const OwnerDashboardPage: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="p-5 border bg-card flex flex-col justify-between">
           <div>
-            <p className="text-[10px] font-bold text-muted-foreground uppercase">Managed Properties</p>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase">{t('owner.dashboard.managedProperties')}</p>
             <p className="text-2xl font-black mt-1 text-primary">{metrics.totalProperties}</p>
           </div>
-          <span className="text-[10px] text-muted-foreground font-semibold mt-4">Active assets holdings</span>
+          <span className="text-[10px] text-muted-foreground font-semibold mt-4">{t('owner.dashboard.activeAssets')}</span>
         </Card>
 
         <Card className="p-5 border bg-card flex flex-col justify-between">
           <div>
-            <p className="text-[10px] font-bold text-muted-foreground uppercase">Occupancy Rate</p>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase">{t('owner.dashboard.occupancyRate')}</p>
             <p className="text-2xl font-black mt-1 text-emerald-500">{metrics.occupancyRate}</p>
           </div>
-          <span className="text-[10px] text-muted-foreground font-semibold mt-4">{metrics.totalUnits} Total Units</span>
+          <span className="text-[10px] text-muted-foreground font-semibold mt-4">{t('owner.dashboard.totalUnits', { count: metrics.totalUnits })}</span>
         </Card>
 
         <Card className="p-5 border bg-card flex flex-col justify-between">
           <div>
-            <p className="text-[10px] font-bold text-muted-foreground uppercase">Monthly Net Income</p>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase">{t('owner.dashboard.monthlyNetIncome')}</p>
             <p className="text-2xl font-black mt-1 text-emerald-500">${metrics.netIncome.toLocaleString()}</p>
           </div>
-          <span className="text-[10px] text-muted-foreground font-semibold mt-4">Operating cash flows</span>
+          <span className="text-[10px] text-muted-foreground font-semibold mt-4">{t('owner.dashboard.operatingCashFlows')}</span>
         </Card>
 
         <Card className="p-5 border bg-card flex flex-col justify-between">
           <div>
-            <p className="text-[10px] font-bold text-muted-foreground uppercase">Pending Maintenance</p>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase">{t('owner.dashboard.pendingMaintenance')}</p>
             <p className="text-2xl font-black mt-1 text-amber-500">{metrics.pendingMaintenance}</p>
           </div>
-          <span className="text-[10px] text-muted-foreground font-semibold mt-4">Active service requests</span>
+          <span className="text-[10px] text-muted-foreground font-semibold mt-4">{t('owner.dashboard.activeServiceRequests')}</span>
         </Card>
       </div>
 
@@ -99,7 +101,7 @@ export const OwnerDashboardPage: React.FC = () => {
         
         {/* Income vs Expenses Bar Chart */}
         <Card className="lg:col-span-3 p-6 border bg-card">
-          <h3 className="font-extrabold text-sm uppercase mb-4 tracking-wider">Income vs Operating Expenses</h3>
+          <h3 className="font-extrabold text-sm uppercase mb-4 tracking-wider">{t('owner.dashboard.incomeVsExpenses')}</h3>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={revenueData}>
@@ -108,8 +110,8 @@ export const OwnerDashboardPage: React.FC = () => {
                 <YAxis stroke="currentColor" fontSize={11} opacity={0.6} />
                 <Tooltip contentStyle={{ background: 'hsl(var(--card))', color: 'hsl(var(--foreground))' }} />
                 <Legend />
-                <Bar dataKey="Income" fill="#10b981" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Expenses" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Income" name={t('dashboard.income')} fill="#10b981" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Expenses" name={t('dashboard.expenses')} fill="#ef4444" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

@@ -15,6 +15,7 @@ import { Select } from '../../components/ui/Select';
 import { StatusBadge } from '../../components/StatusBadge';
 import { Plus, Loader2 } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
+import { useTranslation } from 'react-i18next';
 
 const txSchema = zod.object({
   type: zod.enum(['Income', 'Expense']),
@@ -32,6 +33,7 @@ export const AccountingPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const { t } = useTranslation();
 
   const { data: transactions = [], isLoading } = useQuery({
     queryKey: ['transactions'],
@@ -76,13 +78,13 @@ export const AccountingPage: React.FC = () => {
   });
 
   const columns: ColumnDef<Transaction>[] = [
-    { accessorKey: 'date', header: 'Date', id: 'date' },
-    { accessorKey: 'propertyName', header: 'Property', id: 'property' },
-    { accessorKey: 'category', header: 'Category', id: 'category' },
-    { accessorKey: 'description', header: 'Description', id: 'description' },
+    { accessorKey: 'date', header: t('accounting.columns.date'), id: 'date' },
+    { accessorKey: 'propertyName', header: t('accounting.columns.property'), id: 'property' },
+    { accessorKey: 'category', header: t('accounting.columns.category'), id: 'category' },
+    { accessorKey: 'description', header: t('accounting.columns.description'), id: 'description' },
     {
       accessorKey: 'type',
-      header: 'Type',
+      header: t('accounting.columns.type'),
       id: 'type',
       cell: ({ row }) => (
         <span
@@ -92,13 +94,13 @@ export const AccountingPage: React.FC = () => {
               : 'text-rose-500 font-bold'
           }
         >
-          {row.original.type}
+          {row.original.type === 'Income' ? t('accounting.types.income') : t('accounting.types.expense')}
         </span>
       ),
     },
     {
       accessorKey: 'amount',
-      header: 'Amount',
+      header: t('accounting.columns.amount'),
       id: 'amount',
       cell: ({ row }) => (
         <span
@@ -117,14 +119,14 @@ export const AccountingPage: React.FC = () => {
   return (
     <div>
       <PageHeader
-        title="Accounting & Ledger"
-        description="Review receipts, expense statements, and overall cash flows."
+        title={t('accounting.title')}
+        description={t('accounting.desc')}
         breadcrumbs={[
-          { label: 'Home', href: '/' },
-          { label: 'Accounting' },
+          { label: t('ai.breadcrumbs.home'), href: '/' },
+          { label: t('nav.accounting') },
         ]}
         action={{
-          label: 'Record Transaction',
+          label: t('accounting.recordTransaction'),
           onClick: () => setIsFormOpen(true),
           icon: <Plus className="w-4 h-4" />,
         }}
@@ -133,15 +135,15 @@ export const AccountingPage: React.FC = () => {
       <FilterBar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        searchPlaceholder="Search transactions by category or description..."
+        searchPlaceholder={t('accounting.searchPlaceholder')}
         filters={[
           {
             key: 'type',
             value: typeFilter,
-            placeholder: 'Filter by Type',
+            placeholder: t('accounting.typePlaceholder'),
             options: [
-              { label: 'Income', value: 'Income' },
-              { label: 'Expense', value: 'Expense' },
+              { label: t('accounting.types.income'), value: 'Income' },
+              { label: t('accounting.types.expense'), value: 'Expense' },
             ],
           },
         ]}
@@ -156,24 +158,24 @@ export const AccountingPage: React.FC = () => {
         columns={columns}
         data={filteredTx}
         loading={isLoading}
-        emptyStateMessage="No transactions matching filters."
+        emptyStateMessage={t('accounting.emptyState')}
       />
 
-      <FormDialog open={isFormOpen} onOpenChange={setIsFormOpen} title="Record Cash Transaction">
+      <FormDialog open={isFormOpen} onOpenChange={setIsFormOpen} title={t('accounting.form.title')}>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-xs font-bold text-muted-foreground uppercase">Transaction Type</label>
+              <label className="text-xs font-bold text-muted-foreground uppercase">{t('accounting.form.type')}</label>
               <Select {...register('type')}>
-                <option value="Income">Income (+)</option>
-                <option value="Expense">Expense (-)</option>
+                <option value="Income">{t('accounting.types.income')} (+)</option>
+                <option value="Expense">{t('accounting.types.expense')} (-)</option>
               </Select>
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-bold text-muted-foreground uppercase">Amount ($)</label>
+              <label className="text-xs font-bold text-muted-foreground uppercase">{t('accounting.form.amount')}</label>
               <Input
                 type="number"
-                placeholder="250"
+                placeholder={t('accounting.form.amountPlaceholder')}
                 {...register('amount', { valueAsNumber: true })}
               />
               {errors.amount && <p className="text-rose-500 text-xs">{errors.amount.message}</p>}
@@ -182,14 +184,14 @@ export const AccountingPage: React.FC = () => {
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-xs font-bold text-muted-foreground uppercase">Category</label>
-              <Input placeholder="Rent / Water / Repair" {...register('category')} />
+              <label className="text-xs font-bold text-muted-foreground uppercase">{t('accounting.form.category')}</label>
+              <Input placeholder={t('accounting.form.categoryPlaceholder')} {...register('category')} />
               {errors.category && <p className="text-rose-500 text-xs">{errors.category.message}</p>}
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-bold text-muted-foreground uppercase">Property</label>
+              <label className="text-xs font-bold text-muted-foreground uppercase">{t('accounting.form.property')}</label>
               <Select {...register('propertyName')}>
-                <option value="">Select Property...</option>
+                <option value="">{t('accounting.form.propertyPlaceholder')}</option>
                 {properties.map((p) => (
                   <option key={p.id} value={p.name}>
                     {p.name}
@@ -201,18 +203,18 @@ export const AccountingPage: React.FC = () => {
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-bold text-muted-foreground uppercase">Description</label>
-            <Input placeholder="Enter details about this payment..." {...register('description')} />
+            <label className="text-xs font-bold text-muted-foreground uppercase">{t('accounting.form.description')}</label>
+            <Input placeholder={t('accounting.form.descriptionPlaceholder')} {...register('description')} />
             {errors.description && <p className="text-rose-500 text-xs">{errors.description.message}</p>}
           </div>
 
           <div className="flex justify-end space-x-2 pt-4">
             <Button variant="outline" type="button" onClick={() => setIsFormOpen(false)}>
-              Cancel
+              {t('accounting.form.cancel')}
             </Button>
             <Button type="submit" disabled={createMutation.isPending}>
               {createMutation.isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-              Save Transaction
+              {t('accounting.form.save')}
             </Button>
           </div>
         </form>

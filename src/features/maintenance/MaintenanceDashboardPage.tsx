@@ -17,12 +17,14 @@ import {
   Plus, CheckSquare, Settings, AlertCircle, Wrench, ShieldAlert, ArrowRight,
   Clipboard, Clock, CheckCircle2, XCircle, Search, Eye, Play, Check
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const COLORS = ['#ef4444', '#f59e0b', '#3b82f6', '#10b981'];
 
 export const MaintenanceDashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const { t } = useTranslation();
 
   const isStaff = user?.role === 'Maintenance Staff';
 
@@ -96,11 +98,11 @@ export const MaintenanceDashboardPage: React.FC = () => {
     return (
       <div className="space-y-6 text-foreground">
         <PageHeader
-          title="Maintenance Staff Portal"
-          description="View your workload summary, accept assignments, and update task progress."
+          title={t('maintenance.staffPortalTitle')}
+          description={t('maintenance.staffPortalDesc')}
           breadcrumbs={[
-            { label: 'Portal', href: '/staff/dashboard' },
-            { label: 'Dashboard' },
+            { label: t('maintenance.portalBreadcrumb'), href: '/staff/dashboard' },
+            { label: t('maintenance.dashboardBreadcrumb') },
           ]}
         />
 
@@ -111,7 +113,7 @@ export const MaintenanceDashboardPage: React.FC = () => {
               <Clipboard className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-wider">Assigned Tasks</p>
+              <p className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-wider">{t('maintenance.assignedTasks')}</p>
               <p className="text-2xl font-black mt-0.5 text-blue-500">{assignedCount}</p>
             </div>
           </Card>
@@ -121,7 +123,7 @@ export const MaintenanceDashboardPage: React.FC = () => {
               <Clock className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-wider">In Progress</p>
+              <p className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-wider">{t('maintenance.inProgress')}</p>
               <p className="text-2xl font-black mt-0.5 text-amber-500">{inProgressCount}</p>
             </div>
           </Card>
@@ -131,7 +133,7 @@ export const MaintenanceDashboardPage: React.FC = () => {
               <CheckCircle2 className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-wider">Completed</p>
+              <p className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-wider">{t('maintenance.completed')}</p>
               <p className="text-2xl font-black mt-0.5 text-emerald-500">{completedCount}</p>
             </div>
           </Card>
@@ -141,7 +143,7 @@ export const MaintenanceDashboardPage: React.FC = () => {
               <XCircle className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-wider">Rejected</p>
+              <p className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-wider">{t('maintenance.rejected')}</p>
               <p className="text-2xl font-black mt-0.5 text-rose-500">{rejectedCount}</p>
             </div>
           </Card>
@@ -152,7 +154,7 @@ export const MaintenanceDashboardPage: React.FC = () => {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Search by ID, Property, Unit or Issue..."
+              placeholder={t('maintenance.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9 h-10"
@@ -162,11 +164,11 @@ export const MaintenanceDashboardPage: React.FC = () => {
 
         {/* WORK ORDER LIST/CARDS */}
         <Card className="p-5 border bg-card space-y-4">
-          <h3 className="font-extrabold text-sm uppercase tracking-wider">My Tasks</h3>
+          <h3 className="font-extrabold text-sm uppercase tracking-wider">{t('maintenance.myTasks')}</h3>
           
           {filteredWorkOrders.length === 0 ? (
             <div className="text-center py-12 text-xs text-muted-foreground font-semibold">
-              No assigned tasks found.
+              {t('maintenance.noTasks')}
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4">
@@ -206,13 +208,13 @@ export const MaintenanceDashboardPage: React.FC = () => {
                             onClick={() => updateLocalStatus(order.id, 'Assigned')}
                             className="px-3 py-1.5 rounded-xl text-[10px] font-extrabold bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-all"
                           >
-                            Accept
+                            {t('maintenance.accept')}
                           </button>
                           <button
                             onClick={() => updateLocalStatus(order.id, 'Rejected')}
                             className="px-3 py-1.5 rounded-xl text-[10px] font-extrabold bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/20 transition-all"
                           >
-                            Reject
+                            {t('maintenance.reject')}
                           </button>
                         </>
                       )}
@@ -222,7 +224,7 @@ export const MaintenanceDashboardPage: React.FC = () => {
                           onClick={() => updateLocalStatus(order.id, 'In Progress')}
                           className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-[10px] font-extrabold bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 border border-amber-500/20 transition-all"
                         >
-                          <Play className="w-3 h-3 fill-amber-500" /> Start Work
+                          <Play className="w-3 h-3 fill-amber-500" /> {t('maintenance.startWork')}
                         </button>
                       )}
 
@@ -231,7 +233,7 @@ export const MaintenanceDashboardPage: React.FC = () => {
                           onClick={() => updateLocalStatus(order.id, 'Completed')}
                           className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-[10px] font-extrabold bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 border border-emerald-500/20 transition-all"
                         >
-                          <Check className="w-3 h-3" /> Complete
+                          <Check className="w-3 h-3" /> {t('maintenance.complete')}
                         </button>
                       )}
                     </div>
@@ -242,7 +244,7 @@ export const MaintenanceDashboardPage: React.FC = () => {
                       onClick={() => navigate({ to: `/staff/tasks/${order.id}` })}
                       className="flex items-center gap-1.5 h-9 font-bold px-4 rounded-xl border bg-background hover:bg-secondary/35 text-foreground"
                     >
-                      <Eye className="w-3.5 h-3.5 text-muted-foreground" /> Details
+                      <Eye className="w-3.5 h-3.5 text-muted-foreground" /> {t('maintenance.details')}
                     </Button>
                   </div>
                 </div>
@@ -269,27 +271,27 @@ export const MaintenanceDashboardPage: React.FC = () => {
   return (
     <div className="space-y-6 text-foreground">
       <PageHeader
-        title="Maintenance Dashboard"
-        description="Verify service ticket progress, contractor assignments, operating maintenance costs, and inspections."
+        title={t('maintenance.dashboardTitle')}
+        description={t('maintenance.dashboardDesc')}
         breadcrumbs={[
-          { label: 'Home', href: '/' },
-          { label: 'Maintenance' },
+          { label: t('ai.breadcrumbs.home'), href: '/' },
+          { label: t('nav.maintenance') },
         ]}
       />
 
       {/* QUICK ACTIONS */}
       <div className="flex flex-wrap gap-2.5 p-3.5 bg-card border rounded-2xl">
         <Button size="sm" onClick={() => navigate({ to: '/maintenance/requests/new' })} className="flex items-center gap-1">
-          <Plus className="w-4 h-4" /> Create Request
+          <Plus className="w-4 h-4" /> {t('maintenance.createRequest')}
         </Button>
         <Button size="sm" variant="outline" onClick={() => navigate({ to: '/maintenance/work-orders' })} className="flex items-center gap-1">
-          <Plus className="w-4 h-4" /> Create Work Order
+          <Plus className="w-4 h-4" /> {t('maintenance.createWorkOrder')}
         </Button>
         <Button size="sm" variant="outline" onClick={() => navigate({ to: '/inspections/new' })} className="flex items-center gap-1">
-          <Plus className="w-4 h-4" /> Schedule Inspection
+          <Plus className="w-4 h-4" /> {t('maintenance.scheduleInspection')}
         </Button>
         <Button size="sm" variant="outline" onClick={() => navigate({ to: '/vendors' })} className="flex items-center gap-1">
-          <Plus className="w-4 h-4" /> Add Vendor
+          <Plus className="w-4 h-4" /> {t('maintenance.addVendor')}
         </Button>
       </div>
 
@@ -297,38 +299,38 @@ export const MaintenanceDashboardPage: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="p-5 border bg-card flex flex-col justify-between">
           <div>
-            <p className="text-[10px] font-bold text-muted-foreground uppercase">Open Requests</p>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase">{t('maintenance.openRequests')}</p>
             <p className="text-2xl font-black mt-1 text-primary">{metrics.openRequests}</p>
           </div>
           <span className="text-[10px] text-rose-500 font-bold mt-4 flex items-center gap-0.5 animate-pulse">
-            <AlertCircle className="w-3.5 h-3.5" /> {metrics.emergencyRequests} Emergency
+            <AlertCircle className="w-3.5 h-3.5" /> {metrics.emergencyRequests} {t('maintenance.emergency')}
           </span>
         </Card>
 
         <Card className="p-5 border bg-card flex flex-col justify-between">
           <div>
-            <p className="text-[10px] font-bold text-muted-foreground uppercase">Work Orders In Progress</p>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase">{t('maintenance.workOrdersInProgress')}</p>
             <p className="text-2xl font-black mt-1 text-amber-500">{metrics.workOrdersInProgress}</p>
           </div>
-          <span className="text-[10px] text-muted-foreground font-semibold mt-4">Assigned to active technicians</span>
+          <span className="text-[10px] text-muted-foreground font-semibold mt-4">{t('maintenance.assignedToActive')}</span>
         </Card>
 
         <Card className="p-5 border bg-card flex flex-col justify-between">
           <div>
-            <p className="text-[10px] font-bold text-muted-foreground uppercase">Completed This Month</p>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase">{t('maintenance.completedThisMonth')}</p>
             <p className="text-2xl font-black mt-1 text-emerald-500">{metrics.completedThisMonth}</p>
           </div>
           <span className="text-[10px] text-emerald-500 font-bold mt-4">
-            Avg completion: {metrics.avgCompletionTime}
+            {t('maintenance.avgCompletion', { time: metrics.avgCompletionTime })}
           </span>
         </Card>
 
         <Card className="p-5 border bg-card flex flex-col justify-between">
           <div>
-            <p className="text-[10px] font-bold text-muted-foreground uppercase">Total Maintenance Cost</p>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase">{t('maintenance.totalCost')}</p>
             <p className="text-2xl font-black mt-1 text-rose-500">${metrics.totalMaintenanceCost.toLocaleString()}</p>
           </div>
-          <span className="text-[10px] text-muted-foreground font-semibold mt-4">Work orders and materials</span>
+          <span className="text-[10px] text-muted-foreground font-semibold mt-4">{t('maintenance.workOrdersAndMaterials')}</span>
         </Card>
       </div>
 
@@ -336,7 +338,7 @@ export const MaintenanceDashboardPage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Requests by Priority */}
         <Card className="lg:col-span-1 p-6 border bg-card flex flex-col justify-between">
-          <h3 className="font-extrabold text-sm uppercase mb-4 tracking-wider">Requests Priority Bracket</h3>
+          <h3 className="font-extrabold text-sm uppercase mb-4 tracking-wider">{t('maintenance.priorityBracket')}</h3>
           <div className="h-60 flex justify-center items-center">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -370,7 +372,7 @@ export const MaintenanceDashboardPage: React.FC = () => {
 
         {/* Recent Service Requests list */}
         <Card className="lg:col-span-2 p-5 border bg-card space-y-4">
-          <h3 className="font-extrabold text-sm uppercase border-b pb-3 tracking-wider">Recent Service Tickets</h3>
+          <h3 className="font-extrabold text-sm uppercase border-b pb-3 tracking-wider">{t('maintenance.recentTickets')}</h3>
           <div className="divide-y space-y-3">
             {recentRequests.map((req) => (
               <div key={req.id} className="pt-3 flex justify-between items-center text-xs">
@@ -381,7 +383,7 @@ export const MaintenanceDashboardPage: React.FC = () => {
                 <div className="text-right flex items-center space-x-3">
                   <span className="text-[9px] font-bold text-muted-foreground">{req.createdAt}</span>
                   <Button variant="ghost" size="sm" onClick={() => navigate({ to: `/maintenance/requests/${req.id}` })} className="h-7 text-[10px] text-primary hover:bg-primary/10">
-                    View
+                    {t('maintenance.view')}
                   </Button>
                 </div>
               </div>

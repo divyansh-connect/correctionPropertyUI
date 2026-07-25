@@ -10,9 +10,11 @@ import { Select } from '../../components/ui/Select';
 import { LoadingSkeleton } from '../../components/LoadingSkeleton';
 import { CreditCard, Landmark, CheckCircle, Loader2, Shield, Check, Printer } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';import { clsx } from 'clsx';
+import { useTranslation } from 'react-i18next';
 
 export const TenantPaymentsPage: React.FC = () => {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState<'details' | 'processing' | 'receipt'>('details');
   const [processingMsg, setProcessingMsg] = useState('Initializing SSL handshaking...');
@@ -368,14 +370,14 @@ export const TenantPaymentsPage: React.FC = () => {
   return (
     <div>
       <PageHeader
-        title="Rent Payments & Autopay"
-        description="Verify monthly rent balances, enable ACH direct deposits, and download historical payment receipts."
+        title={t('tenantPayments.title')}
+        description={t('tenantPayments.desc')}
         breadcrumbs={[
-          { label: 'Home', href: '/tenant' },
-          { label: 'Payments' },
+          { label: t('ai.breadcrumbs.home'), href: '/tenant' },
+          { label: t('tenant.nav.payments') },
         ]}
         action={{
-          label: 'Submit Rent Payment',
+          label: t('tenantPayments.submitPayment'),
           onClick: () => setIsOpen(true),
           icon: <CreditCard className="w-4.5 h-4.5" />,
         }}
@@ -386,12 +388,12 @@ export const TenantPaymentsPage: React.FC = () => {
         {/* Outstanding Rent balance */}
         <Card className="md:col-span-2 p-5 border bg-card flex justify-between items-center text-xs font-semibold">
           <div>
-            <h4 className="font-extrabold uppercase text-muted-foreground text-[10px]">Outstanding balance due</h4>
+            <h4 className="font-extrabold uppercase text-muted-foreground text-[10px]">{t('tenantPayments.outstandingBalance')}</h4>
             <p className={`text-3xl font-black mt-2 flex items-center gap-1.5 ${outstandingBalance > 0 ? 'text-rose-500' : 'text-emerald-500'}`}>
               ${outstandingBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
               {outstandingBalance === 0 && <CheckCircle className="w-5 h-5 text-emerald-500" />}
             </p>
-            <p className="text-[10px] text-muted-foreground mt-1">Next rent period invoices generate on August 1st.</p>
+            <p className="text-[10px] text-muted-foreground mt-1">{t('tenantPayments.nextInvoice')}</p>
           </div>
           <Button 
             disabled={outstandingBalance === 0} 
@@ -402,7 +404,7 @@ export const TenantPaymentsPage: React.FC = () => {
             variant={outstandingBalance > 0 ? 'default' : 'outline'} 
             className={outstandingBalance > 0 ? '' : 'border-slate-200 dark:border-white/10 text-muted-foreground bg-transparent'}
           >
-            {outstandingBalance > 0 ? 'Pay Rent' : 'No Balance Due'}
+            {outstandingBalance > 0 ? t('tenantPayments.payRent') : t('tenantPayments.noBalance')}
           </Button>
         </Card>
 
@@ -410,21 +412,21 @@ export const TenantPaymentsPage: React.FC = () => {
         <Card className="md:col-span-1 p-5 border bg-card space-y-3 text-xs font-semibold">
           <div className="flex items-center space-x-2 border-b pb-2">
             <Landmark className="w-5 h-5 text-emerald-500 shrink-0" />
-            <h4 className="font-extrabold uppercase">Autopay Setup</h4>
+            <h4 className="font-extrabold uppercase">{t('tenantPayments.autopaySetup')}</h4>
           </div>
           <div className="flex justify-between items-center">
-            <span>Status:</span>
-            <span className="text-emerald-500 font-extrabold uppercase text-[10px] bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Enabled</span>
+            <span>{t('tenantPayments.status')}</span>
+            <span className="text-emerald-500 font-extrabold uppercase text-[10px] bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">{t('tenantPayments.enabled')}</span>
           </div>
-          <p className="text-[10px] text-muted-foreground">Automatically pulls from Chase checking account ending in XXXX-9822 on the 1st of each month.</p>
+          <p className="text-[10px] text-muted-foreground">{t('tenantPayments.autopayDesc')}</p>
         </Card>
 
       </div>
 
       <div className="mb-3 text-xs font-bold text-muted-foreground uppercase flex justify-between items-center">
-        <span>Payment history ledger</span>
+        <span>{t('tenantPayments.ledger')}</span>
         <Button variant="outline" size="sm" onClick={() => window.print()} className="text-[10px] font-bold flex items-center gap-1.5 h-8">
-          <Printer className="w-3.5 h-3.5" /> Print Ledger
+          <Printer className="w-3.5 h-3.5" /> {t('tenantPayments.printLedger')}
         </Button>
       </div>
 
@@ -481,13 +483,13 @@ export const TenantPaymentsPage: React.FC = () => {
           setStep('details');
           setReceiptNumber('');
         }
-      }} title={step === 'receipt' ? "Payment Receipt" : "Submit Rent Payment"}>
+      }} title={step === 'receipt' ? t('tenantPayments.paymentReceipt') : t('tenantPayments.submitPayment')}>
         {step === 'details' && (
           <form onSubmit={handlePaymentSubmit} className="space-y-4 pt-2 text-xs font-semibold text-foreground">
             
             {/* Payment Option Selector */}
             <div className="space-y-2">
-              <label className="text-xs font-bold text-muted-foreground uppercase block">Payment Option</label>
+              <label className="text-xs font-bold text-muted-foreground uppercase block">{t('tenantPayments.paymentOption')}</label>
               <div className="grid grid-cols-2 gap-3">
                 <button
                   key="opt-full"
@@ -497,7 +499,7 @@ export const TenantPaymentsPage: React.FC = () => {
                     paymentOption === 'full' ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50'
                   }`}
                 >
-                  <span className="font-extrabold text-[10px] uppercase">Pay in Full</span>
+                  <span className="font-extrabold text-[10px] uppercase">{t('tenantPayments.payInFull')}</span>
                   <span className="text-[9px] text-muted-foreground font-semibold">
                     ${outstandingBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                   </span>
@@ -513,14 +515,14 @@ export const TenantPaymentsPage: React.FC = () => {
                     paymentOption === 'partial' ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50'
                   }`}
                 >
-                  <span className="font-extrabold text-[10px] uppercase">Partial Payment</span>
-                  <span className="text-[9px] text-muted-foreground font-semibold">Pay custom amount</span>
+                  <span className="font-extrabold text-[10px] uppercase">{t('tenantPayments.partialPayment')}</span>
+                  <span className="text-[9px] text-muted-foreground font-semibold">{t('tenantPayments.payCustomAmount')}</span>
                 </button>
               </div>
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-bold text-muted-foreground uppercase">Payment Amount</label>
+              <label className="text-xs font-bold text-muted-foreground uppercase">{t('tenantPayments.paymentAmount')}</label>
               <Input 
                 type="number" 
                 required 
@@ -539,31 +541,31 @@ export const TenantPaymentsPage: React.FC = () => {
               />
               {paymentOption === 'partial' && (
                 <div className="flex justify-between text-[10px] text-muted-foreground mt-1 font-semibold">
-                  <span>Max: ${outstandingBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                  <span>Remaining balance: <span className="text-amber-500 font-bold">${Math.max(0, outstandingBalance - amountNum).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span></span>
+                  <span>{t('tenantPayments.max')}: ${outstandingBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                  <span>{t('tenantPayments.remainingBalance')}: <span className="text-amber-500 font-bold">${Math.max(0, outstandingBalance - amountNum).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span></span>
                 </div>
               )}
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-bold text-muted-foreground uppercase block">Payment Method</label>
+              <label className="text-xs font-bold text-muted-foreground uppercase block">{t('tenantPayments.paymentMethod')}</label>
               <div className="grid grid-cols-3 gap-3">
                 {[
-                  { id: 'ACH', label: 'ACH Bank', desc: '$0.00 fee', icon: <Landmark className="w-5 h-5" /> },
-                  { id: 'Credit Card', label: 'Credit Card', desc: '2.9% fee', icon: <CreditCard className="w-5 h-5" /> },
-                  { id: 'Debit Card', label: 'Debit Card', desc: '$4.99 fee', icon: <CreditCard className="w-5 h-5 text-indigo-500" /> },
-                ].map((t) => (
+                  { id: 'ACH', label: t('tenantPayments.achBank'), desc: '$0.00 fee', icon: <Landmark className="w-5 h-5" /> },
+                  { id: 'Credit Card', label: t('tenantPayments.creditCard'), desc: '2.9% fee', icon: <CreditCard className="w-5 h-5" /> },
+                  { id: 'Debit Card', label: t('tenantPayments.debitCard'), desc: '$4.99 fee', icon: <CreditCard className="w-5 h-5 text-indigo-500" /> },
+                ].map((tItem) => (
                   <button
-                    key={t.id}
+                    key={tItem.id}
                     type="button"
-                    onClick={() => setMethod(t.id as any)}
+                    onClick={() => setMethod(tItem.id as any)}
                     className={`p-3 border rounded-xl flex flex-col items-center justify-center text-center gap-1 transition ${
-                      method === t.id ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50'
+                      method === tItem.id ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50'
                     }`}
                   >
-                    {t.icon}
-                    <span className="font-extrabold text-[10px] uppercase leading-none">{t.label}</span>
-                    <span className="text-[9px] text-muted-foreground font-semibold">{t.desc}</span>
+                    {tItem.icon}
+                    <span className="font-extrabold text-[10px] uppercase leading-none">{tItem.label}</span>
+                    <span className="text-[9px] text-muted-foreground font-semibold">{tItem.desc}</span>
                   </button>
                 ))}
               </div>
@@ -572,14 +574,14 @@ export const TenantPaymentsPage: React.FC = () => {
             {/* Dynamic Inputs based on Payment Method */}
             {method === 'ACH' ? (
               <div className="space-y-3 p-3 bg-secondary/15 rounded-xl border border-border">
-                <p className="text-[10px] font-extrabold uppercase text-primary">ACH Bank Information</p>
+                <p className="text-[10px] font-extrabold uppercase text-primary">{t('tenantPayments.achInfo')}</p>
                 <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-bold text-muted-foreground">Account Holder Name</label>
+                  <label className="text-[10px] uppercase font-bold text-muted-foreground">{t('tenantPayments.holderName')}</label>
                   <Input required placeholder="E.g., Jane Doe" value={achHolderName} onChange={e => setAchHolderName(e.target.value)} />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-[10px] uppercase font-bold text-muted-foreground">Bank</label>
+                    <label className="text-[10px] uppercase font-bold text-muted-foreground">{t('tenantPayments.bank')}</label>
                     <Select required value={achBankName} onChange={e => setAchBankName(e.target.value)}>
                       <option value="">Select your bank</option>
                       <option value="Chase">Chase</option>
@@ -593,33 +595,33 @@ export const TenantPaymentsPage: React.FC = () => {
                     </Select>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] uppercase font-bold text-muted-foreground">Account Type</label>
+                    <label className="text-[10px] uppercase font-bold text-muted-foreground">{t('tenantPayments.accountType')}</label>
                     <Select value={achAccountType} onChange={e => setAchAccountType(e.target.value)}>
-                      <option value="Checking">Checking</option>
-                      <option value="Savings">Savings</option>
+                      <option value="Checking">{t('tenantPayments.checking')}</option>
+                      <option value="Savings">{t('tenantPayments.savings')}</option>
                     </Select>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-[10px] uppercase font-bold text-muted-foreground">Routing Number</label>
+                    <label className="text-[10px] uppercase font-bold text-muted-foreground">{t('tenantPayments.routingNumber')}</label>
                     <Input required placeholder="9-digit routing" maxLength={9} value={achRoutingNumber} onChange={e => setAchRoutingNumber(e.target.value.replace(/\D/g, ''))} />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] uppercase font-bold text-muted-foreground">Account Number</label>
+                    <label className="text-[10px] uppercase font-bold text-muted-foreground">{t('tenantPayments.accountNumber')}</label>
                     <Input required placeholder="Account number" value={achAccountNumber} onChange={e => setAchAccountNumber(e.target.value.replace(/\D/g, ''))} />
                   </div>
                 </div>
               </div>
             ) : (
               <div className="space-y-3 p-3 bg-secondary/15 rounded-xl border border-border">
-                <p className="text-[10px] font-extrabold uppercase text-primary">Card details</p>
+                <p className="text-[10px] font-extrabold uppercase text-primary">{t('tenantPayments.cardDetails')}</p>
                 <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-bold text-muted-foreground">Cardholder Name</label>
+                  <label className="text-[10px] uppercase font-bold text-muted-foreground">{t('tenantPayments.holderName')}</label>
                   <Input required placeholder="E.g., Jane Doe" value={cardholderName} onChange={e => setCardholderName(e.target.value)} />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-bold text-muted-foreground">Card Number</label>
+                  <label className="text-[10px] uppercase font-bold text-muted-foreground">{t('tenantPayments.cardNumber')}</label>
                   <div className="relative">
                     <Input required placeholder="4111 2222 3333 4444" maxLength={19} value={cardNumber} onChange={e => {
                       let val = e.target.value.replace(/\D/g, '');
@@ -631,7 +633,7 @@ export const TenantPaymentsPage: React.FC = () => {
                 </div>
                 <div className="grid grid-cols-3 gap-3">
                   <div className="space-y-1 col-span-1">
-                    <label className="text-[10px] uppercase font-bold text-muted-foreground">Expiry (MM/YY)</label>
+                    <label className="text-[10px] uppercase font-bold text-muted-foreground">{t('tenantPayments.expiry')}</label>
                     <Input required placeholder="MM/YY" maxLength={5} value={cardExpiry} onChange={e => {
                       let val = e.target.value.replace(/\D/g, '');
                       if (val.length > 2) {
@@ -641,11 +643,11 @@ export const TenantPaymentsPage: React.FC = () => {
                     }} />
                   </div>
                   <div className="space-y-1 col-span-1">
-                    <label className="text-[10px] uppercase font-bold text-muted-foreground">CVV</label>
+                    <label className="text-[10px] uppercase font-bold text-muted-foreground">{t('tenantPayments.cvv')}</label>
                     <Input required placeholder="123" type="password" maxLength={4} value={cardCvv} onChange={e => setCardCvv(e.target.value.replace(/\D/g, ''))} />
                   </div>
                   <div className="space-y-1 col-span-1">
-                    <label className="text-[10px] uppercase font-bold text-muted-foreground">Billing ZIP</label>
+                    <label className="text-[10px] uppercase font-bold text-muted-foreground">{t('tenantPayments.billingZip')}</label>
                     <Input required placeholder="12345" maxLength={5} value={cardZip} onChange={e => setCardZip(e.target.value.replace(/\D/g, ''))} />
                   </div>
                 </div>
@@ -655,15 +657,15 @@ export const TenantPaymentsPage: React.FC = () => {
             {/* Dynamic Fee & Total Summary */}
             <div className="p-3 bg-secondary/10 border border-border rounded-xl space-y-1 text-xs font-semibold">
               <div className="flex justify-between text-muted-foreground">
-                <span>Base Rent Amount</span>
+                <span>{t('tenantPayments.baseRentAmount')}</span>
                 <span>${amountNum.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
               </div>
               <div className="flex justify-between text-muted-foreground">
-                <span>Convenience Fee ({method})</span>
+                <span>{t('tenantPayments.convenienceFee')} ({method})</span>
                 <span>${fee.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-foreground font-bold border-t pt-1 mt-1">
-                <span>Total Charge</span>
+                <span>{t('tenantPayments.totalCharge')}</span>
                 <span className="text-emerald-500 font-extrabold">${total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               </div>
             </div>
@@ -671,13 +673,13 @@ export const TenantPaymentsPage: React.FC = () => {
             {/* Trust Indicator */}
             <div className="flex items-center justify-center gap-1 text-[9px] text-muted-foreground font-bold uppercase tracking-wider">
               <Shield className="w-3.5 h-3.5 text-emerald-500" />
-              <span>256-bit SSL Secured Transaction</span>
+              <span>{t('tenantPayments.securedTransaction')}</span>
             </div>
 
             <div className="flex justify-end space-x-2 pt-4 border-t">
-              <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
+              <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>{t('tenantPayments.cancel')}</Button>
               <Button type="submit" disabled={amountNum <= 0 || amountNum > outstandingBalance}>
-                Pay Rent
+                {t('tenantPayments.payRent')}
               </Button>
             </div>
 
@@ -687,11 +689,11 @@ export const TenantPaymentsPage: React.FC = () => {
         {step === 'processing' && (
           <div className="py-12 flex flex-col items-center justify-center space-y-4 text-center">
             <Loader2 className="w-10 h-10 animate-spin text-primary" />
-            <p className="font-bold text-sm text-foreground">Processing Rent Payment...</p>
+            <p className="font-bold text-sm text-foreground">{t('tenantPayments.processingPayment')}</p>
             <p className="text-[10px] text-muted-foreground">{processingMsg}</p>
             <div className="flex items-center gap-1 text-[9px] text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 font-bold uppercase tracking-wider mt-2">
               <Shield className="w-3.5 h-3.5" />
-              <span>SSL Secured Gateway</span>
+              <span>{t('tenantPayments.securedGateway')}</span>
             </div>
           </div>
         )}
@@ -702,46 +704,46 @@ export const TenantPaymentsPage: React.FC = () => {
               <div className="w-12 h-12 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mx-auto border border-emerald-500/20">
                 <Check className="w-6 h-6 stroke-[3]" />
               </div>
-              <h3 className="font-extrabold text-base text-emerald-500">Rent Payment Successful!</h3>
-              <p className="text-[10px] text-muted-foreground">Your rent invoice has been marked as settled.</p>
+              <h3 className="font-extrabold text-base text-emerald-500">{t('tenantPayments.paymentSuccessful')}</h3>
+              <p className="text-[10px] text-muted-foreground">{t('tenantPayments.invoiceSettled')}</p>
             </div>
 
             <div className="p-4 bg-secondary/15 rounded-xl border border-border space-y-3 font-semibold text-xs">
               <div className="flex justify-between border-b pb-2">
-                <span className="text-muted-foreground">Receipt Number</span>
+                <span className="text-muted-foreground">{t('tenantPayments.receiptNumber')}</span>
                 <span className="font-mono text-foreground font-bold">{receiptNumber}</span>
               </div>
               <div className="flex justify-between border-b pb-2">
-                <span className="text-muted-foreground">Payment Method</span>
+                <span className="text-muted-foreground">{t('tenantPayments.paymentMethod')}</span>
                 <span>{method}</span>
               </div>
               <div className="flex justify-between border-b pb-2">
-                <span className="text-muted-foreground">Date / Time</span>
+                <span className="text-muted-foreground">{t('tenantPayments.dateTime')}</span>
                 <span>{new Date().toLocaleString()}</span>
               </div>
               <div className="flex justify-between border-b pb-2">
-                <span className="text-muted-foreground">Base Rent</span>
+                <span className="text-muted-foreground">{t('tenantPayments.baseRentAmount')}</span>
                 <span>${amountNum.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
               </div>
               <div className="flex justify-between border-b pb-2">
-                <span className="text-muted-foreground">Convenience Fee</span>
+                <span className="text-muted-foreground">{t('tenantPayments.convenienceFee')}</span>
                 <span>${fee.toFixed(2)}</span>
               </div>
               <div className="flex justify-between pt-1">
-                <span className="text-foreground font-bold">Total Charged</span>
+                <span className="text-foreground font-bold">{t('tenantPayments.totalCharge')}</span>
                 <span className="text-emerald-500 font-extrabold text-sm">${total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               </div>
             </div>
 
             <div className="flex justify-end space-x-2 pt-4 border-t">
               <Button type="button" variant="outline" onClick={handlePrint} className="flex items-center gap-1.5 text-xs font-semibold">
-                <Printer className="w-4.5 h-4.5" /> Print Receipt
+                <Printer className="w-4.5 h-4.5" /> {t('tenantPayments.printReceipt')}
               </Button>
               <Button onClick={() => {
                 setIsOpen(false);
                 setStep('details');
               }}>
-                Close
+                {t('tenantPayments.close')}
               </Button>
             </div>
           </div>

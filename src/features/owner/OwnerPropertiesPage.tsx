@@ -10,9 +10,11 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { Building, MapPin, Plus, Trash2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export const OwnerPropertiesPage: React.FC = () => {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
   const [selectedProperty, setSelectedProperty] = useState<any | null>(null);
 
   // Create Property States
@@ -69,14 +71,14 @@ export const OwnerPropertiesPage: React.FC = () => {
   return (
     <div className="space-y-6 text-foreground">
       <PageHeader
-        title="My Properties"
-        description="Verify property allocations, addresses, current units layouts, and occupancy percentages."
+        title={t('ownerProperties.title')}
+        description={t('ownerProperties.desc')}
         breadcrumbs={[
-          { label: 'Home', href: '/owner' },
-          { label: 'My Properties' },
+          { label: t('ai.breadcrumbs.home'), href: '/owner' },
+          { label: t('ownerProperties.title') },
         ]}
         action={{
-          label: 'Add Property',
+          label: t('ownerProperties.addProperty'),
           onClick: () => setIsCreateOpen(true),
           icon: <Plus className="w-4.5 h-4.5" />,
         }}
@@ -101,20 +103,20 @@ export const OwnerPropertiesPage: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-2 text-center bg-secondary/15 rounded-xl p-3 text-xs font-semibold">
               <div>
-                <p className="text-[9px] text-muted-foreground uppercase">Type</p>
+                <p className="text-[9px] text-muted-foreground uppercase">{t('ownerProperties.type')}</p>
                 <p className="font-extrabold">{p.type || 'Residential'}</p>
               </div>
               <div>
-                <p className="text-[9px] text-muted-foreground uppercase">Rent Cost</p>
+                <p className="text-[9px] text-muted-foreground uppercase">{t('ownerProperties.rentCost')}</p>
                 <p className="font-extrabold text-emerald-500">${(p as any).monthlyRent?.toLocaleString() || '2,400'}</p>
               </div>
             </div>
 
             <div className="flex gap-2">
               <Button size="sm" variant="outline" onClick={() => setSelectedProperty(p)} className="flex-1 text-xs font-bold uppercase">
-                View Details
+                {t('ownerProperties.viewDetails')}
               </Button>
-              <Button size="sm" variant="ghost" onClick={() => setDeleteId(p.id)} className="text-rose-500 hover:text-rose-650 hover:bg-rose-550/10 p-2 rounded-xl" title="Delete Property">
+              <Button size="sm" variant="ghost" onClick={() => setDeleteId(p.id)} className="text-rose-500 hover:text-rose-650 hover:bg-rose-550/10 p-2 rounded-xl" title={t('ownerProperties.deleteProperty')}>
                 <Trash2 className="w-4 h-4" />
               </Button>
             </div>
@@ -123,7 +125,7 @@ export const OwnerPropertiesPage: React.FC = () => {
       </div>
 
       {/* DETAIL DIALOG */}
-      <FormDialog open={!!selectedProperty} onOpenChange={(open) => !open && setSelectedProperty(null)} title="Managed Asset Profile">
+      <FormDialog open={!!selectedProperty} onOpenChange={(open) => !open && setSelectedProperty(null)} title={t('ownerProperties.managedAssetProfile')}>
         {selectedProperty && (
           <div className="space-y-6 pt-3 text-xs font-semibold text-foreground">
             <div className="flex items-center space-x-3 border-b pb-3">
@@ -136,38 +138,38 @@ export const OwnerPropertiesPage: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-[10px] uppercase text-muted-foreground">Property Type</p>
+                <p className="text-[10px] uppercase text-muted-foreground">{t('ownerProperties.propertyType')}</p>
                 <p className="font-bold">{selectedProperty.type || 'Residential Apartment'}</p>
               </div>
               <div>
-                <p className="text-[10px] uppercase text-muted-foreground">Operating Status</p>
-                <p className="text-emerald-500 font-extrabold">Active</p>
+                <p className="text-[10px] uppercase text-muted-foreground">{t('ownerProperties.operatingStatus')}</p>
+                <p className="text-emerald-500 font-extrabold">{t('ownerProperties.active')}</p>
               </div>
             </div>
 
             <div className="flex justify-end pt-4 border-t">
-              <Button variant="outline" onClick={() => setSelectedProperty(null)}>Close</Button>
+              <Button variant="outline" onClick={() => setSelectedProperty(null)}>{t('ownerProperties.close')}</Button>
             </div>
           </div>
         )}
       </FormDialog>
 
       {/* CREATE DIALOG */}
-      <FormDialog open={isCreateOpen} onOpenChange={setIsCreateOpen} title="Add New Property">
+      <FormDialog open={isCreateOpen} onOpenChange={setIsCreateOpen} title={t('ownerProperties.addNewProperty')}>
         <form onSubmit={handleCreateSubmit} className="space-y-4 pt-3 text-xs font-semibold text-foreground">
           <div className="space-y-1.5">
-            <label className="text-[10px] uppercase font-bold text-muted-foreground">Property Name</label>
+            <label className="text-[10px] uppercase font-bold text-muted-foreground">{t('ownerProperties.propertyName')}</label>
             <Input required placeholder="E.g., Sunset Gardens" value={propertyName} onChange={e => setPropertyName(e.target.value)} />
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[10px] uppercase font-bold text-muted-foreground">Address</label>
+            <label className="text-[10px] uppercase font-bold text-muted-foreground">{t('ownerProperties.address')}</label>
             <Input required placeholder="E.g., 789 Palms Blvd, Austin, TX" value={propertyAddress} onChange={e => setPropertyAddress(e.target.value)} />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-[10px] uppercase font-bold text-muted-foreground">Property Type</label>
+              <label className="text-[10px] uppercase font-bold text-muted-foreground">{t('ownerProperties.propertyType')}</label>
               <Select value={propertyType} onChange={e => setPropertyType(e.target.value)}>
                 <option value="Apartment">Apartment</option>
                 <option value="Commercial">Commercial</option>
@@ -176,14 +178,14 @@ export const OwnerPropertiesPage: React.FC = () => {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <label className="text-[10px] uppercase font-bold text-muted-foreground">Target Monthly Rent ($)</label>
+              <label className="text-[10px] uppercase font-bold text-muted-foreground">{t('ownerProperties.targetMonthlyRent')}</label>
               <Input type="number" required min="0" value={propertyRent} onChange={e => setPropertyRent(Number(e.target.value))} />
             </div>
           </div>
 
           <div className="flex justify-end space-x-2 pt-4 border-t">
-            <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
-            <Button type="submit" className="bg-primary text-primary-foreground font-bold">Add Property</Button>
+            <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>{t('ownerProperties.cancel')}</Button>
+            <Button type="submit" className="bg-primary text-primary-foreground font-bold">{t('ownerProperties.addProperty')}</Button>
           </div>
         </form>
       </FormDialog>
@@ -191,9 +193,9 @@ export const OwnerPropertiesPage: React.FC = () => {
       <ConfirmDialog
         open={!!deleteId}
         onOpenChange={(open) => !open && setDeleteId(null)}
-        title="Delete Property"
-        description="Are you sure you want to delete this property? This action is irreversible."
-        confirmText="Delete Property"
+        title={t('ownerProperties.deleteProperty')}
+        description={t('ownerProperties.confirmDeleteDesc')}
+        confirmText={t('ownerProperties.deleteProperty')}
         variant="destructive"
         onConfirm={() => deleteId && deleteMutation.mutate(deleteId)}
       />

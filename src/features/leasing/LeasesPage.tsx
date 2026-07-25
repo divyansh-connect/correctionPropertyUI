@@ -11,10 +11,12 @@ import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { Button } from '../../components/ui/Button';
 import { Plus, Eye, Key, AlertTriangle, Play } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
+import { useTranslation } from 'react-i18next';
 
 export const LeasesPage: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [propertyFilter, setPropertyFilter] = useState('');
@@ -59,7 +61,7 @@ export const LeasesPage: React.FC = () => {
   const columns: ColumnDef<Lease>[] = [
     {
       accessorKey: 'id',
-      header: 'Lease #',
+      header: t('leases.columns.leaseId'),
       id: 'id',
       cell: ({ row }) => (
         <span
@@ -70,33 +72,33 @@ export const LeasesPage: React.FC = () => {
         </span>
       ),
     },
-    { accessorKey: 'tenantName', header: 'Resident', id: 'tenantName' },
-    { accessorKey: 'propertyName', header: 'Property', id: 'property' },
-    { accessorKey: 'unitNumber', header: 'Unit #', id: 'unit' },
-    { accessorKey: 'startDate', header: 'Start Date', id: 'startDate' },
-    { accessorKey: 'endDate', header: 'End Date', id: 'endDate' },
+    { accessorKey: 'tenantName', header: t('leases.columns.resident'), id: 'tenantName' },
+    { accessorKey: 'propertyName', header: t('leases.columns.property'), id: 'property' },
+    { accessorKey: 'unitNumber', header: t('leases.columns.unit'), id: 'unit' },
+    { accessorKey: 'startDate', header: t('leases.columns.startDate'), id: 'startDate' },
+    { accessorKey: 'endDate', header: t('leases.columns.endDate'), id: 'endDate' },
     {
       accessorKey: 'rentAmount',
-      header: 'Monthly Rent',
+      header: t('leases.columns.rent'),
       id: 'rent',
       cell: ({ row }) => <span className="font-semibold">${row.original.rentAmount.toLocaleString()}</span>,
     },
     {
       accessorKey: 'status',
-      header: 'Status',
+      header: t('leases.columns.status'),
       id: 'status',
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
     {
       id: 'actions',
-      header: 'Actions',
+      header: t('leases.columns.actions'),
       cell: ({ row }) => (
         <div className="flex space-x-1">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => navigate({ to: `/leases/${row.original.id}` })}
-            title="View Details"
+            title={t('leases.actions.view')}
           >
             <Eye className="w-4 h-4" />
           </Button>
@@ -106,7 +108,7 @@ export const LeasesPage: React.FC = () => {
               size="icon"
               className="text-rose-500 hover:bg-rose-500/10"
               onClick={() => setTerminateId(row.original.id)}
-              title="Terminate Lease"
+              title={t('leases.actions.terminate')}
             >
               <AlertTriangle className="w-4 h-4" />
             </Button>
@@ -119,15 +121,15 @@ export const LeasesPage: React.FC = () => {
   return (
     <div>
       <PageHeader
-        title="Lease Agreements"
-        description="Verify active tenancies, renewal windows, and security deposits logs."
+        title={t('leases.title')}
+        description={t('leases.desc')}
         breadcrumbs={[
-          { label: 'Home', href: '/' },
-          { label: 'Leasing', href: '/leasing/leases' },
-          { label: 'Leases' },
+          { label: t('ai.breadcrumbs.home'), href: '/' },
+          { label: t('nav.leasing'), href: '/leasing/leases' },
+          { label: t('nav.leases') },
         ]}
         action={{
-          label: 'Create Lease Wizard',
+          label: t('leases.createWizard'),
           onClick: () => navigate({ to: '/leases/new' }),
           icon: <Plus className="w-4.5 h-4.5" />,
         }}
@@ -136,23 +138,23 @@ export const LeasesPage: React.FC = () => {
       <FilterBar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        searchPlaceholder="Search leases by tenant name or ID..."
+        searchPlaceholder={t('leases.searchPlaceholder')}
         filters={[
           {
             key: 'property',
             value: propertyFilter,
-            placeholder: 'All Properties',
+            placeholder: t('leases.propertyPlaceholder'),
             options: properties.map((p) => ({ label: p.name, value: p.id })),
           },
           {
             key: 'status',
             value: statusFilter,
-            placeholder: 'All Statuses',
+            placeholder: t('leases.statusPlaceholder'),
             options: [
-              { label: 'Active', value: 'Active' },
-              { label: 'Pending', value: 'Pending' },
-              { label: 'Expired', value: 'Expired' },
-              { label: 'Terminated', value: 'Terminated' },
+              { label: t('leases.statuses.active'), value: 'Active' },
+              { label: t('leases.statuses.pending'), value: 'Pending' },
+              { label: t('leases.statuses.expired'), value: 'Expired' },
+              { label: t('leases.statuses.terminated'), value: 'Terminated' },
             ],
           },
         ]}
@@ -172,9 +174,9 @@ export const LeasesPage: React.FC = () => {
       <ConfirmDialog
         open={!!terminateId}
         onOpenChange={(open) => !open && setTerminateId(null)}
-        title="Terminate Lease Agreement"
-        description="Are you sure you want to terminate this lease? This will transition the unit status back to Vacant and flag the lease as terminated."
-        confirmText="Terminate Lease"
+        title={t('leases.terminateDialog.title')}
+        description={t('leases.terminateDialog.desc')}
+        confirmText={t('leases.terminateDialog.confirm')}
         variant="destructive"
         onConfirm={() => terminateId && terminateMutation.mutate(terminateId)}
       />
