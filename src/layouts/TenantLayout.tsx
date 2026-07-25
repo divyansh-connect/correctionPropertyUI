@@ -10,6 +10,7 @@ import { Button } from '../components/ui/Button';
 import { StatusBadge } from '../components/StatusBadge';
 import { clsx } from 'clsx';
 import { LanguageSelector } from '../components/LanguageSelector';
+import { useTranslation } from 'react-i18next';
 
 interface MenuItem {
   title: string;
@@ -40,15 +41,17 @@ export const TenantLayout: React.FC<TenantLayoutProps> = ({
   const roleNotifications = notifications.filter((n) => n.role === 'Tenant');
   const unreadCount = roleNotifications.filter((n) => !n.read).length;
 
+  const { t } = useTranslation();
+
   const menuItems: MenuItem[] = [
-    { title: 'Dashboard', icon: <LayoutDashboard className="w-5 h-5" />, path: '/tenant' },
-    { title: 'Lease', icon: <BookOpen className="w-5 h-5" />, path: '/tenant/lease' },
-    { title: 'Payments', icon: <CreditCard className="w-5 h-5" />, path: '/tenant/payments' },
-    { title: 'Maintenance', icon: <Wrench className="w-5 h-5" />, path: '/tenant/maintenance' },
-    { title: 'Documents', icon: <FileText className="w-5 h-5" />, path: '/tenant/documents' },
-    { title: 'Messages', icon: <UserCheck className="w-5 h-5" />, path: '/tenant/messages' },
-    { title: 'Notifications', icon: <Bell className="w-5 h-5" />, path: '/tenant/notifications' },
-    { title: 'Profile', icon: <User className="w-5 h-5" />, path: '/tenant/profile' },
+    { title: t('tenant.nav.dashboard'), icon: <LayoutDashboard className="w-5 h-5" />, path: '/tenant' },
+    { title: t('tenant.nav.lease'), icon: <BookOpen className="w-5 h-5" />, path: '/tenant/lease' },
+    { title: t('tenant.nav.payments'), icon: <CreditCard className="w-5 h-5" />, path: '/tenant/payments' },
+    { title: t('tenant.nav.maintenance'), icon: <Wrench className="w-5 h-5" />, path: '/tenant/maintenance' },
+    { title: t('tenant.nav.documents'), icon: <FileText className="w-5 h-5" />, path: '/tenant/documents' },
+    { title: t('tenant.nav.messages'), icon: <UserCheck className="w-5 h-5" />, path: '/tenant/messages' },
+    { title: t('tenant.nav.notifications'), icon: <Bell className="w-5 h-5" />, path: '/tenant/notifications' },
+    { title: t('tenant.nav.profile'), icon: <User className="w-5 h-5" />, path: '/tenant/profile' },
   ];
 
   const handleMenuClick = (item: MenuItem) => {
@@ -63,7 +66,7 @@ export const TenantLayout: React.FC<TenantLayoutProps> = ({
       <aside className="hidden md:flex flex-col border-r bg-card text-card-foreground shrink-0 w-64">
         <div className="h-16 flex items-center px-6 border-b">
           <span className="font-black text-lg text-primary truncate">
-            Tenant Portal
+            {t('tenant.portal')}
           </span>
         </div>
 
@@ -93,7 +96,7 @@ export const TenantLayout: React.FC<TenantLayoutProps> = ({
             className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-xs font-bold transition-all uppercase tracking-wider text-rose-500 hover:bg-rose-500/10 transition-colors"
           >
             <LogOut className="w-5 h-5" />
-            <span>Log Out</span>
+            <span>{t('tenant.signOut')}</span>
           </button>
         </div>
       </aside>
@@ -110,7 +113,7 @@ export const TenantLayout: React.FC<TenantLayoutProps> = ({
           <div className="relative flex flex-col w-72 max-w-xs bg-card border-r p-4 transition-transform duration-200">
             <div className="flex items-center justify-between pb-4 border-b mb-4">
               <span className="font-black text-lg text-primary truncate">
-                Tenant Portal
+                {t('tenant.portal')}
               </span>
               <Button variant="ghost" size="icon" onClick={() => setIsMobileOpen(false)}>
                 <X className="w-5 h-5" />
@@ -147,7 +150,7 @@ export const TenantLayout: React.FC<TenantLayoutProps> = ({
             <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setIsMobileOpen(true)}>
               <Menu className="w-5 h-5" />
             </Button>
-            <span className="text-xs font-black uppercase text-muted-foreground">Tenant Self-Service</span>
+            <span className="text-xs font-black uppercase text-muted-foreground">{t('tenant.selfService')}</span>
           </div>
 
           <div className="flex items-center space-x-4 relative">
@@ -171,14 +174,14 @@ export const TenantLayout: React.FC<TenantLayoutProps> = ({
               {showNotifications && (
                 <div className="absolute right-0 top-12 z-50 w-80 rounded-xl border border-border bg-card shadow-2xl p-4 animate-fade-in text-foreground">
                   <div className="flex items-center justify-between pb-2 border-b border-border/80">
-                    <h4 className="font-bold text-sm">Notifications</h4>
+                    <h4 className="font-bold text-sm">{t('header.notifications')}</h4>
                     <div className="flex space-x-2 text-xs font-semibold text-primary">
                       <button onClick={() => markAllAsRead('Tenant')} className="hover:underline">
-                        Read All
+                        {t('header.readAll')}
                       </button>
                       <span>•</span>
                       <button onClick={() => clearAll('Tenant')} className="hover:underline text-muted-foreground">
-                        Clear
+                        {t('header.clear')}
                       </button>
                     </div>
                   </div>
@@ -186,7 +189,7 @@ export const TenantLayout: React.FC<TenantLayoutProps> = ({
                   <div className="mt-2 space-y-2 max-h-64 overflow-y-auto">
                     {roleNotifications.length === 0 ? (
                       <p className="text-center text-xs text-muted-foreground py-6">
-                        No notifications
+                        {t('header.noNotifications')}
                       </p>
                     ) : (
                       roleNotifications.map((n) => (
@@ -239,7 +242,7 @@ export const TenantLayout: React.FC<TenantLayoutProps> = ({
                     <p className="text-[10px] text-muted-foreground truncate">{user?.email || 'sarah.c@skyline.com'}</p>
                   </div>
                   <button onClick={() => { logout(); navigate('/login'); }} className="w-full text-left px-4 py-2 text-rose-500 hover:bg-rose-500/10 flex items-center gap-2">
-                    <LogOut className="w-4 h-4" /> Sign Out
+                    <LogOut className="w-4 h-4" /> {t('tenant.signOut')}
                   </button>
                 </div>
               )}

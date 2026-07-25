@@ -138,5 +138,39 @@ export const es = {
     revenue: "Ingresos",
     income: "Ingresos",
     occupancy: "Ocupación"
+  },
+  tenant: {
+    portal: "Portal del Inquilino",
+    selfService: "Autoservicio del Inquilino",
+    nav: {
+      dashboard: "Panel",
+      lease: "Contrato",
+      payments: "Pagos",
+      maintenance: "Mantenimiento",
+      documents: "Documentos",
+      messages: "Mensajes",
+      notifications: "Notificaciones",
+      profile: "Perfil"
+    },
+    signOut: "Cerrar sesión",
+    dashboard: {
+      title: "Panel del Residente",
+      desc: "Verifica saldos de renta mensual, hitos de vencimiento de contrato, llegadas de paquetes y despachos de mantenimiento.",
+      payRent: "Pagar Renta",
+      submitRepair: "Solicitar Reparación",
+      contactMgmt: "Contactar Administración",
+      viewLease: "Ver Términos de Contrato",
+      currentRentDue: "Renta Actual Vencida",
+      dueDate: "Fecha de Vencimiento",
+      outstandingBalance: "Saldo Pendiente",
+      accountStatus: "Estado de cuenta: Pagado en su totalidad",
+      activeVisitorPasses: "Pases de Visitante Activos",
+      registeredGuests: "Registro de invitados",
+      waitingPackages: "Paquetes en Espera",
+      awaitingPickup: "Esperando recolección en casillero",
+      leaseRenewal: "Opción de renovación de contrato activa",
+      leaseExpiringText: "Tu contrato vence el {{date}}. Asegura tu tarifa para el próximo año.",
+      reviewRenewal: "Revisar Renovación"
+    }
   }
 };

@@ -138,5 +138,39 @@ export const en = {
     revenue: "Revenue",
     income: "Income",
     occupancy: "Occupancy"
+  },
+  tenant: {
+    portal: "Tenant Portal",
+    selfService: "Tenant Self-Service",
+    nav: {
+      dashboard: "Dashboard",
+      lease: "Lease",
+      payments: "Payments",
+      maintenance: "Maintenance",
+      documents: "Documents",
+      messages: "Messages",
+      notifications: "Notifications",
+      profile: "Profile"
+    },
+    signOut: "Sign Out",
+    dashboard: {
+      title: "Resident Dashboard",
+      desc: "Verify monthly rent balances, lease expiration milestones, packages arrivals, and maintenance dispatches.",
+      payRent: "Pay Rent",
+      submitRepair: "Submit Repair Request",
+      contactMgmt: "Contact Management",
+      viewLease: "View Lease Terms",
+      currentRentDue: "Current Rent due",
+      dueDate: "Due Date",
+      outstandingBalance: "Outstanding Balance",
+      accountStatus: "Account status: Paid in Full",
+      activeVisitorPasses: "Active Visitor Passes",
+      registeredGuests: "Registered guests logs",
+      waitingPackages: "Waiting Packages",
+      awaitingPickup: "Awaiting pickup in parcel locker",
+      leaseRenewal: "Lease renewal option active",
+      leaseExpiringText: "Your lease is expiring on {{date}}. Lock in your rate for the upcoming year.",
+      reviewRenewal: "Review Renewal"
+    }
   }
 };
