@@ -360,7 +360,7 @@ export const RentLedgerPage: React.FC = () => {
                   <Button variant="outline" size="sm" onClick={() => setSelectedTenantId('')} className="no-print h-9 font-bold">
                     Close Statement
                   </Button>
-                  <Button variant="primary" size="sm" onClick={() => window.print()} className="no-print flex items-center gap-1.5 h-9 font-bold bg-primary text-primary-foreground hover:bg-primary/95">
+                  <Button variant="default" size="sm" onClick={() => window.print()} className="no-print flex items-center gap-1.5 h-9 font-bold bg-primary text-primary-foreground hover:bg-primary/95">
                     <Printer className="w-4 h-4" /> Print Statement
                   </Button>
                 </div>

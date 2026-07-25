@@ -63,11 +63,11 @@ export const TenantPaymentsPage: React.FC = () => {
     // 1. Add invoices (charges)
     tenantInvoices.forEach((inv) => {
       entries.push({
-        date: inv.dueDate || inv.date,
-        desc: inv.description || 'Rent Assessment Charge',
+        date: inv.dueDate,
+        desc: 'Rent Assessment Charge',
         ref: inv.id,
-        debit: inv.amount,
-        credit: 0,
+        debit: 0,
+        credit: inv.amount,
         balance: 0,
         type: 'Charge',
         status: inv.status
@@ -78,11 +78,11 @@ export const TenantPaymentsPage: React.FC = () => {
     tenantPayments.forEach((pay) => {
       if (pay.status === 'Paid') {
         entries.push({
-          date: pay.date || pay.paidDate || new Date().toISOString().split('T')[0],
-          desc: `ACH Payment - Received (${pay.paymentMethod || pay.method || 'Bank'})`,
+          date: pay.paidDate || pay.dueDate || new Date().toISOString().split('T')[0],
+          desc: `ACH Payment - Received (${pay.paymentMethod || 'Bank'})`,
           ref: pay.id,
-          debit: 0,
-          credit: pay.amount,
+          debit: pay.amount,
+          credit: 0,
           balance: 0,
           type: 'Payment',
           status: 'Cleared'
@@ -95,7 +95,7 @@ export const TenantPaymentsPage: React.FC = () => {
 
     // Calculate running balance
     return entries.map((entry) => {
-      if (entry.type === 'Charge') {
+      if (entry.type === 'Payment') {
         runningBalance += entry.debit;
       } else {
         runningBalance -= entry.credit;
@@ -328,21 +328,21 @@ export const TenantPaymentsPage: React.FC = () => {
       accessorKey: 'debit',
       header: 'Debit (+)',
       id: 'debit',
-      cell: ({ row }) => row.original.debit > 0 ? <span className="text-rose-500 font-bold">+${row.original.debit.toLocaleString()}</span> : '-',
+      cell: ({ row }) => row.original.debit > 0 ? <span className="text-emerald-500 font-bold">+${row.original.debit.toLocaleString()}</span> : '-',
     },
     {
       accessorKey: 'credit',
       header: 'Credit (-)',
       id: 'credit',
-      cell: ({ row }) => row.original.credit > 0 ? <span className="text-emerald-500 font-bold">-${row.original.credit.toLocaleString()}</span> : '-',
+      cell: ({ row }) => row.original.credit > 0 ? <span className="text-rose-500 font-bold">-${row.original.credit.toLocaleString()}</span> : '-',
     },
     {
       accessorKey: 'balance',
       header: 'Running Balance',
       id: 'balance',
       cell: ({ row }) => (
-        <span className={row.original.balance > 0 ? 'text-rose-500 font-black' : 'text-emerald-500 font-black'}>
-          ${row.original.balance.toLocaleString()}
+        <span className={row.original.balance >= 0 ? 'text-emerald-500 font-black' : 'text-rose-500 font-black'}>
+          {row.original.balance < 0 ? '-' : ''}${Math.abs(row.original.balance).toLocaleString()}
         </span>
       ),
     },
