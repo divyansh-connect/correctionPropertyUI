@@ -1,53 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Languages, ChevronDown, Check } from 'lucide-react';
 import { Button } from './ui/Button';
+import { useTranslation } from 'react-i18next';
 
 export const LanguageSelector: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [currentLang, setCurrentLang] = useState<'en' | 'es'>('en');
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { i18n } = useTranslation();
 
-  // Helper to read cookie value
-  const getCookie = (name: string): string | null => {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
-    return null;
-  };
+  const currentLang = i18n.language || 'en';
 
   useEffect(() => {
-    // Parse current language from googtrans cookie
-    const googtrans = getCookie('googtrans');
-    if (googtrans) {
-      if (googtrans.endsWith('/es')) {
-        setCurrentLang('es');
-      } else {
-        setCurrentLang('en');
-      }
-    } else {
-      setCurrentLang('en');
-    }
-
-    // Set up Google Translate init function
-    (window as any).googleTranslateElementInit = () => {
-      new (window as any).google.translate.TranslateElement({
-        pageLanguage: 'en',
-        includedLanguages: 'en,es',
-        layout: (window as any).google.translate.TranslateElement.InlineLayout.SIMPLE,
-        autoDisplay: false
-      }, 'google_translate_element');
-    };
-
-    // Load Google Translate script if not present
-    if (!document.getElementById('google-translate-script')) {
-      const script = document.createElement('script');
-      script.id = 'google-translate-script';
-      script.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
-      script.async = true;
-      document.body.appendChild(script);
-    }
-
-    // Handle clicks outside dropdown to close it
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
@@ -64,55 +27,14 @@ export const LanguageSelector: React.FC = () => {
       setIsOpen(false);
       return;
     }
-
-    const domain = window.location.hostname;
-
-    if (lang === 'en') {
-      // Clear/delete the googtrans cookie to revert to English (original)
-      const deleteCookie = (name: string, domainStr?: string) => {
-        const d = domainStr ? `; domain=${domainStr}` : '';
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;${d}`;
-      };
-
-      deleteCookie('googtrans');
-      deleteCookie('googtrans', domain);
-      deleteCookie('googtrans', `.${domain}`);
-      
-      if (domain.includes('.')) {
-        const parts = domain.split('.');
-        if (parts.length > 2) {
-          const parentDomain = parts.slice(-2).join('.');
-          deleteCookie('googtrans', `.${parentDomain}`);
-          deleteCookie('googtrans', parentDomain);
-        }
-      }
-    } else {
-      const cookieValue = `/en/${lang}`;
-      // Set cookies across root and domain settings for robustness
-      document.cookie = `googtrans=${cookieValue}; path=/;`;
-      document.cookie = `googtrans=${cookieValue}; path=/; domain=${domain};`;
-      
-      if (domain.includes('.')) {
-        const parts = domain.split('.');
-        if (parts.length > 2) {
-          const parentDomain = parts.slice(-2).join('.');
-          document.cookie = `googtrans=${cookieValue}; path=/; domain=.${parentDomain};`;
-        }
-      }
-    }
-
-    // Update local storage just in case for faster client reading
-    localStorage.setItem('preferred_lang', lang);
     
-    // Reload page to apply the translation
-    window.location.reload();
+    i18n.changeLanguage(lang);
+    localStorage.setItem('app_language', lang);
+    setIsOpen(false);
   };
 
   return (
     <div className="relative" ref={dropdownRef}>
-      {/* Hidden container required by Google Translate */}
-      <div id="google_translate_element" className="hidden" style={{ display: 'none' }} />
-
       <Button
         variant="ghost"
         size="sm"

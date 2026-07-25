@@ -14,8 +14,11 @@ import {
 } from 'recharts';
 
 import { useAuthStore } from '../../store/useStore';
+import { useTranslation } from 'react-i18next';
 
 export const DashboardPage: React.FC = () => {
+  const { t } = useTranslation();
+
   // Query Metrics
   const { data: metrics, isLoading: loadingMetrics, refetch: refetchMetrics } = useQuery({
     queryKey: ['dashboard-metrics'],
@@ -41,14 +44,14 @@ export const DashboardPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={isCollectionManager ? "Collection Operations" : "Portfolio Analytics"}
-        description={isCollectionManager ? "Real-time tenant balance tracking and maintenance oversight." : "Real-time operational metrics and financial intelligence for your properties."}
+        title={isCollectionManager ? t('dashboard.titleCollection') : t('dashboard.titlePortfolio')}
+        description={isCollectionManager ? t('dashboard.descCollection') : t('dashboard.descPortfolio')}
         breadcrumbs={[
-          { label: 'Home', href: '/' },
-          { label: 'Dashboard' }
+          { label: t('ai.breadcrumbs.home'), href: '/' },
+          { label: t('nav.dashboard') }
         ]}
         action={{
-          label: 'Sync Data',
+          label: t('dashboard.syncData'),
           onClick: refreshAll,
           icon: <RefreshCw className="w-4 h-4" />,
           variant: 'outline'
@@ -59,124 +62,124 @@ export const DashboardPage: React.FC = () => {
       {isCollectionManager ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatsCard
-            title="Monthly Revenue"
+            title={t('dashboard.monthlyRevenue')}
             value={`$${(metrics?.monthlyRevenue ?? 0).toLocaleString()}`}
             icon={<DollarSign className="w-5 h-5" />}
             trend="up"
             trendLabel="+12.4%"
-            description="Rent collection rate"
+            description={t('dashboard.rentCollectionRate')}
             loading={loadingMetrics}
           />
           <StatsCard
-            title="Pending Rent"
+            title={t('dashboard.pendingRent')}
             value={`$${(metrics?.pendingRent ?? 0).toLocaleString()}`}
             icon={<DollarSign className="w-5 h-5" />}
             trend="down"
             trendLabel="-8.5%"
-            description="outstanding balances"
+            description={t('dashboard.outstandingBalances')}
             loading={loadingMetrics}
           />
           <StatsCard
-            title="Expenses"
+            title={t('dashboard.expenses')}
             value={`$${(metrics?.expenses ?? 0).toLocaleString()}`}
             icon={<DollarSign className="w-5 h-5" />}
-            description="Invoices paid this month"
+            description={t('dashboard.invoicesPaid')}
             loading={loadingMetrics}
           />
           <StatsCard
-            title="Open Maintenance"
+            title={t('dashboard.openMaintenance')}
             value={metrics?.openMaintenance ?? 0}
             icon={<Wrench className="w-5 h-5" />}
             trend="up"
             trendLabel="+1 pending"
-            description="Active work orders"
+            description={t('dashboard.activeWorkOrders')}
             loading={loadingMetrics}
           />
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <StatsCard
-            title="Total Properties"
+            title={t('dashboard.totalProperties')}
             value={metrics?.totalProperties ?? 0}
             icon={<Building2 className="w-5 h-5" />}
             trend="up"
-            trendLabel="+1 new"
-            description="this quarter"
+            trendLabel={`+1 ${t('dashboard.thisQuarter').split(' ')[0]}`}
+            description={t('dashboard.thisQuarter')}
             loading={loadingMetrics}
           />
           <StatsCard
-            title="Total Units"
+            title={t('dashboard.totalUnits')}
             value={metrics?.totalUnits ?? 0}
             icon={<Home className="w-5 h-5" />}
-            description="Across all assets"
+            description={t('dashboard.acrossAllAssets')}
             loading={loadingMetrics}
           />
           <StatsCard
-            title="Occupied Units"
+            title={t('dashboard.occupiedUnits')}
             value={metrics?.occupiedUnits ?? 0}
             icon={<UserCheck className="w-5 h-5" />}
             trend="neutral"
             trendLabel="Stable"
-            description="Active leases"
+            description={t('dashboard.activeLeases')}
             loading={loadingMetrics}
           />
           <StatsCard
-            title="Vacant Units"
+            title={t('dashboard.vacantUnits')}
             value={metrics?.vacantUnits ?? 0}
             icon={<AlertCircle className="w-5 h-5" />}
             trend="down"
-            trendLabel="-2 units"
-            description="ready for listings"
+            trendLabel="-2"
+            description={t('dashboard.readyForListings')}
             loading={loadingMetrics}
           />
           <StatsCard
-            title="Occupancy Rate"
+            title={t('dashboard.occupancyRate')}
             value={`${metrics?.occupancyRate ?? 0}%`}
             icon={<TrendingUp className="w-5 h-5" />}
             trend="up"
             trendLabel="+4.2%"
-            description="compared to last month"
+            description={t('dashboard.comparedToLastMonth')}
             loading={loadingMetrics}
           />
           <StatsCard
-            title="Monthly Revenue"
+            title={t('dashboard.monthlyRevenue')}
             value={`$${(metrics?.monthlyRevenue ?? 0).toLocaleString()}`}
             icon={<DollarSign className="w-5 h-5" />}
             trend="up"
             trendLabel="+12.4%"
-            description="Rent collection rate"
+            description={t('dashboard.rentCollectionRate')}
             loading={loadingMetrics}
           />
           <StatsCard
-            title="Pending Rent"
+            title={t('dashboard.pendingRent')}
             value={`$${(metrics?.pendingRent ?? 0).toLocaleString()}`}
             icon={<DollarSign className="w-5 h-5" />}
             trend="down"
             trendLabel="-8.5%"
-            description="outstanding balances"
+            description={t('dashboard.outstandingBalances')}
             loading={loadingMetrics}
           />
           <StatsCard
-            title="Expenses"
+            title={t('dashboard.expenses')}
             value={`$${(metrics?.expenses ?? 0).toLocaleString()}`}
             icon={<DollarSign className="w-5 h-5" />}
-            description="Invoices paid this month"
+            description={t('dashboard.invoicesPaid')}
             loading={loadingMetrics}
           />
           <StatsCard
-            title="Open Maintenance"
+            title={t('dashboard.openMaintenance')}
             value={metrics?.openMaintenance ?? 0}
             icon={<Wrench className="w-5 h-5" />}
             trend="up"
-            trendLabel="+1 pending"
-            description="Active work orders"
+            trendLabel="+1"
+            description={t('dashboard.activeWorkOrders')}
             loading={loadingMetrics}
           />
           <StatsCard
-            title="Leases Expiring Soon"
+            title={t('dashboard.leasesExpiringSoon')}
             value={metrics?.leasesExpiringSoon ?? 0}
             icon={<Calendar className="w-5 h-5" />}
-            description="Expiring in next 60 days"
+            description={t('dashboard.expiringIn60Days')}
             loading={loadingMetrics}
           />
         </div>
@@ -187,8 +190,8 @@ export const DashboardPage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Revenue Growth Chart */}
           <ChartCard
-            title="Revenue Growth"
-            description="Gross rent collected month-over-month"
+            title={t('dashboard.revenueGrowth')}
+            description={t('dashboard.revenueGrowthDesc')}
             loading={loadingCharts}
           >
             <ResponsiveContainer width="100%" height="100%">
@@ -209,7 +212,7 @@ export const DashboardPage: React.FC = () => {
                     borderRadius: '10px',
                     color: 'hsl(var(--foreground))'
                   }}
-                  formatter={(value: any) => [`$${value.toLocaleString()}`, 'Revenue']}
+                  formatter={(value: any) => [`$${value.toLocaleString()}`, t('dashboard.revenue')]}
                 />
                 <Area type="monotone" dataKey="revenue" stroke="#0ea5e9" strokeWidth={2} fillOpacity={1} fill="url(#colorRevenue)" />
               </AreaChart>
@@ -218,8 +221,8 @@ export const DashboardPage: React.FC = () => {
 
           {/* Maintenance Analytics Chart */}
           <ChartCard
-            title="Maintenance Work Orders"
-            description="Work orders broken down by specialty trade category"
+            title={t('dashboard.maintenanceWorkOrders')}
+            description={t('dashboard.maintenanceWorkOrdersDesc')}
             loading={loadingCharts}
           >
             <ResponsiveContainer width="100%" height="100%">
@@ -255,8 +258,8 @@ export const DashboardPage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Revenue Growth Chart */}
           <ChartCard
-            title="Revenue Growth"
-            description="Gross rent collected month-over-month"
+            title={t('dashboard.revenueGrowth')}
+            description={t('dashboard.revenueGrowthDesc')}
             loading={loadingCharts}
           >
             <ResponsiveContainer width="100%" height="100%">
@@ -277,7 +280,7 @@ export const DashboardPage: React.FC = () => {
                     borderRadius: '10px',
                     color: 'hsl(var(--foreground))'
                   }}
-                  formatter={(value: any) => [`$${value.toLocaleString()}`, 'Revenue']}
+                  formatter={(value: any) => [`$${value.toLocaleString()}`, t('dashboard.revenue')]}
                 />
                 <Area type="monotone" dataKey="revenue" stroke="#0ea5e9" strokeWidth={2} fillOpacity={1} fill="url(#colorRevenue)" />
               </AreaChart>
@@ -286,8 +289,8 @@ export const DashboardPage: React.FC = () => {
 
           {/* Income vs Expenses Chart */}
           <ChartCard
-            title="Income vs Expenses"
-            description="Net operations performance comparison"
+            title={t('dashboard.incomeVsExpenses')}
+            description={t('dashboard.incomeVsExpensesDesc')}
             loading={loadingCharts}
           >
             <ResponsiveContainer width="100%" height="100%">
@@ -305,16 +308,16 @@ export const DashboardPage: React.FC = () => {
                   formatter={(value: any) => [`$${value.toLocaleString()}`]}
                 />
                 <Legend verticalAlign="top" height={36} iconType="circle" wrapperStyle={{ fontSize: '11px', fontWeight: 'semibold' }} />
-                <Bar dataKey="income" name="Income" fill="#10b981" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="expenses" name="Expenses" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="income" name={t('dashboard.income')} fill="#10b981" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="expenses" name={t('dashboard.expenses')} fill="#ef4444" radius={[4, 4, 0, 0]} />
               </ReBarChart>
             </ResponsiveContainer>
           </ChartCard>
 
           {/* Occupancy Trend Chart */}
           <ChartCard
-            title="Occupancy Trend"
-            description="Portfolio occupancy percentage rates"
+            title={t('dashboard.occupancyTrend')}
+            description={t('dashboard.occupancyTrendDesc')}
             loading={loadingCharts}
           >
             <ResponsiveContainer width="100%" height="100%">
@@ -329,7 +332,7 @@ export const DashboardPage: React.FC = () => {
                     borderRadius: '10px',
                     color: 'hsl(var(--foreground))'
                   }}
-                  formatter={(value: any) => [`${value}%`, 'Occupancy']}
+                  formatter={(value: any) => [`${value}%`, t('dashboard.occupancy')]}
                 />
                 <Line type="monotone" dataKey="rate" stroke="#8b5cf6" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
               </LineChart>
@@ -338,8 +341,8 @@ export const DashboardPage: React.FC = () => {
 
           {/* Maintenance Analytics Chart */}
           <ChartCard
-            title="Maintenance Work Orders"
-            description="Work orders broken down by specialty trade category"
+            title={t('dashboard.maintenanceWorkOrders')}
+            description={t('dashboard.maintenanceWorkOrdersDesc')}
             loading={loadingCharts}
           >
             <ResponsiveContainer width="100%" height="100%">

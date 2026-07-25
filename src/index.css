@@ -107,29 +107,3 @@
 .glass-header {
   @apply sticky top-0 z-30 bg-background/80 backdrop-blur-md border-b border-border/40;
 }
-
-/* Hide Google Translate top bar / banner and widget artifacts */
-.skiptranslate, 
-.goog-te-banner-frame, 
-.goog-te-banner-frame.skiptranslate, 
-.goog-te-gadget-icon,
-.goog-te-gadget-simple,
-iframe.goog-te-menu-frame {
-  display: none !important;
-}
-
-body {
-  top: 0px !important;
-}
-
-.goog-tooltip,
-.goog-tooltip:hover {
-  display: none !important;
-}
-
-.goog-text-highlight {
-  background-color: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-

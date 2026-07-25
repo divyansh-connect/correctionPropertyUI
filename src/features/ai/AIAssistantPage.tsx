@@ -1,26 +1,29 @@
 import React from 'react';
 import { PageHeader } from '../../components/PageHeader';
 import { AIChatWindow } from './components/AIChatWindow';
+import { useTranslation } from 'react-i18next';
 
 export const AIAssistantPage: React.FC = () => {
+  const { t } = useTranslation();
+
   const suggested = [
-    "Show tenants with overdue rent",
-    "Which leases expire this month?",
-    "Show vacant units",
-    "Summarize maintenance requests",
-    "Generate a rent roll summary",
-    "Show unpaid invoices",
-    "Summarize owner statements",
-    "Explain this financial report",
-    "Generate a late payment reminder"
+    t('ai.suggested.overdueRent'),
+    t('ai.suggested.leasesExpire'),
+    t('ai.suggested.vacantUnits'),
+    t('ai.suggested.maintenanceReqs'),
+    t('ai.suggested.rentRoll'),
+    t('ai.suggested.unpaidInvoices'),
+    t('ai.suggested.ownerStatements'),
+    t('ai.suggested.financialReport'),
+    t('ai.suggested.latePayment')
   ];
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="AI Assistant"
-        description="Interact with the DoorLoop Copilot to query your rental business operations."
-        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'AI Center' }, { label: 'Assistant' }]}
+        title={t('ai.title')}
+        description={t('ai.description')}
+        breadcrumbs={[{ label: t('ai.breadcrumbs.home'), href: '/' }, { label: t('ai.breadcrumbs.aiCenter') }, { label: t('ai.breadcrumbs.assistant') }]}
       />
 
       <AIChatWindow moduleName="General" suggestedQuestions={suggested} />

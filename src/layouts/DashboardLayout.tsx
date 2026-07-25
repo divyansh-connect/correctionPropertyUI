@@ -13,6 +13,7 @@ import { Button } from '../components/ui/Button';
 import { StatusBadge } from '../components/StatusBadge';
 import { clsx } from 'clsx';
 import { LanguageSelector } from '../components/LanguageSelector';
+import { useTranslation } from 'react-i18next';
 
 interface MenuItem {
   title: string;
@@ -35,37 +36,38 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const { user, logout } = useAuthStore();
   const { theme, toggleTheme } = useThemeStore();
   const { notifications, markAsRead, markAllAsRead, clearAll } = useNotificationStore();
+  const { t } = useTranslation();
 
   // --- SUPER ADMIN MENU ITEMS ---
   const superAdminMenuItems: MenuItem[] = [
-    { title: 'Dashboard', icon: <LayoutDashboard className="w-5 h-5" />, path: '/' },
+    { title: t('nav.dashboard'), icon: <LayoutDashboard className="w-5 h-5" />, path: '/' },
     {
-      title: 'Companies',
+      title: t('nav.companies'),
       icon: <Building2 className="w-5 h-5" />,
       path: '/companies',
       submenu: [
-        { title: 'All Companies', path: '/companies' },
+        { title: t('nav.companies'), path: '/companies' },
         { title: 'Create Company', path: '/companies/new' },
         { title: 'Company Users', path: '/companies/users' },
       ],
     },
     {
-      title: 'Subscriptions',
+      title: t('nav.subscriptions'),
       icon: <CalendarCheck className="w-5 h-5" />,
       path: '/subscriptions',
       submenu: [
         { title: 'Plans', path: '/subscriptions/plans' },
         { title: 'Active Subscriptions', path: '/subscriptions/active' },
-        { title: 'Invoices', path: '/subscriptions/invoices' },
+        { title: t('nav.invoices'), path: '/subscriptions/invoices' },
       ],
     },
     {
-      title: 'Platform Users',
+      title: t('nav.platformUsers'),
       icon: <Users className="w-5 h-5" />,
       path: '/platform-users',
     },
     {
-      title: 'Platform Settings',
+      title: t('nav.platformSettings'),
       icon: <Settings className="w-5 h-5" />,
       path: '/platform-settings',
       submenu: [
@@ -77,134 +79,134 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
   // --- PROPERTY MANAGER MENU ITEMS ---
   const managerMenuItems: MenuItem[] = [
-    { title: 'Dashboard', icon: <LayoutDashboard className="w-5 h-5" />, path: '/' },
+    { title: t('nav.dashboard'), icon: <LayoutDashboard className="w-5 h-5" />, path: '/' },
     {
-      title: 'Properties',
+      title: t('nav.properties'),
       icon: <Building2 className="w-5 h-5" />,
       path: '/properties',
       submenu: [
-        { title: 'Properties', path: '/properties' },
-        { title: 'Buildings', path: '/buildings' },
-        { title: 'Units', path: '/units' },
+        { title: t('nav.properties'), path: '/properties' },
+        { title: t('nav.buildings'), path: '/buildings' },
+        { title: t('nav.units'), path: '/units' },
       ],
     },
     {
-      title: 'Leasing',
+      title: t('nav.leasing'),
       icon: <Key className="w-5 h-5" />,
       path: '/leasing',
       submenu: [
-        { title: 'Leads', path: '/leasing/leads' },
-        { title: 'Applications', path: '/leasing/applications' },
-        { title: 'Tenant Screening', path: '/leasing/screening' },
-        { title: 'Leases', path: '/leasing/leases' },
-        { title: 'Renewals', path: '/leasing/renewals' },
-        { title: 'Move In', path: '/leasing/move-in' },
-        { title: 'Move Out', path: '/leasing/move-out' },
+        { title: t('nav.leads'), path: '/leasing/leads' },
+        { title: t('nav.applications'), path: '/leasing/applications' },
+        { title: t('nav.tenantScreening'), path: '/leasing/screening' },
+        { title: t('nav.leases'), path: '/leasing/leases' },
+        { title: t('nav.renewals'), path: '/leasing/renewals' },
+        { title: t('nav.moveIn'), path: '/leasing/move-in' },
+        { title: t('nav.moveOut'), path: '/leasing/move-out' },
       ],
     },
     {
-      title: 'Tenants',
+      title: t('nav.tenants'),
       icon: <Users className="w-5 h-5" />,
       path: '/tenants',
       submenu: [
-        { title: 'Tenant Directory', path: '/tenants' },
-        { title: 'Tenant Documents', path: '/tenants/documents' },
+        { title: t('nav.tenantDirectory'), path: '/tenants' },
+        { title: t('nav.tenantDocuments'), path: '/tenants/documents' },
       ],
     },
     {
-      title: 'Documents',
+      title: t('nav.documents'),
       icon: <FileText className="w-5 h-5" />,
       path: '/documents/all',
       submenu: [
-        { title: 'All Documents', path: '/documents/all' },
-        { title: 'e-Signatures', path: '/documents/signatures' },
+        { title: t('nav.allDocuments'), path: '/documents/all' },
+        { title: t('nav.eSignatures'), path: '/documents/signatures' },
       ],
     },
     {
-      title: 'Owners',
+      title: t('nav.owners'),
       icon: <UserCheck className="w-5 h-5" />,
       path: '/owners',
     },
     {
-      title: 'Rent & Payments',
+      title: t('nav.rentAndPayments'),
       icon: <CreditCard className="w-5 h-5" />,
       path: '/rent',
       submenu: [
-        { title: 'Dashboard', path: '/rent' },
-        { title: 'Payments', path: '/payments' },
-        { title: 'Invoices', path: '/invoices' },
-        { title: 'Rent Ledger', path: '/rent-ledger' },
+        { title: t('nav.dashboard'), path: '/rent' },
+        { title: t('nav.payments'), path: '/payments' },
+        { title: t('nav.invoices'), path: '/invoices' },
+        { title: t('nav.rentLedger'), path: '/rent-ledger' },
       ],
     },
     {
-      title: 'Accounting',
+      title: t('nav.accounting'),
       icon: <BookOpen className="w-5 h-5" />,
       path: '/accounting',
       submenu: [
-        { title: 'Dashboard', path: '/accounting' },
-        { title: 'Chart of Accounts', path: '/accounting/chart-of-accounts' },
-        { title: 'Income', path: '/accounting/income' },
-        { title: 'Expenses', path: '/accounting/expenses' },
+        { title: t('nav.dashboard'), path: '/accounting' },
+        { title: t('nav.chartOfAccounts'), path: '/accounting/chart-of-accounts' },
+        { title: t('nav.income'), path: '/accounting/income' },
+        { title: t('nav.expenses'), path: '/accounting/expenses' },
       ],
     },
     {
-      title: 'Maintenance',
+      title: t('nav.maintenance'),
       icon: <Wrench className="w-5 h-5" />,
       path: '/maintenance',
       submenu: [
-        { title: 'Dashboard', path: '/maintenance' },
-        { title: 'Service Requests', path: '/maintenance/requests' },
-        { title: 'Work Orders', path: '/maintenance/work-orders' },
-        { title: 'Violations & Code', path: '/maintenance/violations' },
-        { title: 'Inspections', path: '/inspections' },
-        { title: 'Vendors', path: '/vendors' },
+        { title: t('nav.dashboard'), path: '/maintenance' },
+        { title: t('nav.serviceRequests'), path: '/maintenance/requests' },
+        { title: t('nav.workOrders'), path: '/maintenance/work-orders' },
+        { title: t('nav.violationsAndCode'), path: '/maintenance/violations' },
+        { title: t('nav.inspections'), path: '/inspections' },
+        { title: t('nav.vendors'), path: '/vendors' },
       ],
     },
     {
-      title: 'Reports',
+      title: t('nav.reports'),
       icon: <BarChart3 className="w-5 h-5" />,
       path: '/reports',
     },
     {
-      title: 'Communication',
+      title: t('nav.communication'),
       icon: <MessageSquare className="w-5 h-5" />,
       path: '/communication',
     },
     {
-      title: 'AI Assistant',
+      title: t('nav.aiAssistant'),
       icon: <Bot className="w-5 h-5" />,
       path: '/ai/assistant',
     },
     {
-      title: 'Company Settings',
+      title: t('nav.companySettings'),
       icon: <Settings className="w-5 h-5" />,
       path: '/admin',
       submenu: [
-        { title: 'Company Profile', path: '/admin/company-settings' },
-        { title: 'Users & Roles', path: '/admin/users' },
-        { title: 'Roles & Permissions', path: '/admin/roles' },
-        { title: 'Payment Settings', path: '/admin/payment-settings' },
-        { title: 'Integrations Marketplace', path: '/admin/integrations' },
-        { title: 'Connected Apps (QuickBooks)', path: '/platform-integrations/connected' },
+        { title: t('nav.companyProfile'), path: '/admin/company-settings' },
+        { title: t('nav.usersAndRoles'), path: '/admin/users' },
+        { title: t('nav.rolesAndPermissions'), path: '/admin/roles' },
+        { title: t('nav.paymentSettings'), path: '/admin/payment-settings' },
+        { title: t('nav.integrationsMarketplace'), path: '/admin/integrations' },
+        { title: t('nav.connectedApps'), path: '/platform-integrations/connected' },
       ],
     },
   ];
 
   // --- COLLECTION MANAGER MENU ITEMS ---
   const collectionManagerMenuItems: MenuItem[] = [
-    { title: 'Dashboard', icon: <LayoutDashboard className="w-5 h-5" />, path: '/' },
+    { title: t('nav.dashboard'), icon: <LayoutDashboard className="w-5 h-5" />, path: '/' },
     {
-      title: 'Tenant Invoices',
+      title: t('nav.tenantInvoices'),
       icon: <FileText className="w-5 h-5" />,
       path: '/invoices',
     },
     {
-      title: 'Payment History',
+      title: t('nav.paymentHistory'),
       icon: <CreditCard className="w-5 h-5" />,
       path: '/payments',
     },
     {
-      title: 'Tenant Ledger',
+      title: t('nav.tenantLedger'),
       icon: <BookOpen className="w-5 h-5" />,
       path: '/rent-ledger',
     },
@@ -422,7 +424,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-rose-500 hover:bg-rose-500/10 transition-all uppercase tracking-wider"
           >
             <LogOut className="w-5 h-5" />
-            {isSidebarOpen && <span>Log Out</span>}
+            {isSidebarOpen && <span>{t('header.logout')}</span>}
           </button>
         </div>
       </aside>
@@ -500,7 +502,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                 className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-rose-500 hover:bg-rose-500/10 transition-colors uppercase tracking-wider"
               >
                 <LogOut className="w-5 h-5" />
-                <span>Log Out</span>
+                <span>{t('header.logout')}</span>
               </button>
             </div>
           </div>
@@ -542,7 +544,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
           <div className="flex items-center space-x-3">
             {/* Theme Toggle */}
-            <Button variant="ghost" size="icon" onClick={toggleTheme} title="Toggle theme">
+            <Button variant="ghost" size="icon" onClick={toggleTheme} title={t('header.toggleTheme')}>
               {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
             </Button>
 
@@ -565,14 +567,14 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               {showNotifications && (
                 <div className="absolute right-0 top-12 z-50 w-80 rounded-xl border border-border bg-card shadow-2xl p-4 animate-fade-in text-foreground">
                   <div className="flex items-center justify-between pb-2 border-b border-border/80">
-                    <h4 className="font-bold text-sm">Notifications</h4>
+                    <h4 className="font-bold text-sm">{t('header.notifications')}</h4>
                     <div className="flex space-x-2 text-xs font-semibold text-primary">
                       <button onClick={() => markAllAsRead(displayRole)} className="hover:underline">
-                        Read All
+                        {t('header.readAll')}
                       </button>
                       <span>•</span>
                       <button onClick={() => clearAll(displayRole)} className="hover:underline text-muted-foreground">
-                        Clear
+                        {t('header.clear')}
                       </button>
                     </div>
                   </div>
@@ -580,7 +582,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                   <div className="mt-2 space-y-2 max-h-64 overflow-y-auto">
                     {roleNotifications.length === 0 ? (
                       <p className="text-center text-xs text-muted-foreground py-6">
-                        No notifications
+                        {t('header.noNotifications')}
                       </p>
                     ) : (
                       roleNotifications.map((n) => (
@@ -652,7 +654,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                       className="w-full text-left px-2 py-1.5 rounded hover:bg-muted text-xs font-semibold flex items-center space-x-2"
                     >
                       <Settings className="w-4 h-4 text-muted-foreground" />
-                      <span>Account Settings</span>
+                      <span>{t('header.accountSettings')}</span>
                     </button>
                     <button
                       onClick={() => {
@@ -663,7 +665,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                       className="w-full text-left px-2 py-1.5 rounded hover:bg-rose-500/10 text-rose-500 hover:text-rose-600 text-xs font-semibold flex items-center space-x-2"
                     >
                       <LogOut className="w-4 h-4" />
-                      <span>Log Out</span>
+                      <span>{t('header.logout')}</span>
                     </button>
                   </div>
                 </div>

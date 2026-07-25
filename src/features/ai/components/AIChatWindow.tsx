@@ -6,6 +6,7 @@ import { AIResponseCard } from './AIResponseCard';
 import { Input } from '../../../components/ui/Input';
 import { Button } from '../../../components/ui/Button';
 import { Send, Plus, Search, Trash2, Edit2, Download, Bot, Settings, Sparkles } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface Message {
   id: string;
@@ -25,6 +26,7 @@ export const AIChatWindow: React.FC<AIChatWindowProps> = ({
   moduleName,
   suggestedQuestions = [],
 }) => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -59,7 +61,7 @@ export const AIChatWindow: React.FC<AIChatWindowProps> = ({
       queryClient.invalidateQueries({ queryKey: ['conversations-list'] });
       setSelectedChatId(newChat.id);
       setMessages([
-        { id: 'welcome', sender: 'AI', text: `Hello! I am your ${moduleName} AI Agent. How can I help you today?` }
+        { id: 'welcome', sender: 'AI', text: t('ai.chat.hello', { moduleName }) }
       ]);
     },
   });
@@ -76,7 +78,7 @@ export const AIChatWindow: React.FC<AIChatWindowProps> = ({
   useEffect(() => {
     if (selectedChatId) {
       setMessages([
-        { id: 'welcome', sender: 'AI', text: `Welcome back. Ask me any analytical question regarding ${moduleName} operations.` }
+        { id: 'welcome', sender: 'AI', text: t('ai.chat.welcomeBack', { moduleName }) }
       ]);
     }
   }, [selectedChatId, moduleName]);
@@ -123,7 +125,7 @@ export const AIChatWindow: React.FC<AIChatWindowProps> = ({
         <div className="space-y-4 flex-1 flex flex-col overflow-hidden">
           <div className="flex justify-between items-center">
             <h3 className="font-bold text-sm text-foreground flex items-center gap-1">
-              <Bot className="w-4 h-4 text-primary" /> Discussions
+              <Bot className="w-4 h-4 text-primary" /> {t('ai.chat.discussions')}
             </h3>
             <Button size="sm" variant="outline" onClick={() => createChatMutation.mutate()} className="h-8 px-2 font-semibold">
               <Plus className="w-3.5 h-3.5" />
@@ -133,7 +135,7 @@ export const AIChatWindow: React.FC<AIChatWindowProps> = ({
           <div className="relative">
             <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-muted-foreground" />
             <Input
-              placeholder="Search..."
+              placeholder={t('ai.chat.search')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-8 text-xs h-9"
@@ -142,7 +144,7 @@ export const AIChatWindow: React.FC<AIChatWindowProps> = ({
 
           <div className="flex-1 overflow-y-auto space-y-1.5 pr-1">
             {loadingConvs ? (
-              <span className="text-xs text-muted-foreground font-medium">Loading history...</span>
+              <span className="text-xs text-muted-foreground font-medium">{t('ai.chat.loadingHistory')}</span>
             ) : (
               filteredConversations.map((c) => (
                 <div
@@ -175,10 +177,10 @@ export const AIChatWindow: React.FC<AIChatWindowProps> = ({
         <div className="flex justify-between items-center px-4 py-3 border-b border-border bg-muted/20">
           <div className="flex items-center space-x-2">
             <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
-            <span className="text-xs font-bold text-foreground capitalize">{moduleName} AI Agent</span>
+            <span className="text-xs font-bold text-foreground capitalize">{moduleName} {t('ai.title')}</span>
           </div>
           <Button variant="outline" size="sm" onClick={handleExport} className="font-semibold text-xs h-8 flex items-center gap-1">
-            <Download className="w-3.5 h-3.5" /> Export
+            <Download className="w-3.5 h-3.5" /> {t('ai.chat.export')}
           </Button>
         </div>
 
@@ -187,8 +189,8 @@ export const AIChatWindow: React.FC<AIChatWindowProps> = ({
           {messages.length <= 1 && (
             <div className="text-center py-8 space-y-2">
               <Bot className="w-8 h-8 text-primary mx-auto opacity-75" />
-              <p className="text-xs font-bold text-foreground">AI Assistant is ready to help you manage your properties.</p>
-              <p className="text-[10px] text-muted-foreground font-medium">Ask a question or choose one of the suggested prompts.</p>
+              <p className="text-xs font-bold text-foreground">{t('ai.chat.agentReady')}</p>
+              <p className="text-[10px] text-muted-foreground font-medium">{t('ai.chat.askQuestion')}</p>
             </div>
           )}
 
@@ -209,7 +211,7 @@ export const AIChatWindow: React.FC<AIChatWindowProps> = ({
           {loading && (
             <div className="flex items-center space-x-2 text-muted-foreground/60 text-xs p-3 animate-pulse">
               <Bot className="w-4 h-4 text-primary animate-bounce" />
-              <span>AI is generating response...</span>
+              <span>{t('ai.chat.generating')}</span>
             </div>
           )}
           <div ref={messagesEndRef} />
@@ -242,7 +244,7 @@ export const AIChatWindow: React.FC<AIChatWindowProps> = ({
                   handleSend(input);
                 }
               }}
-              placeholder="Type a message or select a suggestion..."
+              placeholder={t('ai.chat.typeMessage')}
               disabled={loading}
               rows={1}
               maxLength={4000}
@@ -250,10 +252,10 @@ export const AIChatWindow: React.FC<AIChatWindowProps> = ({
             />
             <div className="flex space-x-1.5">
               <Button type="button" variant="outline" size="sm" onClick={() => setInput('')} disabled={loading} className="font-semibold text-xs h-9">
-                Clear
+                {t('ai.chat.clear')}
               </Button>
               <Button type="submit" disabled={loading || !input.trim()} className="bg-primary text-primary-foreground font-semibold flex items-center gap-1 h-9 text-xs">
-                <Send className="w-4 h-4" /> Send
+                <Send className="w-4 h-4" /> {t('ai.chat.send')}
               </Button>
             </div>
           </form>
@@ -269,7 +271,7 @@ export const AIChatWindow: React.FC<AIChatWindowProps> = ({
       <div className="bg-card border border-border rounded-2xl p-5 space-y-6 overflow-y-auto h-full">
         <div>
           <h4 className="font-bold text-xs text-muted-foreground uppercase tracking-widest mb-3 flex items-center gap-1">
-            <Sparkles className="w-3.5 h-3.5 text-primary" /> Suggested Prompts
+            <Sparkles className="w-3.5 h-3.5 text-primary" /> {t('ai.chat.suggestedPrompts')}
           </h4>
           <div className="space-y-2">
             {suggestedQuestions.map((q) => (
@@ -286,20 +288,20 @@ export const AIChatWindow: React.FC<AIChatWindowProps> = ({
 
         <div className="border-t border-border pt-4 space-y-3">
           <h4 className="font-bold text-xs text-muted-foreground uppercase tracking-widest flex items-center gap-1">
-            <Settings className="w-3.5 h-3.5 text-primary" /> Parameters
+            <Settings className="w-3.5 h-3.5 text-primary" /> {t('ai.chat.parameters')}
           </h4>
           <div className="text-[11px] font-semibold text-muted-foreground space-y-1.5 bg-secondary/35 p-3 rounded-lg border border-border">
             <div className="flex justify-between">
-              <span>Agent Model:</span>
+              <span>{t('ai.chat.agentModel')}</span>
               <span className="text-foreground">DoorLoop-LLM-3.5</span>
             </div>
             <div className="flex justify-between">
-              <span>Temperature:</span>
+              <span>{t('ai.chat.temperature')}</span>
               <span className="text-foreground">0.2 (Analytical)</span>
             </div>
             <div className="flex justify-between">
-              <span>Knowledge base:</span>
-              <span className="text-emerald-600">Sync Complete</span>
+              <span>{t('ai.chat.knowledgeBase')}</span>
+              <span className="text-emerald-600">{t('ai.chat.syncComplete')}</span>
             </div>
           </div>
         </div>
