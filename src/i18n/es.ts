@@ -524,5 +524,28 @@ export const es = {
     targetMonthlyRent: "Renta Mensual Objetivo ($)",
     cancel: "Cancelar",
     confirmDeleteDesc: "¿Está seguro de que desea eliminar esta propiedad? Esta acción es irreversible."
+  },
+  superAdmin: {
+    title: "Panel de Control de la Plataforma SaaS",
+    desc: "Administración global del sistema, salud operativa y estadísticas de suscripciones de empresas.",
+    platformHome: "Inicio de Plataforma",
+    saasDashboard: "Panel SaaS",
+    syncMetrics: "Sincronizar Métricas",
+    activeCompanies: "Empresas Activas",
+    thisMonth: "este mes",
+    activeUsers: "Usuarios Activos",
+    weeklySignups: "registros semanales",
+    mrrRevenue: "MRR (Ingresos)",
+    mmGrowth: "crecimiento m/m",
+    activeSubscriptions: "Suscripciones Activas",
+    retentionRate: "tasa de retención",
+    mrrGrowthTitle: "Crecimiento de Ingresos Recurrentes Mensuales (MRR)",
+    planDistributionTitle: "Distribución de Planes de Suscripción",
+    userGrowthTitle: "Crecimiento de Empresas y Registros de Usuarios Globales",
+    activeCompaniesLegend: "Empresas Activas",
+    totalRegisteredUsers: "Usuarios Registrados Totales",
+    basicPlan: "Plan Básico",
+    proPlan: "Plan Pro",
+    enterprisePlan: "Plan Enterprise"
   }
 };

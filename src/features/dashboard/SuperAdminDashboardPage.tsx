@@ -9,8 +9,10 @@ import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, 
   BarChart as ReBarChart, Bar, Legend, PieChart, Pie, Cell 
 } from 'recharts';
+import { useTranslation } from 'react-i18next';
 
 export const SuperAdminDashboardPage: React.FC = () => {
+  const { t } = useTranslation();
   // Static Mock Data for SaaS Platform
   const metrics = {
     activeCompanies: 142,
@@ -39,9 +41,9 @@ export const SuperAdminDashboardPage: React.FC = () => {
   ];
 
   const planDistribution = [
-    { name: 'Basic Plan', value: 45 },
-    { name: 'Pro Plan', value: 72 },
-    { name: 'Enterprise Plan', value: 21 },
+    { name: t('superAdmin.basicPlan'), value: 45 },
+    { name: t('superAdmin.proPlan'), value: 72 },
+    { name: t('superAdmin.enterprisePlan'), value: 21 },
   ];
 
   const COLORS = ['#3b82f6', '#10b981', '#8b5cf6'];
@@ -49,14 +51,14 @@ export const SuperAdminDashboardPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="SaaS Platform Control Panel"
-        description="Global system administration, operational health, and company subscriptions statistics."
+        title={t('superAdmin.title')}
+        description={t('superAdmin.desc')}
         breadcrumbs={[
-          { label: 'Platform Home', href: '/' },
-          { label: 'SaaS Dashboard' }
+          { label: t('superAdmin.platformHome'), href: '/' },
+          { label: t('superAdmin.saasDashboard') }
         ]}
         action={{
-          label: 'Sync Metrics',
+          label: t('superAdmin.syncMetrics'),
           onClick: () => {},
           icon: <RefreshCw className="w-4 h-4" />,
           variant: 'outline'
@@ -66,43 +68,43 @@ export const SuperAdminDashboardPage: React.FC = () => {
       {/* --- SaaS STATS GRID --- */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard
-          title="Active Companies"
+          title={t('superAdmin.activeCompanies')}
           value={metrics.activeCompanies}
           icon={<Building2 className="w-5 h-5" />}
           trend="up"
           trendLabel="+12 new"
-          description="this month"
+          description={t('superAdmin.thisMonth')}
         />
         <StatsCard
-          title="Active Users"
+          title={t('superAdmin.activeUsers')}
           value={metrics.activeUsers.toLocaleString()}
           icon={<Users className="w-5 h-5" />}
           trend="up"
           trendLabel="+142 new"
-          description="weekly signups"
+          description={t('superAdmin.weeklySignups')}
         />
         <StatsCard
-          title="MRR (Revenue)"
+          title={t('superAdmin.mrrRevenue')}
           value={`$${metrics.monthlyRecurringRevenue.toLocaleString()}`}
           icon={<CreditCard className="w-5 h-5" />}
           trend="up"
           trendLabel="+8.4%"
-          description="m/m growth"
+          description={t('superAdmin.mmGrowth')}
         />
         <StatsCard
-          title="Active Subscriptions"
+          title={t('superAdmin.activeSubscriptions')}
           value={metrics.activeSubscriptions}
           icon={<BarChart3 className="w-5 h-5" />}
           trend="up"
           trendLabel="98.5%"
-          description="retention rate"
+          description={t('superAdmin.retentionRate')}
         />
       </div>
 
       {/* --- SaaS CHARTS GRID --- */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <ChartCard title="Monthly Recurring Revenue (MRR) Growth">
+          <ChartCard title={t('superAdmin.mrrGrowthTitle')}>
             <div className="h-80 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={revenueData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -130,7 +132,7 @@ export const SuperAdminDashboardPage: React.FC = () => {
           </ChartCard>
         </div>
 
-        <ChartCard title="Subscription Plan Distribution">
+        <ChartCard title={t('superAdmin.planDistributionTitle')}>
           <div className="h-80 w-full flex flex-col justify-between">
             <div className="h-60 w-full">
               <ResponsiveContainer width="100%" height="100%">
@@ -174,7 +176,7 @@ export const SuperAdminDashboardPage: React.FC = () => {
       {/* --- PLATFORM USERS AND GROWTH CHART --- */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-3">
-          <ChartCard title="Companies & Global User Signups Growth">
+          <ChartCard title={t('superAdmin.userGrowthTitle')}>
             <div className="h-80 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <ReBarChart data={growthData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -191,8 +193,8 @@ export const SuperAdminDashboardPage: React.FC = () => {
                     }} 
                   />
                 <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '11px' }} />
-                <Bar yAxisId="left" dataKey="companies" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Active Companies" />
-                <Bar yAxisId="right" dataKey="users" fill="#10b981" radius={[4, 4, 0, 0]} name="Total Registered Users" />
+                <Bar yAxisId="left" dataKey="companies" fill="#3b82f6" radius={[4, 4, 0, 0]} name={t('superAdmin.activeCompaniesLegend')} />
+                <Bar yAxisId="right" dataKey="users" fill="#10b981" radius={[4, 4, 0, 0]} name={t('superAdmin.totalRegisteredUsers')} />
               </ReBarChart>
             </ResponsiveContainer>
           </div>

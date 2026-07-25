@@ -524,5 +524,28 @@ export const en = {
     targetMonthlyRent: "Target Monthly Rent ($)",
     cancel: "Cancel",
     confirmDeleteDesc: "Are you sure you want to delete this property? This action is irreversible."
+  },
+  superAdmin: {
+    title: "SaaS Platform Control Panel",
+    desc: "Global system administration, operational health, and company subscriptions statistics.",
+    platformHome: "Platform Home",
+    saasDashboard: "SaaS Dashboard",
+    syncMetrics: "Sync Metrics",
+    activeCompanies: "Active Companies",
+    thisMonth: "this month",
+    activeUsers: "Active Users",
+    weeklySignups: "weekly signups",
+    mrrRevenue: "MRR (Revenue)",
+    mmGrowth: "m/m growth",
+    activeSubscriptions: "Active Subscriptions",
+    retentionRate: "retention rate",
+    mrrGrowthTitle: "Monthly Recurring Revenue (MRR) Growth",
+    planDistributionTitle: "Subscription Plan Distribution",
+    userGrowthTitle: "Companies & Global User Signups Growth",
+    activeCompaniesLegend: "Active Companies",
+    totalRegisteredUsers: "Total Registered Users",
+    basicPlan: "Basic Plan",
+    proPlan: "Pro Plan",
+    enterprisePlan: "Enterprise Plan"
   }
 };
