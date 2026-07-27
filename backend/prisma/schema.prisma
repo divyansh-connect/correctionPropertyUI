@@ -1,0 +1,371 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// --- Enums ---
+enum PropertyType {
+  Apartment
+  Commercial
+  SingleFamily
+  MultiFamily
+  HOA
+}
+
+enum UnitStatus {
+  Occupied
+  Vacant
+  Reserved
+  UnderMaintenance
+}
+
+enum TenantStatus {
+  Active
+  Inactive
+  Pending
+}
+
+enum LeaseStatus {
+  Active
+  Pending
+  Expired
+  Terminated
+}
+
+enum PaymentStatus {
+  Pending
+  Paid
+  PartiallyPaid
+  Failed
+  Refunded
+  Voided
+}
+
+enum PaymentMethod {
+  ACH
+  CreditCard
+  BankTransfer
+  Cash
+  Check
+}
+
+enum WorkOrderStatus {
+  Open
+  InProgress
+  Completed
+  Cancelled
+}
+
+enum Priority {
+  Low
+  Normal
+  High
+  Emergency
+}
+
+// --- User & RBAC Models ---
+model User {
+  id           String           @id @default(uuid())
+  email        String           @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  phone        String?
+  roleId       String
+  role         Role             @relation(fields: [roleId], references: [id])
+  status       String           @default("Active")
+  lastLogin    DateTime?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  assignments  UserAssignment[]
+  auditLogs    AuditLog[]
+
+  @@map("users")
+}
+
+model Role {
+  id          String       @id @default(uuid())
+  name        String       @unique
+  description String?      @db.Text
+  isCustom    Boolean      @default(false)
+  permissions Permission[]
+  users       User[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id         String   @id @default(uuid())
+  roleId     String
+  role       Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  module     String   // e.g. "Properties", "Leasing", "Accounting"
+  canView    Boolean  @default(false)
+  canCreate  Boolean  @default(false)
+  canEdit    Boolean  @default(false)
+  canDelete  Boolean  @default(false)
+  canApprove Boolean  @default(false)
+  canExport  Boolean  @default(false)
+
+  @@unique([roleId, module])
+  @@map("permissions")
+}
+
+model UserAssignment {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  propertyId String?
+  buildingId String?
+  unitId     String?
+
+  @@map("user_assignments")
+}
+
+// --- Real Estate Core Models ---
+model Owner {
+  id                   String              @id @default(uuid())
+  firstName            String
+  lastName             String
+  email                String              @unique
+  phone                String
+  payoutMethod         String              @default("ACH/Direct Deposit")
+  propertiesOwnedCount Int                 @default(0)
+  createdAt            DateTime            @default(now())
+
+  properties           Property[]
+  distributions        OwnerDistribution[]
+
+  @@map("owners")
+}
+
+model Property {
+  id                  String       @id @default(uuid())
+  name                String
+  type                PropertyType @default(Apartment)
+  status              String       @default("Active")
+  ownerId             String
+  owner               Owner        @relation(fields: [ownerId], references: [id])
+  ownershipPercentage Float        @default(100)
+  managementCompany   String       @default("Apex Property Management")
+  address             String
+  streetAddress       String
+  city                String
+  state               String
+  country             String       @default("USA")
+  zip                 String
+  unitsCount          Int          @default(0)
+  occupiedUnits       Int          @default(0)
+  occupancyRate       Float        @default(0)
+  monthlyRevenue      Float        @default(0)
+  yearBuilt           Int
+  totalBuildings      Int          @default(1)
+  squareFootage       Float
+  purchasePrice       Float
+  currentValue        Float
+  monthlyExpenses     Float        @default(0)
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+
+  buildings           Building[]
+  units               Unit[]
+  leases              Lease[]
+  rentPayments        RentPayment[]
+  workOrders          WorkOrder[]
+
+  @@map("properties")
+}
+
+model Building {
+  id            String   @id @default(uuid())
+  propertyId    String
+  property      Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  name          String
+  floors        Int      @default(1)
+  unitsCount    Int      @default(0)
+  occupancyRate Float    @default(0)
+
+  units         Unit[]
+
+  @@map("buildings")
+}
+
+model Unit {
+  id               String     @id @default(uuid())
+  propertyId       String
+  property         Property   @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  buildingId       String
+  building         Building   @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+  unitNumber       String
+  floor            Int
+  bedrooms         Int
+  bathrooms        Float
+  squareFootage    Float
+  rentAmount       Float
+  securityDeposit  Float
+  availabilityDate DateTime
+  status           UnitStatus @default(Vacant)
+
+  tenants          Tenant[]
+  leases           Lease[]
+  rentPayments     RentPayment[]
+
+  @@map("units")
+}
+
+model Tenant {
+  id        String       @id @default(uuid())
+  firstName String
+  lastName  String
+  email     String       @unique
+  phone     String
+  unitId    String?
+  unit      Unit?        @relation(fields: [unitId], references: [id])
+  status    TenantStatus @default(Pending)
+  createdAt DateTime     @default(now())
+
+  leases   Lease[]
+  payments RentPayment[]
+
+  @@map("tenants")
+}
+
+model Lease {
+  id            String      @id @default(uuid())
+  tenantId      String
+  tenant        Tenant      @relation(fields: [tenantId], references: [id])
+  propertyId    String
+  property      Property    @relation(fields: [propertyId], references: [id])
+  unitId        String
+  unit          Unit        @relation(fields: [unitId], references: [id])
+  startDate     DateTime
+  endDate       DateTime
+  rentAmount    Float
+  depositAmount Float
+  status        LeaseStatus @default(Pending)
+
+  payments RentPayment[]
+
+  @@map("leases")
+}
+
+// --- Billing & Accounting Models ---
+model RentPayment {
+  id              String        @id @default(uuid())
+  tenantId        String
+  tenant          Tenant        @relation(fields: [tenantId], references: [id])
+  propertyId      String
+  property        Property      @relation(fields: [propertyId], references: [id])
+  unitId          String
+  unit            Unit          @relation(fields: [unitId], references: [id])
+  leaseId         String
+  lease           Lease         @relation(fields: [leaseId], references: [id])
+  amount          Float
+  dueDate         DateTime
+  paidDate        DateTime?
+  status          PaymentStatus @default(Pending)
+  paymentMethod   PaymentMethod @default(ACH)
+  referenceNumber String?
+  createdBy       String        @default("System")
+
+  @@map("rent_payments")
+}
+
+model CoAAccount {
+  id          String   @id @default(uuid())
+  accountCode String   @unique
+  accountName String
+  type        String   // Asset, Liability, Equity, Revenue, Expense
+  subType     String?
+  balance     Float    @default(0)
+  isActive    Boolean  @default(true)
+
+  journalLines JournalEntryLine[]
+
+  @@map("coa_accounts")
+}
+
+model JournalEntry {
+  id          String             @id @default(uuid())
+  entryNumber String             @unique
+  date        DateTime
+  description String             @db.Text
+  reference   String?
+  lines       JournalEntryLine[]
+
+  @@map("journal_entries")
+}
+
+model JournalEntryLine {
+  id             String       @id @default(uuid())
+  journalEntryId String
+  journalEntry   JournalEntry @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
+  accountId      String
+  account        CoAAccount   @relation(fields: [accountId], references: [id])
+  debit          Float        @default(0)
+  credit         Float        @default(0)
+
+  @@map("journal_entry_lines")
+}
+
+// --- Maintenance & Operations Models ---
+model Vendor {
+  id          String      @id @default(uuid())
+  companyName String
+  contactName String
+  email       String
+  phone       String
+  serviceType String
+  rating      Float       @default(5.0)
+
+  workOrders  WorkOrder[]
+
+  @@map("vendors")
+}
+
+model WorkOrder {
+  id            String          @id @default(uuid())
+  propertyId    String
+  property      Property        @relation(fields: [propertyId], references: [id])
+  title         String
+  description   String          @db.Text
+  vendorId      String?
+  vendor        Vendor?         @relation(fields: [vendorId], references: [id])
+  priority      Priority        @default(Normal)
+  status        WorkOrderStatus @default(Open)
+  estimatedCost Float?
+  actualCost    Float?
+  createdAt     DateTime        @default(now())
+
+  @@map("work_orders")
+}
+
+model OwnerDistribution {
+  id            String   @id @default(uuid())
+  ownerId       String
+  owner         Owner    @relation(fields: [ownerId], references: [id])
+  period        String
+  amount        Float
+  status        String   @default("Completed")
+  processedDate DateTime @default(now())
+
+  @@map("owner_distributions")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  timestamp DateTime @default(now())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  action    String
+  module    String
+  object    String
+  ip        String
+  status    String   @default("Success")
+
+  @@map("audit_logs")
+}

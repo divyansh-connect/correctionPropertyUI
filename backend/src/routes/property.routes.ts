@@ -1,0 +1,12 @@
+import { Router } from 'express';
+import { propertyController } from '../controllers/property.controller.js';
+import { authMiddleware } from '../middlewares/auth.middleware.js';
+import { rbacGuard } from '../middlewares/rbac.middleware.js';
+
+const router = Router();
+
+router.get('/', (req, res, next) => propertyController.getAll(req, res, next));
+router.get('/:id', (req, res, next) => propertyController.getById(req, res, next));
+router.post('/', (req, res, next) => propertyController.create(req, res, next));
+
+export default router;

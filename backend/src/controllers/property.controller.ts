@@ -1,0 +1,35 @@
+import { Request, Response, NextFunction } from 'express';
+import { propertyService } from '../services/property.service.js';
+import { sendSuccess } from '../utils/apiResponse.js';
+
+export class PropertyController {
+  async getAll(req: Request, res: Response, next: NextFunction) {
+    try {
+      const properties = await propertyService.getAllProperties();
+      return sendSuccess({ res, data: properties });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getById(req: Request, res: Response, next: NextFunction) {
+    try {
+      const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+      const property = await propertyService.getPropertyById(id);
+      return sendSuccess({ res, data: property });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async create(req: Request, res: Response, next: NextFunction) {
+    try {
+      const newProp = await propertyService.createProperty(req.body);
+      return sendSuccess({ res, statusCode: 201, data: newProp });
+    } catch (error) {
+      next(error);
+    }
+  }
+}
+
+export const propertyController = new PropertyController();
