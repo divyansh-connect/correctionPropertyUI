@@ -163,7 +163,7 @@ class InvoiceController {
 
   async update(req: Request, res: Response, next: NextFunction) {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const { status, paidAmount, balance, notes } = req.body;
 
       const invoice = await prisma.invoice.update({
@@ -192,7 +192,7 @@ class InvoiceController {
 
   async remove(req: Request, res: Response, next: NextFunction) {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       await prisma.invoice.delete({ where: { id } });
       return sendSuccess({ res, data: { deleted: true } });
     } catch (error) {

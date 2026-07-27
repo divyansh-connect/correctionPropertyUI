@@ -5,12 +5,15 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { Upload, FileText, X, CheckCircle } from 'lucide-react';
+import api from '../../api';
 
 export const DocsUploadPage: React.FC = () => {
   const [dragging, setDragging] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<string | null>(null);
   const [category, setCategory] = useState('Lease');
   const [docName, setDocName] = useState('');
+  const [description, setDescription] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
   const [uploaded, setUploaded] = useState(false);
 
   const handleDrop = (e: React.DragEvent) => {
@@ -25,9 +28,23 @@ export const DocsUploadPage: React.FC = () => {
     if (file) { setUploadedFile(file.name); setDocName(file.name); }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!uploadedFile) return;
-    setTimeout(() => setUploaded(true), 500);
+    setIsUploading(true);
+    try {
+      await api.documents.create({
+        name: docName || uploadedFile,
+        category: category,
+        fileUrl: `/uploads/${uploadedFile}`,
+        fileSize: '1.2 MB',
+        uploadedBy: 'Property Manager',
+      });
+      setUploaded(true);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -100,11 +117,18 @@ export const DocsUploadPage: React.FC = () => {
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-muted-foreground uppercase">Description</label>
-              <textarea className="w-full min-h-[80px] p-2.5 rounded-lg border bg-card text-foreground font-semibold" placeholder="Optional notes about this document..." />
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="w-full min-h-[80px] p-2.5 rounded-lg border bg-card text-foreground font-semibold"
+                placeholder="Optional notes about this document..."
+              />
             </div>
             <div className="flex justify-end gap-2 pt-2 border-t">
-              <Button variant="outline">Cancel</Button>
-              <Button onClick={handleSubmit} disabled={!uploadedFile}><Upload className="w-4 h-4 mr-2" /> Upload Document</Button>
+              <Button variant="outline" onClick={() => { setUploadedFile(null); setDocName(''); setDescription(''); }}>Cancel</Button>
+              <Button onClick={handleSubmit} disabled={!uploadedFile || isUploading}>
+                <Upload className="w-4 h-4 mr-2" /> {isUploading ? 'Uploading...' : 'Upload Document'}
+              </Button>
             </div>
           </Card>
         </div>

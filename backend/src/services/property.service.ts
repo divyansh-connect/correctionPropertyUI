@@ -28,26 +28,47 @@ export class PropertyService {
 
   async createProperty(data: any) {
     let ownerId = data.ownerId;
-    if (!ownerId) {
+    let ownerExists = false;
+
+    if (ownerId) {
+      try {
+        const owner = await prisma.owner.findUnique({
+          where: { id: ownerId },
+        });
+        if (owner) {
+          ownerExists = true;
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    if (!ownerExists) {
       const firstOwner = await prisma.owner.findFirst();
       if (firstOwner) {
         ownerId = firstOwner.id;
       } else {
-        const newOwner = await prisma.owner.create({
+        const defaultOwner = await prisma.owner.create({
           data: {
-            name: 'Primary Owner',
-            email: 'owner@apexpm.com',
+            firstName: 'Default',
+            lastName: 'Owner',
+            email: 'default.owner@example.com',
             phone: '555-0100',
-          },
+          }
         });
-        ownerId = newOwner.id;
+        ownerId = defaultOwner.id;
       }
     }
 
+    let typeVal = (data.type || 'Apartment').replace(/\s+/g, '');
+    const validTypes = ['Apartment', 'Commercial', 'SingleFamily', 'MultiFamily', 'HOA'];
+    if (!validTypes.includes(typeVal)) {
+      typeVal = 'Apartment';
+    }
     return prisma.property.create({
       data: {
         name: data.name,
-        type: data.type || 'Apartment',
+        type: typeVal as any,
         status: data.status || 'Active',
         ownerId: ownerId,
         ownershipPercentage: data.ownershipPercentage || 100,

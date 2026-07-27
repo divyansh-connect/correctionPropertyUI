@@ -57,4 +57,46 @@ router.post('/staff/profile', (req, res, next) => portalController.updateStaffPr
 router.get('/staff/tasks', (req, res, next) => portalController.getStaffTasks(req, res, next));
 router.post('/staff/tasks/:id/status', (req, res, next) => portalController.updateStaffTaskStatus(req, res, next));
 
+// Invoices
+router.get('/invoices', (req, res, next) => portalController.getInvoices(req, res, next));
+router.post('/invoices', (req, res, next) => portalController.createInvoice(req, res, next));
+router.delete('/invoices/:id', (req, res, next) => portalController.deleteInvoice(req, res, next));
+
+// Charges
+router.get('/charges', (req, res, next) => portalController.getCharges(req, res, next));
+router.post('/charges', (req, res, next) => portalController.createCharge(req, res, next));
+router.delete('/charges/:id', (req, res, next) => portalController.deleteCharge(req, res, next));
+
+// Deposits
+router.get('/deposits', (req, res, next) => portalController.getDeposits(req, res, next));
+router.post('/deposits', (req, res, next) => portalController.createDeposit(req, res, next));
+router.delete('/deposits/:id', (req, res, next) => portalController.deleteDeposit(req, res, next));
+
+// Expenses
+router.get('/expenses', (req, res, next) => portalController.getExpenses(req, res, next));
+router.post('/expenses', (req, res, next) => portalController.createExpense(req, res, next));
+router.delete('/expenses/:id', (req, res, next) => portalController.deleteExpense(req, res, next));
+
+// Maintenance Requests
+router.get('/maintenance/requests', (req, res, next) => portalController.getMaintenanceRequests(req, res, next));
+router.post('/maintenance/requests', (req, res, next) => portalController.createMaintenanceRequest(req, res, next));
+router.put('/maintenance/requests/:id', (req, res, next) => portalController.updateMaintenanceRequest(req, res, next));
+router.delete('/maintenance/requests/:id', (req, res, next) => portalController.deleteMaintenanceRequest(req, res, next));
+
+// Inspections
+router.get('/inspections', (req, res, next) => portalController.getInspections(req, res, next));
+router.post('/inspections', (req, res, next) => portalController.createInspection(req, res, next));
+router.put('/inspections/:id', (req, res, next) => portalController.updateInspection(req, res, next));
+router.delete('/inspections/:id', (req, res, next) => portalController.deleteInspection(req, res, next));
+
+// Income
+router.get('/income', (req, res, next) => portalController.getIncome(req, res, next));
+router.post('/income', (req, res, next) => portalController.createIncome(req, res, next));
+router.delete('/income/:id', (req, res, next) => portalController.deleteIncome(req, res, next));
+
+// Signatures
+router.get('/signatures', (req, res, next) => portalController.getSignatures(req, res, next));
+router.post('/signatures', (req, res, next) => portalController.createSignature(req, res, next));
+router.post('/signatures/:id/cancel', (req, res, next) => portalController.cancelSignature(req, res, next));
+
 export default router;

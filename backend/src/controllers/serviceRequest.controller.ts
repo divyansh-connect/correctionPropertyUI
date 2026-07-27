@@ -95,7 +95,7 @@ class ServiceRequestController {
 
   async getById(req: Request, res: Response, next: NextFunction) {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const request = await prisma.serviceRequest.findUnique({ where: { id } });
       if (!request) {
         return res.status(404).json({ success: false, error: { message: 'Service request not found' } });
@@ -151,7 +151,7 @@ class ServiceRequestController {
 
   async update(req: Request, res: Response, next: NextFunction) {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const { newMessage, status, priority, assignedVendorId, assignedVendorName, assignedTechnician, estimatedCost, cost, scheduledDate, notes } = req.body;
 
       // Get current messages if adding a new one
@@ -199,7 +199,7 @@ class ServiceRequestController {
 
   async remove(req: Request, res: Response, next: NextFunction) {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       await prisma.serviceRequest.delete({ where: { id } });
       return sendSuccess({ res, data: { deleted: true } });
     } catch (error) {

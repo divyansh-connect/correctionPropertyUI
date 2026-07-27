@@ -380,7 +380,7 @@ export class PortalController {
         let ownerId = firstOwner?.id;
         if (!ownerId) {
           const newOwner = await prisma.owner.create({
-            data: { name: 'Primary Investor', email: 'investor@apexpm.com', phone: '555-0100' },
+            data: { firstName: 'Primary', lastName: 'Investor', email: 'investor@apexpm.com', phone: '555-0100' },
           });
           ownerId = newOwner.id;
         }
@@ -979,6 +979,19 @@ export class PortalController {
     }
   }
 
+  // --- Invoices ---
+  async getInvoices(req: Request, res: Response, next: NextFunction) {
+    try {
+      const invoices = await prisma.invoice.findMany({
+        include: { tenant: true },
+        orderBy: { dueDate: 'asc' },
+      });
+      return sendSuccess({ res, data: invoices });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async createTenantMessage(req: Request, res: Response, next: NextFunction) {
     try {
       const { sender, recipient, subject, body } = req.body;
@@ -1004,6 +1017,103 @@ export class PortalController {
           body: newMsg.body,
         },
       });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async createInvoice(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { tenantId, amount, dueDate, status } = req.body;
+
+      const tenant = await prisma.tenant.findUnique({
+        where: { id: tenantId },
+        include: { leases: { include: { property: true } } }
+      });
+
+      const tenantName = tenant ? `${tenant.firstName} ${tenant.lastName}` : 'Unknown Tenant';
+      const lease = tenant?.leases?.[0];
+      const propertyId = lease?.propertyId || 'default-property';
+      const propertyName = lease?.property?.name || 'Unknown Property';
+
+      const invoice = await prisma.invoice.create({
+        data: {
+          tenantId,
+          tenantName,
+          propertyId,
+          propertyName,
+          amount: parseFloat(amount || '0'),
+          balance: parseFloat(amount || '0'),
+          dueDate: String(dueDate || new Date().toISOString().split('T')[0]),
+          status: status || 'Sent',
+        },
+      });
+      return sendSuccess({ res, statusCode: 201, data: invoice });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async deleteInvoice(req: Request, res: Response, next: NextFunction) {
+    try {
+      await prisma.invoice.delete({
+        where: { id: req.params.id as string },
+      });
+      return sendSuccess({ res, data: { success: true } });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // --- Charges ---
+  async getCharges(req: Request, res: Response, next: NextFunction) {
+    try {
+      const charges = await prisma.charge.findMany({
+        include: { tenant: true },
+        orderBy: { createdAt: 'desc' },
+      });
+      return sendSuccess({ res, data: charges });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async createCharge(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { tenantId, title, amount, status } = req.body;
+      const charge = await prisma.charge.create({
+        data: {
+          tenantId,
+          title,
+          amount: parseFloat(amount || '0'),
+          status: status || 'Active',
+        },
+      });
+      return sendSuccess({ res, statusCode: 201, data: charge });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async deleteCharge(req: Request, res: Response, next: NextFunction) {
+    try {
+      await prisma.charge.delete({
+        where: { id: req.params.id as string },
+      });
+      return sendSuccess({ res, data: { success: true } });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // --- Deposits ---
+  async getDeposits(req: Request, res: Response, next: NextFunction) {
+    try {
+      const deposits = await prisma.deposit.findMany({
+        include: { tenant: true },
+        orderBy: { createdAt: 'desc' },
+      });
+      return sendSuccess({ res, data: deposits });
     } catch (error) {
       next(error);
     }
@@ -1060,7 +1170,7 @@ export class PortalController {
 
   async markTenantNotificationRead(req: Request, res: Response, next: NextFunction) {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       if (id === 'all') {
         await prisma.tenantNotification.updateMany({
           data: { read: true },
@@ -1191,7 +1301,7 @@ export class PortalController {
               title: 'Plumbing Sink Leak Repair',
               description: 'Kitchen sink pipe leaking continuously.',
               priority: 'Normal',
-              status: 'In_Progress',
+              status: 'InProgress',
               propertyId: propertyId,
               estimatedCost: 120,
             },
@@ -1264,7 +1374,7 @@ export class PortalController {
 
   async updateStaffTaskStatus(req: Request, res: Response, next: NextFunction) {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const { status, actualCost, rejectReason, resolutionNotes } = req.body;
 
       // Map frontend status string → Prisma WorkOrderStatus enum value
@@ -1296,6 +1406,270 @@ export class PortalController {
       });
 
       return sendSuccess({ res, data: order });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async createDeposit(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { tenantId, amount, status } = req.body;
+      const deposit = await prisma.deposit.create({
+        data: {
+          tenantId,
+          amount: parseFloat(amount || '0'),
+          status: status || 'Held',
+        },
+      });
+      return sendSuccess({ res, statusCode: 201, data: deposit });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async deleteDeposit(req: Request, res: Response, next: NextFunction) {
+    try {
+      await prisma.deposit.delete({
+        where: { id: req.params.id as string },
+      });
+      return sendSuccess({ res, data: { success: true } });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // --- Expenses ---
+  async getExpenses(req: Request, res: Response, next: NextFunction) {
+    try {
+      const expenses = await prisma.expense.findMany({
+        orderBy: { date: 'desc' },
+      });
+      return sendSuccess({ res, data: expenses });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async createExpense(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { category, amount, date, description } = req.body;
+      const expense = await prisma.expense.create({
+        data: {
+          category,
+          amount: parseFloat(amount || '0'),
+          date: new Date(date || Date.now()),
+          description: description || '',
+        },
+      });
+      return sendSuccess({ res, statusCode: 201, data: expense });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async deleteExpense(req: Request, res: Response, next: NextFunction) {
+    try {
+      await prisma.expense.delete({
+        where: { id: req.params.id as string },
+      });
+      return sendSuccess({ res, data: { success: true } });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // --- Maintenance Requests ---
+  async getMaintenanceRequests(req: Request, res: Response, next: NextFunction) {
+    try {
+      const reqs = await prisma.maintenanceRequest.findMany({
+        orderBy: { createdAt: 'desc' },
+      });
+      return sendSuccess({ res, data: reqs });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async createMaintenanceRequest(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { title, description, propertyName, unitNumber, priority, status } = req.body;
+      const request = await prisma.maintenanceRequest.create({
+        data: {
+          title,
+          description,
+          propertyName,
+          unitNumber,
+          priority: priority || 'Normal',
+          status: status || 'New',
+        },
+      });
+      return sendSuccess({ res, statusCode: 201, data: request });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateMaintenanceRequest(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { status, priority, title, description } = req.body;
+      const request = await prisma.maintenanceRequest.update({
+        where: { id: req.params.id as string },
+        data: { status, priority, title, description },
+      });
+      return sendSuccess({ res, data: request });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async deleteMaintenanceRequest(req: Request, res: Response, next: NextFunction) {
+    try {
+      await prisma.maintenanceRequest.delete({
+        where: { id: req.params.id as string },
+      });
+      return sendSuccess({ res, data: { success: true } });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // --- Inspections ---
+  async getInspections(req: Request, res: Response, next: NextFunction) {
+    try {
+      const inspections = await prisma.inspection.findMany({
+        orderBy: { date: 'asc' },
+      });
+      return sendSuccess({ res, data: inspections });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async createInspection(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { propertyName, unitNumber, inspector, status, date } = req.body;
+      const inspection = await prisma.inspection.create({
+        data: {
+          propertyName,
+          unitNumber,
+          inspector,
+          status: status || 'Scheduled',
+          date: date ? new Date(date) : new Date(),
+        },
+      });
+      return sendSuccess({ res, statusCode: 201, data: inspection });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateInspection(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { status, date, inspector } = req.body;
+      const inspection = await prisma.inspection.update({
+        where: { id: req.params.id as string },
+        data: {
+          status,
+          date: date ? new Date(date) : undefined,
+          inspector,
+        },
+      });
+      return sendSuccess({ res, data: inspection });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async deleteInspection(req: Request, res: Response, next: NextFunction) {
+    try {
+      await prisma.inspection.delete({
+        where: { id: req.params.id as string },
+      });
+      return sendSuccess({ res, data: { success: true } });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // --- Income ---
+  async getIncome(req: Request, res: Response, next: NextFunction) {
+    try {
+      const incomes = await prisma.income.findMany({
+        orderBy: { date: 'desc' },
+      });
+      return sendSuccess({ res, data: incomes });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async createIncome(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { category, amount, date, description, status } = req.body;
+      const income = await prisma.income.create({
+        data: {
+          category,
+          amount: parseFloat(amount || '0'),
+          date: new Date(date || Date.now()),
+          description: description || '',
+          status: status || 'Cleared',
+        },
+      });
+      return sendSuccess({ res, statusCode: 201, data: income });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async deleteIncome(req: Request, res: Response, next: NextFunction) {
+    try {
+      await prisma.income.delete({
+        where: { id: req.params.id as string },
+      });
+      return sendSuccess({ res, data: { success: true } });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // --- Signatures ---
+  async getSignatures(req: Request, res: Response, next: NextFunction) {
+    try {
+      const signatures = await prisma.signature.findMany({
+        orderBy: { createdAt: 'desc' },
+      });
+      return sendSuccess({ res, data: signatures });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async createSignature(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { documentName, documentId, recipientName, recipientEmail, expiresAt } = req.body;
+      const signature = await prisma.signature.create({
+        data: {
+          documentName,
+          documentId,
+          recipientName,
+          recipientEmail,
+          status: 'Sent',
+          expiresAt: expiresAt ? new Date(expiresAt) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        },
+      });
+      return sendSuccess({ res, statusCode: 201, data: signature });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async cancelSignature(req: Request, res: Response, next: NextFunction) {
+    try {
+      const signature = await prisma.signature.update({
+        where: { id: req.params.id as string },
+        data: { status: 'Cancelled' },
+      });
+      return sendSuccess({ res, data: signature });
     } catch (error) {
       next(error);
     }

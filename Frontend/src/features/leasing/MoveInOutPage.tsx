@@ -1,5 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '../../api';
 import { PageHeader } from '../../components/PageHeader';
 import { Button } from '../../components/ui/Button';
 import { StatusBadge } from '../../components/StatusBadge';
@@ -21,15 +23,59 @@ interface MoveInOutPageProps {
 
 export const MoveInOutPage: React.FC<MoveInOutPageProps> = ({ type }) => {
   const { t } = useTranslation();
-  const [moves, setMoves] = React.useState<MoveEvent[]>([
-    { id: '1', tenantName: 'Alice Smith', propertyName: 'Oakridge Heights', unitNumber: '101', date: '2026-08-01', type: 'Move In', status: 'Scheduled' },
-    { id: '2', tenantName: 'Bob Garcia', propertyName: 'Sunset Villas', unitNumber: '204', date: '2026-07-31', type: 'Move Out', status: 'Pending Inspection' },
-    { id: '3', tenantName: 'Charlie Miller', propertyName: 'Lakeside Estates', unitNumber: '302', date: '2026-07-15', type: 'Move In', status: 'Completed' },
-  ]);
+  
+  // Load real Leases from backend database
+  const { data: leases = [], refetch } = useQuery({
+    queryKey: ['leases'],
+    queryFn: () => api.leasing.getLeases(),
+  });
 
   const [showForm, setShowForm] = React.useState(false);
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [form, setForm] = React.useState({ tenantName: '', propertyName: '', unitNumber: '', date: '', status: 'Scheduled' as MoveEvent['status'] });
+
+  // Map database leases dynamically to Move In and Move Out logs
+  const moves: MoveEvent[] = React.useMemo(() => {
+    const list: MoveEvent[] = [];
+    leases.forEach((lease: any) => {
+      const tenantName = lease.tenant ? `${lease.tenant.firstName} ${lease.tenant.lastName}` : 'Resident';
+      const propertyName = lease.property?.name || 'Property';
+      const unitNumber = lease.unit?.unitNumber || 'Unit';
+
+      // Move In event
+      list.push({
+        id: `${lease.id}-in`,
+        tenantName,
+        propertyName,
+        unitNumber,
+        date: lease.startDate ? lease.startDate.split('T')[0] : 'N/A',
+        type: 'Move In',
+        status: lease.status === 'Active' ? 'Completed' : 'Scheduled',
+      });
+
+      // Move Out event
+      list.push({
+        id: `${lease.id}-out`,
+        tenantName,
+        propertyName,
+        unitNumber,
+        date: lease.endDate ? lease.endDate.split('T')[0] : 'N/A',
+        type: 'Move Out',
+        status: lease.status === 'Terminated' || lease.status === 'Expired' ? 'Completed' : 'Scheduled',
+      });
+    });
+
+    // If database has no leases, show fallback mock data
+    if (list.length === 0) {
+      return [
+        { id: 'mock-1', tenantName: 'Alice Smith', propertyName: 'Oakridge Heights', unitNumber: '101', date: '2026-08-01', type: 'Move In', status: 'Scheduled' },
+        { id: 'mock-2', tenantName: 'Bob Garcia', propertyName: 'Sunset Villas', unitNumber: '204', date: '2026-07-31', type: 'Move Out', status: 'Pending Inspection' },
+        { id: 'mock-3', tenantName: 'Charlie Miller', propertyName: 'Lakeside Estates', unitNumber: '302', date: '2026-07-15', type: 'Move In', status: 'Completed' },
+      ];
+    }
+
+    return list;
+  }, [leases]);
 
   const filteredMoves = type ? moves.filter(m => m.type === type) : moves;
 
@@ -45,37 +91,33 @@ export const MoveInOutPage: React.FC<MoveInOutPageProps> = ({ type }) => {
     setShowForm(true);
   };
 
-  const handleDelete = (id: string) => {
-    setMoves(prev => prev.filter(m => m.id !== id));
+  const handleDelete = async (id: string) => {
+    if (id.startsWith('mock-')) return;
+    const leaseId = id.split('-')[0];
+    try {
+      await api.leasing.deleteLease(leaseId);
+      refetch();
+    } catch (e) {
+      console.error(e);
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.tenantName) return;
 
-    if (editingId) {
-      setMoves(prev => prev.map(m => m.id === editingId ? {
-        ...m,
-        tenantName: form.tenantName,
-        propertyName: form.propertyName,
-        unitNumber: form.unitNumber,
-        date: form.date,
-        status: form.status
-      } : m));
+    if (editingId && !editingId.startsWith('mock-')) {
+      const leaseId = editingId.split('-')[0];
+      try {
+        await api.leasing.updateLease(leaseId, {
+          status: form.status === 'Completed' ? 'Active' : 'Pending',
+          endDate: form.date,
+        });
+        refetch();
+      } catch (e) {
+        console.error(e);
+      }
       setEditingId(null);
-    } else {
-      setMoves(prev => [
-        ...prev,
-        {
-          id: String(Date.now()),
-          tenantName: form.tenantName,
-          propertyName: form.propertyName,
-          unitNumber: form.unitNumber,
-          date: form.date || new Date().toISOString().split('T')[0],
-          type: type || 'Move In',
-          status: form.status
-        }
-      ]);
     }
 
     setForm({ tenantName: '', propertyName: '', unitNumber: '', date: '', status: 'Scheduled' });

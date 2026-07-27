@@ -238,6 +238,9 @@ model Tenant {
   insurancePolicies InsurancePolicy[]
   paymentPlans      PaymentPlan[]
   screeningReports  ScreeningReport[]
+  invoices          Invoice[]
+  charges           Charge[]
+  deposits          Deposit[]
 
   @@map("tenants")
 }
@@ -540,9 +543,24 @@ model Violation {
   @@map("violations")
 }
 
+model Application {
+  id            String   @id @default(uuid())
+  tenantName    String
+  email         String
+  propertyName  String
+  unitNumber    String
+  status        String   @default("Pending")
+  submittedDate DateTime @default(now())
+  rentProposed  Float
+  createdAt     DateTime @default(now())
+
+  @@map("applications")
+}
+
 model Invoice {
   id           String   @id @default(uuid())
   tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id])
   tenantName   String
   propertyId   String
   propertyName String
@@ -727,6 +745,87 @@ model StaffProfile {
   @@map("staff_profiles")
 }
 
+model Charge {
+  id        String   @id @default(uuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  title     String
+  amount    Float
+  status    String   @default("Active")
+  createdAt DateTime @default(now())
 
+  @@map("charges")
+}
 
+model Deposit {
+  id        String   @id @default(uuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  amount    Float
+  status    String   @default("Held")
+  createdAt DateTime @default(now())
 
+  @@map("deposits")
+}
+
+model Expense {
+  id          String   @id @default(uuid())
+  category    String
+  amount      Float
+  date        DateTime @default(now())
+  description String   @db.Text
+  createdAt   DateTime @default(now())
+
+  @@map("expenses")
+}
+
+model MaintenanceRequest {
+  id          String   @id @default(uuid())
+  title       String
+  description String   @db.Text
+  propertyName String
+  unitNumber  String
+  priority    String   @default("Normal")
+  status      String   @default("New")
+  createdAt   DateTime @default(now())
+
+  @@map("maintenance_requests")
+}
+
+model Inspection {
+  id           String   @id @default(uuid())
+  propertyName String
+  unitNumber   String
+  inspector    String
+  status       String   @default("Scheduled")
+  date         DateTime @default(now())
+  createdAt    DateTime @default(now())
+
+  @@map("inspections")
+}
+
+model Income {
+  id          String   @id @default(uuid())
+  category    String
+  amount      Float
+  date        DateTime @default(now())
+  description String   @db.Text
+  status      String   @default("Cleared")
+  createdAt   DateTime @default(now())
+
+  @@map("incomes")
+}
+
+model Signature {
+  id             String   @id @default(uuid())
+  documentName   String
+  documentId     String
+  recipientName  String
+  recipientEmail String
+  status         String   @default("Sent")
+  sentAt         DateTime @default(now())
+  expiresAt      DateTime @default(now())
+  createdAt      DateTime @default(now())
+
+  @@map("signatures")
+}
