@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2022"],
+    "baseUrl": ".",
+    "paths": {
+      "@prisma/client": ["./backend/node_modules/@prisma/client"]
+    },
+    "skipLibCheck": true
+  },
+  "include": [
+    "backend/src/**/*",
+    "backend/prisma/**/*"
+  ]
+}
