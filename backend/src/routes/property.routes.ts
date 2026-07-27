@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import { propertyController } from '../controllers/property.controller.js';
-import { authMiddleware } from '../middlewares/auth.middleware.js';
-import { rbacGuard } from '../middlewares/rbac.middleware.js';
+import { propertyController } from '../controllers/property.controller';
+import { authMiddleware } from '../middlewares/auth.middleware';
+import { rbacGuard } from '../middlewares/rbac.middleware';
 
 const router = Router();
 

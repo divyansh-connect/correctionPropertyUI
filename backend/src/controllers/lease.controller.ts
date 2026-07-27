@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { leaseService } from '../services/lease.service.js';
-import { sendSuccess } from '../utils/apiResponse.js';
+import { leaseService } from '../services/lease.service';
+import { sendSuccess } from '../utils/apiResponse';
 
 export class LeaseController {
   async getAll(req: Request, res: Response, next: NextFunction) {

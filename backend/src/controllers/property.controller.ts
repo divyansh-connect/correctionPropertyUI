@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { propertyService } from '../services/property.service.js';
-import { sendSuccess } from '../utils/apiResponse.js';
+import { propertyService } from '../services/property.service';
+import { sendSuccess } from '../utils/apiResponse';
 
 export class PropertyController {
   async getAll(req: Request, res: Response, next: NextFunction) {

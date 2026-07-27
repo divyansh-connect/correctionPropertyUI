@@ -1,7 +1,7 @@
-import app from './app.js';
-import { env } from './config/env.js';
-import { logger } from './config/logger.js';
-import prisma from './config/database.js';
+import app from './app';
+import { env } from './config/env';
+import { logger } from './config/logger';
+import prisma from './config/database';
 
 // Connect and verify database connection
 prisma.$connect()

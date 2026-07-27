@@ -1,5 +1,5 @@
-import prisma from '../config/database.js';
-import { AppError } from '../utils/appError.js';
+import prisma from '../config/database';
+import { AppError } from '../utils/appError';
 
 export class PropertyService {
   async getAllProperties() {

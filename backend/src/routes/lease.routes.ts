@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { leaseController } from '../controllers/lease.controller.js';
+import { leaseController } from '../controllers/lease.controller';
 
 const router = Router();
 

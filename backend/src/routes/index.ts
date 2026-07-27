@@ -1,9 +1,9 @@
 import { Router } from 'express';
-import authRoutes from './auth.routes.js';
-import propertyRoutes from './property.routes.js';
-import leaseRoutes from './lease.routes.js';
-import paymentRoutes from './payment.routes.js';
-import accountingRoutes from './accounting.routes.js';
+import authRoutes from './auth.routes';
+import propertyRoutes from './property.routes';
+import leaseRoutes from './lease.routes';
+import paymentRoutes from './payment.routes';
+import accountingRoutes from './accounting.routes';
 
 const router = Router();
 
