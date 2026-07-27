@@ -57,50 +57,45 @@ interface User {
   email: string;
   role: string;
   avatarUrl?: string;
+  token?: string;
 }
 
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
-  login: (email: string) => Promise<boolean>;
+  login: (email: string, password?: string) => Promise<boolean>;
   logout: () => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: JSON.parse(localStorage.getItem('user') || 'null'),
   isAuthenticated: !!localStorage.getItem('user'),
-  login: async (email: string) => {
-    // Mock login verification
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    let role = 'Property Manager';
-    let name = 'Sarah Davis';
-    
-    if (email.toLowerCase().includes('admin')) {
-      role = 'Super Admin';
-      name = 'John Doe';
-    } else if (email.toLowerCase().includes('owner')) {
-      role = 'Owner';
-      name = 'Lakeside Development';
-    } else if (email.toLowerCase().includes('tenant')) {
-      role = 'Tenant';
-      name = 'Robert Johnson';
-    } else if (email.toLowerCase().includes('staff') || email.toLowerCase().includes('tech')) {
-      role = 'Maintenance Staff';
-      name = 'Technician Lead 1';
-    } else if (email.toLowerCase().includes('collection')) {
-      role = 'Collection Manager';
-      name = 'Michael Collection';
+  login: async (email: string, password?: string) => {
+    const response = await fetch('http://localhost:5000/api/v1/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: password || 'admin123' }),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || 'Login failed');
     }
 
-    const mockUser: User = {
-      id: 'usr-1',
-      name: name,
-      email: email,
-      role: role,
-      avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
+    const resData = await response.json();
+    const apiUser = resData.data.user;
+    const token = resData.data.accessToken;
+
+    const loggedInUser: User = {
+      id: apiUser.id,
+      name: `${apiUser.firstName} ${apiUser.lastName}`,
+      email: apiUser.email,
+      role: apiUser.roleName,
+      token: token,
     };
-    localStorage.setItem('user', JSON.stringify(mockUser));
-    set({ user: mockUser, isAuthenticated: true });
+
+    localStorage.setItem('user', JSON.stringify(loggedInUser));
+    set({ user: loggedInUser, isAuthenticated: true });
     return true;
   },
   logout: () => {

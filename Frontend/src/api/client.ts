@@ -1,29 +1,63 @@
-// Simulates custom fetch/axios client, which will be updated for a real backend in Phase 2.
+const BASE_URL = 'http://localhost:5000/api/v1';
+
 export const apiClient = {
-  delay: (ms: number = 600) => new Promise((resolve) => setTimeout(resolve, ms)),
+  getHeaders: () => {
+    const userStr = localStorage.getItem('user');
+    const token = userStr ? JSON.parse(userStr).token : null;
+    return {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    };
+  },
 
   get: async <T>(url: string): Promise<T> => {
-    console.log(`[API CLIENT] GET request to ${url}`);
-    await apiClient.delay();
-    throw new Error("Method not implemented. Mock services active.");
+    const response = await fetch(`${BASE_URL}${url}`, {
+      method: 'GET',
+      headers: apiClient.getHeaders(),
+    });
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.message || 'API request failed');
+    }
+    return response.json();
   },
 
   post: async <T>(url: string, data: any): Promise<T> => {
-    console.log(`[API CLIENT] POST request to ${url}`, data);
-    await apiClient.delay();
-    throw new Error("Method not implemented. Mock services active.");
+    const response = await fetch(`${BASE_URL}${url}`, {
+      method: 'POST',
+      headers: apiClient.getHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.message || 'API request failed');
+    }
+    return response.json();
   },
 
   put: async <T>(url: string, data: any): Promise<T> => {
-    console.log(`[API CLIENT] PUT request to ${url}`, data);
-    await apiClient.delay();
-    throw new Error("Method not implemented. Mock services active.");
+    const response = await fetch(`${BASE_URL}${url}`, {
+      method: 'PUT',
+      headers: apiClient.getHeaders(),
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.message || 'API request failed');
+    }
+    return response.json();
   },
 
   delete: async <T>(url: string): Promise<T> => {
-    console.log(`[API CLIENT] DELETE request to ${url}`);
-    await apiClient.delay();
-    throw new Error("Method not implemented. Mock services active.");
+    const response = await fetch(`${BASE_URL}${url}`, {
+      method: 'DELETE',
+      headers: apiClient.getHeaders(),
+    });
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.message || 'API request failed');
+    }
+    return response.json();
   },
 };
 export default apiClient;

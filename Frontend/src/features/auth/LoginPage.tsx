@@ -31,14 +31,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({ navigate }) => {
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: 'manager@apexpm.com',
-      password: 'password123',
+      password: 'admin123',
     },
   });
 
   const onSubmit = async (data: LoginFormInputs) => {
     setApiError(null);
     try {
-      await login(data.email);
+      await login(data.email, data.password);
       const emailLower = data.email.toLowerCase();
       if (emailLower.includes('owner')) {
         navigate('/owner');

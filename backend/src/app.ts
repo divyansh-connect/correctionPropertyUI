@@ -12,9 +12,23 @@ const app = express();
 
 // --- Core Hardening & Request Middlewares ---
 app.use(helmet());
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:5174',
+  env.CORS_ORIGIN,
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: env.CORS_ORIGIN,
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(null, false); // Do not block request entirely if checking in REST clients
+      }
+    },
     credentials: true,
   })
 );
