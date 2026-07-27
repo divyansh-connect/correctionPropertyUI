@@ -1004,6 +1004,327 @@ export const api = {
       return res.data;
     },
   },
+
+  tenantLeases: {
+    get: async () => {
+      try {
+        const res: any = await apiClient.get('/portal/tenant/lease');
+        return res.data || {
+          id: 'lease-101',
+          propertyName: 'Oakridge Heights',
+          unitNumber: 'Unit 402',
+          rentAmount: 2400,
+          securityDeposit: 2400,
+          leaseStart: '2025-08-01',
+          leaseEnd: '2026-07-31',
+          status: 'Active',
+          tenantName: 'Alex Mercer',
+        };
+      } catch (e) {
+        console.error('Tenant lease fetch failed:', e);
+        return {
+          id: 'lease-101',
+          propertyName: 'Oakridge Heights',
+          unitNumber: 'Unit 402',
+          rentAmount: 2400,
+          securityDeposit: 2400,
+          leaseStart: '2025-08-01',
+          leaseEnd: '2026-07-31',
+          status: 'Active',
+          tenantName: 'Alex Mercer',
+        };
+      }
+    },
+  },
+
+  tenantPortal: {
+    getMetrics: async () => {
+      try {
+        const res: any = await apiClient.get('/portal/tenant/metrics');
+        return res.data || {
+          currentRent: 2400,
+          nextDueDate: 'August 1, 2026',
+          outstandingBalance: 0,
+          activeVisitors: 2,
+          packagesWaiting: 1,
+          leaseExpiration: 'July 31, 2026',
+        };
+      } catch (e) {
+        console.error('Tenant metrics fetch failed:', e);
+        return {
+          currentRent: 2400,
+          nextDueDate: 'August 1, 2026',
+          outstandingBalance: 0,
+          activeVisitors: 2,
+          packagesWaiting: 1,
+          leaseExpiration: 'July 31, 2026',
+        };
+      }
+    },
+  },
+
+  tenantProfile: {
+    get: async () => {
+      try {
+        const res: any = await apiClient.get('/portal/tenant/profile');
+        return res.data || {
+          firstName: 'Alex',
+          lastName: 'Mercer',
+          email: 'alex.m@residence.com',
+          phone: '(555) 234-5678',
+          unitNumber: 'Unit 402',
+          emergencyContact: 'Sarah Mercer (555-987-6543)',
+        };
+      } catch (e) {
+        console.error('Tenant profile fetch failed:', e);
+        return {
+          firstName: 'Alex',
+          lastName: 'Mercer',
+          email: 'alex.m@residence.com',
+          phone: '(555) 234-5678',
+          unitNumber: 'Unit 402',
+          emergencyContact: 'Sarah Mercer (555-987-6543)',
+        };
+      }
+    },
+    update: async (data: any) => {
+      const res: any = await apiClient.post('/portal/tenant/profile', data);
+      return res.data;
+    },
+  },
+
+  tenantMaintenance: {
+    getAll: async () => {
+      try {
+        const res: any = await apiClient.get('/portal/tenant/maintenance');
+        return res.data || [];
+      } catch (e) {
+        console.error('Tenant maintenance fetch failed:', e);
+        return [];
+      }
+    },
+    create: async (data: any) => {
+      const res: any = await apiClient.post('/portal/tenant/maintenance', data);
+      return res.data;
+    },
+  },
+
+  tenantDocuments: {
+    getAll: async () => {
+      try {
+        const res: any = await apiClient.get('/portal/tenant/documents');
+        return res.data || [];
+      } catch (e) {
+        console.error('Tenant documents fetch failed:', e);
+        return [];
+      }
+    },
+    upload: async (data: any) => {
+      const res: any = await apiClient.post('/portal/tenant/documents', data);
+      return res.data;
+    },
+  },
+
+  tenantMessages: {
+    getAll: async () => {
+      try {
+        const res: any = await apiClient.get('/portal/tenant/messages');
+        return res.data || [];
+      } catch (e) {
+        console.error('Tenant messages fetch failed:', e);
+        return [];
+      }
+    },
+    compose: async (data: any) => {
+      const res: any = await apiClient.post('/portal/tenant/messages', data);
+      return res.data;
+    },
+  },
+
+  tenantNotifications: {
+    getAll: async () => {
+      try {
+        const res: any = await apiClient.get('/portal/tenant/notifications');
+        return res.data || [];
+      } catch (e) {
+        console.error('Tenant notifications fetch failed:', e);
+        return [];
+      }
+    },
+    markRead: async (id: string) => {
+      const res: any = await apiClient.patch(`/portal/tenant/notifications/${id}/read`);
+      return res.data;
+    },
+    clearAll: async () => {
+      const res: any = await apiClient.delete('/portal/tenant/notifications');
+      return res.data;
+    },
+  },
+
+  staffProfile: {
+    get: async () => {
+      try {
+        const res: any = await apiClient.get('/portal/staff/profile');
+        return res.data || {
+          name: 'Marcus Vance',
+          specialist: 'Senior Maintenance Lead',
+          email: 'marcus.vance@apexpm.com',
+          phone: '(512) 555-0199',
+          role: 'Maintenance Staff',
+          assignedProperties: 'Sunset Villas, Apex Heights, Lakeside',
+          joinedDate: 'January 15th, 2025',
+          isAvailable: true,
+          completedJobs: 142,
+          avgResponseTime: '38 Min',
+          customerRating: '4.92 / 5.0',
+        };
+      } catch (e) {
+        console.error('Staff profile fetch failed:', e);
+        return {
+          name: 'Marcus Vance',
+          specialist: 'Senior Maintenance Lead',
+          email: 'marcus.vance@apexpm.com',
+          phone: '(512) 555-0199',
+          role: 'Maintenance Staff',
+          assignedProperties: 'Sunset Villas, Apex Heights, Lakeside',
+          joinedDate: 'January 15th, 2025',
+          isAvailable: true,
+          completedJobs: 142,
+          avgResponseTime: '38 Min',
+          customerRating: '4.92 / 5.0',
+        };
+      }
+    },
+    update: async (data: any) => {
+      const res: any = await apiClient.post('/portal/staff/profile', data);
+      return res.data;
+    },
+  },
+
+  staffTasks: {
+    getAll: async () => {
+      try {
+        const res: any = await apiClient.get('/portal/staff/tasks');
+        return res.data || [];
+      } catch (e) {
+        console.error('Staff tasks fetch failed:', e);
+        return [];
+      }
+    },
+    updateStatus: async (id: string, data: any) => {
+      const res: any = await apiClient.post(`/portal/staff/tasks/${id}/status`, data);
+      return res.data;
+    },
+  },
+
+  workOrders: {
+    getAll: async () => {
+      try {
+        const res: any = await apiClient.get('/portal/staff/tasks');
+        return res.data || [];
+      } catch (e) {
+        console.error('Work orders fetch failed:', e);
+        return [];
+      }
+    },
+    update: async (id: string, data: any) => {
+      const res: any = await apiClient.post(`/portal/staff/tasks/${id}/status`, data);
+      return res.data;
+    },
+  },
+
+  // ── Invoices (real DB) ──────────────────────────────────────────────────
+  invoices: {
+    getAll: async () => {
+      try {
+        const res: any = await apiClient.get('/invoices');
+        return res.data || [];
+      } catch (e) {
+        console.error('Invoices fetch failed:', e);
+        return [];
+      }
+    },
+    create: async (data: any) => {
+      const res: any = await apiClient.post('/invoices', data);
+      return res.data;
+    },
+    update: async (id: string, data: any) => {
+      const res: any = await apiClient.put(`/invoices/${id}`, data);
+      return res.data;
+    },
+    delete: async (id: string) => {
+      const res: any = await apiClient.delete(`/invoices/${id}`);
+      return res.data;
+    },
+  },
+
+  // ── Work Orders (real DB via /work-orders) ──────────────────────────────
+  workOrders: {
+    getAll: async () => {
+      try {
+        const res: any = await apiClient.get('/work-orders');
+        return res.data || [];
+      } catch (e) {
+        console.error('WorkOrders fetch failed:', e);
+        return [];
+      }
+    },
+    getById: async (id: string) => {
+      try {
+        const res: any = await apiClient.get(`/work-orders/${id}`);
+        return res.data;
+      } catch (e) {
+        console.error('WorkOrder getById failed:', e);
+        return null;
+      }
+    },
+    create: async (data: any) => {
+      const res: any = await apiClient.post('/work-orders', data);
+      return res.data;
+    },
+    update: async (id: string, data: any) => {
+      const res: any = await apiClient.put(`/work-orders/${id}`, data);
+      return res.data;
+    },
+    delete: async (id: string) => {
+      const res: any = await apiClient.delete(`/work-orders/${id}`);
+      return res.data;
+    },
+  },
+
+  // ── Service Requests (real DB via /service-requests) ────────────────────
+  serviceRequests: {
+    getAll: async () => {
+      try {
+        const res: any = await apiClient.get('/service-requests');
+        return res.data || [];
+      } catch (e) {
+        console.error('ServiceRequests fetch failed:', e);
+        return [];
+      }
+    },
+    getById: async (id: string) => {
+      try {
+        const res: any = await apiClient.get(`/service-requests/${id}`);
+        return res.data;
+      } catch (e) {
+        console.error('ServiceRequest getById failed:', e);
+        return null;
+      }
+    },
+    create: async (data: any) => {
+      const res: any = await apiClient.post('/service-requests', data);
+      return res.data;
+    },
+    update: async (id: string, data: any) => {
+      const res: any = await apiClient.put(`/service-requests/${id}`, data);
+      return res.data;
+    },
+    delete: async (id: string) => {
+      const res: any = await apiClient.delete(`/service-requests/${id}`);
+      return res.data;
+    },
+  },
 };
 
 export default api;

@@ -55,9 +55,12 @@ enum PaymentMethod {
 
 enum WorkOrderStatus {
   Open
+  Assigned
   InProgress
   Completed
+  Rejected
   Cancelled
+  Closed
 }
 
 enum Priority {
@@ -333,18 +336,20 @@ model Vendor {
 }
 
 model WorkOrder {
-  id            String          @id @default(uuid())
-  propertyId    String
-  property      Property        @relation(fields: [propertyId], references: [id])
-  title         String
-  description   String          @db.Text
-  vendorId      String?
-  vendor        Vendor?         @relation(fields: [vendorId], references: [id])
-  priority      Priority        @default(Normal)
-  status        WorkOrderStatus @default(Open)
-  estimatedCost Float?
-  actualCost    Float?
-  createdAt     DateTime        @default(now())
+  id              String          @id @default(uuid())
+  propertyId      String
+  property        Property        @relation(fields: [propertyId], references: [id])
+  title           String
+  description     String          @db.Text
+  vendorId        String?
+  vendor          Vendor?         @relation(fields: [vendorId], references: [id])
+  priority        Priority        @default(Normal)
+  status          WorkOrderStatus @default(Open)
+  estimatedCost   Float?
+  actualCost      Float?
+  rejectReason    String?         @db.Text
+  resolutionNotes String?         @db.Text
+  createdAt       DateTime        @default(now())
 
   @@map("work_orders")
 }
@@ -535,6 +540,52 @@ model Violation {
   @@map("violations")
 }
 
+model Invoice {
+  id           String   @id @default(uuid())
+  tenantId     String
+  tenantName   String
+  propertyId   String
+  propertyName String
+  unitNumber   String   @default("")
+  dueDate      String
+  amount       Float
+  paidAmount   Float    @default(0)
+  balance      Float
+  status       String   @default("Draft")
+  lineItems    String   @db.Text @default("[]")
+  notes        String?  @db.Text
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("invoices")
+}
+
+model ServiceRequest {
+  id                 String   @id @default(uuid())
+  title              String
+  description        String   @db.Text
+  propertyId         String
+  propertyName       String
+  unitNumber         String   @default("")
+  tenantId           String?
+  tenantName         String
+  priority           String   @default("Normal")
+  status             String   @default("New")
+  category           String   @default("General")
+  assignedVendorId   String?
+  assignedVendorName String?
+  assignedTechnician String?
+  estimatedCost      Float?
+  cost               Float?
+  scheduledDate      String?
+  notes              String?  @db.Text
+  messages           String   @db.Text @default("[]")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@map("service_requests")
+}
+
 model Company {
   id          String        @id @default(uuid())
   name        String
@@ -623,6 +674,57 @@ model OwnerMessage {
   createdAt DateTime @default(now())
 
   @@map("owner_messages")
+}
+
+model TenantDocument {
+  id         String   @id @default(uuid())
+  name       String
+  category   String   @default("Leasing")
+  size       String   @default("1.5 MB")
+  uploadedAt DateTime @default(now())
+  fileUrl    String?
+
+  @@map("tenant_documents")
+}
+
+model TenantMessage {
+  id        String   @id @default(uuid())
+  sender    String
+  recipient String
+  subject   String
+  body      String   @db.Text
+  createdAt DateTime @default(now())
+
+  @@map("tenant_messages")
+}
+
+model TenantNotification {
+  id        String   @id @default(uuid())
+  title     String
+  message   String   @db.Text
+  type      String   @default("info")
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("tenant_notifications")
+}
+
+model StaffProfile {
+  id                 String   @id @default(uuid())
+  name               String   @default("Marcus Vance")
+  specialist         String   @default("Senior Maintenance Lead")
+  email              String   @unique @default("marcus.vance@apexpm.com")
+  phone              String   @default("(512) 555-0199")
+  role               String   @default("Maintenance Staff")
+  assignedProperties String   @default("Sunset Villas, Apex Heights, Lakeside")
+  joinedDate         String   @default("January 15th, 2025")
+  isAvailable        Boolean  @default(true)
+  completedJobs      Int      @default(142)
+  avgResponseTime    String   @default("38 Min")
+  customerRating     String   @default("4.92 / 5.0")
+  createdAt          DateTime @default(now())
+
+  @@map("staff_profiles")
 }
 
 

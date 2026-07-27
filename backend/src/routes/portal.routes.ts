@@ -5,8 +5,19 @@ const router = Router();
 
 // Tenant Portal Views
 router.get('/tenant/leases', (req, res, next) => portalController.getTenantLeases(req, res, next));
+router.get('/tenant/lease', (req, res, next) => portalController.getTenantLease(req, res, next));
+router.get('/tenant/metrics', (req, res, next) => portalController.getTenantMetrics(req, res, next));
+router.get('/tenant/profile', (req, res, next) => portalController.getTenantProfile(req, res, next));
+router.post('/tenant/profile', (req, res, next) => portalController.updateTenantProfile(req, res, next));
 router.get('/tenant/maintenance', (req, res, next) => portalController.getTenantMaintenance(req, res, next));
+router.post('/tenant/maintenance', (req, res, next) => portalController.createTenantMaintenance(req, res, next));
 router.get('/tenant/documents', (req, res, next) => portalController.getTenantDocuments(req, res, next));
+router.post('/tenant/documents', (req, res, next) => portalController.uploadTenantDocument(req, res, next));
+router.get('/tenant/messages', (req, res, next) => portalController.getTenantMessages(req, res, next));
+router.post('/tenant/messages', (req, res, next) => portalController.createTenantMessage(req, res, next));
+router.get('/tenant/notifications', (req, res, next) => portalController.getTenantNotifications(req, res, next));
+router.patch('/tenant/notifications/:id/read', (req, res, next) => portalController.markTenantNotificationRead(req, res, next));
+router.delete('/tenant/notifications', (req, res, next) => portalController.clearTenantNotifications(req, res, next));
 
 // Owner Portal Views
 router.get('/owner/financials', (req, res, next) => portalController.getOwnerFinancials(req, res, next));
@@ -39,5 +50,11 @@ router.post('/screening/reports', (req, res, next) => portalController.createScr
 
 router.get('/violations', (req, res, next) => portalController.getViolations(req, res, next));
 router.post('/violations', (req, res, next) => portalController.createViolation(req, res, next));
+
+// Maintenance Staff Profile & Tasks Views
+router.get('/staff/profile', (req, res, next) => portalController.getStaffProfile(req, res, next));
+router.post('/staff/profile', (req, res, next) => portalController.updateStaffProfile(req, res, next));
+router.get('/staff/tasks', (req, res, next) => portalController.getStaffTasks(req, res, next));
+router.post('/staff/tasks/:id/status', (req, res, next) => portalController.updateStaffTaskStatus(req, res, next));
 
 export default router;
