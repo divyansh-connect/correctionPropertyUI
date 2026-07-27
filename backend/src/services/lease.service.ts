@@ -25,6 +25,22 @@ export class LeaseService {
       },
     });
   }
+
+  async updateLease(id: string, data: any) {
+    return prisma.lease.update({
+      where: { id },
+      data: {
+        status: data.status,
+        endDate: data.endDate ? new Date(data.endDate) : undefined,
+      },
+    });
+  }
+
+  async deleteLease(id: string) {
+    return prisma.lease.delete({
+      where: { id },
+    });
+  }
 }
 
 export const leaseService = new LeaseService();

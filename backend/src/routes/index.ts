@@ -11,7 +11,12 @@ import workOrderRoutes from './workorder.routes';
 import dashboardRoutes from './dashboard.routes';
 import secondaryRoutes from './secondary.routes';
 import portalRoutes from './portal.routes';
+import buildingRoutes from './building.routes';
+import unitRoutes from './unit.routes';
+import applicationRoutes from './application.routes';
 import superAdminRoutes from './superadmin.routes';
+import invoiceRoutes from './invoice.routes';
+import serviceRequestRoutes from './serviceRequest.routes';
 
 const router = Router();
 
@@ -35,6 +40,11 @@ router.use('/work-orders', workOrderRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/portal', portalRoutes);
 router.use('/superadmin', superAdminRoutes);
+router.use('/invoices', invoiceRoutes);
+router.use('/service-requests', serviceRequestRoutes);
+router.use('/buildings', buildingRoutes);
+router.use('/units', unitRoutes);
+router.use('/applications', applicationRoutes);
 router.use('/', secondaryRoutes);
 
 export default router;

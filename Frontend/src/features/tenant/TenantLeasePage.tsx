@@ -43,11 +43,11 @@ export const TenantLeasePage: React.FC = () => {
           <div className="grid grid-cols-2 gap-4 text-xs font-semibold">
             <div className="space-y-1">
               <span className="text-[10px] text-muted-foreground uppercase">{t('tenantLease.monthlyRent')}</span>
-              <p className="font-bold text-sm text-primary">${lease.rentAmount.toLocaleString()}</p>
+              <p className="font-bold text-sm text-primary">${(Number(lease.rentAmount) || 0).toLocaleString()}</p>
             </div>
             <div className="space-y-1">
               <span className="text-[10px] text-muted-foreground uppercase">{t('tenantLease.securityDeposit')}</span>
-              <p className="font-bold text-sm">${lease.securityDeposit.toLocaleString()}</p>
+              <p className="font-bold text-sm">${(Number(lease.securityDeposit) || 0).toLocaleString()}</p>
             </div>
           </div>
 

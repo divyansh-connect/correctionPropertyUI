@@ -20,6 +20,24 @@ export class LeaseController {
       next(error);
     }
   }
+
+  async update(req: Request, res: Response, next: NextFunction) {
+    try {
+      const lease = await leaseService.updateLease(req.params.id as string, req.body);
+      return sendSuccess({ res, data: lease });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async delete(req: Request, res: Response, next: NextFunction) {
+    try {
+      await leaseService.deleteLease(req.params.id as string);
+      return sendSuccess({ res, data: { success: true } });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export const leaseController = new LeaseController();

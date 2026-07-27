@@ -1,4 +1,6 @@
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '../../api';
 import { PageHeader } from '../../components/PageHeader';
 import { Button } from '../../components/ui/Button';
 import { StatusBadge } from '../../components/StatusBadge';
@@ -14,16 +16,46 @@ interface RenewalLog {
 }
 
 export const RenewalsPage: React.FC = () => {
-  const [renewals, setRenewals] = React.useState<RenewalLog[]>([
-    { id: '1', tenantName: 'William Miller', propertyName: 'Oakridge Heights', unitNumber: '102', expirationDate: '2026-08-15', status: 'Pending Offer' },
-    { id: '2', tenantName: 'Patricia Thomas', propertyName: 'Sunset Villas', unitNumber: '304', expirationDate: '2026-08-20', status: 'Sent' },
-    { id: '3', tenantName: 'Robert Johnson', propertyName: 'Lakeside Estates', unitNumber: '110', expirationDate: '2026-09-01', status: 'Accepted' },
-  ]);
+  // Load real Leases from backend database
+  const { data: leases = [], refetch } = useQuery({
+    queryKey: ['leases'],
+    queryFn: () => api.leasing.getLeases(),
+  });
 
   const [showForm, setShowForm] = React.useState(false);
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [form, setForm] = React.useState({ tenantName: '', propertyName: '', unitNumber: '', expirationDate: '', status: 'Pending Offer' as RenewalLog['status'] });
   const [msg, setMsg] = React.useState('');
+
+  // Map database leases dynamically to Renewal Logs
+  const renewals: RenewalLog[] = React.useMemo(() => {
+    const list: RenewalLog[] = leases.map((lease: any) => {
+      let rStatus: RenewalLog['status'] = 'Pending Offer';
+      if (lease.status === 'Active') rStatus = 'Accepted';
+      else if (lease.status === 'Pending') rStatus = 'Sent';
+      else if (lease.status === 'Terminated') rStatus = 'Declined';
+
+      return {
+        id: lease.id,
+        tenantName: lease.tenant ? `${lease.tenant.firstName} ${lease.tenant.lastName}` : 'Resident',
+        propertyName: lease.property?.name || 'Property',
+        unitNumber: lease.unit?.unitNumber || 'Unit',
+        expirationDate: lease.endDate ? lease.endDate.split('T')[0] : 'N/A',
+        status: rStatus,
+      };
+    });
+
+    // If database has no leases, show fallback mock data
+    if (list.length === 0) {
+      return [
+        { id: 'mock-1', tenantName: 'William Miller', propertyName: 'Oakridge Heights', unitNumber: '102', expirationDate: '2026-08-15', status: 'Pending Offer' },
+        { id: 'mock-2', tenantName: 'Patricia Thomas', propertyName: 'Sunset Villas', unitNumber: '304', expirationDate: '2026-08-20', status: 'Sent' },
+        { id: 'mock-3', tenantName: 'Robert Johnson', propertyName: 'Lakeside Estates', unitNumber: '110', expirationDate: '2026-09-01', status: 'Accepted' },
+      ];
+    }
+
+    return list;
+  }, [leases]);
 
   const handleEdit = (r: RenewalLog) => {
     setEditingId(r.id);
@@ -37,42 +69,51 @@ export const RenewalsPage: React.FC = () => {
     setShowForm(true);
   };
 
-  const handleDelete = (id: string) => {
-    setRenewals(prev => prev.filter(r => r.id !== id));
+  const handleDelete = async (id: string) => {
+    if (id.startsWith('mock-')) return;
+    try {
+      await api.leasing.deleteLease(id);
+      refetch();
+    } catch (e) {
+      console.error(e);
+    }
   };
 
-  const handleSendOffer = (name: string, id: string) => {
-    setRenewals(prev => prev.map(r => r.id === id ? { ...r, status: 'Sent' } : r));
-    setMsg(`Renewal proposal terms dispatched to ${name}.`);
-    setTimeout(() => setMsg(''), 3000);
+  const handleSendOffer = async (name: string, id: string) => {
+    if (id.startsWith('mock-')) {
+      setMsg(`Renewal proposal terms dispatched to ${name}.`);
+      setTimeout(() => setMsg(''), 3000);
+      return;
+    }
+    try {
+      await api.leasing.updateLease(id, { status: 'Pending' });
+      refetch();
+      setMsg(`Renewal proposal terms dispatched to ${name}.`);
+      setTimeout(() => setMsg(''), 3000);
+    } catch (e) {
+      console.error(e);
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.tenantName) return;
 
-    if (editingId) {
-      setRenewals(prev => prev.map(r => r.id === editingId ? {
-        ...r,
-        tenantName: form.tenantName,
-        propertyName: form.propertyName,
-        unitNumber: form.unitNumber,
-        expirationDate: form.expirationDate,
-        status: form.status
-      } : r));
+    if (editingId && !editingId.startsWith('mock-')) {
+      let lStatus = 'Pending';
+      if (form.status === 'Accepted') lStatus = 'Active';
+      else if (form.status === 'Declined') lStatus = 'Terminated';
+
+      try {
+        await api.leasing.updateLease(editingId, {
+          status: lStatus,
+          endDate: form.expirationDate,
+        });
+        refetch();
+      } catch (e) {
+        console.error(e);
+      }
       setEditingId(null);
-    } else {
-      setRenewals(prev => [
-        ...prev,
-        {
-          id: String(Date.now()),
-          tenantName: form.tenantName,
-          propertyName: form.propertyName,
-          unitNumber: form.unitNumber,
-          expirationDate: form.expirationDate || new Date().toISOString().split('T')[0],
-          status: form.status
-        }
-      ]);
     }
 
     setForm({ tenantName: '', propertyName: '', unitNumber: '', expirationDate: '', status: 'Pending Offer' });

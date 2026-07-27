@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import api from '../../api';
 import { useAuthStore } from '../../store/useStore';
@@ -9,11 +9,11 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { LoadingSkeleton } from '../../components/LoadingSkeleton';
 import { StatusBadge } from '../../components/StatusBadge';
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, 
-  ResponsiveContainer, PieChart, Pie, Cell 
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, PieChart, Pie, Cell
 } from 'recharts';
-import { 
+import {
   Plus, CheckSquare, Settings, AlertCircle, Wrench, ShieldAlert, ArrowRight,
   Clipboard, Clock, CheckCircle2, XCircle, Search, Eye, Play, Check
 } from 'lucide-react';
@@ -25,6 +25,7 @@ export const MaintenanceDashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
 
   const isStaff = user?.role === 'Maintenance Staff';
 
@@ -44,51 +45,41 @@ export const MaintenanceDashboardPage: React.FC = () => {
     enabled: !isStaff,
   });
 
-  // --- QUERY FOR MAINTENANCE STAFF VIEW ---
+  // --- QUERY FOR MAINTENANCE STAFF VIEW (real DB) ---
   const { data: allWorkOrders = [], isLoading: loadingWorkOrders } = useQuery({
     queryKey: ['staff-dashboard-work-orders'],
-    queryFn: () => api.workOrders.getAll(),
+    queryFn: () => api.staffTasks.getAll(),
     enabled: isStaff,
   });
 
-  // Filter orders assigned to this technician
-  const myWorkOrders = allWorkOrders.filter(
-    (w: any) => w.assignedTechnician === user?.name
-  );
+  // Status-update mutation for staff dashboard (hits real DB)
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: string }) =>
+      api.staffTasks.updateStatus(id, { status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['staff-dashboard-work-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['staff-work-orders'] });
+    },
+  });
 
-  // Local interactive state for staff work orders (UI-only status updates)
-  const [localWorkOrders, setLocalWorkOrders] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
-  useEffect(() => {
-    if (myWorkOrders.length && !localWorkOrders.length) {
-      setLocalWorkOrders(myWorkOrders);
-    }
-  }, [myWorkOrders, localWorkOrders]);
-
-  const updateLocalStatus = (orderId: string, newStatus: string) => {
-    setLocalWorkOrders(prev => 
-      prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o)
-    );
-  };
-
-  // Staff Search filtering
-  const filteredWorkOrders = localWorkOrders.filter((order: any) => {
+  // Only active work orders in dashboard view (filter completed/closed/rejected)
+  const activeWorkOrders = allWorkOrders.filter((order: any) => {
     const isActive = !['Completed', 'Closed', 'Rejected', 'Cancelled'].includes(order.status);
-
-    const matchesSearch = 
-      order.workOrderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.propertyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.unitNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const matchesSearch =
+      order.workOrderNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      order.propertyName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      order.unitNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (order.issue && order.issue.toLowerCase().includes(searchQuery.toLowerCase()));
     return isActive && matchesSearch;
   });
 
-  // Staff summary counts
-  const assignedCount = localWorkOrders.filter(w => w.status === 'New' || w.status === 'Assigned').length;
-  const inProgressCount = localWorkOrders.filter(w => w.status === 'In Progress').length;
-  const completedCount = localWorkOrders.filter(w => w.status === 'Completed' || w.status === 'Closed').length;
-  const rejectedCount = localWorkOrders.filter(w => w.status === 'Rejected' || w.status === 'Cancelled').length;
+  // Staff summary counts derived from real DB data
+  const assignedCount = allWorkOrders.filter((w: any) => w.status === 'New' || w.status === 'Assigned').length;
+  const inProgressCount = allWorkOrders.filter((w: any) => w.status === 'In Progress').length;
+  const completedCount = allWorkOrders.filter((w: any) => w.status === 'Completed' || w.status === 'Closed').length;
+  const rejectedCount = allWorkOrders.filter((w: any) => w.status === 'Rejected' || w.status === 'Cancelled').length;
 
   if (isStaff) {
     if (loadingWorkOrders) {
@@ -149,7 +140,7 @@ export const MaintenanceDashboardPage: React.FC = () => {
           </Card>
         </div>
 
-        {/* MY TASKS CONTROL BAR */}
+        {/* MY TASKS SEARCH BAR */}
         <div className="flex gap-3.5 p-4 bg-card border rounded-2xl shadow-sm">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -162,19 +153,19 @@ export const MaintenanceDashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* WORK ORDER LIST/CARDS */}
+        {/* ACTIVE WORK ORDER CARDS */}
         <Card className="p-5 border bg-card space-y-4">
           <h3 className="font-extrabold text-sm uppercase tracking-wider">{t('maintenance.myTasks')}</h3>
-          
-          {filteredWorkOrders.length === 0 ? (
+
+          {activeWorkOrders.length === 0 ? (
             <div className="text-center py-12 text-xs text-muted-foreground font-semibold">
               {t('maintenance.noTasks')}
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4">
-              {filteredWorkOrders.map((order: any) => (
-                <div 
-                  key={order.id} 
+              {activeWorkOrders.map((order: any) => (
+                <div
+                  key={order.id}
                   className="flex flex-col md:flex-row justify-between items-start md:items-center p-4 rounded-2xl border bg-secondary/10 hover:border-primary/30 transition-all group animate-in fade-in duration-200"
                 >
                   <div className="space-y-1.5 flex-1">
@@ -185,7 +176,7 @@ export const MaintenanceDashboardPage: React.FC = () => {
                       <StatusBadge status={order.status} />
                       {order.priority && (
                         <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full ${
-                          order.priority === 'Urgent' ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20' :
+                          order.priority === 'Urgent' || order.priority === 'Emergency' ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20' :
                           order.priority === 'High' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' :
                           order.priority === 'Medium' ? 'bg-blue-500/10 text-blue-500 border border-blue-500/20' :
                           'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
@@ -194,44 +185,50 @@ export const MaintenanceDashboardPage: React.FC = () => {
                         </span>
                       )}
                     </div>
-                    
-                    <h4 className="font-bold text-sm text-foreground">{order.issue || 'AC Diagnostics and Fix'}</h4>
+
+                    <h4 className="font-bold text-sm text-foreground">{order.issue || 'Maintenance Task'}</h4>
                     <p className="text-[11px] text-muted-foreground font-semibold">{order.propertyName} • Unit {order.unitNumber}</p>
                   </div>
 
                   <div className="mt-4 md:mt-0 flex flex-wrap items-center gap-2 w-full md:w-auto border-t pt-3 md:pt-0 md:border-0 justify-between">
                     <div className="flex gap-2">
-                      {/* UI-only action triggers based on state */}
+                      {/* Accept / Reject (New orders) */}
                       {order.status === 'New' && (
                         <>
                           <button
-                            onClick={() => updateLocalStatus(order.id, 'Assigned')}
-                            className="px-3 py-1.5 rounded-xl text-[10px] font-extrabold bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-all"
+                            disabled={updateStatusMutation.isPending}
+                            onClick={() => updateStatusMutation.mutate({ id: order.id, status: 'Assigned' })}
+                            className="px-3 py-1.5 rounded-xl text-[10px] font-extrabold bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-all disabled:opacity-60"
                           >
                             {t('maintenance.accept')}
                           </button>
                           <button
-                            onClick={() => updateLocalStatus(order.id, 'Rejected')}
-                            className="px-3 py-1.5 rounded-xl text-[10px] font-extrabold bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/20 transition-all"
+                            disabled={updateStatusMutation.isPending}
+                            onClick={() => updateStatusMutation.mutate({ id: order.id, status: 'Rejected' })}
+                            className="px-3 py-1.5 rounded-xl text-[10px] font-extrabold bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/20 transition-all disabled:opacity-60"
                           >
                             {t('maintenance.reject')}
                           </button>
                         </>
                       )}
 
+                      {/* Start Work (Assigned orders) */}
                       {(order.status === 'Assigned' || order.status === 'Scheduled' || order.status === 'Draft') && (
                         <button
-                          onClick={() => updateLocalStatus(order.id, 'In Progress')}
-                          className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-[10px] font-extrabold bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 border border-amber-500/20 transition-all"
+                          disabled={updateStatusMutation.isPending}
+                          onClick={() => updateStatusMutation.mutate({ id: order.id, status: 'In_Progress' })}
+                          className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-[10px] font-extrabold bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 border border-amber-500/20 transition-all disabled:opacity-60"
                         >
                           <Play className="w-3 h-3 fill-amber-500" /> {t('maintenance.startWork')}
                         </button>
                       )}
 
-                      {order.status === 'In Progress' && (
+                      {/* Mark Complete (In Progress orders) */}
+                      {(order.status === 'In Progress' || order.status === 'In_Progress') && (
                         <button
-                          onClick={() => updateLocalStatus(order.id, 'Completed')}
-                          className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-[10px] font-extrabold bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 border border-emerald-500/20 transition-all"
+                          disabled={updateStatusMutation.isPending}
+                          onClick={() => updateStatusMutation.mutate({ id: order.id, status: 'Completed' })}
+                          className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-[10px] font-extrabold bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 border border-emerald-500/20 transition-all disabled:opacity-60"
                         >
                           <Check className="w-3 h-3" /> {t('maintenance.complete')}
                         </button>
@@ -256,7 +253,7 @@ export const MaintenanceDashboardPage: React.FC = () => {
     );
   }
 
-  // --- RENDER ORIGINAL PROPERTY MANAGER DASHBOARD ---
+  // --- RENDER PROPERTY MANAGER DASHBOARD ---
   if (loadingMetrics || loadingRecent || !metrics) {
     return <LoadingSkeleton type="card" />;
   }

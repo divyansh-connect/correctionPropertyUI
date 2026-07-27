@@ -1,18 +1,39 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../store/useStore';
+import api from '../../api';
 import { PageHeader } from '../../components/PageHeader';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
+import { LoadingSkeleton } from '../../components/LoadingSkeleton';
 import { 
   User, Mail, Shield, CheckCircle2, Clock, 
-  Star, MapPin, Phone, Calendar, Briefcase, Power
+  Star, MapPin, Phone, Calendar, Briefcase, Power, Loader2
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 export const StaffProfilePage: React.FC = () => {
   const { user } = useAuthStore();
   const { t } = useTranslation();
-  const [isAvailable, setIsAvailable] = useState(true);
+  const queryClient = useQueryClient();
+
+  const { data: profile, isLoading } = useQuery({
+    queryKey: ['staff-profile-data'],
+    queryFn: () => api.staffProfile.get(),
+  });
+
+  const toggleDutyMutation = useMutation({
+    mutationFn: (newStatus: boolean) => api.staffProfile.update({ isAvailable: newStatus }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['staff-profile-data'] });
+    },
+  });
+
+  if (isLoading || !profile) {
+    return <LoadingSkeleton type="card" />;
+  }
+
+  const isAvailable = profile.isAvailable ?? true;
 
   return (
     <div className="space-y-6 text-foreground">
@@ -31,7 +52,7 @@ export const StaffProfilePage: React.FC = () => {
           <div className="relative">
             <img
               src={user?.avatarUrl || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80"}
-              alt={user?.name}
+              alt={profile.name || user?.name}
               className="w-28 h-28 rounded-full object-cover border-4 border-primary/20 shadow-lg"
             />
             <span className={`absolute bottom-1 right-1 w-6 h-6 rounded-full border-4 border-card flex items-center justify-center ${
@@ -40,9 +61,9 @@ export const StaffProfilePage: React.FC = () => {
           </div>
 
           <div>
-            <h3 className="font-extrabold text-lg">{user?.name || 'Technician Lead 1'}</h3>
+            <h3 className="font-extrabold text-lg">{profile.name || user?.name || 'Marcus Vance'}</h3>
             <p className="text-xs text-muted-foreground font-semibold flex items-center justify-center gap-1 mt-1">
-              <Briefcase className="w-3.5 h-3.5" /> {t('staffProfilePage.specialist')}
+              <Briefcase className="w-3.5 h-3.5" /> {profile.specialist || t('staffProfilePage.specialist')}
             </p>
           </div>
 
@@ -56,14 +77,16 @@ export const StaffProfilePage: React.FC = () => {
             </div>
             <Button
               size="sm"
-              onClick={() => setIsAvailable(!isAvailable)}
+              disabled={toggleDutyMutation.isPending}
+              onClick={() => toggleDutyMutation.mutate(!isAvailable)}
               className={`w-full flex items-center justify-center gap-2 rounded-xl h-10 font-bold transition-all ${
                 isAvailable 
                   ? 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/20' 
                   : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border border-emerald-500/20'
               }`}
             >
-              <Power className="w-4 h-4" /> {isAvailable ? t('staffProfilePage.clockOut') : t('staffProfilePage.clockIn')}
+              {toggleDutyMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Power className="w-4 h-4" />}
+              {isAvailable ? t('staffProfilePage.clockOut') : t('staffProfilePage.clockIn')}
             </Button>
           </div>
         </Card>
@@ -78,7 +101,7 @@ export const StaffProfilePage: React.FC = () => {
               </div>
               <div>
                 <p className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-wider">{t('staffProfilePage.completedJobs')}</p>
-                <p className="text-xl font-black mt-0.5">142</p>
+                <p className="text-xl font-black mt-0.5">{profile.completedJobs || 142}</p>
               </div>
             </Card>
 
@@ -88,7 +111,7 @@ export const StaffProfilePage: React.FC = () => {
               </div>
               <div>
                 <p className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-wider">{t('staffProfilePage.avgResponseTime')}</p>
-                <p className="text-xl font-black mt-0.5">38 Min</p>
+                <p className="text-xl font-black mt-0.5">{profile.avgResponseTime || '38 Min'}</p>
               </div>
             </Card>
 
@@ -98,7 +121,7 @@ export const StaffProfilePage: React.FC = () => {
               </div>
               <div>
                 <p className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-wider">{t('staffProfilePage.customerRating')}</p>
-                <p className="text-xl font-black mt-0.5">4.92 / 5.0</p>
+                <p className="text-xl font-black mt-0.5">{profile.customerRating || '4.92 / 5.0'}</p>
               </div>
             </Card>
           </div>
@@ -113,7 +136,7 @@ export const StaffProfilePage: React.FC = () => {
                   <User className="w-4.5 h-4.5 text-primary shrink-0" />
                   <div>
                     <p className="text-[10px] uppercase font-bold text-muted-foreground/60">{t('staffProfilePage.fullName')}</p>
-                    <p className="text-foreground mt-0.5">{user?.name}</p>
+                    <p className="text-foreground mt-0.5">{profile.name || user?.name}</p>
                   </div>
                 </div>
 
@@ -121,7 +144,7 @@ export const StaffProfilePage: React.FC = () => {
                   <Mail className="w-4.5 h-4.5 text-primary shrink-0" />
                   <div>
                     <p className="text-[10px] uppercase font-bold text-muted-foreground/60">{t('staffProfilePage.emailAddress')}</p>
-                    <p className="text-foreground mt-0.5">{user?.email}</p>
+                    <p className="text-foreground mt-0.5">{profile.email || user?.email}</p>
                   </div>
                 </div>
 
@@ -129,7 +152,7 @@ export const StaffProfilePage: React.FC = () => {
                   <Phone className="w-4.5 h-4.5 text-primary shrink-0" />
                   <div>
                     <p className="text-[10px] uppercase font-bold text-muted-foreground/60">{t('staffProfilePage.contactPhone')}</p>
-                    <p className="text-foreground mt-0.5">(512) 555-0199</p>
+                    <p className="text-foreground mt-0.5">{profile.phone || '(512) 555-0199'}</p>
                   </div>
                 </div>
               </div>
@@ -139,7 +162,7 @@ export const StaffProfilePage: React.FC = () => {
                   <Shield className="w-4.5 h-4.5 text-primary shrink-0" />
                   <div>
                     <p className="text-[10px] uppercase font-bold text-muted-foreground/60">{t('staffProfilePage.securityRole')}</p>
-                    <p className="text-foreground mt-0.5">{user?.role}</p>
+                    <p className="text-foreground mt-0.5">{profile.role || user?.role}</p>
                   </div>
                 </div>
 
@@ -147,7 +170,7 @@ export const StaffProfilePage: React.FC = () => {
                   <MapPin className="w-4.5 h-4.5 text-primary shrink-0" />
                   <div>
                     <p className="text-[10px] uppercase font-bold text-muted-foreground/60">{t('staffProfilePage.assignedProperties')}</p>
-                    <p className="text-foreground mt-0.5">Sunset Villas, Apex Heights, Lakeside</p>
+                    <p className="text-foreground mt-0.5">{profile.assignedProperties || 'Sunset Villas, Apex Heights, Lakeside'}</p>
                   </div>
                 </div>
 
@@ -155,7 +178,7 @@ export const StaffProfilePage: React.FC = () => {
                   <Calendar className="w-4.5 h-4.5 text-primary shrink-0" />
                   <div>
                     <p className="text-[10px] uppercase font-bold text-muted-foreground/60">{t('staffProfilePage.joinedDate')}</p>
-                    <p className="text-foreground mt-0.5">January 15th, 2025</p>
+                    <p className="text-foreground mt-0.5">{profile.joinedDate || 'January 15th, 2025'}</p>
                   </div>
                 </div>
               </div>
