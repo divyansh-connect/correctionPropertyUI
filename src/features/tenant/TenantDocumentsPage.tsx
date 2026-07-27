@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { PageHeader } from '../../components/PageHeader';
 import { DataTable } from '../../components/DataTable';
@@ -12,6 +13,7 @@ import { Download, FileText, Plus, UploadCloud, Loader2 } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
 
 export const TenantDocumentsPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -62,31 +64,31 @@ export const TenantDocumentsPage: React.FC = () => {
   };
 
   const filteredDocs = documents.filter((doc) => {
-    const searchMatch = doc.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const catMatch = categoryFilter === '' || doc.category === categoryFilter;
-    return searchMatch && catMatch;
+    const matchesSearch = doc.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = categoryFilter ? doc.category.toLowerCase() === categoryFilter.toLowerCase() : true;
+    return matchesSearch && matchesCategory;
   });
 
   const columns: ColumnDef<any>[] = [
     {
       accessorKey: 'name',
-      header: 'File Name',
+      header: t('tenant.documents.documentName', 'Document Name'),
       id: 'name',
       cell: ({ row }) => (
-        <div className="flex items-center space-x-2 font-bold text-foreground">
+        <div className="flex items-center gap-2 font-bold text-foreground">
           <FileText className="w-4 h-4 text-primary shrink-0" />
           <span>{row.original.name}</span>
         </div>
       ),
     },
-    { accessorKey: 'category', header: 'Category', id: 'category' },
-    { accessorKey: 'uploadedAt', header: 'Uploaded Date', id: 'date' },
-    { accessorKey: 'size', header: 'File Size', id: 'size' },
+    { accessorKey: 'category', header: t('tenant.documents.category', 'Category'), id: 'category' },
+    { accessorKey: 'uploadedDate', header: t('tenant.documents.uploadedDate', 'Uploaded Date'), id: 'uploadedDate' },
+    { accessorKey: 'size', header: t('tenant.documents.size', 'File Size'), id: 'size' },
     {
       id: 'actions',
-      header: 'Actions',
+      header: t('tenant.documents.actions', 'Actions'),
       cell: ({ row }) => (
-        <Button variant="ghost" size="icon" onClick={() => alert(`Downloading: ${row.original.name}`)} title="Download file">
+        <Button variant="ghost" size="icon" onClick={() => alert(`Downloading: ${row.original.name}`)} title={t('tenant.documents.download', 'Download file')}>
           <Download className="w-4 h-4" />
         </Button>
       ),
@@ -96,14 +98,14 @@ export const TenantDocumentsPage: React.FC = () => {
   return (
     <div>
       <PageHeader
-        title="My Document Files"
-        description="Verify copy of leases agreement sheets, payment invoices receipt logs, and insurance documents."
+        title={t('tenant.documents.title', 'My Document Files')}
+        description={t('tenant.documents.desc', 'Verify copy of leases agreement sheets, payment invoices receipt logs, and insurance documents.')}
         breadcrumbs={[
-          { label: 'Home', href: '/tenant' },
-          { label: 'Documents' },
+          { label: t('header.home', 'Home'), href: '/tenant' },
+          { label: t('tenant.nav.documents', 'Documents') },
         ]}
         action={{
-          label: 'Upload Document',
+          label: t('tenant.documents.uploadDoc', 'Upload Document'),
           onClick: () => setIsOpen(true),
           icon: <Plus className="w-4.5 h-4.5" />,
         }}
@@ -112,19 +114,19 @@ export const TenantDocumentsPage: React.FC = () => {
       <FilterBar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        searchPlaceholder="Search files by name..."
+        searchPlaceholder={t('tenant.documents.searchPlaceholder', 'Search files by name...')}
         filters={[
           {
             key: 'category',
             value: categoryFilter,
-            placeholder: 'Document Category',
+            placeholder: t('tenant.documents.categoryPlaceholder', 'Document Category'),
             options: [
-              { label: 'Lease', value: 'Lease' },
-              { label: 'Receipts', value: 'Receipts' },
-              { label: 'Notices', value: 'Notices' },
-              { label: 'Community Documents', value: 'Community Documents' },
-              { label: 'Insurance', value: 'Insurance' },
-              { label: 'Inspection Reports', value: 'Inspection Reports' },
+              { label: t('tenant.documents.categories.lease', 'Lease'), value: 'Lease' },
+              { label: t('tenant.documents.categories.receipts', 'Receipts'), value: 'Receipts' },
+              { label: t('tenant.documents.categories.notices', 'Notices'), value: 'Notices' },
+              { label: t('tenant.documents.categories.community', 'Community Documents'), value: 'Community Documents' },
+              { label: t('tenant.documents.categories.insurance', 'Insurance'), value: 'Insurance' },
+              { label: t('tenant.documents.categories.inspection', 'Inspection Reports'), value: 'Inspection Reports' },
             ],
           },
         ]}
@@ -140,7 +142,7 @@ export const TenantDocumentsPage: React.FC = () => {
       <DataTable columns={columns} data={filteredDocs} loading={isLoading} />
 
       {/* UPLOAD DIALOG */}
-      <FormDialog open={isOpen} onOpenChange={setIsOpen} title="Upload New Document">
+      <FormDialog open={isOpen} onOpenChange={setIsOpen} title={t('tenant.documents.uploadTitle', 'Upload New Document')}>
         <form onSubmit={handleUploadSubmit} className="space-y-4 pt-2 text-xs font-semibold text-foreground">
           <div 
             onClick={handleDropzoneClick}

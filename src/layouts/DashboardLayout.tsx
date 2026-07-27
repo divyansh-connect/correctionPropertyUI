@@ -47,8 +47,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       path: '/companies',
       submenu: [
         { title: t('nav.companies'), path: '/companies' },
-        { title: 'Create Company', path: '/companies/new' },
-        { title: 'Company Users', path: '/companies/users' },
+        { title: t('nav.createCompany'), path: '/companies/new' },
+        { title: t('nav.companyUsers'), path: '/companies/users' },
       ],
     },
     {
@@ -56,8 +56,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       icon: <CalendarCheck className="w-5 h-5" />,
       path: '/subscriptions',
       submenu: [
-        { title: 'Plans', path: '/subscriptions/plans' },
-        { title: 'Active Subscriptions', path: '/subscriptions/active' },
+        { title: t('nav.plans'), path: '/subscriptions/plans' },
+        { title: t('nav.activeSubscriptions'), path: '/subscriptions/active' },
         { title: t('nav.invoices'), path: '/subscriptions/invoices' },
       ],
     },
@@ -71,8 +71,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       icon: <Settings className="w-5 h-5" />,
       path: '/platform-settings',
       submenu: [
-        { title: 'General', path: '/platform-settings/general' },
-        { title: 'Security & Logs', path: '/platform-security/audit' },
+        { title: t('nav.general'), path: '/platform-settings/general' },
+        { title: t('nav.securityAndLogs'), path: '/platform-security/audit' },
       ],
     },
   ];
@@ -320,12 +320,28 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   // Build Breadcrumbs from Path
   const getBreadcrumbs = () => {
     const parts = currentPath.split('/').filter(Boolean);
-    const crumbs = [{ label: 'Home', href: '/' }];
+    const crumbs = [{ label: t('header.home', 'Home'), href: '/' }];
     let currentLink = '';
     parts.forEach((part) => {
       currentLink += `/${part}`;
+      const translationKeyMap: Record<string, string> = {
+        'platform-security': t('nav.platformSettings', 'Platform Security'),
+        'audit': t('platformSecurity.auditLogs.breadcrumb', 'Audit Logs'),
+        'login-history': t('platformSecurity.loginHistory.breadcrumb', 'Login History'),
+        'policies': t('platformSecurity.policies.breadcrumb', 'Policies'),
+        'platform-settings': t('nav.platformSettings', 'Platform Settings'),
+        'general': t('platformSettingsPage.general', 'General'),
+        'email': t('platformSettings.email.breadcrumb', 'Email'),
+        'storage': t('platformSettings.storage.breadcrumb', 'Storage'),
+        'branding': t('platformSettings.branding.breadcrumb', 'Branding'),
+        'platform-integrations': t('nav.integrationsMarketplace', 'Integrations'),
+        'connected': t('platformIntegrations.connectedApps.breadcrumb', 'Connected Apps'),
+        'keys': t('platformIntegrations.apiKeys.breadcrumb', 'API Keys'),
+        'webhooks': t('platformIntegrations.webhooks.breadcrumb', 'Webhooks')
+      };
+      const label = translationKeyMap[part] || t(`nav.${part}`, part.charAt(0).toUpperCase() + part.slice(1).replace('-', ' '));
       crumbs.push({
-        label: part.charAt(0).toUpperCase() + part.slice(1).replace('-', ' '),
+        label,
         href: currentLink,
       });
     });

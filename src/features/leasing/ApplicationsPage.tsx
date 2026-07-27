@@ -1,62 +1,50 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
+import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { Application } from '../../types';
 import { PageHeader } from '../../components/PageHeader';
 import { DataTable } from '../../components/DataTable';
 import { FilterBar } from '../../components/FilterBar';
-import { StatusBadge } from '../../components/StatusBadge';
 import { FormDialog } from '../../components/FormDialog';
 import { Button } from '../../components/ui/Button';
-import { Select } from '../../components/ui/Select';
-import { Eye, Check, X, ShieldAlert, FileText, Loader2, ArrowRight } from 'lucide-react';
+import { StatusBadge } from '../../components/StatusBadge';
+import { Eye, Check, X, ArrowRight, ShieldAlert, FileText } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
 
 export const ApplicationsPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
 
   // Queries
-  const { data: apps = [], isLoading, error } = useQuery({
-    queryKey: ['applications'],
+  const { data: applications = [], isLoading, error } = useQuery({
+    queryKey: ['applications-list'],
     queryFn: () => api.leasing.getApplications(),
   });
 
-  const { data: properties = [] } = useQuery({
-    queryKey: ['properties'],
-    queryFn: () => api.property.getAll(),
-  });
-
-  // Mutations
   const approveMutation = useMutation({
-    mutationFn: async (id: string) => {
-      // update status in mock API
-      return api.leasing.updateApplication(id, { status: 'Approved' });
-    },
+    mutationFn: (id: string) => api.leasing.updateApplication(id, { status: 'Approved' }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['applications'] });
+      queryClient.invalidateQueries({ queryKey: ['applications-list'] });
       setSelectedApp(null);
     },
   });
 
   const rejectMutation = useMutation({
-    mutationFn: async (id: string) => {
-      return api.leasing.updateApplication(id, { status: 'Rejected' });
-    },
+    mutationFn: (id: string) => api.leasing.updateApplication(id, { status: 'Rejected' }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['applications'] });
+      queryClient.invalidateQueries({ queryKey: ['applications-list'] });
       setSelectedApp(null);
     },
   });
 
-  const filteredApps = apps.filter((app) => {
-    const nameVal = app.tenantName || '';
-    const nameMatch = nameVal.toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredApps = applications.filter((app) => {
+    const nameMatch = app.tenantName.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === '' || app.status === statusFilter;
     return nameMatch && matchesStatus;
   });
@@ -64,7 +52,7 @@ export const ApplicationsPage: React.FC = () => {
   const columns: ColumnDef<Application>[] = [
     {
       accessorKey: 'tenantName',
-      header: 'Applicant',
+      header: t('pmApplications.applicant'),
       id: 'applicant',
       cell: ({ row }) => (
         <span
@@ -75,14 +63,13 @@ export const ApplicationsPage: React.FC = () => {
         </span>
       ),
     },
-    { accessorKey: 'propertyName', header: 'Interested Property', id: 'property' },
-    { accessorKey: 'unitNumber', header: 'Unit #', id: 'unit' },
-    { accessorKey: 'submittedDate', header: 'Submission Date', id: 'submittedDate' },
+    { accessorKey: 'propertyName', header: t('pmApplications.interestedProperty'), id: 'property' },
+    { accessorKey: 'unitNumber', header: t('pmApplications.unit'), id: 'unit' },
+    { accessorKey: 'submittedDate', header: t('pmApplications.submissionDate'), id: 'submittedDate' },
     {
       id: 'creditScore',
-      header: 'Credit Score',
+      header: t('pmApplications.creditScore'),
       cell: ({ row }) => {
-        // mock score placeholder
         const score = 650 + (parseInt(row.original.id.split('-').pop() || '0') % 150);
         return (
           <span className={`font-bold ${score >= 700 ? 'text-emerald-500' : 'text-amber-500'}`}>
@@ -93,19 +80,19 @@ export const ApplicationsPage: React.FC = () => {
     },
     {
       accessorKey: 'rentProposed',
-      header: 'Proposed Rent',
+      header: t('pmApplications.proposedRent'),
       id: 'rentProposed',
       cell: ({ row }) => <span className="font-semibold">${row.original.rentProposed.toLocaleString()}</span>,
     },
     {
       accessorKey: 'status',
-      header: 'Status',
+      header: t('pmApplications.status'),
       id: 'status',
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
     {
       id: 'actions',
-      header: 'Actions',
+      header: t('pmApplications.actions'),
       cell: ({ row }) => (
         <div className="flex space-x-1">
           <Button variant="ghost" size="icon" onClick={() => setSelectedApp(row.original)} title="Review Application">
@@ -118,7 +105,6 @@ export const ApplicationsPage: React.FC = () => {
                 size="icon"
                 className="text-emerald-500 hover:bg-emerald-500/10"
                 onClick={() => approveMutation.mutate(row.original.id)}
-                title="Approve"
               >
                 <Check className="w-4 h-4" />
               </Button>
@@ -127,21 +113,10 @@ export const ApplicationsPage: React.FC = () => {
                 size="icon"
                 className="text-rose-500 hover:bg-rose-500/10"
                 onClick={() => rejectMutation.mutate(row.original.id)}
-                title="Reject"
               >
                 <X className="w-4 h-4" />
               </Button>
             </>
-          )}
-          {row.original.status === 'Approved' && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate({ to: '/leases/new' })}
-              className="text-xs font-semibold flex items-center gap-1"
-            >
-              Convert to Lease <ArrowRight className="w-3.5 h-3.5" />
-            </Button>
           )}
         </div>
       ),
@@ -151,19 +126,19 @@ export const ApplicationsPage: React.FC = () => {
   return (
     <div>
       <PageHeader
-        title="Background Applications"
-        description="Oversee applicant credit evaluations, income streams, and screening logs."
+        title={t('pmApplications.title')}
+        description={t('pmApplications.desc')}
         breadcrumbs={[
-          { label: 'Home', href: '/' },
-          { label: 'Leasing', href: '/leasing/leases' },
-          { label: 'Applications' },
+          { label: t('header.home'), href: '/' },
+          { label: t('nav.leasing'), href: '/leasing/leases' },
+          { label: t('pmApplications.title') },
         ]}
       />
 
       <FilterBar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        searchPlaceholder="Search applicants by name..."
+        searchPlaceholder={t('pmApplications.searchPlaceholder')}
         filters={[
           {
             key: 'status',

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { OwnerDocument } from '../../types';
 import { PageHeader } from '../../components/PageHeader';
@@ -13,6 +14,7 @@ import { Download, FileText, Plus, UploadCloud, Loader2 } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
 
 export const OwnerDocumentsPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -63,31 +65,42 @@ export const OwnerDocumentsPage: React.FC = () => {
   };
 
   const filteredDocs = documents.filter((doc) => {
-    const searchMatch = doc.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const catMatch = categoryFilter === '' || doc.category === categoryFilter;
-    return searchMatch && catMatch;
+    const matchesSearch = doc.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = categoryFilter ? doc.category.toLowerCase() === categoryFilter.toLowerCase() : true;
+    return matchesSearch && matchesCategory;
   });
 
   const columns: ColumnDef<OwnerDocument>[] = [
     {
       accessorKey: 'name',
-      header: 'File Name',
+      header: t('owner.documents.documentName'),
       id: 'name',
       cell: ({ row }) => (
-        <div className="flex items-center space-x-2 font-bold text-foreground">
+        <div className="flex items-center gap-2">
           <FileText className="w-4 h-4 text-primary shrink-0" />
-          <span>{row.original.name}</span>
+          <span className="font-bold cursor-pointer hover:underline text-primary" onClick={() => alert(`Downloading ${row.original.name}`)}>
+            {row.original.name}
+          </span>
         </div>
       ),
     },
-    { accessorKey: 'category', header: 'Category', id: 'category' },
-    { accessorKey: 'uploadedAt', header: 'Uploaded Date', id: 'date' },
-    { accessorKey: 'size', header: 'File Size', id: 'size' },
+    {
+      accessorKey: 'category',
+      header: t('owner.documents.category'),
+      id: 'category',
+      cell: ({ row }) => (
+        <span className="font-bold text-[10px] bg-secondary px-2 py-0.5 rounded border uppercase">
+          {row.original.category}
+        </span>
+      ),
+    },
+    { accessorKey: 'uploadedDate', header: t('owner.documents.uploadedDate'), id: 'uploadedDate' },
+    { accessorKey: 'size', header: t('owner.documents.size'), id: 'size' },
     {
       id: 'actions',
-      header: 'Actions',
+      header: t('owner.documents.actions'),
       cell: ({ row }) => (
-        <Button variant="ghost" size="icon" onClick={() => alert(`Downloading: ${row.original.name}`)} title="Download file">
+        <Button variant="ghost" size="icon" onClick={() => alert(`Downloading ${row.original.name}`)} title={t('owner.documents.download')}>
           <Download className="w-4 h-4" />
         </Button>
       ),
@@ -97,14 +110,14 @@ export const OwnerDocumentsPage: React.FC = () => {
   return (
     <div>
       <PageHeader
-        title="Portfolio Documents Log"
-        description="Verify monthly statements sheets, signed contracts, insurance policies, and annual tax returns."
+        title={t('owner.documents.title')}
+        description={t('owner.documents.desc')}
         breadcrumbs={[
-          { label: 'Home', href: '/owner' },
-          { label: 'Documents' },
+          { label: t('header.home'), href: '/owner' },
+          { label: t('owner.nav.documents') },
         ]}
         action={{
-          label: 'Upload Document',
+          label: t('owner.documents.uploadDoc'),
           onClick: () => setIsOpen(true),
           icon: <Plus className="w-4.5 h-4.5" />,
         }}
@@ -113,20 +126,20 @@ export const OwnerDocumentsPage: React.FC = () => {
       <FilterBar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        searchPlaceholder="Search document name..."
+        searchPlaceholder={t('owner.documents.searchPlaceholder')}
         filters={[
           {
             key: 'category',
             value: categoryFilter,
-            placeholder: 'Document Category',
+            placeholder: t('owner.documents.categoryPlaceholder'),
             options: [
-              { label: 'Statements', value: 'Statements' },
-              { label: 'Tax Documents', value: 'Tax Documents' },
-              { label: 'Contracts', value: 'Contracts' },
-              { label: 'Insurance', value: 'Insurance' },
-              { label: 'Property Photos', value: 'Property Photos' },
-              { label: 'Maintenance Reports', value: 'Maintenance Reports' },
-              { label: 'Inspection Reports', value: 'Inspection Reports' },
+              { label: t('owner.documents.categories.statements'), value: 'Statements' },
+              { label: t('owner.documents.categories.tax'), value: 'Tax Documents' },
+              { label: t('owner.documents.categories.contracts'), value: 'Contracts' },
+              { label: t('owner.documents.categories.insurance'), value: 'Insurance' },
+              { label: t('owner.documents.categories.photos'), value: 'Property Photos' },
+              { label: t('owner.documents.categories.maintenance'), value: 'Maintenance Reports' },
+              { label: t('owner.documents.categories.inspection'), value: 'Inspection Reports' },
             ],
           },
         ]}
@@ -142,7 +155,7 @@ export const OwnerDocumentsPage: React.FC = () => {
       <DataTable columns={columns} data={filteredDocs.slice(0, 100)} loading={isLoading} />
 
       {/* UPLOAD DIALOG */}
-      <FormDialog open={isOpen} onOpenChange={setIsOpen} title="Upload New Document">
+      <FormDialog open={isOpen} onOpenChange={setIsOpen} title={t('owner.documents.uploadTitle')}>
         <form onSubmit={handleUploadSubmit} className="space-y-4 pt-2 text-xs font-semibold text-foreground">
           <div 
             onClick={handleDropzoneClick}

@@ -7,19 +7,21 @@ import {
   User, Mail, Shield, CheckCircle2, Clock, 
   Star, MapPin, Phone, Calendar, Briefcase, Power
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export const StaffProfilePage: React.FC = () => {
   const { user } = useAuthStore();
+  const { t } = useTranslation();
   const [isAvailable, setIsAvailable] = useState(true);
 
   return (
     <div className="space-y-6 text-foreground">
       <PageHeader
-        title="My Profile"
-        description="View your technician credentials, specialty ratings, and work statistics."
+        title={t('staffProfilePage.title')}
+        description={t('staffProfilePage.desc')}
         breadcrumbs={[
-          { label: 'Portal', href: '/staff/dashboard' },
-          { label: 'Profile' },
+          { label: t('staffProfilePage.portalBreadcrumb'), href: '/staff/dashboard' },
+          { label: t('staffProfilePage.profileBreadcrumb') },
         ]}
       />
 
@@ -40,16 +42,16 @@ export const StaffProfilePage: React.FC = () => {
           <div>
             <h3 className="font-extrabold text-lg">{user?.name || 'Technician Lead 1'}</h3>
             <p className="text-xs text-muted-foreground font-semibold flex items-center justify-center gap-1 mt-1">
-              <Briefcase className="w-3.5 h-3.5" /> Lead Maintenance Specialist
+              <Briefcase className="w-3.5 h-3.5" /> {t('staffProfilePage.specialist')}
             </p>
           </div>
 
           {/* Availability Toggle */}
           <div className="w-full pt-4 border-t border-border/40 flex flex-col items-center space-y-2">
             <div className="flex items-center justify-between w-full px-2 text-xs font-bold">
-              <span className="text-muted-foreground">Duty Status:</span>
+              <span className="text-muted-foreground">{t('staffProfilePage.dutyStatus')}</span>
               <span className={isAvailable ? 'text-emerald-500' : 'text-rose-500'}>
-                {isAvailable ? 'On Duty & Active' : 'Off Duty / On Break'}
+                {isAvailable ? t('staffProfilePage.onDuty') : t('staffProfilePage.offDuty')}
               </span>
             </div>
             <Button
@@ -61,7 +63,7 @@ export const StaffProfilePage: React.FC = () => {
                   : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border border-emerald-500/20'
               }`}
             >
-              <Power className="w-4 h-4" /> {isAvailable ? 'Clock Out / Go Offline' : 'Clock In / Go Online'}
+              <Power className="w-4 h-4" /> {isAvailable ? t('staffProfilePage.clockOut') : t('staffProfilePage.clockIn')}
             </Button>
           </div>
         </Card>
@@ -75,7 +77,7 @@ export const StaffProfilePage: React.FC = () => {
                 <CheckCircle2 className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-wider">Completed Jobs</p>
+                <p className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-wider">{t('staffProfilePage.completedJobs')}</p>
                 <p className="text-xl font-black mt-0.5">142</p>
               </div>
             </Card>
@@ -85,7 +87,7 @@ export const StaffProfilePage: React.FC = () => {
                 <Clock className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-wider">Avg Response Time</p>
+                <p className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-wider">{t('staffProfilePage.avgResponseTime')}</p>
                 <p className="text-xl font-black mt-0.5">38 Min</p>
               </div>
             </Card>
@@ -95,7 +97,7 @@ export const StaffProfilePage: React.FC = () => {
                 <Star className="w-5 h-5 fill-amber-500" />
               </div>
               <div>
-                <p className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-wider">Customer Rating</p>
+                <p className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-wider">{t('staffProfilePage.customerRating')}</p>
                 <p className="text-xl font-black mt-0.5">4.92 / 5.0</p>
               </div>
             </Card>
@@ -103,14 +105,14 @@ export const StaffProfilePage: React.FC = () => {
 
           {/* Account & Details Card */}
           <Card className="p-6 border bg-card space-y-6">
-            <h3 className="font-extrabold text-sm uppercase tracking-wider border-b pb-3">Professional Credentials</h3>
+            <h3 className="font-extrabold text-sm uppercase tracking-wider border-b pb-3">{t('staffProfilePage.credentials')}</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-semibold">
               <div className="space-y-4">
                 <div className="flex items-center space-x-3 text-muted-foreground">
                   <User className="w-4.5 h-4.5 text-primary shrink-0" />
                   <div>
-                    <p className="text-[10px] uppercase font-bold text-muted-foreground/60">Full Name</p>
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground/60">{t('staffProfilePage.fullName')}</p>
                     <p className="text-foreground mt-0.5">{user?.name}</p>
                   </div>
                 </div>
@@ -118,7 +120,7 @@ export const StaffProfilePage: React.FC = () => {
                 <div className="flex items-center space-x-3 text-muted-foreground">
                   <Mail className="w-4.5 h-4.5 text-primary shrink-0" />
                   <div>
-                    <p className="text-[10px] uppercase font-bold text-muted-foreground/60">Email Address</p>
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground/60">{t('staffProfilePage.emailAddress')}</p>
                     <p className="text-foreground mt-0.5">{user?.email}</p>
                   </div>
                 </div>
@@ -126,7 +128,7 @@ export const StaffProfilePage: React.FC = () => {
                 <div className="flex items-center space-x-3 text-muted-foreground">
                   <Phone className="w-4.5 h-4.5 text-primary shrink-0" />
                   <div>
-                    <p className="text-[10px] uppercase font-bold text-muted-foreground/60">Contact Phone</p>
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground/60">{t('staffProfilePage.contactPhone')}</p>
                     <p className="text-foreground mt-0.5">(512) 555-0199</p>
                   </div>
                 </div>
@@ -136,7 +138,7 @@ export const StaffProfilePage: React.FC = () => {
                 <div className="flex items-center space-x-3 text-muted-foreground">
                   <Shield className="w-4.5 h-4.5 text-primary shrink-0" />
                   <div>
-                    <p className="text-[10px] uppercase font-bold text-muted-foreground/60">Security Role</p>
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground/60">{t('staffProfilePage.securityRole')}</p>
                     <p className="text-foreground mt-0.5">{user?.role}</p>
                   </div>
                 </div>
@@ -144,7 +146,7 @@ export const StaffProfilePage: React.FC = () => {
                 <div className="flex items-center space-x-3 text-muted-foreground">
                   <MapPin className="w-4.5 h-4.5 text-primary shrink-0" />
                   <div>
-                    <p className="text-[10px] uppercase font-bold text-muted-foreground/60">Assigned Properties</p>
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground/60">{t('staffProfilePage.assignedProperties')}</p>
                     <p className="text-foreground mt-0.5">Sunset Villas, Apex Heights, Lakeside</p>
                   </div>
                 </div>
@@ -152,7 +154,7 @@ export const StaffProfilePage: React.FC = () => {
                 <div className="flex items-center space-x-3 text-muted-foreground">
                   <Calendar className="w-4.5 h-4.5 text-primary shrink-0" />
                   <div>
-                    <p className="text-[10px] uppercase font-bold text-muted-foreground/60">Joined Date</p>
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground/60">{t('staffProfilePage.joinedDate')}</p>
                     <p className="text-foreground mt-0.5">January 15th, 2025</p>
                   </div>
                 </div>

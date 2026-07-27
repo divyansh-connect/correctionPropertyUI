@@ -14,6 +14,7 @@ import {
   Clock, Search, Eye, Play, Check, AlertCircle, XCircle, X,
   AlertTriangle, FileText, MapPin
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const formatDate = (dateStr?: string) => {
   if (!dateStr) return 'TBD';
@@ -34,6 +35,7 @@ export const StaffMaintenancePage: React.FC = () => {
   const { user } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
 
   // Determine if we are on the Completed Tasks (History) view
   const isCompletedView = location.pathname.includes('/completed');
@@ -144,15 +146,15 @@ export const StaffMaintenancePage: React.FC = () => {
   return (
     <div className="space-y-6 text-foreground">
       <PageHeader
-        title={isCompletedView ? "Work History" : "My Work Orders"}
+        title={isCompletedView ? t('staffMaintenance.workHistory') : t('staffMaintenance.myWorkOrders')}
         description={
           isCompletedView 
-            ? "Track completed or rejected jobs, actual repair costs, and resolution details." 
-            : "Accept assignments, execute field operations, and update task statuses."
+            ? t('staffMaintenance.workHistoryDesc')
+            : t('staffMaintenance.myWorkOrdersDesc')
         }
         breadcrumbs={[
-          { label: 'Portal', href: '/staff/dashboard' },
-          { label: isCompletedView ? 'Work History' : 'My Tasks' },
+          { label: t('staffMaintenance.portalBreadcrumb'), href: '/staff/dashboard' },
+          { label: isCompletedView ? t('staffMaintenance.workHistoryBreadcrumb') : t('staffMaintenance.myTasksBreadcrumb') },
         ]}
       />
 
@@ -161,7 +163,7 @@ export const StaffMaintenancePage: React.FC = () => {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Search tasks by ID, property, or issue..."
+            placeholder={t('staffMaintenance.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9 h-10"
@@ -173,14 +175,14 @@ export const StaffMaintenancePage: React.FC = () => {
       <div className="space-y-4">
         <div className="flex justify-between items-center px-1">
           <h3 className="font-extrabold text-sm uppercase tracking-wider text-muted-foreground">
-            {isCompletedView ? "Archived Logs" : "Active Tasks"} ({filteredWorkOrders.length})
+            {isCompletedView ? t('staffMaintenance.archivedLogs') : t('staffMaintenance.activeTasks')} ({filteredWorkOrders.length})
           </h3>
         </div>
         
         {filteredWorkOrders.length === 0 ? (
           <Card className="p-12 text-center border bg-card">
             <Clipboard className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
-            <p className="text-xs text-muted-foreground font-semibold">No work orders matching your filters at this time.</p>
+            <p className="text-xs text-muted-foreground font-semibold">{t('staffMaintenance.noOrders')}</p>
           </Card>
         ) : (
           <div className="space-y-4">
@@ -213,7 +215,7 @@ export const StaffMaintenancePage: React.FC = () => {
                           order.priority === 'Medium' ? 'bg-blue-500/10 text-blue-500 border-blue-500/25' :
                           'bg-emerald-500/10 text-emerald-500 border-emerald-500/25'
                         }`}>
-                          {order.priority} Priority
+                          {t('staffMaintenance.priority', { priority: order.priority })}
                         </span>
                       )}
                     </div>
@@ -238,7 +240,7 @@ export const StaffMaintenancePage: React.FC = () => {
                         {/* Reject Info Box */}
                         {order.status === 'Rejected' && order.rejectReason && (
                           <div className="p-3 bg-rose-500/5 border border-rose-500/20 text-rose-500 rounded-xl text-[11px] font-semibold space-y-0.5 mt-2">
-                            <p className="uppercase text-[8px] text-muted-foreground font-bold tracking-wide">Reason for Rejection</p>
+                            <p className="uppercase text-[8px] text-muted-foreground font-bold tracking-wide">{t('staffMaintenance.reasonForRejection')}</p>
                             <p className="leading-relaxed italic">"{order.rejectReason}"</p>
                           </div>
                         )}
@@ -246,7 +248,7 @@ export const StaffMaintenancePage: React.FC = () => {
                         {/* Resolution Info Box */}
                         {order.status === 'Completed' && order.resolutionNotes && (
                           <div className="p-3 bg-emerald-500/5 border border-emerald-500/20 text-emerald-600 rounded-xl text-[11px] font-semibold space-y-0.5 mt-2">
-                            <p className="uppercase text-[8px] text-muted-foreground font-bold tracking-wide">Resolution Summary</p>
+                            <p className="uppercase text-[8px] text-muted-foreground font-bold tracking-wide">{t('staffMaintenance.resolutionSummary')}</p>
                             <p className="leading-relaxed italic">"{order.resolutionNotes}"</p>
                           </div>
                         )}
@@ -257,7 +259,7 @@ export const StaffMaintenancePage: React.FC = () => {
                         {/* Scheduled Date */}
                         <div className="space-y-0.5">
                           <span className="text-muted-foreground uppercase text-[8px] tracking-wider block font-bold leading-none">
-                            📅 Scheduled Date
+                            {t('staffMaintenance.scheduledDate')}
                           </span>
                           <span className="text-foreground font-black text-sm block">
                             {formatDate(order.scheduledDate)}
@@ -266,7 +268,7 @@ export const StaffMaintenancePage: React.FC = () => {
                         {/* Budget */}
                         <div className="space-y-0.5">
                           <span className="text-muted-foreground uppercase text-[8px] tracking-wider block font-bold leading-none">
-                            💰 {isCompletedView ? 'Final Cost' : 'Estimated Budget'}
+                            {isCompletedView ? t('staffMaintenance.finalCost') : t('staffMaintenance.estimatedBudget')}
                           </span>
                           <span className="text-foreground font-black text-sm block">
                             {isCompletedView ? (
@@ -293,14 +295,14 @@ export const StaffMaintenancePage: React.FC = () => {
                               onClick={() => handleAccept(order.id)}
                               className="h-8 px-4 rounded-xl text-xs font-bold bg-primary text-white hover:bg-primary/95 transition-all shadow-sm"
                             >
-                              Accept
+                              {t('staffMaintenance.accept')}
                             </button>
                             <button
                               type="button"
                               onClick={() => setRejectTaskId(order.id)}
                               className="h-8 px-4 rounded-xl text-xs font-bold bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/20 transition-all"
                             >
-                              Reject
+                              {t('staffMaintenance.reject')}
                             </button>
                           </>
                         )}
@@ -311,7 +313,7 @@ export const StaffMaintenancePage: React.FC = () => {
                             onClick={() => handleStartWork(order.id)}
                             className="flex items-center gap-1.5 h-8 px-4 rounded-xl text-xs font-bold bg-amber-500 text-white hover:bg-amber-600 transition-all shadow-sm shadow-amber-500/15"
                           >
-                            <Play className="w-3.5 h-3.5 fill-white" /> Start Work
+                            <Play className="w-3.5 h-3.5 fill-white" /> {t('staffMaintenance.startWork')}
                           </button>
                         )}
 
@@ -324,7 +326,7 @@ export const StaffMaintenancePage: React.FC = () => {
                             }}
                             className="flex items-center gap-1.5 h-8 px-4 rounded-xl text-xs font-bold bg-emerald-500 text-white hover:bg-emerald-600 transition-all shadow-sm shadow-emerald-500/15"
                           >
-                            <Check className="w-3.5 h-3.5" /> Mark Completed
+                            <Check className="w-3.5 h-3.5" /> {t('staffMaintenance.markCompleted')}
                           </button>
                         )}
                       </div>
@@ -335,7 +337,7 @@ export const StaffMaintenancePage: React.FC = () => {
                         onClick={() => navigate({ to: `/staff/tasks/${order.id}` })}
                         className="flex items-center gap-1 h-8 font-bold px-3.5 rounded-xl text-xs border bg-background hover:bg-secondary/35 text-foreground"
                       >
-                        <Eye className="w-3.5 h-3.5 text-muted-foreground" /> Details
+                        <Eye className="w-3.5 h-3.5 text-muted-foreground" /> {t('staffMaintenance.details')}
                       </Button>
                     </div>
                   </div>
@@ -359,18 +361,18 @@ export const StaffMaintenancePage: React.FC = () => {
 
             <div className="flex items-center space-x-2.5 text-rose-500 font-extrabold text-sm border-b pb-3 uppercase tracking-wide">
               <AlertTriangle className="w-5 h-5" />
-              <h3>Reject Work Assignment</h3>
+              <h3>{t('staffMaintenance.rejectAssignment')}</h3>
             </div>
 
             <form onSubmit={handleRejectSubmit} className="space-y-4 text-xs font-semibold">
               <div className="space-y-1">
-                <label className="text-muted-foreground font-bold text-[10px] uppercase">Reason for Rejection</label>
+                <label className="text-muted-foreground font-bold text-[10px] uppercase">{t('staffMaintenance.reasonForRejection')}</label>
                 <textarea
                   required
                   rows={3}
                   value={rejectReasonText}
                   onChange={(e) => setRejectReasonText(e.target.value)}
-                  placeholder="Please state why you are rejecting this task (e.g. materials unavailable, conflicts with existing schedule, incorrect dispatch)..."
+                  placeholder={t('staffMaintenance.rejectionPlaceholder')}
                   className="w-full rounded-xl border bg-background p-3.5 border-border/80 focus:outline-none focus:ring-1 focus:ring-primary text-xs"
                 />
               </div>
@@ -382,13 +384,13 @@ export const StaffMaintenancePage: React.FC = () => {
                   className="flex-1 rounded-xl h-10 font-bold"
                   onClick={() => setRejectTaskId(null)}
                 >
-                  Cancel
+                  {t('staffMaintenance.cancel')}
                 </Button>
                 <Button
                   type="submit"
                   className="flex-1 rounded-xl h-10 font-bold bg-rose-500 text-white hover:bg-rose-600"
                 >
-                  Confirm Reject
+                  {t('staffMaintenance.confirmReject')}
                 </Button>
               </div>
             </form>
@@ -409,14 +411,14 @@ export const StaffMaintenancePage: React.FC = () => {
 
             <div className="flex items-center space-x-2.5 text-emerald-500 font-extrabold text-sm border-b pb-3 uppercase tracking-wide">
               <CheckCircle2 className="w-5 h-5" />
-              <h3>Record Job Resolution</h3>
+              <h3>{t('staffMaintenance.recordJobResolution')}</h3>
             </div>
 
             <form onSubmit={handleCompleteSubmit} className="space-y-4 text-xs font-semibold">
               <div className="grid grid-cols-2 gap-4">
                 {/* Actual repair cost */}
                 <div className="space-y-1">
-                  <label className="text-muted-foreground font-bold text-[10px] uppercase">Labor / Base Cost ($)</label>
+                  <label className="text-muted-foreground font-bold text-[10px] uppercase">{t('staffMaintenance.laborBaseCost')}</label>
                   <div className="relative">
                     <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
@@ -432,7 +434,7 @@ export const StaffMaintenancePage: React.FC = () => {
 
                 {/* Extra Expenses */}
                 <div className="space-y-1">
-                  <label className="text-muted-foreground font-bold text-[10px] uppercase">Extra Expenses / Materials ($)</label>
+                  <label className="text-muted-foreground font-bold text-[10px] uppercase">{t('staffMaintenance.extraExpenses')}</label>
                   <div className="relative">
                     <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
@@ -448,12 +450,12 @@ export const StaffMaintenancePage: React.FC = () => {
 
               {/* Resolution Notes */}
               <div className="space-y-1">
-                <label className="text-muted-foreground font-bold text-[10px] uppercase">Materials Used / Resolution Notes</label>
+                <label className="text-muted-foreground font-bold text-[10px] uppercase">{t('staffMaintenance.materialsUsedNotes')}</label>
                 <textarea
                   rows={4}
                   value={resolutionNotesVal}
                   onChange={(e) => setResolutionNotesVal(e.target.value)}
-                  placeholder="Mention parts replaced, details of diagnostic checks, or extra materials purchased for this task..."
+                  placeholder={t('staffMaintenance.notesPlaceholder')}
                   className="w-full rounded-xl border bg-background p-3.5 border-border/80 focus:outline-none focus:ring-1 focus:ring-primary text-xs"
                 />
               </div>
@@ -465,13 +467,13 @@ export const StaffMaintenancePage: React.FC = () => {
                   className="flex-1 rounded-xl h-10 font-bold"
                   onClick={() => setCompleteTaskId(null)}
                 >
-                  Cancel
+                  {t('staffMaintenance.cancel')}
                 </Button>
                 <Button
                   type="submit"
                   className="flex-1 rounded-xl h-10 font-bold bg-emerald-500 text-white hover:bg-emerald-600"
                 >
-                  Submit & Finish Job
+                  {t('staffMaintenance.submitFinish')}
                 </Button>
               </div>
             </form>

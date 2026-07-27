@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { PageHeader } from '../../components/PageHeader';
 import { Button } from '../../components/ui/Button';
 import { StatusBadge } from '../../components/StatusBadge';
@@ -8,6 +9,7 @@ import { getNotificationRedirectPath } from '../../utils/navigation';
 import { Check, Trash2, Bell } from 'lucide-react';
 
 export const TenantNotificationsPage: React.FC = () => {
+  const { t } = useTranslation();
   const { notifications, markAsRead, markAllAsRead, clearAll } = useNotificationStore();
   const { user } = useAuthStore();
   const navigate = useNavigate();
@@ -16,24 +18,24 @@ export const TenantNotificationsPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Tenant Notifications Center"
-        description="Verify recent updates regarding your lease, payments, maintenance orders, and announcements."
+        title={t('tenant.notifications.title')}
+        description={t('tenant.notifications.desc')}
         breadcrumbs={[
-          { label: 'Home', href: '/tenant' },
-          { label: 'Notifications' }
+          { label: t('header.home'), href: '/tenant' },
+          { label: t('tenant.notifications.title') }
         ]}
         action={{
-          label: 'Mark All as Read',
+          label: t('tenant.notifications.markAllRead'),
           onClick: () => markAllAsRead('Tenant'),
           icon: <Check className="w-4 h-4" />
         }}
       />
 
       <div className="flex justify-between items-center text-xs font-bold text-muted-foreground uppercase border-b pb-2">
-        <span>Recent Activity ({roleNotifications.length})</span>
+        <span>{t('tenant.notifications.recentActivity', { count: roleNotifications.length })}</span>
         {roleNotifications.length > 0 && (
           <button onClick={() => clearAll('Tenant')} className="text-rose-500 hover:underline flex items-center gap-1">
-            <Trash2 className="w-3.5 h-3.5" /> Clear All
+            <Trash2 className="w-3.5 h-3.5" /> {t('tenant.notifications.clearAll')}
           </button>
         )}
       </div>
@@ -41,8 +43,8 @@ export const TenantNotificationsPage: React.FC = () => {
       {roleNotifications.length === 0 ? (
         <div className="bg-card border rounded-2xl p-12 text-center space-y-3">
           <Bell className="w-8 h-8 text-muted-foreground mx-auto opacity-60" />
-          <h4 className="font-bold text-xs">No alerts found</h4>
-          <p className="text-[10px] text-muted-foreground">You are all caught up on your residency updates.</p>
+          <h4 className="font-bold text-xs">{t('tenant.notifications.noAlerts')}</h4>
+          <p className="text-[10px] text-muted-foreground">{t('tenant.notifications.allCaughtUp')}</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -77,7 +79,7 @@ export const TenantNotificationsPage: React.FC = () => {
                     onClick={() => markAsRead(n.id)}
                     className="text-[10px] font-extrabold px-2 py-1 text-primary"
                   >
-                    Mark read
+                    {t('tenant.notifications.markRead')}
                   </Button>
                 )}
               </div>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { PageHeader } from '../../components/PageHeader';
 import { DataTable } from '../../components/DataTable';
@@ -16,6 +17,7 @@ import { ColumnDef } from '@tanstack/react-table';
 const WIZARD_STEPS = ['Select Document', 'Select Signers', 'Signature Fields', 'Message', 'Review', 'Send'];
 
 export const DocsSignaturesPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -74,12 +76,12 @@ export const DocsSignaturesPage: React.FC = () => {
   }).filter(s => s.documentName.toLowerCase().includes(searchQuery.toLowerCase()));
 
   const columns: ColumnDef<any>[] = [
-    { accessorKey: 'sentAt', header: 'Sent Date', id: 'date' },
-    { accessorKey: 'documentName', header: 'Document', id: 'doc', cell: ({ row }) => <span className="font-bold text-foreground">{row.original.documentName}</span> },
-    { accessorKey: 'requestedBy', header: 'Requested By', id: 'by' },
-    { accessorKey: 'expiresAt', header: 'Expires', id: 'exp' },
-    { accessorKey: 'status', header: 'Status', id: 'status', cell: ({ row }) => <SignatureStatusBadge status={row.original.status} /> },
-    { id: 'actions', header: 'Actions', cell: ({ row }) => (
+    { accessorKey: 'sentAt', header: t('pmDocuments.sentDate'), id: 'date' },
+    { accessorKey: 'documentName', header: t('pmDocuments.docName'), id: 'doc', cell: ({ row }) => <span className="font-bold text-foreground">{row.original.documentName}</span> },
+    { accessorKey: 'requestedBy', header: t('pmDocuments.requestedBy'), id: 'by' },
+    { accessorKey: 'expiresAt', header: t('pmDocuments.expires'), id: 'exp' },
+    { accessorKey: 'status', header: t('pmDocuments.status'), id: 'status', cell: ({ row }) => <SignatureStatusBadge status={row.original.status} /> },
+    { id: 'actions', header: t('pmDocuments.actions'), cell: ({ row }) => (
       <div className="flex items-center gap-1">
         <Button
           variant="outline"
@@ -88,9 +90,9 @@ export const DocsSignaturesPage: React.FC = () => {
           onClick={() => setSelectedSigningItem(row.original)}
         >
           {row.original.status === 'Signed' ? (
-            <><Eye className="w-3 h-3 mr-1" /> View Document</>
+            <><Eye className="w-3 h-3 mr-1" /> {t('pmDocuments.viewDoc')}</>
           ) : (
-            <><PenTool className="w-3 h-3 mr-1" /> Sign Now</>
+            <><PenTool className="w-3 h-3 mr-1" /> {t('pmDocuments.signNow')}</>
           )}
         </Button>
         {row.original.status === 'Sent' && (
@@ -105,12 +107,12 @@ export const DocsSignaturesPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Digital Signature Requests"
-        description="Send, track, and manage digital signature workflows for leases, contracts, and legal documents."
-        breadcrumbs={[{ label: 'Documents', href: '/documents' }, { label: 'Signature Requests' }]}
-        action={{ label: 'Request Signature', onClick: () => setIsOpen(true), icon: <Plus className="w-4 h-4" /> }}
+        title={t('pmDocuments.signaturesTitle')}
+        description={t('pmDocuments.signaturesDesc')}
+        breadcrumbs={[{ label: t('header.home'), href: '/' }, { label: t('nav.documents'), href: '/documents' }, { label: t('pmDocuments.signaturesTitle') }]}
+        action={{ label: t('pmDocuments.requestSignature'), onClick: () => setIsOpen(true), icon: <Plus className="w-4 h-4" /> }}
       />
-      <FilterBar searchQuery={searchQuery} onSearchChange={setSearchQuery} searchPlaceholder="Search signature requests..." onReset={() => setSearchQuery('')} />
+      <FilterBar searchQuery={searchQuery} onSearchChange={setSearchQuery} searchPlaceholder={t('pmDocuments.searchSignatures')} onReset={() => setSearchQuery('')} />
       <DataTable columns={columns} data={filtered} loading={isLoading} />
 
       {/* Interactive Paper Signing Viewer Modal */}

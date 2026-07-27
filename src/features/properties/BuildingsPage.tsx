@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as zod from 'zod';
@@ -29,6 +30,7 @@ const buildingSchema = zod.object({
 type BuildingFormValues = zod.infer<typeof buildingSchema>;
 
 export const BuildingsPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -90,25 +92,25 @@ export const BuildingsPage: React.FC = () => {
   );
 
   const columns: ColumnDef<Building>[] = [
-    { accessorKey: 'name', header: 'Building Name', id: 'name', cell: ({ row }) => <span className="font-bold">{row.original.name}</span> },
-    { accessorKey: 'propertyName', header: 'Property', id: 'property' },
-    { accessorKey: 'floors', header: 'Floors', id: 'floors' },
-    { accessorKey: 'unitsCount', header: 'Total Units', id: 'units' },
+    { accessorKey: 'name', header: t('pmProperties.buildingName'), id: 'name', cell: ({ row }) => <span className="font-bold">{row.original.name}</span> },
+    { accessorKey: 'propertyName', header: t('pmLeasing.property'), id: 'property' },
+    { accessorKey: 'floors', header: t('pmProperties.floors'), id: 'floors' },
+    { accessorKey: 'unitsCount', header: t('pmProperties.totalUnits'), id: 'units' },
     {
       accessorKey: 'occupancyRate',
-      header: 'Occupancy',
+      header: t('pmProperties.occupancy'),
       id: 'occupancy',
       cell: ({ row }) => <span>{row.original.occupancyRate || 0}%</span>,
     },
     {
       accessorKey: 'status',
-      header: 'Status',
+      header: t('pmIncome.status'),
       id: 'status',
       cell: ({ row }) => <StatusBadge status={row.original.status || 'Active'} />,
     },
     {
       id: 'actions',
-      header: 'Actions',
+      header: t('pmCoa.actions'),
       cell: ({ row }) => (
         <Button
           variant="ghost"
@@ -125,15 +127,15 @@ export const BuildingsPage: React.FC = () => {
   return (
     <div>
       <PageHeader
-        title="Buildings"
-        description="Verify structures, complexes, and layouts inside your properties list."
+        title={t('pmProperties.buildingsTitle')}
+        description={t('pmProperties.buildingsDesc')}
         breadcrumbs={[
-          { label: 'Home', href: '/' },
-          { label: 'Properties', href: '/properties' },
-          { label: 'Buildings' },
+          { label: t('header.home'), href: '/' },
+          { label: t('nav.properties'), href: '/properties' },
+          { label: t('pmProperties.buildingsTitle') },
         ]}
         action={{
-          label: 'Add Building',
+          label: t('pmProperties.addBuilding'),
           onClick: () => setIsFormOpen(true),
           icon: <Plus className="w-4.5 h-4.5" />,
         }}
@@ -142,7 +144,7 @@ export const BuildingsPage: React.FC = () => {
       <FilterBar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        searchPlaceholder="Search buildings by name or property..."
+        searchPlaceholder={t('pmProperties.searchBuildings')}
         onReset={() => setSearchQuery('')}
       />
 

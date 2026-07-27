@@ -1,6 +1,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
+import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { PageHeader } from '../../components/PageHeader';
 import { Card } from '../../components/ui/Card';
@@ -13,6 +14,7 @@ import {
 import { Plus, CheckSquare, DollarSign, Wallet, FileText, ArrowRight } from 'lucide-react';
 
 export const AccountingDashboardPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   // Queries
@@ -42,24 +44,24 @@ export const AccountingDashboardPage: React.FC = () => {
   return (
     <div className="space-y-6 text-foreground">
       <PageHeader
-        title="Accounting Dashboard"
-        description="Verify Chart of Accounts distributions, profit margins, cash balances, and financial audits."
+        title={t('pmAccountingDashboard.title')}
+        description={t('pmAccountingDashboard.desc')}
         breadcrumbs={[
-          { label: 'Home', href: '/' },
-          { label: 'Accounting' },
+          { label: t('header.home'), href: '/' },
+          { label: t('nav.accounting'), href: '/accounting' },
         ]}
       />
 
       {/* QUICK ACTIONS BAR */}
       <div className="flex flex-wrap gap-2.5 p-3.5 bg-card border rounded-2xl">
         <Button size="sm" onClick={() => navigate({ to: '/accounting/income' })} className="flex items-center gap-1">
-          <Plus className="w-4 h-4" /> Record Income
+          <Plus className="w-4 h-4" /> {t('pmAccountingDashboard.recordIncome')}
         </Button>
         <Button size="sm" variant="outline" onClick={() => navigate({ to: '/accounting/expenses' })} className="flex items-center gap-1">
-          <Plus className="w-4 h-4" /> Record Expense
+          <Plus className="w-4 h-4" /> {t('pmAccountingDashboard.recordExpense')}
         </Button>
         <Button size="sm" variant="outline" onClick={() => navigate({ to: '/accounting/chart-of-accounts' })} className="flex items-center gap-1">
-          <Plus className="w-4 h-4" /> Chart of Accounts
+          <Plus className="w-4 h-4" /> {t('pmAccountingDashboard.coa')}
         </Button>
       </div>
 
@@ -67,34 +69,34 @@ export const AccountingDashboardPage: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="p-5 border bg-card flex flex-col justify-between">
           <div>
-            <p className="text-[10px] font-bold text-muted-foreground uppercase">Cash Account Balance</p>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase">{t('pmAccountingDashboard.cashBalance')}</p>
             <p className="text-2xl font-black mt-1 text-emerald-500">${cashBalance.toLocaleString()}</p>
           </div>
-          <span className="text-[10px] text-muted-foreground font-semibold mt-4">Standard asset holdings</span>
+          <span className="text-[10px] text-muted-foreground font-semibold mt-4">{t('pmAccountingDashboard.cashSubtitle')}</span>
         </Card>
 
         <Card className="p-5 border bg-card flex flex-col justify-between">
           <div>
-            <p className="text-[10px] font-bold text-muted-foreground uppercase">Total Income YTD</p>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase">{t('pmAccountingDashboard.totalIncomeYtd')}</p>
             <p className="text-2xl font-black mt-1 text-emerald-500">${totalIncome.toLocaleString()}</p>
           </div>
-          <span className="text-[10px] text-muted-foreground font-semibold mt-4">Operating revenues</span>
+          <span className="text-[10px] text-muted-foreground font-semibold mt-4">{t('pmAccountingDashboard.incomeSubtitle')}</span>
         </Card>
 
         <Card className="p-5 border bg-card flex flex-col justify-between">
           <div>
-            <p className="text-[10px] font-bold text-muted-foreground uppercase">Total Expenses YTD</p>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase">{t('pmAccountingDashboard.totalExpensesYtd')}</p>
             <p className="text-2xl font-black mt-1 text-rose-500">${totalExpenses.toLocaleString()}</p>
           </div>
-          <span className="text-[10px] text-muted-foreground font-semibold mt-4">Maintenance, taxes & fees</span>
+          <span className="text-[10px] text-muted-foreground font-semibold mt-4">{t('pmAccountingDashboard.expensesSubtitle')}</span>
         </Card>
 
         <Card className="p-5 border bg-card flex flex-col justify-between">
           <div>
-            <p className="text-[10px] font-bold text-muted-foreground uppercase">Net Profit Margin</p>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase">{t('pmAccountingDashboard.netProfitMargin')}</p>
             <p className="text-2xl font-black mt-1 text-emerald-500">${netProfit.toLocaleString()}</p>
           </div>
-          <span className="text-[10px] text-muted-foreground font-semibold mt-4">Income after operating costs</span>
+          <span className="text-[10px] text-muted-foreground font-semibold mt-4">{t('pmAccountingDashboard.profitSubtitle')}</span>
         </Card>
       </div>
 
@@ -103,7 +105,7 @@ export const AccountingDashboardPage: React.FC = () => {
         
         {/* Income vs Expenses Bar Chart */}
         <Card className="lg:col-span-2 p-6 border bg-card">
-          <h3 className="font-extrabold text-sm uppercase mb-4 tracking-wider">Monthly Financial Payouts</h3>
+          <h3 className="font-extrabold text-sm uppercase mb-4 tracking-wider">{t('pmAccountingDashboard.monthlyFinancialPayouts')}</h3>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={monthlyData}>
@@ -121,7 +123,7 @@ export const AccountingDashboardPage: React.FC = () => {
 
         {/* Profit margins trend */}
         <Card className="lg:col-span-1 p-6 border bg-card">
-          <h3 className="font-extrabold text-sm uppercase mb-4 tracking-wider">Net Profit Trend</h3>
+          <h3 className="font-extrabold text-sm uppercase mb-4 tracking-wider">{t('pmAccountingDashboard.netProfitTrend')}</h3>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={monthlyData.map(d => ({ month: d.month, Profit: d.Income - d.Expenses }))}>

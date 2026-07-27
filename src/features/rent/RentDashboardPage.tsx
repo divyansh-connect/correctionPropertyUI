@@ -1,6 +1,7 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
+import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { PageHeader } from '../../components/PageHeader';
 import { Card } from '../../components/ui/Card';
@@ -18,6 +19,7 @@ import {
 const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'];
 
 export const RentDashboardPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   // Queries
@@ -66,7 +68,7 @@ export const RentDashboardPage: React.FC = () => {
   ];
 
   const methodDistribution = [
-    { name: 'ACH Direct', value: 55 },
+    { name: 'ACH/Direct', value: 55 },
     { name: 'Credit Card', value: 25 },
     { name: 'Bank Wire', value: 12 },
     { name: 'Cash/Check', value: 8 },
@@ -75,24 +77,24 @@ export const RentDashboardPage: React.FC = () => {
   return (
     <div className="space-y-6 text-foreground">
       <PageHeader
-        title="Rent Dashboard"
-        description="Verify monthly payment collections, active payment plans, and outstanding rent balances."
+        title={t('pmRentDashboard.title')}
+        description={t('pmRentDashboard.desc')}
         breadcrumbs={[
-          { label: 'Home', href: '/' },
-          { label: 'Rent Collection' },
+          { label: t('header.home'), href: '/' },
+          { label: t('nav.rent') },
         ]}
       />
 
       {/* QUICK ACTION BAR */}
       <div className="flex flex-wrap gap-2.5 p-3.5 bg-card/60 border rounded-2xl">
         <Button size="sm" onClick={() => navigate({ to: '/payments/new' })} className="flex items-center gap-1">
-          <Plus className="w-4 h-4" /> Record Payment
+          <Plus className="w-4 h-4" /> {t('pmRentDashboard.recordPayment')}
         </Button>
         <Button size="sm" variant="outline" onClick={() => navigate({ to: '/invoices/new' })} className="flex items-center gap-1">
-          <Plus className="w-4 h-4" /> Create Invoice
+          <Plus className="w-4 h-4" /> {t('pmRentDashboard.createInvoice')}
         </Button>
         <Button size="sm" variant="outline" onClick={() => navigate({ to: '/rent-ledger' })} className="flex items-center gap-1">
-          <Plus className="w-4 h-4" /> Rent Ledger
+          <Plus className="w-4 h-4" /> {t('pmRentDashboard.rentLedger')}
         </Button>
       </div>
 
@@ -100,10 +102,10 @@ export const RentDashboardPage: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card className="p-5 border border-border bg-card flex flex-col justify-between">
           <div>
-            <p className="text-[10px] font-bold text-muted-foreground uppercase">Collected Today</p>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase">{t('pmRentDashboard.collectedToday')}</p>
             <p className="text-2xl font-extrabold mt-1 text-emerald-500">${metrics.collectedToday.toLocaleString()}</p>
           </div>
-          <span className="text-[10px] text-muted-foreground font-semibold mt-4">Daily clearing</span>
+          <span className="text-[10px] text-muted-foreground font-semibold mt-4">{t('pmRentDashboard.dailyClearing')}</span>
         </Card>
 
         <Card className="p-5 border border-border bg-card flex flex-col justify-between">

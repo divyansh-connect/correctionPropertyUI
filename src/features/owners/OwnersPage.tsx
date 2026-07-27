@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as zod from 'zod';
@@ -25,6 +26,7 @@ const ownerFormSchema = zod.object({
 type OwnerFormInputs = zod.infer<typeof ownerFormSchema>;
 
 export const OwnersPage: React.FC = () => {
+  const { t } = useTranslation();
   const { user } = useAuthStore();
   const isCollectionManager = user?.role === 'Collection Manager';
   const queryClient = useQueryClient();
@@ -61,10 +63,9 @@ export const OwnersPage: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['owners'] });
-      queryClient.invalidateQueries({ queryKey: ['properties'] });
       setIsModalOpen(false);
-      setSelectedProperties([]);
       reset();
+      setSelectedProperties([]);
     },
   });
 
@@ -74,11 +75,10 @@ export const OwnersPage: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['owners'] });
-      queryClient.invalidateQueries({ queryKey: ['properties'] });
       setIsModalOpen(false);
       setEditingOwner(null);
-      setSelectedProperties([]);
       reset();
+      setSelectedProperties([]);
     },
   });
 
@@ -88,40 +88,36 @@ export const OwnersPage: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['owners'] });
-      queryClient.invalidateQueries({ queryKey: ['properties'] });
     },
   });
 
   const handleEditClick = (owner: Owner) => {
     setEditingOwner(owner);
-    const owned = properties
-      .filter(p => p.owner === `${owner.firstName} ${owner.lastName}`)
-      .map(p => p.id);
-    setSelectedProperties(owned);
+    setSelectedProperties((owner as any).propertiesOwned || []);
     reset({
       firstName: owner.firstName,
       lastName: owner.lastName,
       email: owner.email,
       phone: owner.phone,
-      payoutMethod: owner.payoutMethod as "ACH/Direct Deposit" | "Wire Transfer" | "Check",
+      payoutMethod: owner.payoutMethod as any,
     });
     setIsModalOpen(true);
-  };
-
-  const handleDeleteClick = (id: string) => {
-    if (confirm('Are you sure you want to delete this owner? This will also unassign them from any properties.')) {
-      deleteMutation.mutate(id);
-    }
   };
 
   const handleViewClick = (owner: Owner) => {
     setViewingOwner(owner);
   };
 
+  const handleDeleteClick = (id: string) => {
+    if (window.confirm('Are you sure you want to delete this owner?')) {
+      deleteMutation.mutate(id);
+    }
+  };
+
   const onSubmit = (data: OwnerFormInputs) => {
     const payload = {
       ...data,
-      assignedProperties: selectedProperties,
+      propertiesOwned: selectedProperties,
     };
     if (editingOwner) {
       updateMutation.mutate({ id: editingOwner.id, data: payload });
@@ -135,7 +131,7 @@ export const OwnersPage: React.FC = () => {
   const columns: ColumnDef<Owner>[] = [
     {
       accessorKey: 'firstName',
-      header: 'Owner Name',
+      header: t('pmOwners.name'),
       id: 'name',
       cell: ({ row }) => (
         <span className="font-bold">
@@ -143,13 +139,13 @@ export const OwnersPage: React.FC = () => {
         </span>
       ),
     },
-    { accessorKey: 'email', header: 'Email', id: 'email' },
-    { accessorKey: 'phone', header: 'Phone', id: 'phone' },
-    { accessorKey: 'propertiesOwnedCount', header: 'Properties Owned', id: 'propertiesOwnedCount' },
-    { accessorKey: 'payoutMethod', header: 'Payout Method', id: 'payoutMethod' },
+    { accessorKey: 'email', header: t('pmOwners.email'), id: 'email' },
+    { accessorKey: 'phone', header: t('pmOwners.phone'), id: 'phone' },
+    { accessorKey: 'propertiesOwnedCount', header: t('pmOwners.propertiesOwned'), id: 'propertiesOwnedCount' },
+    { accessorKey: 'payoutMethod', header: t('pmOwners.payoutMethod'), id: 'payoutMethod' },
     {
       id: 'actions',
-      header: 'Actions',
+      header: t('pmOwners.actions'),
       cell: ({ row }) => (
         <div className="flex items-center space-x-2">
           <Button
@@ -188,14 +184,14 @@ export const OwnersPage: React.FC = () => {
   return (
     <div>
       <PageHeader
-        title="Property Owners"
-        description="Manage owner contacts, properties owned, and payout preferences."
+        title={t('pmOwners.title')}
+        description={t('pmOwners.desc')}
         breadcrumbs={[
-          { label: 'Home', href: '/' },
-          { label: 'Owners' },
+          { label: t('header.home'), href: '/' },
+          { label: t('pmOwners.title') },
         ]}
         action={isCollectionManager ? undefined : {
-          label: 'Add Owner',
+          label: t('pmOwners.addOwner'),
           onClick: () => {
             setEditingOwner(null);
             setSelectedProperties([]);

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { IncomeRecord } from '../../types';
 import { PageHeader } from '../../components/PageHeader';
@@ -15,6 +16,7 @@ import { Plus, Loader2 } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
 
 export const IncomePage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
@@ -57,24 +59,24 @@ export const IncomePage: React.FC = () => {
   });
 
   const columns: ColumnDef<IncomeRecord>[] = [
-    { accessorKey: 'date', header: 'Clearing Date', id: 'date' },
-    { accessorKey: 'tenantName', header: 'Resident Name', id: 'tenant' },
-    { accessorKey: 'propertyName', header: 'Property Location', id: 'property' },
+    { accessorKey: 'date', header: t('pmIncome.clearingDate'), id: 'date' },
+    { accessorKey: 'tenantName', header: t('pmIncome.residentName'), id: 'tenant' },
+    { accessorKey: 'propertyName', header: t('pmIncome.propertyLocation'), id: 'property' },
     {
       accessorKey: 'category',
-      header: 'Category',
+      header: t('pmIncome.category'),
       id: 'category',
       cell: ({ row }) => <span className="font-bold text-[10px] bg-secondary px-2 py-0.5 rounded-lg border uppercase">{row.original.category}</span>,
     },
     {
       accessorKey: 'amount',
-      header: 'Amount',
+      header: t('pmIncome.amount'),
       id: 'amount',
       cell: ({ row }) => <span className="font-extrabold text-emerald-500">${row.original.amount.toLocaleString()}</span>,
     },
     {
       accessorKey: 'status',
-      header: 'Status',
+      header: t('pmIncome.status'),
       id: 'status',
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
@@ -83,15 +85,15 @@ export const IncomePage: React.FC = () => {
   return (
     <div>
       <PageHeader
-        title="Income Transactions"
-        description="Verify utility disbursements, late fees payments, pet assessments, and rental revenue."
+        title={t('pmIncome.title')}
+        description={t('pmIncome.desc')}
         breadcrumbs={[
-          { label: 'Home', href: '/' },
-          { label: 'Accounting', href: '/accounting' },
-          { label: 'Income' },
+          { label: t('header.home'), href: '/' },
+          { label: t('nav.accounting'), href: '/accounting' },
+          { label: t('pmIncome.title') },
         ]}
         action={{
-          label: 'Record Miscellaneous Income',
+          label: t('pmIncome.recordIncome'),
           onClick: () => setIsOpen(true),
           icon: <Plus className="w-4.5 h-4.5" />,
         }}
@@ -100,12 +102,12 @@ export const IncomePage: React.FC = () => {
       <FilterBar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        searchPlaceholder="Search income by tenant or property..."
+        searchPlaceholder={t('pmIncome.searchPlaceholder')}
         filters={[
           {
             key: 'category',
             value: categoryFilter,
-            placeholder: 'Income Category',
+            placeholder: t('pmIncome.incomeCategory'),
             options: [
               { label: 'Rent', value: 'Rent' },
               { label: 'Utilities', value: 'Utilities' },

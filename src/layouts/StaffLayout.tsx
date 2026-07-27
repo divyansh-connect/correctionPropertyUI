@@ -8,6 +8,7 @@ import {
 import { Button } from '../components/ui/Button';
 import { clsx } from 'clsx';
 import { LanguageSelector } from '../components/LanguageSelector';
+import { useTranslation } from 'react-i18next';
 
 interface MenuItem {
   title: string;
@@ -29,6 +30,7 @@ export const StaffLayout: React.FC<StaffLayoutProps> = ({
   const { user, logout } = useAuthStore();
   const { theme, toggleTheme } = useThemeStore();
   const { notifications, markAsRead, markAllAsRead, clearAll } = useNotificationStore();
+  const { t } = useTranslation();
 
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -38,10 +40,10 @@ export const StaffLayout: React.FC<StaffLayoutProps> = ({
   const unreadCount = roleNotifications.filter((n) => !n.read).length;
 
   const menuItems: MenuItem[] = [
-    { title: 'Dashboard', icon: <LayoutDashboard className="w-5 h-5" />, path: '/staff/dashboard' },
-    { title: 'My Tasks', icon: <Wrench className="w-5 h-5" />, path: '/staff/tasks' },
-    { title: 'History', icon: <CheckSquare className="w-5 h-5" />, path: '/staff/completed' },
-    { title: 'Profile', icon: <User className="w-5 h-5" />, path: '/staff/profile' },
+    { title: t('staffLayout.dashboard'), icon: <LayoutDashboard className="w-5 h-5" />, path: '/staff/dashboard' },
+    { title: t('staffLayout.myTasks'), icon: <Wrench className="w-5 h-5" />, path: '/staff/tasks' },
+    { title: t('staffLayout.history'), icon: <CheckSquare className="w-5 h-5" />, path: '/staff/completed' },
+    { title: t('staffLayout.profile'), icon: <User className="w-5 h-5" />, path: '/staff/profile' },
   ];
 
   const handleMenuClick = (item: MenuItem) => {
@@ -56,7 +58,7 @@ export const StaffLayout: React.FC<StaffLayoutProps> = ({
       <aside className="hidden md:flex flex-col border-r bg-card text-card-foreground shrink-0 w-64">
         <div className="h-16 flex items-center px-6 border-b">
           <span className="font-black text-lg text-primary truncate">
-            Staff Portal
+            {t('staffLayout.portalTitle')}
           </span>
         </div>
 
@@ -86,7 +88,7 @@ export const StaffLayout: React.FC<StaffLayoutProps> = ({
             className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-xs font-bold transition-all uppercase tracking-wider text-rose-500 hover:bg-rose-500/10 transition-colors"
           >
             <LogOut className="w-5 h-5" />
-            <span>Log Out</span>
+            <span>{t('staffLayout.logOut')}</span>
           </button>
         </div>
       </aside>
@@ -130,7 +132,7 @@ export const StaffLayout: React.FC<StaffLayoutProps> = ({
                 className="w-full flex items-center space-x-3 px-3 py-3 rounded-lg text-xs font-bold transition-all uppercase tracking-wider text-rose-500 hover:bg-rose-500/10 transition-colors"
               >
                 <LogOut className="w-5 h-5" />
-                <span>Log Out</span>
+                <span>{t('staffLayout.logOut')}</span>
               </button>
             </div>
           </div>
@@ -152,7 +154,7 @@ export const StaffLayout: React.FC<StaffLayoutProps> = ({
               <Menu className="w-5 h-5" />
             </Button>
             <h2 className="text-sm font-extrabold tracking-wide uppercase text-muted-foreground hidden md:block">
-              Welcome back, {user?.name || 'Technician'}
+              {t('staffLayout.welcomeBack', { name: user?.name || 'Technician' })}
             </h2>
           </div>
 
@@ -176,14 +178,14 @@ export const StaffLayout: React.FC<StaffLayoutProps> = ({
               {showNotifications && (
                 <div className="absolute right-0 top-12 z-50 w-80 rounded-xl border border-border bg-card shadow-2xl p-4 animate-fade-in text-foreground">
                   <div className="flex items-center justify-between pb-2 border-b border-border/80">
-                    <h4 className="font-bold text-sm">Notifications</h4>
+                    <h4 className="font-bold text-sm">{t('staffLayout.notifications')}</h4>
                     <div className="flex space-x-2 text-xs font-semibold text-primary">
                       <button onClick={() => markAllAsRead('Maintenance Staff')} className="hover:underline">
-                        Read All
+                        {t('staffLayout.readAll')}
                       </button>
                       <span>•</span>
                       <button onClick={() => clearAll('Maintenance Staff')} className="hover:underline text-muted-foreground">
-                        Clear
+                        {t('staffLayout.clear')}
                       </button>
                     </div>
                   </div>
@@ -191,7 +193,7 @@ export const StaffLayout: React.FC<StaffLayoutProps> = ({
                   <div className="mt-2 space-y-2 max-h-64 overflow-y-auto">
                     {roleNotifications.length === 0 ? (
                       <p className="text-center text-xs text-muted-foreground py-6">
-                        No notifications
+                        {t('staffLayout.noNotifications')}
                       </p>
                     ) : (
                       roleNotifications.map((n) => (
@@ -258,7 +260,7 @@ export const StaffLayout: React.FC<StaffLayoutProps> = ({
                       className="w-full flex items-center space-x-2 px-3 py-2 text-xs font-bold text-rose-500 hover:bg-rose-500/10 rounded-lg mt-1 transition text-left"
                     >
                       <LogOut className="w-4 h-4" />
-                      <span>Log Out</span>
+                      <span>{t('staffLayout.logOut')}</span>
                     </button>
                   </div>
                 </>

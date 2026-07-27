@@ -12,10 +12,12 @@ import { StatusBadge } from '../../components/StatusBadge';
 import { PaymentMethodBadge } from '../../components/Phase4Components';
 import { Plus, Eye, AlertOctagon, RefreshCw, Trash2, Download } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
+import { useTranslation } from 'react-i18next';
 
 export const PaymentsPage: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [propertyFilter, setPropertyFilter] = useState('');
@@ -85,7 +87,7 @@ export const PaymentsPage: React.FC = () => {
   const columns: ColumnDef<RentPayment>[] = [
     {
       accessorKey: 'id',
-      header: 'Receipt #',
+      header: t('rentPaymentsPage.receiptNo'),
       id: 'id',
       cell: ({ row }) => (
         <span
@@ -96,34 +98,34 @@ export const PaymentsPage: React.FC = () => {
         </span>
       ),
     },
-    { accessorKey: 'tenantName', header: 'Tenant', id: 'tenantName' },
-    { accessorKey: 'propertyName', header: 'Property', id: 'property' },
-    { accessorKey: 'unitNumber', header: 'Unit #', id: 'unit' },
-    { accessorKey: 'paidDate', header: 'Date Paid', id: 'paidDate', cell: ({ row }) => row.original.paidDate || '-' },
+    { accessorKey: 'tenantName', header: t('rentPaymentsPage.tenant'), id: 'tenantName' },
+    { accessorKey: 'propertyName', header: t('rentPaymentsPage.property'), id: 'property' },
+    { accessorKey: 'unitNumber', header: t('rentPaymentsPage.unitNo'), id: 'unit' },
+    { accessorKey: 'paidDate', header: t('rentPaymentsPage.datePaid'), id: 'paidDate', cell: ({ row }) => row.original.paidDate || '-' },
     {
       accessorKey: 'amount',
-      header: 'Amount Paid',
+      header: t('rentPaymentsPage.amountPaid'),
       id: 'amount',
       cell: ({ row }) => <span className="font-extrabold text-emerald-500">${row.original.amount.toLocaleString()}</span>,
     },
     {
       accessorKey: 'paymentMethod',
-      header: 'Method',
+      header: t('rentPaymentsPage.method'),
       id: 'method',
       cell: ({ row }) => <PaymentMethodBadge method={row.original.paymentMethod} />,
     },
     {
       accessorKey: 'status',
-      header: 'Status',
+      header: t('rentPaymentsPage.status'),
       id: 'status',
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
     {
       id: 'actions',
-      header: 'Actions',
+      header: t('rentPaymentsPage.actions'),
       cell: ({ row }) => (
         <div className="flex space-x-1">
-          <Button variant="ghost" size="icon" onClick={() => navigate({ to: `/payments/${row.original.id}` })} title="View Receipt">
+          <Button variant="ghost" size="icon" onClick={() => navigate({ to: `/payments/${row.original.id}` })} title={t('rentPaymentsPage.viewReceipt')}>
             <Eye className="w-4 h-4" />
           </Button>
           {row.original.status === 'Paid' && (
@@ -133,7 +135,7 @@ export const PaymentsPage: React.FC = () => {
                 size="icon"
                 onClick={() => setRefundId(row.original.id)}
                 className="text-amber-500 hover:bg-amber-500/10"
-                title="Refund Payment"
+                title={t('rentPaymentsPage.refundPayment')}
               >
                 <RefreshCw className="w-4 h-4" />
               </Button>
@@ -142,7 +144,7 @@ export const PaymentsPage: React.FC = () => {
                 size="icon"
                 onClick={() => setVoidId(row.original.id)}
                 className="text-rose-500 hover:bg-rose-500/10"
-                title="Void Transaction"
+                title={t('rentPaymentsPage.voidTransaction')}
               >
                 <AlertOctagon className="w-4 h-4" />
               </Button>
@@ -156,15 +158,15 @@ export const PaymentsPage: React.FC = () => {
   return (
     <div>
       <PageHeader
-        title="Rent Payments"
-        description="Verify individual cleared transaction logs, receipt ledger details, and voided charges."
+        title={t('rentPaymentsPage.title')}
+        description={t('rentPaymentsPage.desc')}
         breadcrumbs={[
-          { label: 'Home', href: '/' },
-          { label: 'Rent Collection', href: '/rent' },
-          { label: 'Payments' },
+          { label: t('ai.breadcrumbs.home'), href: '/' },
+          { label: t('rentPaymentsPage.rentCollection'), href: '/rent' },
+          { label: t('rentPaymentsPage.payments') },
         ]}
         action={{
-          label: 'Record Payment',
+          label: t('rentPaymentsPage.recordPayment'),
           onClick: () => navigate({ to: '/payments/new' }),
           icon: <Plus className="w-4.5 h-4.5" />,
         }}
@@ -172,29 +174,29 @@ export const PaymentsPage: React.FC = () => {
 
       <div className="flex justify-between items-center mb-3">
         <span className="text-xs font-bold text-muted-foreground uppercase">
-          Showing {filteredPayments.length} Payment Receipts
+          {t('rentPaymentsPage.showingReceipts', { count: filteredPayments.length })}
         </span>
         <Button variant="outline" size="sm" onClick={handleExport} className="text-xs font-semibold flex items-center gap-1.5">
           <Download className="w-3.5 h-3.5" />
-          Export CSV
+          {t('rentPaymentsPage.exportCsv')}
         </Button>
       </div>
 
       <FilterBar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        searchPlaceholder="Search payments by tenant name or Ref..."
+        searchPlaceholder={t('rentPaymentsPage.searchPlaceholder')}
         filters={[
           {
             key: 'property',
             value: propertyFilter,
-            placeholder: 'All Properties',
+            placeholder: t('rentPaymentsPage.allProperties'),
             options: properties.map((p) => ({ label: p.name, value: p.id })),
           },
           {
             key: 'status',
             value: statusFilter,
-            placeholder: 'All Statuses',
+            placeholder: t('rentPaymentsPage.allStatuses'),
             options: [
               { label: 'Paid', value: 'Paid' },
               { label: 'Pending', value: 'Pending' },
@@ -220,18 +222,18 @@ export const PaymentsPage: React.FC = () => {
       <ConfirmDialog
         open={!!refundId}
         onOpenChange={(open) => !open && setRefundId(null)}
-        title="Refund Payment Receipt"
-        description="Are you sure you want to issue a refund for this transaction? The payment status will update to Refunded and create a processed refund line item."
-        confirmText="Confirm Refund"
+        title={t('rentPaymentsPage.refundTitle')}
+        description={t('rentPaymentsPage.refundDesc')}
+        confirmText={t('rentPaymentsPage.confirmRefund')}
         onConfirm={() => refundId && refundMutation.mutate(refundId)}
       />
 
       <ConfirmDialog
         open={!!voidId}
         onOpenChange={(open) => !open && setVoidId(null)}
-        title="Void Transaction Record"
-        description="Voiding a transaction reverses the credit in the rent ledger. This cannot be undone."
-        confirmText="Void Payment"
+        title={t('rentPaymentsPage.voidTitle')}
+        description={t('rentPaymentsPage.voidDesc')}
+        confirmText={t('rentPaymentsPage.voidPayment')}
         variant="destructive"
         onConfirm={() => voidId && voidMutation.mutate(voidId)}
       />

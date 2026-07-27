@@ -4059,61 +4059,104 @@ export const mockApi = {
     sendMessage: async (chatId: string, message: string) => {
       await delay(800);
       const clean = message.toLowerCase();
+      const isSpanish = (typeof window !== 'undefined' && localStorage.getItem('app_language') === 'es');
       
-      let summary = "I parsed your request. I can assist with portfolio yields, unit listings, or general leasing metrics.";
-      let insights = "No additional insights available for this query.";
+      let summary = isSpanish
+        ? "Procesé su solicitud. Puedo ayudarle con el rendimiento del portafolio, listados de unidades o métricas generales de arrendamiento."
+        : "I parsed your request. I can assist with portfolio yields, unit listings, or general leasing metrics.";
+      let insights = isSpanish
+        ? "No hay información adicional disponible para esta consulta."
+        : "No additional insights available for this query.";
       let suggestedActions: string[] = [];
       let relatedRecords: string[] = [];
 
-      if (clean.includes('overdue') || clean.includes('delinquent')) {
-        summary = "There are currently 2 tenants with outstanding rental balances overdue.";
-        insights = "Michael Jordan is 5 days overdue ($1,850) for Apt 102. Brittany Spears is 12 days overdue ($950) for Apt 204.";
-        suggestedActions = ["Send Reminder", "View Invoice"];
+      if (clean.includes('overdue') || clean.includes('delinquent') || clean.includes('vencid') || clean.includes('mora')) {
+        summary = isSpanish
+          ? "Actualmente hay 2 inquilinos con saldos de alquiler pendientes vencidos."
+          : "There are currently 2 tenants with outstanding rental balances overdue.";
+        insights = isSpanish
+          ? "Michael Jordan tiene 5 días de retraso ($1,850) en Apto 102. Brittany Spears tiene 12 días de retraso ($950) en Apto 204."
+          : "Michael Jordan is 5 days overdue ($1,850) for Apt 102. Brittany Spears is 12 days overdue ($950) for Apt 204.";
+        suggestedActions = isSpanish ? ["Enviar Recordatorio", "Ver Factura"] : ["Send Reminder", "View Invoice"];
         relatedRecords = ["Michael Jordan", "Brittany Spears", "Sunset Villas Complex"];
-      } else if (clean.includes('expire') || clean.includes('lease')) {
-        summary = "There is 1 lease expiring by the end of this month.";
-        insights = "Robert Johnson's lease for Apt 101 expires on 2026-07-31.";
-        suggestedActions = ["Open Lease", "Send Reminder"];
+      } else if (clean.includes('expire') || clean.includes('lease') || clean.includes('contrato') || clean.includes('venc')) {
+        summary = isSpanish
+          ? "Hay 1 contrato de arrendamiento que vence a finales de este mes."
+          : "There is 1 lease expiring by the end of this month.";
+        insights = isSpanish
+          ? "El contrato de Robert Johnson para el Apto 101 vence el 2026-07-31."
+          : "Robert Johnson's lease for Apt 101 expires on 2026-07-31.";
+        suggestedActions = isSpanish ? ["Abrir Contrato", "Enviar Recordatorio"] : ["Open Lease", "Send Reminder"];
         relatedRecords = ["Robert Johnson", "Apt 101"];
-      } else if (clean.includes('vacant') || clean.includes('vacancy')) {
-        summary = "There are currently 5 vacant units in your portfolio.";
-        insights = "Sunset Villas Complex has 2 vacant units (Apt 105, Apt 108). Summit Group Commercial Loft has 3 vacant lofts.";
-        suggestedActions = ["Open Property"];
+      } else if (clean.includes('vacant') || clean.includes('vacancy') || clean.includes('vacant') || clean.includes('desocupad')) {
+        summary = isSpanish
+          ? "Actualmente hay 5 unidades vacantes en su portafolio."
+          : "There are currently 5 vacant units in your portfolio.";
+        insights = isSpanish
+          ? "Sunset Villas Complex tiene 2 unidades vacantes (Apto 105, Apto 108). Summit Group Loft tiene 3 lofts vacantes."
+          : "Sunset Villas Complex has 2 vacant units (Apt 105, Apt 108). Summit Group Commercial Loft has 3 vacant lofts.";
+        suggestedActions = isSpanish ? ["Abrir Propiedad"] : ["Open Property"];
         relatedRecords = ["Sunset Villas Complex", "Summit Group Commercial Loft"];
-      } else if (clean.includes('maintenance') || clean.includes('request')) {
-        summary = "You have 3 active maintenance requests.";
-        insights = "1 critical HVAC issue (AC noise) at Oakridge Heights, and 2 medium priority requests (faucet leaks).";
-        suggestedActions = ["Open Maintenance"];
+      } else if (clean.includes('maintenance') || clean.includes('request') || clean.includes('mantenimiento') || clean.includes('solicitud')) {
+        summary = isSpanish
+          ? "Tiene 3 solicitudes de mantenimiento activas."
+          : "You have 3 active maintenance requests.";
+        insights = isSpanish
+          ? "1 problema crítico de HVAC (ruido de aire acondicionado) en Oakridge Heights, y 2 solicitudes de prioridad media (fugas)."
+          : "1 critical HVAC issue (AC noise) at Oakridge Heights, and 2 medium priority requests (faucet leaks).";
+        suggestedActions = isSpanish ? ["Abrir Mantenimiento"] : ["Open Maintenance"];
         relatedRecords = ["Oakridge Heights"];
-      } else if (clean.includes('roll') || clean.includes('rent roll')) {
-        summary = "Rent roll summary for the active billing period.";
-        insights = "Total expected rent: $4,550. Total collected: $2,700. Delinquent balance: $2,800.";
-        suggestedActions = ["Open Report"];
+      } else if (clean.includes('roll') || clean.includes('rent roll') || clean.includes('alquileres')) {
+        summary = isSpanish
+          ? "Resumen del libro de alquileres para el período de facturación activo."
+          : "Rent roll summary for the active billing period.";
+        insights = isSpanish
+          ? "Alquiler total esperado: $4,550. Total cobrado: $2,700. Saldo moroso: $2,800."
+          : "Total expected rent: $4,550. Total collected: $2,700. Delinquent balance: $2,800.";
+        suggestedActions = isSpanish ? ["Abrir Reporte"] : ["Open Report"];
         relatedRecords = ["Rent Roll Report"];
-      } else if (clean.includes('invoice') || clean.includes('unpaid')) {
-        summary = "There are 3 unpaid invoices active in the system.";
-        insights = "Invoice INV-1018 for Summit Group ($499) is currently Unpaid.";
-        suggestedActions = ["View Invoice"];
+      } else if (clean.includes('invoice') || clean.includes('unpaid') || clean.includes('factura') || clean.includes('no pagad')) {
+        summary = isSpanish
+          ? "Hay 3 facturas pendientes de pago activas en el sistema."
+          : "There are 3 unpaid invoices active in the system.";
+        insights = isSpanish
+          ? "La factura INV-1018 para Summit Group ($499) está actualmente no pagada."
+          : "Invoice INV-1018 for Summit Group ($499) is currently Unpaid.";
+        suggestedActions = isSpanish ? ["Ver Factura"] : ["View Invoice"];
         relatedRecords = ["Summit Group", "INV-1018"];
-      } else if (clean.includes('owner statement') || clean.includes('statement')) {
-        summary = "Owner statement summary for Sunset Villas Complex.";
-        insights = "Gross Income: $14,500. Operating Expenses: $3,200. Net Cash: $11,300.";
-        suggestedActions = ["Open Report"];
+      } else if (clean.includes('owner statement') || clean.includes('statement') || clean.includes('estado de cuenta')) {
+        summary = isSpanish
+          ? "Resumen del estado de cuenta del propietario para Sunset Villas Complex."
+          : "Owner statement summary for Sunset Villas Complex.";
+        insights = isSpanish
+          ? "Ingresos brutos: $14,500. Gastos operativos: $3,200. Efectivo neto: $11,300."
+          : "Gross Income: $14,500. Operating Expenses: $3,200. Net Cash: $11,300.";
+        suggestedActions = isSpanish ? ["Abrir Reporte"] : ["Open Report"];
         relatedRecords = ["Sunset Villas Complex"];
-      } else if (clean.includes('report') || clean.includes('financial')) {
-        summary = "Overview of your current month profit and loss ledger.";
-        insights = "Net cash flow is positive at $11,300. Maintenance expenses accounted for the largest expense slice (HVAC repairs).";
-        suggestedActions = ["Open Report"];
+      } else if (clean.includes('report') || clean.includes('financial') || clean.includes('financier') || clean.includes('reporte')) {
+        summary = isSpanish
+          ? "Resumen de su libro de pérdidas y ganancias del mes actual."
+          : "Overview of your current month profit and loss ledger.";
+        insights = isSpanish
+          ? "El flujo de efectivo neto es positivo en $11,300. Los gastos de mantenimiento representaron la mayor parte."
+          : "Net cash flow is positive at $11,300. Maintenance expenses accounted for the largest expense slice (HVAC repairs).";
+        suggestedActions = isSpanish ? ["Abrir Reporte"] : ["Open Report"];
         relatedRecords = ["Owner Financial Statements"];
-      } else if (clean.includes('reminder') || clean.includes('late payment')) {
-        summary = "Late payment reminder draft generated successfully.";
-        insights = "'Dear resident, this is a friendly reminder that your rent payment is overdue. Please log in to your portal to complete payment.'";
-        suggestedActions = ["Send Reminder"];
+      } else if (clean.includes('reminder') || clean.includes('late payment') || clean.includes('recordatorio') || clean.includes('pago tard')) {
+        summary = isSpanish
+          ? "Borrador de recordatorio de pago atrasado generado con éxito."
+          : "Late payment reminder draft generated successfully.";
+        insights = isSpanish
+          ? "'Estimado residente, este es un amable recordatorio de que su pago de alquiler está vencido. Inicie sesión para pagar.'"
+          : "'Dear resident, this is a friendly reminder that your rent payment is overdue. Please log in to your portal to complete payment.'";
+        suggestedActions = isSpanish ? ["Enviar Recordatorio"] : ["Send Reminder"];
         relatedRecords = ["Michael Jordan", "Brittany Spears"];
       }
 
       // Build structured text response
-      const responseText = `**Summary**\n${summary}\n\n**Insights**\n${insights}`;
+      const summaryHeader = isSpanish ? "**Resumen**" : "**Summary**";
+      const insightsHeader = isSpanish ? "**Perspectivas**" : "**Insights**";
+      const responseText = `${summaryHeader}\n${summary}\n\n${insightsHeader}\n${insights}`;
 
       return {
         id: `msg-${Date.now()}`,

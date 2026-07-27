@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
+import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { Lead } from '../../types';
 import { PageHeader } from '../../components/PageHeader';
@@ -9,17 +10,17 @@ import { FilterBar } from '../../components/FilterBar';
 import { KanbanBoard } from '../../components/KanbanBoard';
 import { FormDialog } from '../../components/FormDialog';
 import { Button } from '../../components/ui/Button';
-import { Select } from '../../components/ui/Select';
-import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
+import { Card } from '../../components/ui/Card';
 import { StatusBadge } from '../../components/StatusBadge';
 import { 
   Plus, Eye, Kanban, Table, Calendar, Clock, 
-  Trash2, UserCheck, AlertOctagon, Loader2 
+  UserCheck, Loader2 
 } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
 
 export const LeadsPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -85,10 +86,10 @@ export const LeadsPage: React.FC = () => {
 
   // Kanban Pipeline Stages mapping
   const pipelineStages = [
-    { label: 'New', value: 'New' },
-    { label: 'Contacted', value: 'Contacted' },
-    { label: 'Tour Scheduled', value: 'Tour Scheduled' },
-    { label: 'Application Sent', value: 'Application Sent' },
+    { label: t('pmLeads.stageNew'), value: 'New' },
+    { label: t('pmLeads.stageContacted'), value: 'Contacted' },
+    { label: t('pmLeads.stageTourScheduled'), value: 'Tour Scheduled' },
+    { label: t('pmLeads.stageAppSent'), value: 'Application Sent' },
     { label: 'Negotiating', value: 'Negotiating' },
     { label: 'Lease Signed', value: 'Lease Signed' },
     { label: 'Lost', value: 'Lost' },
@@ -112,7 +113,7 @@ export const LeadsPage: React.FC = () => {
   const tableColumns: ColumnDef<Lead>[] = [
     {
       accessorKey: 'firstName',
-      header: 'Lead Name',
+      header: t('pmApplications.applicant'),
       id: 'name',
       cell: ({ row }) => (
         <span
@@ -123,26 +124,18 @@ export const LeadsPage: React.FC = () => {
         </span>
       ),
     },
-    { accessorKey: 'email', header: 'Email', id: 'email' },
-    { accessorKey: 'phone', header: 'Phone', id: 'phone' },
-    { accessorKey: 'propertyName', header: 'Property Preference', id: 'property' },
-    {
-      id: 'budget',
-      header: 'Budget',
-      cell: ({ row }) => {
-        const budgetVal = 1400 + (parseInt(row.original.id.split('-').pop() || '0') % 4) * 200;
-        return <span className="font-semibold text-emerald-500">${budgetVal.toLocaleString()}/mo</span>;
-      },
-    },
+    { accessorKey: 'email', header: t('pmScreening.email'), id: 'email' },
+    { accessorKey: 'phone', header: t('owners.phone'), id: 'phone' },
+    { accessorKey: 'propertyName', header: t('pmApplications.interestedProperty'), id: 'property' },
     {
       accessorKey: 'status',
-      header: 'Stage',
+      header: t('pmApplications.status'),
       id: 'status',
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
     {
       id: 'actions',
-      header: 'Actions',
+      header: t('pmApplications.actions'),
       cell: ({ row }) => (
         <div className="flex space-x-1">
           <Button variant="ghost" size="icon" onClick={() => navigate({ to: `/leads/${row.original.id}` })} title="View Lead">
@@ -176,15 +169,15 @@ export const LeadsPage: React.FC = () => {
   return (
     <div>
       <PageHeader
-        title="Leads Pipeline"
-        description="Verify visitors pipeline interest, schedule viewing tours, and track conversions."
+        title={t('pmLeads.title')}
+        description={t('pmLeads.desc')}
         breadcrumbs={[
-          { label: 'Home', href: '/' },
-          { label: 'CRM', href: '/crm' },
-          { label: 'Leads' },
+          { label: t('header.home'), href: '/' },
+          { label: t('nav.leasing'), href: '/leasing' },
+          { label: t('pmLeads.title') },
         ]}
         action={{
-          label: 'Add Lead',
+          label: t('pmLeads.addLead'),
           onClick: () => navigate({ to: '/leads/new' }),
           icon: <Plus className="w-4.5 h-4.5" />,
         }}
@@ -193,7 +186,7 @@ export const LeadsPage: React.FC = () => {
       {/* VIEW TOGGLES */}
       <div className="flex justify-between items-center mb-5 bg-card/65 p-2 rounded-xl border border-border/80">
         <span className="text-xs font-bold text-muted-foreground uppercase pl-2">
-          Pipeline View Mode
+          {t('pmLeads.pipelineViewMode')}
         </span>
         <div className="flex space-x-1">
           <Button
@@ -202,7 +195,7 @@ export const LeadsPage: React.FC = () => {
             onClick={() => setViewMode('kanban')}
             className="text-xs font-bold flex items-center gap-1.5"
           >
-            <Kanban className="w-3.5 h-3.5" /> Kanban Board
+            <Kanban className="w-3.5 h-3.5" /> {t('pmLeads.kanbanBoard')}
           </Button>
           <Button
             variant={viewMode === 'table' ? 'default' : 'ghost'}
@@ -210,7 +203,7 @@ export const LeadsPage: React.FC = () => {
             onClick={() => setViewMode('table')}
             className="text-xs font-bold flex items-center gap-1.5"
           >
-            <Table className="w-3.5 h-3.5" /> Table Directory
+            <Table className="w-3.5 h-3.5" /> {t('pmLeads.tableDirectory')}
           </Button>
           <Button
             variant={viewMode === 'calendar' ? 'default' : 'ghost'}
@@ -218,7 +211,7 @@ export const LeadsPage: React.FC = () => {
             onClick={() => setViewMode('calendar')}
             className="text-xs font-bold flex items-center gap-1.5"
           >
-            <Calendar className="w-3.5 h-3.5" /> Tours Calendar
+            <Calendar className="w-3.5 h-3.5" /> {t('pmLeads.toursCalendar')}
           </Button>
         </div>
       </div>

@@ -9,6 +9,7 @@ import { StatusBadge } from '../../components/StatusBadge';
 import { Download, Printer, Eye, ArrowLeft } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
 import { useSearch, useNavigate } from '@tanstack/react-router';
+import { useTranslation } from 'react-i18next';
 
 interface LedgerItem {
   id: string;
@@ -24,6 +25,7 @@ interface LedgerItem {
 }
 
 export const RentLedgerPage: React.FC = () => {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [propertyFilter, setPropertyFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
@@ -110,25 +112,25 @@ export const RentLedgerPage: React.FC = () => {
   };
 
   const columns: ColumnDef<LedgerItem>[] = [
-    { accessorKey: 'date', header: 'Date', id: 'date' },
-    { accessorKey: 'tenantName', header: 'Tenant', id: 'tenant' },
-    { accessorKey: 'propertyName', header: 'Property', id: 'property', cell: ({ row }) => `${row.original.propertyName} (Unit ${row.original.unitNumber})` },
-    { accessorKey: 'description', header: 'Description', id: 'description' },
+    { accessorKey: 'date', header: t('rentLedgerPage.date'), id: 'date' },
+    { accessorKey: 'tenantName', header: t('rentLedgerPage.tenant'), id: 'tenant' },
+    { accessorKey: 'propertyName', header: t('rentLedgerPage.property'), id: 'property', cell: ({ row }) => `${row.original.propertyName} (Unit ${row.original.unitNumber})` },
+    { accessorKey: 'description', header: t('rentLedgerPage.description'), id: 'description' },
     {
       accessorKey: 'debit',
-      header: 'Debit (+)',
+      header: t('rentLedgerPage.debit'),
       id: 'debit',
       cell: ({ row }) => row.original.debit > 0 ? <span className="text-rose-500 font-bold">+${row.original.debit.toLocaleString()}</span> : '-',
     },
     {
       accessorKey: 'credit',
-      header: 'Credit (-)',
+      header: t('rentLedgerPage.credit'),
       id: 'credit',
       cell: ({ row }) => row.original.credit > 0 ? <span className="text-emerald-500 font-bold">-${row.original.credit.toLocaleString()}</span> : '-',
     },
     {
       accessorKey: 'balance',
-      header: 'Running Balance',
+      header: t('rentLedgerPage.runningBalance'),
       id: 'balance',
       cell: ({ row }) => (
         <span className={row.original.balance > 0 ? 'text-rose-500 font-black' : 'text-emerald-500 font-black'}>
@@ -138,15 +140,15 @@ export const RentLedgerPage: React.FC = () => {
     },
     {
       accessorKey: 'transactionType',
-      header: 'Type',
+      header: t('rentLedgerPage.type'),
       id: 'type',
       cell: ({ row }) => <StatusBadge status={row.original.transactionType} />,
     },
     {
       id: 'actions',
-      header: 'Actions',
+      header: t('rentLedgerPage.actions'),
       cell: ({ row }) => {
-        const tenantObj = tenants.find((t) => `${t.firstName} ${t.lastName}` === row.original.tenantName);
+        const tenantObj = tenants.find((tItem) => `${tItem.firstName} ${tItem.lastName}` === row.original.tenantName);
         if (tenantObj) {
           return (
             <Button
@@ -154,7 +156,7 @@ export const RentLedgerPage: React.FC = () => {
               size="icon"
               onClick={() => setSelectedTenantId(tenantObj.id)}
               className="h-8 w-8 text-muted-foreground hover:text-foreground cursor-pointer"
-              title="View Statement"
+              title={t('rentLedgerPage.viewStatement')}
             >
               <Eye className="w-4 h-4" />
             </Button>
@@ -168,12 +170,12 @@ export const RentLedgerPage: React.FC = () => {
   return (
     <div>
       <PageHeader
-        title="Rent Ledger"
-        description="Verify chronological credit payments, billing assessments, and running balance totals."
+        title={t('rentLedgerPage.title')}
+        description={t('rentLedgerPage.desc')}
         breadcrumbs={[
-          { label: 'Home', href: '/' },
-          { label: 'Rent Collection', href: '/rent' },
-          { label: 'Rent Ledger' },
+          { label: t('ai.breadcrumbs.home'), href: '/' },
+          { label: t('rentPaymentsPage.rentCollection'), href: '/rent' },
+          { label: t('rentLedgerPage.title') },
         ]}
       />
 
@@ -181,29 +183,29 @@ export const RentLedgerPage: React.FC = () => {
         <>
           <div className="flex justify-between items-center mb-3">
             <span className="text-xs font-bold text-muted-foreground uppercase">
-              Ledger contains {filteredLedger.length} Line Items
+              {t('rentLedgerPage.showingItems', { count: filteredLedger.length })}
             </span>
             <Button variant="outline" size="sm" onClick={handleExport} className="text-xs font-semibold flex items-center gap-1.5">
               <Download className="w-3.5 h-3.5" />
-              Export CSV
+              {t('rentLedgerPage.exportCsv')}
             </Button>
           </div>
 
           <FilterBar
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
-            searchPlaceholder="Search ledger by tenant name..."
+            searchPlaceholder={t('rentLedgerPage.searchPlaceholder')}
             filters={[
               {
                 key: 'property',
                 value: propertyFilter,
-                placeholder: 'All Properties',
+                placeholder: t('rentLedgerPage.allProperties'),
                 options: properties.map((p) => ({ label: p.name, value: p.name })),
               },
               {
                 key: 'type',
                 value: typeFilter,
-                placeholder: 'Transaction Type',
+                placeholder: t('rentLedgerPage.transactionType'),
                 options: [
                   { label: 'Rent Charge', value: 'Rent Charge' },
                   { label: 'Payment', value: 'Payment' },
@@ -234,7 +236,7 @@ export const RentLedgerPage: React.FC = () => {
               className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-foreground pl-0 cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4" />
-              Back to Full Ledger
+              {t('rentLedgerPage.backToLedger')}
             </Button>
           </div>
           <style>{`
@@ -288,7 +290,7 @@ export const RentLedgerPage: React.FC = () => {
             <div className="flex justify-between items-start border-b pb-4">
               <div className="space-y-1">
                 <span className="text-[10px] font-extrabold uppercase bg-primary/10 text-primary px-2 py-0.5 rounded no-print">
-                  Official Tenant Ledger Statement
+                  {t('rentLedgerPage.officialStatement')}
                 </span>
                 <h3 className="font-extrabold text-base text-foreground mt-1">{managementCompany}</h3>
                 <p className="text-muted-foreground text-[10px] leading-relaxed">
@@ -296,7 +298,7 @@ export const RentLedgerPage: React.FC = () => {
                 </p>
               </div>
               <div className="text-right space-y-1">
-                <p className="text-muted-foreground text-[10px] uppercase font-bold">Statement Recipient</p>
+                <p className="text-muted-foreground text-[10px] uppercase font-bold">{t('rentLedgerPage.statementRecipient')}</p>
                 <p className="font-extrabold text-foreground text-sm">{selectedTenant.firstName} {selectedTenant.lastName}</p>
                 <p className="text-muted-foreground text-[10px] leading-relaxed">
                   Phone: {selectedTenant.phone || 'N/A'} • Email: {selectedTenant.email || 'N/A'}<br />
@@ -310,11 +312,11 @@ export const RentLedgerPage: React.FC = () => {
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
                   <tr className="border-b border-border text-muted-foreground uppercase text-[10px] tracking-wider font-bold">
-                    <th className="py-2.5">Date</th>
-                    <th className="py-2.5">Description</th>
-                    <th className="py-2.5 text-right">Debit (Charges)</th>
-                    <th className="py-2.5 text-right">Credit (Payments)</th>
-                    <th className="py-2.5 text-right">Running Balance</th>
+                    <th className="py-2.5">{t('rentLedgerPage.date')}</th>
+                    <th className="py-2.5">{t('rentLedgerPage.description')}</th>
+                    <th className="py-2.5 text-right">{t('rentLedgerPage.debitCharges')}</th>
+                    <th className="py-2.5 text-right">{t('rentLedgerPage.creditPayments')}</th>
+                    <th className="py-2.5 text-right">{t('rentLedgerPage.runningBalance')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/40">
@@ -336,7 +338,7 @@ export const RentLedgerPage: React.FC = () => {
                   {selectedTenantLedger.length === 0 && (
                     <tr>
                       <td colSpan={5} className="py-8 text-center text-muted-foreground italic font-medium">
-                        No ledger transactions recorded for this resident.
+                        {t('rentLedgerPage.noTransactions')}
                       </td>
                     </tr>
                   )}
@@ -347,21 +349,21 @@ export const RentLedgerPage: React.FC = () => {
             {/* Ledger Footer */}
             <div className="flex justify-between items-center pt-4 border-t border-border">
               <div className="text-[10px] text-muted-foreground">
-                Generated on {new Date().toLocaleDateString()} • System Audited Ledger
+                {t('rentLedgerPage.generatedOn', { date: new Date().toLocaleDateString() })}
               </div>
               <div className="flex items-center gap-6">
                 <div className="text-right">
-                  <p className="text-[9px] uppercase text-muted-foreground font-bold">Outstanding Balance</p>
+                  <p className="text-[9px] uppercase text-muted-foreground font-bold">{t('rentLedgerPage.outstandingBalance')}</p>
                   <p className={`text-lg font-black ${selectedTenantLedger.length > 0 ? (selectedTenantLedger[selectedTenantLedger.length - 1].balance > 0 ? 'text-rose-500' : 'text-emerald-500') : 'text-emerald-500'}`}>
                     ${selectedTenantLedger.length > 0 ? selectedTenantLedger[selectedTenantLedger.length - 1].balance.toLocaleString(undefined, { minimumFractionDigits: 2 }) : '0.00'}
                   </p>
                 </div>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" onClick={() => setSelectedTenantId('')} className="no-print h-9 font-bold">
-                    Close Statement
+                    {t('rentLedgerPage.closeStatement')}
                   </Button>
                   <Button variant="default" size="sm" onClick={() => window.print()} className="no-print flex items-center gap-1.5 h-9 font-bold bg-primary text-primary-foreground hover:bg-primary/95">
-                    <Printer className="w-4 h-4" /> Print Statement
+                    <Printer className="w-4 h-4" /> {t('rentLedgerPage.printStatement')}
                   </Button>
                 </div>
               </div>

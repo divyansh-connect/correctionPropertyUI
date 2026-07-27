@@ -1,17 +1,20 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card } from '../../../components/ui/Card';
-import { User, Layers, Clock } from 'lucide-react';
+import { User, Clock } from 'lucide-react';
 
 interface AuditTimelineProps {
   logs: any[];
 }
 
 export const AuditTimeline: React.FC<AuditTimelineProps> = ({ logs }) => {
+  const { t } = useTranslation();
+
   return (
     <Card className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
       <div className="p-4 border-b border-border bg-muted/15">
         <h4 className="font-bold text-xs text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
-          <Clock className="w-4 h-4 text-primary" /> Live Audit Log Trail
+          <Clock className="w-4 h-4 text-primary" /> {t('platformSecurity.auditLogs.liveTrail')}
         </h4>
       </div>
 
@@ -29,13 +32,13 @@ export const AuditTimeline: React.FC<AuditTimelineProps> = ({ logs }) => {
                 <span>{log.timestamp}</span>
               </div>
               <p className="text-foreground/90 font-medium">
-                {log.action} on object <strong className="font-extrabold text-foreground">{log.object}</strong>
+                {t(`status.${log.action}`)} {t('platformSecurity.auditLogs.onObject')} <strong className="font-extrabold text-foreground">{log.object}</strong>
               </p>
               <div className="flex items-center space-x-3 text-[10px] text-muted-foreground">
                 <span className="bg-secondary px-1.5 py-0.5 rounded uppercase">{log.module}</span>
                 <span>IP: {log.ip}</span>
                 <span className={`font-bold ${log.status === 'Success' ? 'text-emerald-600' : 'text-rose-500'}`}>
-                  {log.status}
+                  {t(`status.${log.status}`)}
                 </span>
               </div>
             </div>

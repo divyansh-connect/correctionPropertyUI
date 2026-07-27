@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { CoAAccount } from '../../types';
 import { PageHeader } from '../../components/PageHeader';
@@ -12,10 +13,11 @@ import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { StatusBadge } from '../../components/StatusBadge';
 import { CurrencyInput } from '../../components/Phase4Components';
-import { Plus, Trash2, Edit, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Loader2 } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
 
 export const ChartOfAccountsPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
@@ -27,7 +29,7 @@ export const ChartOfAccountsPage: React.FC = () => {
   // Form states
   const [number, setNumber] = useState('');
   const [name, setName] = useState('');
-  const [type, setType] = useState<'Assets' | 'Liabilities' | 'Equity' | 'Income' | 'Expenses'>('Income');
+  const [type, setType] = useState('Assets');
   const [openingBalance, setOpeningBalance] = useState(0);
 
   // Queries
@@ -38,7 +40,7 @@ export const ChartOfAccountsPage: React.FC = () => {
       return api.accounts.create({
         accountNumber: number,
         accountName: name,
-        accountType: type,
+        accountType: type as any,
         balance: openingBalance,
         currency: 'USD',
       });
@@ -67,24 +69,24 @@ export const ChartOfAccountsPage: React.FC = () => {
   });
 
   const columns: ColumnDef<CoAAccount>[] = [
-    { accessorKey: 'accountNumber', header: 'Account Number', id: 'number', cell: ({ row }) => <span className="font-mono font-bold">{row.original.accountNumber}</span> },
-    { accessorKey: 'accountName', header: 'Account Name', id: 'name', cell: ({ row }) => <span className="font-bold">{row.original.accountName}</span> },
-    { accessorKey: 'accountType', header: 'Type', id: 'type' },
+    { accessorKey: 'accountNumber', header: t('pmCoa.accountNumber'), id: 'number', cell: ({ row }) => <span className="font-mono font-bold">{row.original.accountNumber}</span> },
+    { accessorKey: 'accountName', header: t('pmCoa.accountName'), id: 'name', cell: ({ row }) => <span className="font-bold">{row.original.accountName}</span> },
+    { accessorKey: 'accountType', header: t('pmCoa.type'), id: 'type' },
     {
       accessorKey: 'balance',
-      header: 'Balance',
+      header: t('pmCoa.balance'),
       id: 'balance',
       cell: ({ row }) => <span className="font-extrabold">${row.original.balance.toLocaleString()}</span>,
     },
     {
       accessorKey: 'status',
-      header: 'Status',
+      header: t('pmIncome.status'),
       id: 'status',
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
     {
       id: 'actions',
-      header: 'Actions',
+      header: t('pmCoa.actions'),
       cell: ({ row }) => (
         <Button variant="ghost" size="icon" onClick={() => setDeleteId(row.original.id)} className="text-muted-foreground hover:text-destructive hover:bg-destructive/10">
           <Trash2 className="w-4 h-4" />
@@ -96,15 +98,15 @@ export const ChartOfAccountsPage: React.FC = () => {
   return (
     <div>
       <PageHeader
-        title="Chart of Accounts (CoA)"
-        description="Verify property portfolios asset categories, liability reserves, and equity subdivisions."
+        title={t('pmCoa.title')}
+        description={t('pmCoa.desc')}
         breadcrumbs={[
-          { label: 'Home', href: '/' },
-          { label: 'Accounting', href: '/accounting' },
-          { label: 'Chart of Accounts' },
+          { label: t('header.home'), href: '/' },
+          { label: t('nav.accounting'), href: '/accounting' },
+          { label: t('pmCoa.title') },
         ]}
         action={{
-          label: 'Add Account',
+          label: t('pmCoa.addAccount'),
           onClick: () => setIsOpen(true),
           icon: <Plus className="w-4.5 h-4.5" />,
         }}
@@ -113,12 +115,12 @@ export const ChartOfAccountsPage: React.FC = () => {
       <FilterBar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        searchPlaceholder="Search accounts by name or number..."
+        searchPlaceholder={t('pmCoa.searchPlaceholder')}
         filters={[
           {
             key: 'type',
             value: typeFilter,
-            placeholder: 'Account Type',
+            placeholder: t('pmCoa.type'),
             options: [
               { label: 'Assets', value: 'Assets' },
               { label: 'Liabilities', value: 'Liabilities' },

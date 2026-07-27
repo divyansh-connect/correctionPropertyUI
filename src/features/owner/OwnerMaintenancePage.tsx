@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { MaintenanceRequest } from '../../types';
 import { PageHeader } from '../../components/PageHeader';
@@ -13,6 +14,7 @@ import { Eye } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
 
 export const OwnerMaintenancePage: React.FC = () => {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRequest, setSelectedRequest] = useState<MaintenanceRequest | null>(null);
 
@@ -25,25 +27,25 @@ export const OwnerMaintenancePage: React.FC = () => {
   );
 
   const columns: ColumnDef<MaintenanceRequest>[] = [
-    { accessorKey: 'id', header: 'Request NO', id: 'id', cell: ({ row }) => <span className="font-bold">#{row.original.id.replace('sr-', '')}</span> },
-    { accessorKey: 'title', header: 'Subject Issue', id: 'title', cell: ({ row }) => <span className="font-bold">{row.original.title}</span> },
-    { accessorKey: 'propertyName', header: 'Location Property', id: 'property' },
-    { accessorKey: 'unitNumber', header: 'Unit', id: 'unit' },
+    { accessorKey: 'id', header: t('owner.maintenance.requestNo'), id: 'id', cell: ({ row }) => <span className="font-bold">#{row.original.id.replace('sr-', '')}</span> },
+    { accessorKey: 'title', header: t('owner.maintenance.subjectIssue'), id: 'title', cell: ({ row }) => <span className="font-bold">{row.original.title}</span> },
+    { accessorKey: 'propertyName', header: t('owner.maintenance.locationProperty'), id: 'property' },
+    { accessorKey: 'unitNumber', header: t('owner.maintenance.unit'), id: 'unit' },
     {
       accessorKey: 'priority',
-      header: 'Priority',
+      header: t('owner.maintenance.priority'),
       id: 'priority',
       cell: ({ row }) => <RequestPriorityBadge priority={row.original.priority as any} />,
     },
     {
       accessorKey: 'status',
-      header: 'Status',
+      header: t('owner.maintenance.status'),
       id: 'status',
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
     {
       id: 'actions',
-      header: 'Actions',
+      header: t('owner.maintenance.actions'),
       cell: ({ row }) => (
         <Button variant="ghost" size="icon" onClick={() => setSelectedRequest(row.original)} title="View Progress">
           <Eye className="w-4 h-4" />
@@ -55,25 +57,25 @@ export const OwnerMaintenancePage: React.FC = () => {
   return (
     <div>
       <PageHeader
-        title="Portfolio Maintenance Tickets"
-        description="Verify contractor dispatches progress and repairs costs deductions."
+        title={t('owner.maintenance.title')}
+        description={t('owner.maintenance.desc')}
         breadcrumbs={[
-          { label: 'Home', href: '/owner' },
-          { label: 'Maintenance' },
+          { label: t('header.home'), href: '/owner' },
+          { label: t('nav.maintenance') },
         ]}
       />
 
       <FilterBar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        searchPlaceholder="Search tickets by property or subject..."
+        searchPlaceholder={t('owner.maintenance.searchPlaceholder')}
         onReset={() => setSearchQuery('')}
       />
 
       <DataTable columns={columns} data={filteredMaint.slice(0, 100)} loading={isLoading} />
 
       {/* DETAIL DIALOG */}
-      <FormDialog open={!!selectedRequest} onOpenChange={(open) => !open && setSelectedRequest(null)} title="Maintenance Dispatch Progress">
+      <FormDialog open={!!selectedRequest} onOpenChange={(open) => !open && setSelectedRequest(null)} title={t('owner.maintenance.dialogTitle')}>
         {selectedRequest && (
           <div className="space-y-4 pt-2 text-xs font-semibold text-foreground">
             <div className="flex justify-between items-center border-b pb-2">

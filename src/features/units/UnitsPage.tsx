@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { Unit } from '../../types';
 import { PageHeader } from '../../components/PageHeader';
@@ -14,6 +15,7 @@ import { ColumnDef } from '@tanstack/react-table';
 import { useNavigate } from '@tanstack/react-router';
 
 export const UnitsPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -98,44 +100,44 @@ export const UnitsPage: React.FC = () => {
   const columns: ColumnDef<Unit>[] = [
     {
       accessorKey: 'unitNumber',
-      header: 'Unit #',
+      header: t('pmProperties.unitNumber'),
       id: 'unitNumber',
       cell: ({ row }) => (
         <span
           className="font-bold text-primary hover:underline cursor-pointer"
-          onClick={() => navigate({ to: `/properties/units/${row.original.id}` })} // matching the routed parameter later
+          onClick={() => navigate({ to: `/properties/units/${row.original.id}` })}
         >
           {row.original.unitNumber}
         </span>
       ),
     },
-    { accessorKey: 'propertyName', header: 'Property', id: 'property' },
-    { accessorKey: 'buildingName', header: 'Building', id: 'building', cell: ({ row }) => row.original.buildingName || 'N/A' },
-    { accessorKey: 'floor', header: 'Floor', id: 'floor' },
-    { accessorKey: 'bedrooms', header: 'Beds', id: 'bedrooms' },
-    { accessorKey: 'bathrooms', header: 'Baths', id: 'bathrooms' },
-    { accessorKey: 'squareFootage', header: 'Sqft', id: 'squareFootage' },
+    { accessorKey: 'propertyName', header: t('pmLeasing.property'), id: 'property' },
+    { accessorKey: 'buildingName', header: t('pmProperties.building'), id: 'building', cell: ({ row }) => row.original.buildingName || 'N/A' },
+    { accessorKey: 'floor', header: t('pmProperties.floor'), id: 'floor' },
+    { accessorKey: 'bedrooms', header: t('pmProperties.beds'), id: 'bedrooms' },
+    { accessorKey: 'bathrooms', header: t('pmProperties.baths'), id: 'bathrooms' },
+    { accessorKey: 'squareFootage', header: t('pmProperties.sqft'), id: 'squareFootage' },
     {
       accessorKey: 'rentAmount',
-      header: 'Rent',
+      header: t('pmProperties.rent'),
       id: 'rent',
       cell: ({ row }) => <span>${row.original.rentAmount.toLocaleString()}</span>,
     },
     {
       accessorKey: 'tenantName',
-      header: 'Tenant',
+      header: t('pmProperties.tenant'),
       id: 'tenant',
-      cell: ({ row }) => row.original.tenantName || <span className="text-muted-foreground italic text-xs">Vacant</span>,
+      cell: ({ row }) => row.original.tenantName || <span className="text-muted-foreground italic text-xs">{t('pmProperties.vacant')}</span>,
     },
     {
       accessorKey: 'status',
-      header: 'Status',
+      header: t('pmIncome.status'),
       id: 'status',
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
     {
       id: 'actions',
-      header: 'Actions',
+      header: t('pmCoa.actions'),
       cell: ({ row }) => (
         <div className="flex space-x-1">
           <Button
@@ -184,15 +186,15 @@ export const UnitsPage: React.FC = () => {
   return (
     <div>
       <PageHeader
-        title="Units"
-        description="Verify layout square footage, occupancy levels, and monthly rent logs."
+        title={t('pmProperties.unitsTitle')}
+        description={t('pmProperties.unitsDesc')}
         breadcrumbs={[
-          { label: 'Home', href: '/' },
-          { label: 'Properties', href: '/properties' },
-          { label: 'Units' },
+          { label: t('header.home'), href: '/' },
+          { label: t('nav.properties'), href: '/properties' },
+          { label: t('pmProperties.unitsTitle') },
         ]}
         action={{
-          label: 'Add Unit',
+          label: t('pmProperties.addUnit'),
           onClick: () => navigate({ to: '/properties/units/new' }), // matching routes
           icon: <Plus className="w-4.5 h-4.5" />,
         }}

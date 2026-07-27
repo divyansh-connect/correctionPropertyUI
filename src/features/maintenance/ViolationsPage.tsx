@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
+import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { Violation } from '../../types';
 import { PageHeader } from '../../components/PageHeader';
@@ -12,6 +13,7 @@ import { Wrench, ShieldAlert, Eye, Download, Info } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
 
 export const ViolationsPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
@@ -66,7 +68,7 @@ export const ViolationsPage: React.FC = () => {
   const columns: ColumnDef<Violation>[] = [
     {
       accessorKey: 'violationCode',
-      header: 'Violation Code',
+      header: t('maintenanceViolations.violationCode'),
       id: 'violationCode',
       cell: ({ row }) => (
         <span className="font-extrabold text-rose-500 font-mono">
@@ -74,21 +76,21 @@ export const ViolationsPage: React.FC = () => {
         </span>
       ),
     },
-    { accessorKey: 'issuingAuthority', header: 'Department Authority', id: 'issuingAuthority' },
+    { accessorKey: 'issuingAuthority', header: t('maintenanceViolations.issuingAuthority'), id: 'issuingAuthority' },
     {
       accessorKey: 'propertyName',
-      header: 'Property Location',
+      header: t('maintenanceRequests.propertyLocation'),
       id: 'property',
       cell: ({ row }) => (
         <div>
           <p className="font-bold">{row.original.propertyName}</p>
-          <p className="text-[10px] text-muted-foreground">Unit: {row.original.unitNumber || 'All Building'}</p>
+          <p className="text-[10px] text-muted-foreground">{t('maintenanceRequests.unit')}: {row.original.unitNumber || 'All Building'}</p>
         </div>
       ),
     },
     {
       accessorKey: 'fineAmount',
-      header: 'Fine Amount',
+      header: t('maintenanceViolations.fineAmount'),
       id: 'fine',
       cell: ({ row }) => (
         <span className="font-bold text-rose-500">
@@ -96,10 +98,10 @@ export const ViolationsPage: React.FC = () => {
         </span>
       ),
     },
-    { accessorKey: 'dueDate', header: 'Compliance Due', id: 'dueDate' },
+    { accessorKey: 'dueDate', header: t('maintenanceViolations.dueDate'), id: 'dueDate' },
     {
       accessorKey: 'severity',
-      header: 'Severity',
+      header: t('maintenanceRequests.priority'),
       id: 'severity',
       cell: ({ row }) => (
         <StatusBadge status={row.original.severity} />
@@ -107,13 +109,13 @@ export const ViolationsPage: React.FC = () => {
     },
     {
       accessorKey: 'status',
-      header: 'Status',
+      header: t('maintenanceRequests.status'),
       id: 'status',
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
     {
       id: 'actions',
-      header: 'Resolution Actions',
+      header: t('maintenanceRequests.actions'),
       cell: ({ row }) => (
         <div className="flex space-x-2">
           {row.original.status !== 'Resolved' && !row.original.workOrderId ? (
@@ -146,11 +148,11 @@ export const ViolationsPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Municipal Maintenance Violations"
-        description="Verify property compliance flags pushed directly from city building, fire, and health departments."
-        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Maintenance' }, { label: 'Violations' }]}
+        title={t('maintenanceViolations.title')}
+        description={t('maintenanceViolations.desc')}
+        breadcrumbs={[{ label: t('header.home'), href: '/' }, { label: t('nav.maintenance'), href: '/maintenance' }, { label: t('maintenanceViolations.title') }]}
         action={{
-          label: 'Export CSV Log',
+          label: t('maintenanceRequests.exportCsv'),
           onClick: handleExport,
           icon: <Download className="w-4.5 h-4.5" />,
         }}

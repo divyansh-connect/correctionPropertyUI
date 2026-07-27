@@ -12,10 +12,12 @@ import { Button } from '../../components/ui/Button';
 import { StatusBadge } from '../../components/StatusBadge';
 import { Plus, Eye, Trash2, Download, Mail, MessageSquare } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
+import { useTranslation } from 'react-i18next';
 
 export const InvoicesPage: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -45,7 +47,7 @@ export const InvoicesPage: React.FC = () => {
   const columns: ColumnDef<Invoice>[] = [
     {
       accessorKey: 'id',
-      header: 'Invoice #',
+      header: t('invoicesPage.invoiceNo'),
       id: 'id',
       cell: ({ row }) => (
         <span
@@ -56,18 +58,18 @@ export const InvoicesPage: React.FC = () => {
         </span>
       ),
     },
-    { accessorKey: 'tenantName', header: 'Tenant', id: 'tenantName' },
-    { accessorKey: 'propertyName', header: 'Property', id: 'property' },
-    { accessorKey: 'dueDate', header: 'Due Date', id: 'dueDate' },
+    { accessorKey: 'tenantName', header: t('invoicesPage.tenant'), id: 'tenantName' },
+    { accessorKey: 'propertyName', header: t('invoicesPage.property'), id: 'property' },
+    { accessorKey: 'dueDate', header: t('invoicesPage.dueDate'), id: 'dueDate' },
     {
       accessorKey: 'amount',
-      header: 'Amount Due',
+      header: t('invoicesPage.amountDue'),
       id: 'amount',
       cell: ({ row }) => <span className="font-semibold">${row.original.amount.toLocaleString()}</span>,
     },
     {
       accessorKey: 'balance',
-      header: 'Outstanding Balance',
+      header: t('invoicesPage.outstandingBalance'),
       id: 'balance',
       cell: ({ row }) => (
         <span className={row.original.balance > 0 ? 'text-rose-500 font-bold' : 'text-emerald-500 font-bold'}>
@@ -77,16 +79,16 @@ export const InvoicesPage: React.FC = () => {
     },
     {
       accessorKey: 'status',
-      header: 'Status',
+      header: t('invoicesPage.status'),
       id: 'status',
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
     {
       id: 'actions',
-      header: 'Actions',
+      header: t('invoicesPage.actions'),
       cell: ({ row }) => (
         <div className="flex space-x-1">
-          <Button variant="ghost" size="icon" onClick={() => setSelectedInvoice(row.original)} title="View Details">
+          <Button variant="ghost" size="icon" onClick={() => setSelectedInvoice(row.original)} title={t('invoicesPage.viewDetails')}>
             <Eye className="w-4 h-4" />
           </Button>
           <Button
@@ -94,7 +96,7 @@ export const InvoicesPage: React.FC = () => {
             size="icon"
             onClick={() => setDeleteId(row.original.id)}
             className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-            title="Delete Invoice"
+            title={t('invoicesPage.deleteInvoice')}
           >
             <Trash2 className="w-4 h-4" />
           </Button>
@@ -106,15 +108,15 @@ export const InvoicesPage: React.FC = () => {
   return (
     <div>
       <PageHeader
-        title="Invoices Manager"
-        description="Verify resident monthly invoices billing distributions, itemized charges, and overdue alerts."
+        title={t('invoicesPage.title')}
+        description={t('invoicesPage.desc')}
         breadcrumbs={[
-          { label: 'Home', href: '/' },
-          { label: 'Rent Collection', href: '/rent' },
-          { label: 'Invoices' },
+          { label: t('ai.breadcrumbs.home'), href: '/' },
+          { label: t('rentPaymentsPage.rentCollection'), href: '/rent' },
+          { label: t('invoicesPage.invoices') },
         ]}
         action={{
-          label: 'Create Invoice',
+          label: t('invoicesPage.createInvoice'),
           onClick: () => navigate({ to: '/invoices/new' }),
           icon: <Plus className="w-4.5 h-4.5" />,
         }}
@@ -123,12 +125,12 @@ export const InvoicesPage: React.FC = () => {
       <FilterBar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        searchPlaceholder="Search invoices by tenant name..."
+        searchPlaceholder={t('invoicesPage.searchPlaceholder')}
         filters={[
           {
             key: 'status',
             value: statusFilter,
-            placeholder: 'All Statuses',
+            placeholder: t('rentPaymentsPage.allStatuses'),
             options: [
               { label: 'Paid', value: 'Paid' },
               { label: 'Partially Paid', value: 'Partially Paid' },
@@ -153,27 +155,27 @@ export const InvoicesPage: React.FC = () => {
       <FormDialog
         open={!!selectedInvoice}
         onOpenChange={(open) => !open && setSelectedInvoice(null)}
-        title="Itemized Invoice Statement"
+        title={t('invoicesPage.itemizedStatement')}
       >
         {selectedInvoice && (
           <div className="space-y-6 pt-3 text-xs font-semibold text-foreground">
             <div className="flex justify-between items-start border-b pb-3">
               <div>
-                <h4 className="font-extrabold text-sm uppercase">Invoice Statement</h4>
+                <h4 className="font-extrabold text-sm uppercase">{t('invoicesPage.invoiceStatement')}</h4>
                 <p className="text-[10px] text-muted-foreground font-bold mt-1">NO: {selectedInvoice.id} • DUE: {selectedInvoice.dueDate}</p>
               </div>
               <StatusBadge status={selectedInvoice.status} />
             </div>
 
             <div className="space-y-1">
-              <p className="text-[10px] uppercase text-muted-foreground">Resident Details</p>
+              <p className="text-[10px] uppercase text-muted-foreground">{t('invoicesPage.residentDetails')}</p>
               <p className="text-sm font-bold">{selectedInvoice.tenantName}</p>
               <p className="text-muted-foreground">{selectedInvoice.propertyName} • Unit {selectedInvoice.unitNumber}</p>
             </div>
 
             {/* Line items list */}
             <div className="space-y-2 border-t pt-4">
-              <p className="text-[10px] uppercase text-muted-foreground tracking-wide">Line Items Breakdown</p>
+              <p className="text-[10px] uppercase text-muted-foreground tracking-wide">{t('invoicesPage.lineItemsBreakdown')}</p>
               <div className="divide-y border rounded-xl overflow-hidden bg-secondary/15">
                 {selectedInvoice.lineItems.map((item, idx) => (
                   <div key={idx} className="flex justify-between p-3">
@@ -185,13 +187,13 @@ export const InvoicesPage: React.FC = () => {
             </div>
 
             <div className="border-t border-dashed pt-4 flex justify-between items-center text-sm font-black">
-              <span>Total Balance Due</span>
+              <span>{t('invoicesPage.totalBalanceDue')}</span>
               <span className="text-lg text-rose-500">${selectedInvoice.balance.toLocaleString()}</span>
             </div>
 
             {/* Share / Send Invoice options */}
             <div className="border-t pt-4 space-y-2">
-              <p className="text-[10px] uppercase text-muted-foreground tracking-wide font-black">Direct Invoice Delivery</p>
+              <p className="text-[10px] uppercase text-muted-foreground tracking-wide font-black">{t('invoicesPage.directDelivery')}</p>
               <div className="flex gap-2 font-bold text-xs">
                 <Button 
                   size="sm" 
@@ -200,7 +202,7 @@ export const InvoicesPage: React.FC = () => {
                   className="flex-1 flex items-center justify-center gap-1.5 h-9"
                 >
                   <Mail className="w-3.5 h-3.5 text-primary" />
-                  <span>Send Email</span>
+                  <span>{t('invoicesPage.sendEmail')}</span>
                 </Button>
                 <Button 
                   size="sm" 
@@ -209,7 +211,7 @@ export const InvoicesPage: React.FC = () => {
                   className="flex-1 flex items-center justify-center gap-1.5 h-9"
                 >
                   <MessageSquare className="w-3.5 h-3.5 text-primary" />
-                  <span>Send SMS</span>
+                  <span>{t('invoicesPage.sendSms')}</span>
                 </Button>
                 <a 
                   href={`https://wa.me/5550199?text=${encodeURIComponent(`Hi ${selectedInvoice.tenantName}, here is your outstanding statement balance details for ${selectedInvoice.propertyName} Unit ${selectedInvoice.unitNumber}. Total amount due: $${selectedInvoice.balance.toLocaleString()}. Please view details and complete payment: http://localhost:5173/tenant/payments`)}`} 
@@ -218,17 +220,17 @@ export const InvoicesPage: React.FC = () => {
                   className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/10 rounded-xl transition text-foreground"
                 >
                   <MessageSquare className="w-3.5 h-3.5 text-emerald-500" />
-                  <span>WhatsApp</span>
+                  <span>{t('invoicesPage.whatsApp')}</span>
                 </a>
               </div>
             </div>
 
             <div className="flex justify-end space-x-2 pt-4 border-t">
-              <Button variant="outline" onClick={() => setSelectedInvoice(null)}>Close</Button>
+              <Button variant="outline" onClick={() => setSelectedInvoice(null)}>{t('invoicesPage.close')}</Button>
               <Button onClick={() => {
                 setSelectedInvoice(null);
                 navigate({ to: '/payments/new' });
-              }}>Record Payment</Button>
+              }}>{t('invoicesPage.recordPayment')}</Button>
             </div>
           </div>
         )}
@@ -237,9 +239,9 @@ export const InvoicesPage: React.FC = () => {
       <ConfirmDialog
         open={!!deleteId}
         onOpenChange={(open) => !open && setDeleteId(null)}
-        title="Delete Invoice Statement"
-        description="Are you sure you want to delete this invoice? The transaction debit will be reversed."
-        confirmText="Delete Invoice"
+        title={t('invoicesPage.deleteTitle')}
+        description={t('invoicesPage.deleteDesc')}
+        confirmText={t('invoicesPage.confirmDelete')}
         variant="destructive"
         onConfirm={() => deleteId && deleteMutation.mutate(deleteId)}
       />

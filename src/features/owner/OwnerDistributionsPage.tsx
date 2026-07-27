@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { OwnerDistribution } from '../../types';
 import { PageHeader } from '../../components/PageHeader';
@@ -9,6 +10,7 @@ import { StatusBadge } from '../../components/StatusBadge';
 import { ColumnDef } from '@tanstack/react-table';
 
 export const OwnerDistributionsPage: React.FC = () => {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
 
   // Queries
@@ -20,19 +22,19 @@ export const OwnerDistributionsPage: React.FC = () => {
   );
 
   const columns: ColumnDef<OwnerDistribution>[] = [
-    { accessorKey: 'distributionNumber', header: 'Distribution NO', id: 'number', cell: ({ row }) => <span className="font-bold">{row.original.distributionNumber}</span> },
-    { accessorKey: 'propertyName', header: 'Property Managed', id: 'property' },
-    { accessorKey: 'date', header: 'Payment Date', id: 'date' },
+    { accessorKey: 'distributionNumber', header: t('owner.distributions.number'), id: 'number', cell: ({ row }) => <span className="font-bold">{row.original.distributionNumber}</span> },
+    { accessorKey: 'propertyName', header: t('owner.distributions.property'), id: 'property' },
+    { accessorKey: 'date', header: t('owner.distributions.date'), id: 'date' },
     {
       accessorKey: 'amount',
-      header: 'Amount Paid',
+      header: t('owner.distributions.amount'),
       id: 'amount',
       cell: ({ row }) => <span className="font-extrabold text-emerald-500">${row.original.amount.toLocaleString()}</span>,
     },
-    { accessorKey: 'method', header: 'Payout Method', id: 'method' },
+    { accessorKey: 'method', header: t('owner.distributions.method'), id: 'method' },
     {
       accessorKey: 'status',
-      header: 'Status',
+      header: t('owner.distributions.status'),
       id: 'status',
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
@@ -41,18 +43,18 @@ export const OwnerDistributionsPage: React.FC = () => {
   return (
     <div>
       <PageHeader
-        title="Payout Distributions Log"
-        description="Verify direct deposits ACH/Wires cleared to checking accounts."
+        title={t('owner.distributions.title')}
+        description={t('owner.distributions.desc')}
         breadcrumbs={[
-          { label: 'Home', href: '/owner' },
-          { label: 'Distributions' },
+          { label: t('header.home'), href: '/owner' },
+          { label: t('owner.nav.distributions') },
         ]}
       />
 
       <FilterBar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        searchPlaceholder="Search distributions by number or asset..."
+        searchPlaceholder={t('owner.distributions.searchPlaceholder')}
         onReset={() => setSearchQuery('')}
       />
 

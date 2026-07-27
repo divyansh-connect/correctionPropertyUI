@@ -71,14 +71,14 @@ export const OwnerPropertiesPage: React.FC = () => {
   return (
     <div className="space-y-6 text-foreground">
       <PageHeader
-        title={t('ownerProperties.title')}
-        description={t('ownerProperties.desc')}
+        title={t('owner.ownerProperties.title')}
+        description={t('owner.ownerProperties.desc')}
         breadcrumbs={[
-          { label: t('ai.breadcrumbs.home'), href: '/owner' },
-          { label: t('ownerProperties.title') },
+          { label: t('header.home'), href: '/owner' },
+          { label: t('owner.ownerProperties.title') },
         ]}
         action={{
-          label: t('ownerProperties.addProperty'),
+          label: t('owner.ownerProperties.addProperty'),
           onClick: () => setIsCreateOpen(true),
           icon: <Plus className="w-4.5 h-4.5" />,
         }}
@@ -103,20 +103,20 @@ export const OwnerPropertiesPage: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-2 text-center bg-secondary/15 rounded-xl p-3 text-xs font-semibold">
               <div>
-                <p className="text-[9px] text-muted-foreground uppercase">{t('ownerProperties.type')}</p>
-                <p className="font-extrabold">{p.type || 'Residential'}</p>
+                <p className="text-[9px] text-muted-foreground uppercase">{t('owner.ownerProperties.type')}</p>
+                <p className="font-extrabold">{t(`owner.ownerProperties.propertyTypes.${p.type?.toLowerCase() || 'apartment'}`)}</p>
               </div>
               <div>
-                <p className="text-[9px] text-muted-foreground uppercase">{t('ownerProperties.rentCost')}</p>
+                <p className="text-[9px] text-muted-foreground uppercase">{t('owner.ownerProperties.rentCost')}</p>
                 <p className="font-extrabold text-emerald-500">${(p as any).monthlyRent?.toLocaleString() || '2,400'}</p>
               </div>
             </div>
 
             <div className="flex gap-2">
               <Button size="sm" variant="outline" onClick={() => setSelectedProperty(p)} className="flex-1 text-xs font-bold uppercase">
-                {t('ownerProperties.viewDetails')}
+                {t('owner.ownerProperties.viewDetails')}
               </Button>
-              <Button size="sm" variant="ghost" onClick={() => setDeleteId(p.id)} className="text-rose-500 hover:text-rose-650 hover:bg-rose-550/10 p-2 rounded-xl" title={t('ownerProperties.deleteProperty')}>
+              <Button size="sm" variant="ghost" onClick={() => setDeleteId(p.id)} className="text-rose-500 hover:text-rose-650 hover:bg-rose-550/10 p-2 rounded-xl" title={t('owner.ownerProperties.deleteProperty')}>
                 <Trash2 className="w-4 h-4" />
               </Button>
             </div>

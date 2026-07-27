@@ -8,7 +8,7 @@ export const LanguageSelector: React.FC = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { i18n } = useTranslation();
 
-  const currentLang = i18n.language || 'en';
+  const currentLang = i18n.language?.startsWith('es') ? 'es' : 'en';
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -28,8 +28,8 @@ export const LanguageSelector: React.FC = () => {
       return;
     }
     
-    i18n.changeLanguage(lang);
     localStorage.setItem('app_language', lang);
+    i18n.changeLanguage(lang);
     setIsOpen(false);
   };
 

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { Vendor } from '../../types';
 import { PageHeader } from '../../components/PageHeader';
@@ -15,6 +16,7 @@ import { Plus, Eye, Loader2, ShieldAlert } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
 
 export const VendorsPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
@@ -25,7 +27,7 @@ export const VendorsPage: React.FC = () => {
 
   // Form states
   const [name, setName] = useState('');
-  const [category, setCategory] = useState('Plumber');
+  const [category, setCategory] = useState('Plumbing');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [contact, setContact] = useState('');
@@ -35,17 +37,7 @@ export const VendorsPage: React.FC = () => {
   const { data: vendorsList = [], isLoading } = useQuery({ queryKey: ['vendors-list'], queryFn: () => api.vendors.getAll() });
 
   const createMutation = useMutation({
-    mutationFn: () => {
-      return api.vendors.create({
-        name,
-        category,
-        phone,
-        email,
-        primaryContact: contact,
-        licenseNumber: license,
-        insuranceExpiration: '2027-12-31',
-      });
-    },
+    mutationFn: (newV: Partial<Vendor>) => api.vendors.create(newV),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vendors-list'] });
       setIsCreateOpen(false);
@@ -66,7 +58,7 @@ export const VendorsPage: React.FC = () => {
   const columns: ColumnDef<Vendor>[] = [
     {
       accessorKey: 'name',
-      header: 'Vendor / Firm',
+      header: t('maintenanceVendors.vendorFirm'),
       id: 'name',
       cell: ({ row }) => (
         <span onClick={() => setSelectedVendor(row.original)} className="font-bold text-primary hover:underline cursor-pointer">
@@ -74,25 +66,25 @@ export const VendorsPage: React.FC = () => {
         </span>
       ),
     },
-    { accessorKey: 'category', header: 'Trade specialty', id: 'category' },
+    { accessorKey: 'category', header: t('maintenanceVendors.tradeSpecialty'), id: 'category' },
     {
       accessorKey: 'rating',
-      header: 'Rating',
+      header: t('maintenanceVendors.rating'),
       id: 'rating',
       cell: ({ row }) => <VendorRating rating={row.original.rating} />,
     },
-    { accessorKey: 'activeJobs', header: 'Active Jobs', id: 'activeJobs' },
-    { accessorKey: 'completedJobs', header: 'Completed Jobs', id: 'completedJobs' },
-    { accessorKey: 'responseTime', header: 'Response Time', id: 'responseTime' },
+    { accessorKey: 'activeJobs', header: t('maintenanceVendors.activeJobs'), id: 'activeJobs' },
+    { accessorKey: 'completedJobs', header: t('maintenanceVendors.completedJobs'), id: 'completedJobs' },
+    { accessorKey: 'responseTime', header: t('maintenanceVendors.responseTime'), id: 'responseTime' },
     {
       accessorKey: 'status',
-      header: 'Status',
+      header: t('maintenanceRequests.status'),
       id: 'status',
       cell: ({ row }) => <StatusBadge status={row.original.status || 'Active'} />,
     },
     {
       id: 'actions',
-      header: 'Actions',
+      header: t('maintenanceRequests.actions'),
       cell: ({ row }) => (
         <Button variant="ghost" size="icon" onClick={() => setSelectedVendor(row.original)} title="View Profile">
           <Eye className="w-4 h-4" />
@@ -104,15 +96,15 @@ export const VendorsPage: React.FC = () => {
   return (
     <div>
       <PageHeader
-        title="Vendors & Contractors"
-        description="Verify service level compliance, licenses, and trade specializations."
+        title={t('maintenanceVendors.title')}
+        description={t('maintenanceVendors.desc')}
         breadcrumbs={[
-          { label: 'Home', href: '/' },
-          { label: 'Maintenance', href: '/maintenance' },
-          { label: 'Vendors' },
+          { label: t('header.home'), href: '/' },
+          { label: t('nav.maintenance'), href: '/maintenance' },
+          { label: t('maintenanceVendors.title') },
         ]}
         action={{
-          label: 'Register Vendor Partner',
+          label: t('maintenanceVendors.registerVendor'),
           onClick: () => setIsCreateOpen(true),
           icon: <Plus className="w-4.5 h-4.5" />,
         }}
@@ -200,7 +192,20 @@ export const VendorsPage: React.FC = () => {
 
           <div className="flex justify-end space-x-2 pt-4">
             <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
-            <Button onClick={() => createMutation.mutate()} disabled={!name || !phone || createMutation.isPending}>
+            <Button
+              onClick={() =>
+                createMutation.mutate({
+                  name,
+                  category,
+                  phone,
+                  email,
+                  primaryContact: contact,
+                  licenseNumber: license,
+                  insuranceExpiration: '2027-12-31',
+                })
+              }
+              disabled={!name || !phone || createMutation.isPending}
+            >
               {createMutation.isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
               Register Vendor
             </Button>

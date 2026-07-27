@@ -8,6 +8,7 @@ import {
 } from '@tanstack/react-router';
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import api from '../api';
 import { useAuthStore } from '../store/useStore';
 import {
@@ -1818,28 +1819,29 @@ const adminTeamsRoute = createRoute({
 });
 
 const AccessTemplatesPage: React.FC = () => {
+  const { t } = useTranslation();
   return (
     <div className="space-y-6 text-foreground">
       <PageHeader
-        title="Access Templates"
-        description="Bootstrap your organizational permissions with pre-configured access templates."
-        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Administration' }, { label: 'Templates' }]}
+        title={t('accessTemplatesPage.title', 'Access Templates')}
+        description={t('accessTemplatesPage.desc', 'Bootstrap your organizational permissions with pre-configured access templates.')}
+        breadcrumbs={[{ label: t('nav.home', 'Home'), href: '/' }, { label: t('nav.platformSettings', 'Administration') }, { label: t('accessTemplatesPage.breadcrumb', 'Templates') }]}
       />
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-card border border-border p-5 rounded-2xl shadow-sm space-y-3">
-          <h3 className="font-extrabold text-sm text-primary">Standard Staff Access</h3>
-          <p className="text-xs text-muted-foreground font-semibold">Standard settings for front desk staff. Grants view-only rights to tenants and properties.</p>
-          <span className="inline-block px-2 py-0.5 bg-secondary text-[10px] font-extrabold rounded">6 Modules Enabled</span>
+          <h3 className="font-extrabold text-sm text-primary">{t('accessTemplatesPage.staffTitle', 'Standard Staff Access')}</h3>
+          <p className="text-xs text-muted-foreground font-semibold">{t('accessTemplatesPage.staffDesc', 'Standard settings for front desk staff. Grants view-only rights to tenants and properties.')}</p>
+          <span className="inline-block px-2 py-0.5 bg-secondary text-[10px] font-extrabold rounded">6 {t('accessTemplatesPage.modulesEnabled', 'Modules Enabled')}</span>
         </div>
         <div className="bg-card border border-border p-5 rounded-2xl shadow-sm space-y-3">
-          <h3 className="font-extrabold text-sm text-primary">Full Financial Access</h3>
-          <p className="text-xs text-muted-foreground font-semibold">Tailored for external accountants. Enables comprehensive access to accounting and payments.</p>
-          <span className="inline-block px-2 py-0.5 bg-secondary text-[10px] font-extrabold rounded">3 Modules Enabled</span>
+          <h3 className="font-extrabold text-sm text-primary">{t('accessTemplatesPage.financialTitle', 'Full Financial Access')}</h3>
+          <p className="text-xs text-muted-foreground font-semibold">{t('accessTemplatesPage.financialDesc', 'Tailored for external accountants. Enables comprehensive access to accounting and payments.')}</p>
+          <span className="inline-block px-2 py-0.5 bg-secondary text-[10px] font-extrabold rounded">3 {t('accessTemplatesPage.modulesEnabled', 'Modules Enabled')}</span>
         </div>
         <div className="bg-card border border-border p-5 rounded-2xl shadow-sm space-y-3">
-          <h3 className="font-extrabold text-sm text-primary">Maintenance Vendor Access</h3>
-          <p className="text-xs text-muted-foreground font-semibold">Minimal access scope. Grants technicians rights to view and update work orders only.</p>
-          <span className="inline-block px-2 py-0.5 bg-secondary text-[10px] font-extrabold rounded">1 Module Enabled</span>
+          <h3 className="font-extrabold text-sm text-primary">{t('accessTemplatesPage.vendorTitle', 'Maintenance Vendor Access')}</h3>
+          <p className="text-xs text-muted-foreground font-semibold">{t('accessTemplatesPage.vendorDesc', 'Minimal access scope. Grants technicians rights to view and update work orders only.')}</p>
+          <span className="inline-block px-2 py-0.5 bg-secondary text-[10px] font-extrabold rounded">1 {t('accessTemplatesPage.moduleEnabled', 'Module Enabled')}</span>
         </div>
       </div>
     </div>
@@ -1934,6 +1936,7 @@ const settingsRoute = createRoute({
 // 1. COMPANIES PAGE
 const CompaniesPage: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [companies, setCompanies] = React.useState<any[]>(() => {
     const stored = localStorage.getItem('companies');
     if (stored) return JSON.parse(stored);
@@ -1955,11 +1958,11 @@ const CompaniesPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Companies Directory"
-        description="Manage the SaaS client companies, account configuration, and resource usage."
-        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Companies' }]}
+        title={t('companiesPage.title')}
+        description={t('companiesPage.desc')}
+        breadcrumbs={[{ label: t('companiesPage.home'), href: '/' }, { label: t('companiesPage.companies') }]}
         action={{
-          label: 'Create Company',
+          label: t('companiesPage.createCompany'),
           onClick: () => navigate({ to: '/companies/new' }),
           icon: <Plus className="w-4 h-4" />
         }}
@@ -1968,21 +1971,21 @@ const CompaniesPage: React.FC = () => {
         <div className="p-4 border-b flex justify-between items-center bg-card/65 backdrop-blur">
           <div className="relative max-w-sm w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <input placeholder="Search companies..." className="pl-9 pr-4 py-2 w-full text-xs font-semibold rounded-lg bg-secondary border focus:outline-none focus:ring-1 focus:ring-primary" />
+            <input placeholder={t('companiesPage.searchPlaceholder')} className="pl-9 pr-4 py-2 w-full text-xs font-semibold rounded-lg bg-secondary border focus:outline-none focus:ring-1 focus:ring-primary" />
           </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-muted/50 border-b text-muted-foreground font-bold uppercase tracking-wider">
-                <th className="p-4">Company Details</th>
-                <th className="p-4">Code</th>
-                <th className="p-4">Contact</th>
-                <th className="p-4">Plan & Cycle</th>
-                <th className="p-4">Storage</th>
-                <th className="p-4">Status</th>
-                <th className="p-4">Created Date</th>
-                <th className="p-4 text-right">Actions</th>
+                <th className="p-4">{t('companiesPage.companyDetails')}</th>
+                <th className="p-4">{t('companiesPage.code')}</th>
+                <th className="p-4">{t('companiesPage.contact')}</th>
+                <th className="p-4">{t('companiesPage.planAndCycle')}</th>
+                <th className="p-4">{t('companiesPage.storage')}</th>
+                <th className="p-4">{t('companiesPage.status')}</th>
+                <th className="p-4">{t('companiesPage.createdDate')}</th>
+                <th className="p-4 text-right">{t('companiesPage.actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y font-medium text-foreground">
@@ -1999,7 +2002,7 @@ const CompaniesPage: React.FC = () => {
                   </td>
                   <td className="p-4">
                     <StatusBadge status={c.plan} />
-                    <div className="text-[10px] text-muted-foreground font-semibold mt-1">{c.cycle} Billing</div>
+                    <div className="text-[10px] text-muted-foreground font-semibold mt-1">{c.cycle} {t('companiesPage.billing')}</div>
                   </td>
                   <td className="p-4 font-bold">{c.storage}</td>
                   <td className="p-4">
@@ -2027,6 +2030,7 @@ const CompaniesPage: React.FC = () => {
 // 2. CREATE COMPANY FORM
 const NewCompanyPage: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [success, setSuccess] = React.useState(false);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -2107,47 +2111,47 @@ const NewCompanyPage: React.FC = () => {
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <PageHeader
-        title="Create New Company"
-        description="Register a new subscriber tenant onto the SaaS platform."
-        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Companies', href: '/companies' }, { label: 'New' }]}
+        title={t('newCompanyPage.title')}
+        description={t('newCompanyPage.desc')}
+        breadcrumbs={[{ label: t('newCompanyPage.home'), href: '/' }, { label: t('newCompanyPage.companies'), href: '/companies' }, { label: t('newCompanyPage.new') }]}
       />
       {success && (
         <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 dark:text-emerald-400 p-4 rounded-xl text-xs font-semibold text-center">
-          Company profile created successfully! Redirecting...
+          {t('newCompanyPage.successMsg')}
         </div>
       )}
       <form onSubmit={handleSubmit} className="bg-card border rounded-xl p-6 shadow-sm space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1">
-            <label className="text-[10px] font-extrabold uppercase text-muted-foreground">Company Name</label>
+            <label className="text-[10px] font-extrabold uppercase text-muted-foreground">{t('newCompanyPage.companyName')}</label>
             <input name="companyName" required placeholder="Apex Property Management" className="w-full text-xs font-semibold p-2.5 rounded-lg border bg-secondary focus:ring-1 focus:ring-primary focus:outline-none" />
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] font-extrabold uppercase text-muted-foreground">Business Name (Legal)</label>
+            <label className="text-[10px] font-extrabold uppercase text-muted-foreground">{t('newCompanyPage.businessName')}</label>
             <input name="businessName" placeholder="Apex PM LLC" className="w-full text-xs font-semibold p-2.5 rounded-lg border bg-secondary focus:ring-1 focus:ring-primary focus:outline-none" />
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] font-extrabold uppercase text-muted-foreground">Company Code</label>
+            <label className="text-[10px] font-extrabold uppercase text-muted-foreground">{t('newCompanyPage.companyCode')}</label>
             <input name="companyCode" required maxLength={5} placeholder="APEX" className="w-full text-xs font-semibold p-2.5 rounded-lg border bg-secondary uppercase focus:ring-1 focus:ring-primary focus:outline-none" />
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] font-extrabold uppercase text-muted-foreground">Primary Contact Person</label>
+            <label className="text-[10px] font-extrabold uppercase text-muted-foreground">{t('newCompanyPage.contactPerson')}</label>
             <input name="contactPerson" required placeholder="Sarah Davis" className="w-full text-xs font-semibold p-2.5 rounded-lg border bg-secondary focus:ring-1 focus:ring-primary focus:outline-none" />
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] font-extrabold uppercase text-muted-foreground">Email Address</label>
+            <label className="text-[10px] font-extrabold uppercase text-muted-foreground">{t('newCompanyPage.emailAddress')}</label>
             <input name="email" required type="email" placeholder="sarah@apexpm.com" className="w-full text-xs font-semibold p-2.5 rounded-lg border bg-secondary focus:ring-1 focus:ring-primary focus:outline-none" />
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] font-extrabold uppercase text-muted-foreground">Phone Number</label>
+            <label className="text-[10px] font-extrabold uppercase text-muted-foreground">{t('newCompanyPage.phoneNumber')}</label>
             <input name="phone" placeholder="555-0199" className="w-full text-xs font-semibold p-2.5 rounded-lg border bg-secondary focus:ring-1 focus:ring-primary focus:outline-none" />
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] font-extrabold uppercase text-muted-foreground">Website</label>
+            <label className="text-[10px] font-extrabold uppercase text-muted-foreground">{t('newCompanyPage.website')}</label>
             <input name="website" placeholder="www.apexpm.com" className="w-full text-xs font-semibold p-2.5 rounded-lg border bg-secondary focus:ring-1 focus:ring-primary focus:outline-none" />
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] font-extrabold uppercase text-muted-foreground">Subscription Plan</label>
+            <label className="text-[10px] font-extrabold uppercase text-muted-foreground">{t('newCompanyPage.subscriptionPlan')}</label>
             <select name="plan" className="w-full text-xs font-semibold p-2.5 rounded-lg border bg-secondary focus:ring-1 focus:ring-primary focus:outline-none">
               <option>Basic Plan</option>
               <option>Pro Plan</option>
@@ -2156,8 +2160,8 @@ const NewCompanyPage: React.FC = () => {
           </div>
         </div>
         <div className="border-t pt-4 flex justify-end space-x-2">
-          <Button type="button" variant="outline" onClick={() => navigate({ to: '/companies' })}>Cancel</Button>
-          <Button type="submit">Create Company</Button>
+          <Button type="button" variant="outline" onClick={() => navigate({ to: '/companies' })}>{t('newCompanyPage.cancel')}</Button>
+          <Button type="submit">{t('newCompanyPage.createCompany')}</Button>
         </div>
       </form>
     </div>
@@ -2166,63 +2170,64 @@ const NewCompanyPage: React.FC = () => {
 
 // 3. COMPANY DETAILS / METRICS & USAGE
 const CompanyDetailsPage: React.FC = () => {
+  const { t } = useTranslation();
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Company Profile Details"
-        description="Detailed review of registered companies, account subscription plan status, usage stats and limits."
-        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Companies', href: '/companies' }, { label: 'Details' }]}
+        title={t('companyViews.profileTitle')}
+        description={t('companyViews.profileDesc')}
+        breadcrumbs={[{ label: t('nav.home'), href: '/' }, { label: t('nav.companies'), href: '/companies' }, { label: t('companyViews.detailsBreadcrumb') }]}
       />
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="bg-card border rounded-xl p-6 shadow-sm space-y-4 lg:col-span-2">
-          <h2 className="text-sm font-extrabold uppercase tracking-wide border-b pb-2">Operational Information</h2>
+          <h2 className="text-sm font-extrabold uppercase tracking-wide border-b pb-2">{t('companyViews.opsInfo')}</h2>
           <div className="grid grid-cols-2 gap-4 text-xs">
             <div>
-              <span className="text-muted-foreground font-semibold">Company Name</span>
+              <span className="text-muted-foreground font-semibold">{t('companyViews.companyName')}</span>
               <p className="font-bold text-sm">Apex Property Management</p>
             </div>
             <div>
-              <span className="text-muted-foreground font-semibold">Legal Entity</span>
+              <span className="text-muted-foreground font-semibold">{t('companyViews.legalEntity')}</span>
               <p className="font-bold text-sm">Apex PM LLC</p>
             </div>
             <div>
-              <span className="text-muted-foreground font-semibold">Contact Email</span>
+              <span className="text-muted-foreground font-semibold">{t('companyViews.contactEmail')}</span>
               <p className="font-bold text-sm">sarah@apexpm.com</p>
             </div>
             <div>
-              <span className="text-muted-foreground font-semibold">Phone</span>
+              <span className="text-muted-foreground font-semibold">{t('companyViews.phone')}</span>
               <p className="font-bold text-sm">555-0199</p>
             </div>
             <div>
-              <span className="text-muted-foreground font-semibold">Website</span>
+              <span className="text-muted-foreground font-semibold">{t('companyViews.website')}</span>
               <p className="font-bold text-sm">apexpm.com</p>
             </div>
             <div>
-              <span className="text-muted-foreground font-semibold">Date Registered</span>
+              <span className="text-muted-foreground font-semibold">{t('companyViews.dateRegistered')}</span>
               <p className="font-bold text-sm font-mono">2026-01-15</p>
             </div>
           </div>
         </div>
         <div className="bg-card border rounded-xl p-6 shadow-sm space-y-4">
-          <h2 className="text-sm font-extrabold uppercase tracking-wide border-b pb-2">Subscription & Limits</h2>
+          <h2 className="text-sm font-extrabold uppercase tracking-wide border-b pb-2">{t('companyViews.subAndLimits')}</h2>
           <div className="space-y-3 text-xs">
             <div className="flex justify-between items-center">
-              <span className="text-muted-foreground font-semibold">Active Plan:</span>
+              <span className="text-muted-foreground font-semibold">{t('companyViews.activePlan')}</span>
               <StatusBadge status="Pro Plan" />
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-muted-foreground font-semibold">Billing Period:</span>
-              <span className="font-bold">Monthly</span>
+              <span className="text-muted-foreground font-semibold">{t('companyViews.billingPeriod')}</span>
+              <span className="font-bold">{t('companyViews.monthly')}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-muted-foreground font-semibold">Storage Capacity:</span>
+              <span className="text-muted-foreground font-semibold">{t('companyViews.storageCapacity')}</span>
               <span className="font-bold">1.2 GB / 50 GB Used</span>
             </div>
             <div className="w-full bg-secondary h-2 rounded-full overflow-hidden">
               <div className="bg-primary h-full rounded-full" style={{ width: '2.4%' }} />
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-muted-foreground font-semibold">User Seats:</span>
+              <span className="text-muted-foreground font-semibold">{t('companyViews.userSeats')}</span>
               <span className="font-bold">8 / 25 Registered</span>
             </div>
           </div>
@@ -2234,6 +2239,7 @@ const CompanyDetailsPage: React.FC = () => {
 
 // 3a. COMPANY USERS LIST
 const CompanyUsersPage: React.FC = () => {
+  const { t } = useTranslation();
   const [companiesList] = React.useState<any[]>(() => {
     const stored = localStorage.getItem('companies');
     if (stored) return JSON.parse(stored);
@@ -2258,7 +2264,6 @@ const CompanyUsersPage: React.FC = () => {
     return initialUsers;
   });
 
-  // Filter out users belonging to companies that are Suspended
   const visibleUsers = allUsers.filter(u => {
     const comp = companiesList.find((c: any) => c.name === u.companyName);
     return !comp || comp.status === 'Active';
@@ -2267,21 +2272,21 @@ const CompanyUsersPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Company Registered Users"
-        description="Manage seat allocations, account configurations, and profiles for subscriber companies."
-        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Companies', href: '/companies' }, { label: 'Users' }]}
+        title={t('companyViews.usersTitle')}
+        description={t('companyViews.usersDesc')}
+        breadcrumbs={[{ label: t('nav.home'), href: '/' }, { label: t('nav.companies'), href: '/companies' }, { label: t('companyViews.usersBreadcrumb') }]}
       />
       <div className="bg-card border rounded-xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-muted/50 border-b text-muted-foreground font-bold uppercase tracking-wider">
-                <th className="p-4">User Name</th>
-                <th className="p-4">Email</th>
-                <th className="p-4">Associated Company</th>
-                <th className="p-4">Company Role</th>
-                <th className="p-4">Status</th>
-                <th className="p-4">Last Activity</th>
+                <th className="p-4">{t('companyViews.usersTable.userName')}</th>
+                <th className="p-4">{t('companyViews.usersTable.email')}</th>
+                <th className="p-4">{t('companyViews.usersTable.company')}</th>
+                <th className="p-4">{t('companyViews.usersTable.role')}</th>
+                <th className="p-4">{t('companyViews.usersTable.status')}</th>
+                <th className="p-4">{t('companyViews.usersTable.lastActivity')}</th>
               </tr>
             </thead>
             <tbody className="divide-y font-medium text-foreground">
@@ -2305,6 +2310,7 @@ const CompanyUsersPage: React.FC = () => {
 
 // 3b. COMPANY SUBSCRIPTION DETAILS
 const CompanySubscriptionPage: React.FC = () => {
+  const { t } = useTranslation();
   const invoices = [
     { id: 'INV-001', date: '2026-07-15', amount: 149, status: 'Paid' },
     { id: 'INV-002', date: '2026-06-15', amount: 149, status: 'Paid' },
@@ -2314,21 +2320,21 @@ const CompanySubscriptionPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Company Plan Subscription"
-        description="SaaS billing settings, plan parameters, invoices, and credit card updates."
-        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Companies', href: '/companies' }, { label: 'Subscription' }]}
+        title={t('companyViews.subTitle')}
+        description={t('companyViews.subDesc')}
+        breadcrumbs={[{ label: t('nav.home'), href: '/' }, { label: t('nav.companies'), href: '/companies' }, { label: t('companyViews.subBreadcrumb') }]}
       />
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="bg-card border rounded-xl p-6 shadow-sm space-y-4 lg:col-span-2">
-          <h2 className="text-sm font-extrabold uppercase tracking-wide border-b pb-2">Invoice Billing History</h2>
+          <h2 className="text-sm font-extrabold uppercase tracking-wide border-b pb-2">{t('companyViews.invoiceHistory')}</h2>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
                 <tr className="bg-muted/50 border-b text-muted-foreground font-bold uppercase tracking-wider">
-                  <th className="p-4">Invoice ID</th>
-                  <th className="p-4">Billing Date</th>
-                  <th className="p-4">Amount</th>
-                  <th className="p-4">Payment Status</th>
+                  <th className="p-4">{t('companyViews.subTable.invoiceId')}</th>
+                  <th className="p-4">{t('companyViews.subTable.billingDate')}</th>
+                  <th className="p-4">{t('companyViews.subTable.amount')}</th>
+                  <th className="p-4">{t('companyViews.subTable.paymentStatus')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y font-medium text-foreground">
@@ -2345,18 +2351,18 @@ const CompanySubscriptionPage: React.FC = () => {
           </div>
         </div>
         <div className="bg-card border rounded-xl p-6 shadow-sm space-y-4">
-          <h2 className="text-sm font-extrabold uppercase tracking-wide border-b pb-2">Active Plan Options</h2>
+          <h2 className="text-sm font-extrabold uppercase tracking-wide border-b pb-2">{t('companyViews.activePlanOptions')}</h2>
           <div className="space-y-3 text-xs">
             <div className="flex justify-between items-center">
-              <span className="text-muted-foreground font-semibold">Current Plan:</span>
+              <span className="text-muted-foreground font-semibold">{t('companyViews.currentPlan')}</span>
               <StatusBadge status="Pro Plan" />
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-muted-foreground font-semibold">Payment Method:</span>
+              <span className="text-muted-foreground font-semibold">{t('companyViews.paymentMethod')}</span>
               <span className="font-bold">Visa ending in 4242</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-muted-foreground font-semibold">Renewal Date:</span>
+              <span className="text-muted-foreground font-semibold">{t('companyViews.renewalDate')}</span>
               <span className="font-bold font-mono">2026-08-15</span>
             </div>
           </div>
@@ -2368,53 +2374,54 @@ const CompanySubscriptionPage: React.FC = () => {
 
 // 3c. COMPANY USAGE STATISTICS
 const CompanyUsagePage: React.FC = () => {
+  const { t } = useTranslation();
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Company Resource Usage"
-        description="Detailed resource consumption, database usage, units managed, and bandwidth statistics."
-        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Companies', href: '/companies' }, { label: 'Usage' }]}
+        title={t('companyViews.usageTitle')}
+        description={t('companyViews.usageDesc')}
+        breadcrumbs={[{ label: t('nav.home'), href: '/' }, { label: t('nav.companies'), href: '/companies' }, { label: t('companyViews.usageBreadcrumb') }]}
       />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-card border rounded-xl p-6 shadow-sm space-y-3">
           <div className="flex justify-between text-xs font-bold">
-            <span>Disk Storage Usage</span>
+            <span>{t('companyViews.diskStorageUsage')}</span>
             <span className="text-primary">1.2 GB / 50 GB (2.4%)</span>
           </div>
           <div className="w-full bg-secondary h-2.5 rounded-full overflow-hidden">
             <div className="bg-primary h-full rounded-full" style={{ width: '2.4%' }} />
           </div>
-          <p className="text-[10px] text-muted-foreground font-medium">Includes lease documents, property photos, and invoice PDFs.</p>
+          <p className="text-[10px] text-muted-foreground font-medium">{t('companyViews.diskStorageDesc')}</p>
         </div>
         <div className="bg-card border rounded-xl p-6 shadow-sm space-y-3">
           <div className="flex justify-between text-xs font-bold">
-            <span>Total Managed Units</span>
+            <span>{t('companyViews.totalManagedUnits')}</span>
             <span className="text-emerald-500">42 / 200 Units (21%)</span>
           </div>
           <div className="w-full bg-secondary h-2.5 rounded-full overflow-hidden">
             <div className="bg-emerald-500 h-full rounded-full" style={{ width: '21%' }} />
           </div>
-          <p className="text-[10px] text-muted-foreground font-medium">Number of active property units currently managed inside manager dashboard.</p>
+          <p className="text-[10px] text-muted-foreground font-medium">{t('companyViews.totalManagedUnitsDesc')}</p>
         </div>
         <div className="bg-card border rounded-xl p-6 shadow-sm space-y-3">
           <div className="flex justify-between text-xs font-bold">
-            <span>Monthly API Requests</span>
+            <span>{t('companyViews.monthlyApiRequests')}</span>
             <span className="text-purple-500">4,500 / 50,000 (9%)</span>
           </div>
           <div className="w-full bg-secondary h-2.5 rounded-full overflow-hidden">
             <div className="bg-purple-500 h-full rounded-full" style={{ width: '9%' }} />
           </div>
-          <p className="text-[10px] text-muted-foreground font-medium">Usage statistics for integrations, webhooks, and REST endpoints.</p>
+          <p className="text-[10px] text-muted-foreground font-medium">{t('companyViews.monthlyApiRequestsDesc')}</p>
         </div>
         <div className="bg-card border rounded-xl p-6 shadow-sm space-y-3">
           <div className="flex justify-between text-xs font-bold">
-            <span>Bandwidth Consumption</span>
+            <span>{t('companyViews.bandwidthConsumption')}</span>
             <span className="text-amber-500">18.4 GB / 500 GB (3.6%)</span>
           </div>
           <div className="w-full bg-secondary h-2.5 rounded-full overflow-hidden">
             <div className="bg-amber-500 h-full rounded-full" style={{ width: '3.6%' }} />
           </div>
-          <p className="text-[10px] text-muted-foreground font-medium">Data transfer statistics for upload and download operations.</p>
+          <p className="text-[10px] text-muted-foreground font-medium">{t('companyViews.bandwidthConsumptionDesc')}</p>
         </div>
       </div>
     </div>
@@ -2423,6 +2430,7 @@ const CompanyUsagePage: React.FC = () => {
 
 // 4a. PRICING PLANS MANAGER (CREATE & LIST PLANS)
 const SubscriptionPlansPage: React.FC = () => {
+  const { t } = useTranslation();
   const [plans, setPlans] = React.useState([
     { id: '1', name: 'Basic Plan', price: 79, cycle: 'Monthly', units: 'Up to 50 Units', storage: '10 GB', features: 'Email support, standard reports', status: 'Active' },
     { id: '2', name: 'Pro Plan', price: 149, cycle: 'Monthly', units: 'Up to 250 Units', storage: '50 GB', features: 'Priority support, trust accounts, custom branding', status: 'Active' },
@@ -2488,11 +2496,11 @@ const SubscriptionPlansPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Subscription Pricing Plans"
-        description="Configure subscription plans, manage pricing structures, and create new offers for subscriber companies."
-        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Subscriptions' }, { label: 'Plans' }]}
+        title={t('subscriptionsPage.plansTitle')}
+        description={t('subscriptionsPage.plansDesc')}
+        breadcrumbs={[{ label: t('nav.home'), href: '/' }, { label: t('nav.subscriptions') }, { label: t('subscriptionsPage.plansBreadcrumb') }]}
         action={{
-          label: 'Create Pricing Plan',
+          label: t('subscriptionsPage.createPlanBtn'),
           onClick: () => {
             handleCancel();
             setShowCreate(true);
@@ -2504,11 +2512,11 @@ const SubscriptionPlansPage: React.FC = () => {
       {showCreate && (
         <form onSubmit={handleSubmit} className="bg-card border rounded-xl p-6 shadow-sm space-y-4 max-w-2xl">
           <h2 className="text-sm font-extrabold uppercase tracking-wide border-b pb-2">
-            {editId ? "Edit Subscription Plan" : "Create New Subscription Plan"}
+            {editId ? t('subscriptionsPage.editPlanTitle') : t('subscriptionsPage.newPlanTitle')}
           </h2>
           <div className="grid grid-cols-2 gap-4 text-xs">
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-muted-foreground uppercase">Plan Name</label>
+              <label className="text-[10px] font-bold text-muted-foreground uppercase">{t('subscriptionsPage.planName')}</label>
               <input
                 required
                 value={newPlan.name}
@@ -2518,7 +2526,7 @@ const SubscriptionPlansPage: React.FC = () => {
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-muted-foreground uppercase">Monthly Price ($)</label>
+              <label className="text-[10px] font-bold text-muted-foreground uppercase">{t('subscriptionsPage.monthlyPrice')}</label>
               <input
                 required
                 type="number"
@@ -2529,18 +2537,18 @@ const SubscriptionPlansPage: React.FC = () => {
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-muted-foreground uppercase">Billing Cycle</label>
+              <label className="text-[10px] font-bold text-muted-foreground uppercase">{t('subscriptionsPage.billingCycle')}</label>
               <select
                 value={newPlan.cycle}
                 onChange={e => setNewPlan(prev => ({ ...prev, cycle: e.target.value }))}
                 className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold focus:outline-none"
               >
-                <option>Monthly</option>
-                <option>Annual</option>
+                <option value="Monthly">{t('status.Monthly')}</option>
+                <option value="Annual">{t('status.Annual')}</option>
               </select>
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-muted-foreground uppercase">Max Units Limit</label>
+              <label className="text-[10px] font-bold text-muted-foreground uppercase">{t('subscriptionsPage.maxUnits')}</label>
               <input
                 value={newPlan.units}
                 onChange={e => setNewPlan(prev => ({ ...prev, units: e.target.value }))}
@@ -2549,7 +2557,7 @@ const SubscriptionPlansPage: React.FC = () => {
               />
             </div>
             <div className="space-y-1 text-xs col-span-2">
-              <label className="text-[10px] font-bold text-muted-foreground uppercase">Storage Capacity</label>
+              <label className="text-[10px] font-bold text-muted-foreground uppercase">{t('subscriptionsPage.storageCap')}</label>
               <input
                 value={newPlan.storage}
                 onChange={e => setNewPlan(prev => ({ ...prev, storage: e.target.value }))}
@@ -2558,7 +2566,7 @@ const SubscriptionPlansPage: React.FC = () => {
               />
             </div>
             <div className="space-y-1 text-xs col-span-2">
-              <label className="text-[10px] font-bold text-muted-foreground uppercase">Included Features & Details</label>
+              <label className="text-[10px] font-bold text-muted-foreground uppercase">{t('subscriptionsPage.includedFeatures')}</label>
               <textarea
                 value={newPlan.features}
                 onChange={e => setNewPlan(prev => ({ ...prev, features: e.target.value }))}
@@ -2569,9 +2577,9 @@ const SubscriptionPlansPage: React.FC = () => {
             </div>
           </div>
           <div className="border-t pt-4 flex justify-end space-x-2">
-            <Button type="button" variant="outline" onClick={handleCancel}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={handleCancel}>{t('subscriptionsPage.cancel')}</Button>
             <Button type="submit">
-              {editId ? "Update Pricing Plan" : "Publish Pricing Plan"}
+              {editId ? t('subscriptionsPage.updatePlanBtn') : t('subscriptionsPage.publishPlanBtn')}
             </Button>
           </div>
         </form>
@@ -2583,32 +2591,32 @@ const SubscriptionPlansPage: React.FC = () => {
             <div className="space-y-4">
               <div className="flex justify-between items-start">
                 <div>
-                  <h3 className="font-extrabold text-lg text-foreground">{p.name}</h3>
-                  <p className="text-[10px] text-muted-foreground font-semibold uppercase mt-0.5">{p.cycle} Billing</p>
+                  <h3 className="font-extrabold text-lg text-foreground">{t(`status.${p.name}`)}</h3>
+                  <p className="text-[10px] text-muted-foreground font-semibold uppercase mt-0.5">{t(`status.${p.cycle}`)}</p>
                 </div>
                 <StatusBadge status={p.status} />
               </div>
               <div className="flex items-baseline text-foreground">
                 <span className="text-3xl font-extrabold tracking-tight">${p.price}</span>
-                <span className="ml-1 text-xs text-muted-foreground font-semibold">/month</span>
+                <span className="ml-1 text-xs text-muted-foreground font-semibold">{t('subscriptionsPage.perMonth')}</span>
               </div>
               <div className="space-y-2 text-xs font-medium border-t pt-4">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Properties Limit:</span>
+                  <span className="text-muted-foreground">{t('subscriptionsPage.propertiesLimit')}</span>
                   <span className="font-bold">{p.units}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Disk Storage:</span>
+                  <span className="text-muted-foreground">{t('subscriptionsPage.diskStorage')}</span>
                   <span className="font-bold">{p.storage}</span>
                 </div>
                 <div className="pt-2">
-                  <span className="text-muted-foreground text-[10px] uppercase font-bold tracking-wide">Included Features:</span>
+                  <span className="text-muted-foreground text-[10px] uppercase font-bold tracking-wide">{t('subscriptionsPage.featuresIncluded')}</span>
                   <p className="font-bold text-primary mt-1 text-[11px] leading-relaxed">{p.features}</p>
                 </div>
               </div>
             </div>
             <div className="pt-6 border-t mt-6">
-              <Button variant="outline" onClick={() => handleEditClick(p)} className="w-full font-bold text-xs">Edit Plan Details</Button>
+              <Button variant="outline" onClick={() => handleEditClick(p)} className="w-full font-bold text-xs">{t('subscriptionsPage.editPlanDetails')}</Button>
             </div>
           </div>
         ))}
@@ -2619,6 +2627,7 @@ const SubscriptionPlansPage: React.FC = () => {
 
 // 4b. ACTIVE SUBSCRIPTIONS LIST
 const ActiveSubscriptionsPage: React.FC = () => {
+  const { t } = useTranslation();
   const subs = [
     { id: '1', plan: 'Pro Plan', company: 'Apex Property Management', price: 149, cycle: 'Monthly', nextBill: '2026-08-15', status: 'Active', trialEnds: 'N/A', paymentStatus: 'Paid' },
     { id: '2', plan: 'Basic Plan', company: 'Horizon Living', price: 79, cycle: 'Annual', nextBill: '2027-03-22', status: 'Active', trialEnds: 'N/A', paymentStatus: 'Paid' },
@@ -2629,32 +2638,32 @@ const ActiveSubscriptionsPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Active Company Subscriptions"
-        description="Monitor active SaaS company subscribers, next billing details, and trial status."
-        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Subscriptions', href: '/subscriptions/plans' }, { label: 'Active' }]}
+        title={t('subscriptionsPage.activeTitle')}
+        description={t('subscriptionsPage.activeDesc')}
+        breadcrumbs={[{ label: t('nav.home'), href: '/' }, { label: t('nav.subscriptions'), href: '/subscriptions/plans' }, { label: t('subscriptionsPage.activeBreadcrumb') }]}
       />
       <div className="bg-card border rounded-xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-muted/50 border-b text-muted-foreground font-bold uppercase tracking-wider">
-                <th className="p-4">Plan Option</th>
-                <th className="p-4">Subscriber Company</th>
-                <th className="p-4">Monthly Price</th>
-                <th className="p-4">Billing Cycle</th>
-                <th className="p-4">Next Billing Date</th>
-                <th className="p-4">Status</th>
-                <th className="p-4">Trial Expiry</th>
-                <th className="p-4">Payment Status</th>
+                <th className="p-4">{t('subscriptionsPage.table.planOption')}</th>
+                <th className="p-4">{t('subscriptionsPage.table.subscriberCompany')}</th>
+                <th className="p-4">{t('subscriptionsPage.table.monthlyPrice')}</th>
+                <th className="p-4">{t('subscriptionsPage.table.billingCycle')}</th>
+                <th className="p-4">{t('subscriptionsPage.table.nextBillingDate')}</th>
+                <th className="p-4">{t('subscriptionsPage.table.status')}</th>
+                <th className="p-4">{t('subscriptionsPage.table.trialExpiry')}</th>
+                <th className="p-4">{t('subscriptionsPage.table.paymentStatus')}</th>
               </tr>
             </thead>
             <tbody className="divide-y font-medium text-foreground">
               {subs.map(s => (
                 <tr key={s.id} className="hover:bg-accent/40 transition">
-                  <td className="p-4 font-bold">{s.plan}</td>
+                  <td className="p-4 font-bold">{t(`status.${s.plan}`)}</td>
                   <td className="p-4 font-bold text-primary">{s.company}</td>
                   <td className="p-4">${s.price}</td>
-                  <td className="p-4">{s.cycle}</td>
+                  <td className="p-4">{t(`status.${s.cycle}`)}</td>
                   <td className="p-4 font-mono">{s.nextBill}</td>
                   <td className="p-4">
                     <StatusBadge status={s.status} />
@@ -2675,6 +2684,7 @@ const ActiveSubscriptionsPage: React.FC = () => {
 
 // 4c. SUBSCRIPTIONS INVOICES LIST
 const SubscriptionInvoicesPage: React.FC = () => {
+  const { t } = useTranslation();
   const invoices = [
     { id: 'INV-1020', company: 'Apex Property Management', plan: 'Pro Plan', amount: 149, date: '2026-07-15', status: 'Paid' },
     { id: 'INV-1019', company: 'Horizon Living', plan: 'Basic Plan', amount: 948, date: '2026-03-22', status: 'Paid' },
@@ -2684,21 +2694,21 @@ const SubscriptionInvoicesPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Billing Invoices Ledger"
-        description="Monitor system-wide invoices, client company receipts, and tax allocations."
-        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Subscriptions', href: '/subscriptions/plans' }, { label: 'Invoices' }]}
+        title={t('subscriptionsPage.invoicesTitle')}
+        description={t('subscriptionsPage.invoicesDesc')}
+        breadcrumbs={[{ label: t('nav.home'), href: '/' }, { label: t('nav.subscriptions'), href: '/subscriptions/plans' }, { label: t('subscriptionsPage.invoicesBreadcrumb') }]}
       />
       <div className="bg-card border rounded-xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-muted/50 border-b text-muted-foreground font-bold uppercase tracking-wider">
-                <th className="p-4">Invoice ID</th>
-                <th className="p-4">Company</th>
-                <th className="p-4">Plan Item</th>
-                <th className="p-4">Amount Paid</th>
-                <th className="p-4">Invoice Date</th>
-                <th className="p-4">Status</th>
+                <th className="p-4">{t('subscriptionsPage.invoicesTable.invoiceId')}</th>
+                <th className="p-4">{t('subscriptionsPage.invoicesTable.company')}</th>
+                <th className="p-4">{t('subscriptionsPage.invoicesTable.planItem')}</th>
+                <th className="p-4">{t('subscriptionsPage.invoicesTable.amountPaid')}</th>
+                <th className="p-4">{t('subscriptionsPage.invoicesTable.invoiceDate')}</th>
+                <th className="p-4">{t('subscriptionsPage.invoicesTable.status')}</th>
               </tr>
             </thead>
             <tbody className="divide-y font-medium text-foreground">
@@ -2706,7 +2716,7 @@ const SubscriptionInvoicesPage: React.FC = () => {
                 <tr key={inv.id} className="hover:bg-accent/40 transition">
                   <td className="p-4 font-mono font-bold text-primary">{inv.id}</td>
                   <td className="p-4 font-bold">{inv.company}</td>
-                  <td className="p-4 font-semibold">{inv.plan}</td>
+                  <td className="p-4 font-semibold">{t(`status.${inv.plan}`)}</td>
                   <td className="p-4 font-bold">${inv.amount}</td>
                   <td className="p-4 font-mono text-muted-foreground">{inv.date}</td>
                   <td className="p-4"><StatusBadge status={inv.status} /></td>
@@ -2722,6 +2732,7 @@ const SubscriptionInvoicesPage: React.FC = () => {
 
 // 4d. SUBSCRIPTIONS PAYMENTS LEDGER
 const SubscriptionPaymentsPage: React.FC = () => {
+  const { t } = useTranslation();
   const transactions = [
     { txId: 'ch_stripe_8820', company: 'Apex Property Management', method: 'Visa ending 4242', amount: 149, date: '2026-07-15 09:12', status: 'Success' },
     { txId: 'ch_stripe_4112', company: 'Summit Group', method: 'Mastercard ending 9900', amount: 499, date: '2026-07-10 14:02', status: 'Failed' }
@@ -2730,21 +2741,21 @@ const SubscriptionPaymentsPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Gateway Payments Ledger"
-        description="Verify Stripe credit card payouts, transaction statuses, and refund records."
-        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Subscriptions', href: '/subscriptions/plans' }, { label: 'Payments' }]}
+        title={t('subscriptionsPage.paymentsTitle')}
+        description={t('subscriptionsPage.paymentsDesc')}
+        breadcrumbs={[{ label: t('nav.home'), href: '/' }, { label: t('nav.subscriptions'), href: '/subscriptions/plans' }, { label: t('subscriptionsPage.paymentsBreadcrumb') }]}
       />
       <div className="bg-card border rounded-xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-muted/50 border-b text-muted-foreground font-bold uppercase tracking-wider">
-                <th className="p-4">Transaction ID</th>
-                <th className="p-4">Company</th>
-                <th className="p-4">Payment Method</th>
-                <th className="p-4">Amount</th>
-                <th className="p-4">Processed Date</th>
-                <th className="p-4">Status</th>
+                <th className="p-4">{t('subscriptionsPage.paymentsTable.transactionId')}</th>
+                <th className="p-4">{t('subscriptionsPage.paymentsTable.company')}</th>
+                <th className="p-4">{t('subscriptionsPage.paymentsTable.paymentMethod')}</th>
+                <th className="p-4">{t('subscriptionsPage.paymentsTable.amount')}</th>
+                <th className="p-4">{t('subscriptionsPage.paymentsTable.processedDate')}</th>
+                <th className="p-4">{t('subscriptionsPage.paymentsTable.status')}</th>
               </tr>
             </thead>
             <tbody className="divide-y font-medium text-foreground">
@@ -2768,6 +2779,7 @@ const SubscriptionPaymentsPage: React.FC = () => {
 
 // 4e. SUBSCRIPTIONS COUPONS MANAGER
 const SubscriptionCouponsPage: React.FC = () => {
+  const { t } = useTranslation();
   const [coupons, setCoupons] = React.useState([
     { code: 'SUMMER50', discount: '50%', duration: '3 Months', used: 12, maxUses: 100, status: 'Active' },
     { code: 'WELCOMPM', discount: '10%', duration: 'Forever', used: 24, maxUses: 500, status: 'Active' }
@@ -2797,11 +2809,11 @@ const SubscriptionCouponsPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Promotional Coupons"
-        description="Publish discount coupons, campaign codes, and subscription cost overrides."
-        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Subscriptions', href: '/subscriptions/plans' }, { label: 'Coupons' }]}
+        title={t('subscriptionsPage.couponsTitle')}
+        description={t('subscriptionsPage.couponsDesc')}
+        breadcrumbs={[{ label: t('nav.home'), href: '/' }, { label: t('nav.subscriptions'), href: '/subscriptions/plans' }, { label: t('subscriptionsPage.couponsBreadcrumb') }]}
         action={{
-          label: 'Create Coupon Code',
+          label: t('subscriptionsPage.createCouponBtn'),
           onClick: () => setShowForm(!showForm),
           icon: <Plus className="w-4 h-4" />
         }}
@@ -2809,10 +2821,10 @@ const SubscriptionCouponsPage: React.FC = () => {
 
       {showForm && (
         <form onSubmit={handleSubmit} className="bg-card border rounded-xl p-6 shadow-sm space-y-4 max-w-md">
-          <h2 className="text-sm font-extrabold uppercase tracking-wide border-b pb-2">Create New Coupon</h2>
+          <h2 className="text-sm font-extrabold uppercase tracking-wide border-b pb-2">{t('subscriptionsPage.newCouponTitle')}</h2>
           <div className="grid grid-cols-1 gap-3 text-xs">
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-muted-foreground uppercase">Promo Code</label>
+              <label className="text-[10px] font-bold text-muted-foreground uppercase">{t('subscriptionsPage.promoCode')}</label>
               <input
                 required
                 value={newCoupon.code}
@@ -2822,7 +2834,7 @@ const SubscriptionCouponsPage: React.FC = () => {
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-muted-foreground uppercase">Discount Value (e.g. 50% or $20)</label>
+              <label className="text-[10px] font-bold text-muted-foreground uppercase">{t('subscriptionsPage.discountValue')}</label>
               <input
                 required
                 value={newCoupon.discount}
@@ -2832,7 +2844,7 @@ const SubscriptionCouponsPage: React.FC = () => {
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-muted-foreground uppercase">Duration</label>
+              <label className="text-[10px] font-bold text-muted-foreground uppercase">{t('subscriptionsPage.duration')}</label>
               <select
                 value={newCoupon.duration}
                 onChange={e => setNewCoupon(prev => ({ ...prev, duration: e.target.value }))}
@@ -2845,7 +2857,7 @@ const SubscriptionCouponsPage: React.FC = () => {
               </select>
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-muted-foreground uppercase">Max Usage Limit</label>
+              <label className="text-[10px] font-bold text-muted-foreground uppercase">{t('subscriptionsPage.maxUsageLimit')}</label>
               <input
                 type="number"
                 value={newCoupon.maxUses}
@@ -2856,8 +2868,8 @@ const SubscriptionCouponsPage: React.FC = () => {
             </div>
           </div>
           <div className="border-t pt-4 flex justify-end space-x-2">
-            <Button type="button" variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
-            <Button type="submit">Activate Coupon</Button>
+            <Button type="button" variant="outline" onClick={() => setShowForm(false)}>{t('subscriptionsPage.cancel')}</Button>
+            <Button type="submit">{t('subscriptionsPage.activateCouponBtn')}</Button>
           </div>
         </form>
       )}
@@ -2867,12 +2879,12 @@ const SubscriptionCouponsPage: React.FC = () => {
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-muted/50 border-b text-muted-foreground font-bold uppercase tracking-wider">
-                <th className="p-4">Coupon Code</th>
-                <th className="p-4">Discount Amount</th>
-                <th className="p-4">Duration Term</th>
-                <th className="p-4">Redemption Count</th>
-                <th className="p-4">Max Uses</th>
-                <th className="p-4">Status</th>
+                <th className="p-4">{t('subscriptionsPage.couponsTable.couponCode')}</th>
+                <th className="p-4">{t('subscriptionsPage.couponsTable.discountAmount')}</th>
+                <th className="p-4">{t('subscriptionsPage.couponsTable.durationTerm')}</th>
+                <th className="p-4">{t('subscriptionsPage.couponsTable.redemptionCount')}</th>
+                <th className="p-4">{t('subscriptionsPage.couponsTable.maxUses')}</th>
+                <th className="p-4">{t('subscriptionsPage.couponsTable.status')}</th>
               </tr>
             </thead>
             <tbody className="divide-y font-medium text-foreground">
@@ -2896,6 +2908,7 @@ const SubscriptionCouponsPage: React.FC = () => {
 
 // 5. PLATFORM USERS PAGE
 const PlatformUsersPage: React.FC = () => {
+  const { t } = useTranslation();
   const [usersList, setUsersList] = React.useState([
     { name: 'John Doe', email: 'admin@apexpm.com', role: 'Super Admin', company: 'SaaS Platform Owner', status: 'Active', lastLogin: '2026-07-20 05:12' },
     { name: 'Sarah Davis', email: 'manager@apexpm.com', role: 'Property Manager', company: 'Apex Property Management', status: 'Active', lastLogin: '2026-07-20 04:33' },
@@ -2916,22 +2929,22 @@ const PlatformUsersPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Global Platform Users"
-        description="Oversee and manage global accounts, role configurations, and access details."
-        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Platform Users' }]}
+        title={t('platformUsersPage.title')}
+        description={t('platformUsersPage.desc')}
+        breadcrumbs={[{ label: t('platformUsersPage.home'), href: '/' }, { label: t('platformUsersPage.platformUsers') }]}
       />
       <div className="bg-card border rounded-xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-muted/50 border-b text-muted-foreground font-bold uppercase tracking-wider">
-                <th className="p-4">User Name</th>
-                <th className="p-4">Email</th>
-                <th className="p-4">Platform Role</th>
-                <th className="p-4">Assigned Company</th>
-                <th className="p-4">Account Status</th>
-                <th className="p-4">Last Login</th>
-                <th className="p-4 text-right">Actions</th>
+                <th className="p-4">{t('platformUsersPage.userName')}</th>
+                <th className="p-4">{t('platformUsersPage.email')}</th>
+                <th className="p-4">{t('platformUsersPage.platformRole')}</th>
+                <th className="p-4">{t('platformUsersPage.assignedCompany')}</th>
+                <th className="p-4">{t('platformUsersPage.accountStatus')}</th>
+                <th className="p-4">{t('platformUsersPage.lastLogin')}</th>
+                <th className="p-4 text-right">{t('platformUsersPage.actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y font-medium text-foreground">
@@ -2957,7 +2970,7 @@ const PlatformUsersPage: React.FC = () => {
                             : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border-emerald-500/20'
                         }`}
                       >
-                        {u.status === 'Active' ? 'Suspend' : 'Activate'}
+                        {u.status === 'Active' ? t('platformUsersPage.suspend') : t('platformUsersPage.activate')}
                       </button>
                     )}
                   </td>
@@ -2973,6 +2986,7 @@ const PlatformUsersPage: React.FC = () => {
 
 // 6. SUPPORT TICKETS PAGE
 const SupportTicketsPage: React.FC = () => {
+  const { t } = useTranslation();
   const tickets = [
     { id: 'TKT-102', company: 'Apex Property Management', topic: 'SMTP Email Configuration Issue', type: 'Ticket', priority: 'High', status: 'In Progress', date: '2026-07-20' },
     { id: 'FDB-882', company: 'Horizon Living', topic: 'Requested eSignature integration update', type: 'Feedback', priority: 'Medium', status: 'Waiting', date: '2026-07-19' },
@@ -2982,38 +2996,38 @@ const SupportTicketsPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Support & Feedback center"
-        description="Review tickets, custom requests, and feedback sent by platform managers."
-        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Support' }]}
+        title={t('supportViews.ticketsTitle')}
+        description={t('supportViews.ticketsDesc')}
+        breadcrumbs={[{ label: t('nav.home'), href: '/' }, { label: t('nav.support') }]}
       />
       <div className="bg-card border rounded-xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-muted/50 border-b text-muted-foreground font-bold uppercase tracking-wider">
-                <th className="p-4">ID</th>
-                <th className="p-4">Company</th>
-                <th className="p-4">Inquiry / Topic</th>
-                <th className="p-4">Type</th>
-                <th className="p-4">Priority</th>
-                <th className="p-4">Status</th>
-                <th className="p-4">Submitted</th>
+                <th className="p-4">{t('supportViews.ticketsTable.id')}</th>
+                <th className="p-4">{t('supportViews.ticketsTable.company')}</th>
+                <th className="p-4">{t('supportViews.ticketsTable.topic')}</th>
+                <th className="p-4">{t('supportViews.ticketsTable.type')}</th>
+                <th className="p-4">{t('supportViews.ticketsTable.priority')}</th>
+                <th className="p-4">{t('supportViews.ticketsTable.status')}</th>
+                <th className="p-4">{t('supportViews.ticketsTable.submitted')}</th>
               </tr>
             </thead>
             <tbody className="divide-y font-medium text-foreground">
-              {tickets.map(t => (
-                <tr key={t.id} className="hover:bg-accent/40 transition">
-                  <td className="p-4 font-mono font-bold">{t.id}</td>
-                  <td className="p-4 font-bold">{t.company}</td>
-                  <td className="p-4">{t.topic}</td>
-                  <td className="p-4">{t.type}</td>
+              {tickets.map(tkt => (
+                <tr key={tkt.id} className="hover:bg-accent/40 transition">
+                  <td className="p-4 font-mono font-bold">{tkt.id}</td>
+                  <td className="p-4 font-bold">{tkt.company}</td>
+                  <td className="p-4">{tkt.topic}</td>
+                  <td className="p-4"><StatusBadge status={tkt.type} /></td>
                   <td className="p-4">
-                    <StatusBadge status={t.priority} />
+                    <StatusBadge status={tkt.priority} />
                   </td>
                   <td className="p-4">
-                    <StatusBadge status={t.status} />
+                    <StatusBadge status={tkt.status} />
                   </td>
-                  <td className="p-4 text-muted-foreground font-mono">{t.date}</td>
+                  <td className="p-4 text-muted-foreground font-mono">{tkt.date}</td>
                 </tr>
               ))}
             </tbody>
@@ -3026,6 +3040,7 @@ const SupportTicketsPage: React.FC = () => {
 
 // 6a. SUPPORT FEEDBACK PAGE
 const SupportFeedbackPage: React.FC = () => {
+  const { t } = useTranslation();
   const feedbacks = [
     { id: 'FDB-001', company: 'Horizon Living', score: '5 Stars', text: 'Excellent dashboard layout! It is very easy to manage property leasing workflows now.', date: '2026-07-19' },
     { id: 'FDB-002', company: 'Summit Group', score: '4 Stars', text: 'Feature flags are extremely helpful for rolling out beta properties features.', date: '2026-07-17' },
@@ -3035,20 +3050,20 @@ const SupportFeedbackPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Platform Customer Feedback"
-        description="Review ratings, NPS scores, and system reviews sent in by property managers."
-        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Support', href: '/support/tickets' }, { label: 'Feedback' }]}
+        title={t('supportViews.feedbackTitle')}
+        description={t('supportViews.feedbackDesc')}
+        breadcrumbs={[{ label: t('nav.home'), href: '/' }, { label: t('nav.support'), href: '/support/tickets' }, { label: t('supportViews.feedbackBreadcrumb') }]}
       />
       <div className="bg-card border rounded-xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-muted/50 border-b text-muted-foreground font-bold uppercase tracking-wider">
-                <th className="p-4">Feedback ID</th>
-                <th className="p-4">Company</th>
-                <th className="p-4">Satisfaction Score</th>
-                <th className="p-4">Customer Review Comments</th>
-                <th className="p-4">Submitted Date</th>
+                <th className="p-4">{t('supportViews.feedbackTable.feedbackId')}</th>
+                <th className="p-4">{t('supportViews.feedbackTable.company')}</th>
+                <th className="p-4">{t('supportViews.feedbackTable.score')}</th>
+                <th className="p-4">{t('supportViews.feedbackTable.comments')}</th>
+                <th className="p-4">{t('supportViews.feedbackTable.submittedDate')}</th>
               </tr>
             </thead>
             <tbody className="divide-y font-medium text-foreground">
@@ -3071,6 +3086,7 @@ const SupportFeedbackPage: React.FC = () => {
 
 // 6b. PUBLIC CONTACT REQUESTS PAGE
 const SupportContactPage: React.FC = () => {
+  const { t } = useTranslation();
   const requests = [
     { name: 'John Peterson', company: 'Peterson Realty', email: 'john@peterson.com', phone: '555-9088', message: 'Looking for a custom enterprise tier package with 1,000 units.', date: '2026-07-20' },
     { name: 'Alice Watson', company: 'Watson & Co', email: 'alice@watson.com', phone: '555-1122', message: 'Requesting a demo call to review trust accounting capabilities next week.', date: '2026-07-18' }
@@ -3079,21 +3095,21 @@ const SupportContactPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Public Website Contact Requests"
-        description="Oversee incoming sales inquiries, trial requests, and contact messages."
-        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Support', href: '/support/tickets' }, { label: 'Contact Requests' }]}
+        title={t('supportViews.contactTitle')}
+        description={t('supportViews.contactDesc')}
+        breadcrumbs={[{ label: t('nav.home'), href: '/' }, { label: t('nav.support'), href: '/support/tickets' }, { label: t('supportViews.contactBreadcrumb') }]}
       />
       <div className="bg-card border rounded-xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-muted/50 border-b text-muted-foreground font-bold uppercase tracking-wider">
-                <th className="p-4">Contact Name</th>
-                <th className="p-4">Business / Company</th>
-                <th className="p-4">Email Address</th>
-                <th className="p-4">Phone Number</th>
-                <th className="p-4">Sales Message Inquiry</th>
-                <th className="p-4">Received Date</th>
+                <th className="p-4">{t('supportViews.contactTable.name')}</th>
+                <th className="p-4">{t('supportViews.contactTable.company')}</th>
+                <th className="p-4">{t('supportViews.contactTable.email')}</th>
+                <th className="p-4">{t('supportViews.contactTable.phone')}</th>
+                <th className="p-4">{t('supportViews.contactTable.inquiry')}</th>
+                <th className="p-4">{t('supportViews.contactTable.date')}</th>
               </tr>
             </thead>
             <tbody className="divide-y font-medium text-foreground">
@@ -3117,26 +3133,27 @@ const SupportContactPage: React.FC = () => {
 
 // 7a. PLATFORM SETTINGS GENERAL
 const PlatformSettingsGeneralView: React.FC = () => {
+  const { t } = useTranslation();
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <PageHeader
-        title="General Platform Config"
-        description="Modify global SaaS metadata parameters, timezone default settings, and system-wide options."
-        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Platform Settings' }, { label: 'General' }]}
+        title={t('platformSettingsPage.title')}
+        description={t('platformSettingsPage.desc')}
+        breadcrumbs={[{ label: t('platformSettingsPage.home'), href: '/' }, { label: t('platformSettingsPage.platformSettings') }, { label: t('platformSettingsPage.general') }]}
       />
       <div className="bg-card border rounded-xl p-6 shadow-sm space-y-6">
-        <h2 className="text-sm font-extrabold uppercase tracking-wide border-b pb-2">Global SaaS Properties</h2>
+        <h2 className="text-sm font-extrabold uppercase tracking-wide border-b pb-2">{t('platformSettingsPage.globalProperties')}</h2>
         <div className="grid grid-cols-2 gap-4 text-xs">
           <div className="space-y-1">
-            <label className="text-[10px] font-bold text-muted-foreground uppercase">Platform System Name</label>
+            <label className="text-[10px] font-bold text-muted-foreground uppercase">{t('platformSettingsPage.systemName')}</label>
             <input defaultValue="Apex SaaS Platform" className="w-full p-2 rounded border bg-secondary text-xs font-semibold" />
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] font-bold text-muted-foreground uppercase">System Support Email</label>
+            <label className="text-[10px] font-bold text-muted-foreground uppercase">{t('platformSettingsPage.supportEmail')}</label>
             <input defaultValue="support@apexpm.com" className="w-full p-2 rounded border bg-secondary text-xs font-semibold" />
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] font-bold text-muted-foreground uppercase">Default System Currency</label>
+            <label className="text-[10px] font-bold text-muted-foreground uppercase">{t('platformSettingsPage.defaultCurrency')}</label>
             <select className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold focus:outline-none">
               <option>USD ($)</option>
               <option>EUR (€)</option>
@@ -3144,7 +3161,7 @@ const PlatformSettingsGeneralView: React.FC = () => {
             </select>
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] font-bold text-muted-foreground uppercase">SaaS App Timezone</label>
+            <label className="text-[10px] font-bold text-muted-foreground uppercase">{t('platformSettingsPage.appTimezone')}</label>
             <select className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold focus:outline-none">
               <option>UTC (Coordinated Universal Time)</option>
               <option>EST (Eastern Standard Time)</option>
@@ -3155,9 +3172,9 @@ const PlatformSettingsGeneralView: React.FC = () => {
         <div className="border-t pt-4 flex justify-between items-center">
           <div className="flex items-center space-x-2 text-xs">
             <input type="checkbox" className="rounded border-border text-primary focus:ring-primary" />
-            <span className="font-bold text-rose-500">Enable Maintenance Mode (Restricts Tenant/Owner Portals)</span>
+            <span className="font-bold text-rose-500">{t('platformSettingsPage.maintenanceMode')}</span>
           </div>
-          <Button className="font-bold bg-primary text-white hover:bg-primary/95">Save Settings</Button>
+          <Button className="font-bold bg-primary text-white hover:bg-primary/95">{t('platformSettingsPage.saveSettings')}</Button>
         </div>
       </div>
     </div>
@@ -3166,35 +3183,40 @@ const PlatformSettingsGeneralView: React.FC = () => {
 
 // 7b. PLATFORM SETTINGS EMAIL
 const PlatformSettingsEmailView: React.FC = () => {
+  const { t } = useTranslation();
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <PageHeader
-        title="Email Server Settings"
-        description="Configure SMTP delivery endpoints, credentials, secure TLS/SSL options, and sandbox email triggers."
-        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Platform Settings' }, { label: 'Email' }]}
+        title={t('platformSettings.email.title')}
+        description={t('platformSettings.email.description')}
+        breadcrumbs={[
+          { label: t('nav.home'), href: '/' },
+          { label: t('nav.platformSettings') },
+          { label: t('platformSettings.email.breadcrumb') }
+        ]}
       />
       <div className="bg-card border rounded-xl p-6 shadow-sm space-y-6">
-        <h2 className="text-sm font-extrabold uppercase tracking-wide border-b pb-2">SMTP Mail Server Config</h2>
+        <h2 className="text-sm font-extrabold uppercase tracking-wide border-b pb-2">{t('platformSettings.email.section')}</h2>
         <div className="grid grid-cols-2 gap-4 text-xs">
           <div className="space-y-1">
-            <label className="text-[10px] font-bold text-muted-foreground uppercase">SMTP Server Host</label>
+            <label className="text-[10px] font-bold text-muted-foreground uppercase">{t('platformSettings.email.host')}</label>
             <input defaultValue="smtp.sendgrid.net" className="w-full p-2 rounded border bg-secondary text-xs font-semibold" />
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] font-bold text-muted-foreground uppercase">SMTP Port</label>
+            <label className="text-[10px] font-bold text-muted-foreground uppercase">{t('platformSettings.email.port')}</label>
             <input defaultValue="587" className="w-full p-2 rounded border bg-secondary text-xs font-semibold" />
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] font-bold text-muted-foreground uppercase">SMTP Username</label>
+            <label className="text-[10px] font-bold text-muted-foreground uppercase">{t('platformSettings.email.username')}</label>
             <input defaultValue="apikey" className="w-full p-2 rounded border bg-secondary text-xs font-semibold" />
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] font-bold text-muted-foreground uppercase">SMTP Secure Password</label>
+            <label className="text-[10px] font-bold text-muted-foreground uppercase">{t('platformSettings.email.password')}</label>
             <input type="password" placeholder="••••••••••••••••" className="w-full p-2 rounded border bg-secondary text-xs font-semibold" />
           </div>
         </div>
         <div className="border-t pt-4 flex justify-end">
-          <Button className="font-bold bg-primary text-white hover:bg-primary/95">Save Email Config</Button>
+          <Button className="font-bold bg-primary text-white hover:bg-primary/95">{t('platformSettings.email.saveBtn')}</Button>
         </div>
       </div>
     </div>
@@ -3203,27 +3225,32 @@ const PlatformSettingsEmailView: React.FC = () => {
 
 // 7c. PLATFORM SETTINGS STORAGE
 const PlatformSettingsStorageView: React.FC = () => {
+  const { t } = useTranslation();
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <PageHeader
-        title="Cloud Storage Providers"
-        description="Integrate Amazon S3 or Google Cloud storage bucket services to house tenant lease paperwork."
-        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Platform Settings' }, { label: 'Storage' }]}
+        title={t('platformSettings.storage.title')}
+        description={t('platformSettings.storage.description')}
+        breadcrumbs={[
+          { label: t('nav.home'), href: '/' },
+          { label: t('nav.platformSettings') },
+          { label: t('platformSettings.storage.breadcrumb') }
+        ]}
       />
       <div className="bg-card border rounded-xl p-6 shadow-sm space-y-6">
-        <h2 className="text-sm font-extrabold uppercase tracking-wide border-b pb-2">AWS S3 Assets Configuration</h2>
+        <h2 className="text-sm font-extrabold uppercase tracking-wide border-b pb-2">{t('platformSettings.storage.section')}</h2>
         <div className="grid grid-cols-2 gap-4 text-xs">
           <div className="space-y-1">
-            <label className="text-[10px] font-bold text-muted-foreground uppercase">S3 Default Region</label>
+            <label className="text-[10px] font-bold text-muted-foreground uppercase">{t('platformSettings.storage.region')}</label>
             <input defaultValue="us-east-1" className="w-full p-2 rounded border bg-secondary text-xs font-semibold" />
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] font-bold text-muted-foreground uppercase">AWS S3 Bucket Name</label>
+            <label className="text-[10px] font-bold text-muted-foreground uppercase">{t('platformSettings.storage.bucket')}</label>
             <input defaultValue="doorloop-saas-production-storage" className="w-full p-2 rounded border bg-secondary text-xs font-semibold" />
           </div>
         </div>
         <div className="border-t pt-4 flex justify-end">
-          <Button className="font-bold bg-primary text-white hover:bg-primary/95">Save Storage Config</Button>
+          <Button className="font-bold bg-primary text-white hover:bg-primary/95">{t('platformSettings.storage.saveBtn')}</Button>
         </div>
       </div>
     </div>
@@ -3232,30 +3259,35 @@ const PlatformSettingsStorageView: React.FC = () => {
 
 // 7d. PLATFORM SETTINGS BRANDING
 const PlatformSettingsBrandingView: React.FC = () => {
+  const { t } = useTranslation();
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <PageHeader
-        title="White-Label & Branding"
-        description="Update platform CSS colors, primary layout logo uploads, and custom web app favicon elements."
-        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Platform Settings' }, { label: 'Branding' }]}
+        title={t('platformSettings.branding.title')}
+        description={t('platformSettings.branding.description')}
+        breadcrumbs={[
+          { label: t('nav.home'), href: '/' },
+          { label: t('nav.platformSettings') },
+          { label: t('platformSettings.branding.breadcrumb') }
+        ]}
       />
       <div className="bg-card border rounded-xl p-6 shadow-sm space-y-6">
-        <h2 className="text-sm font-extrabold uppercase tracking-wide border-b pb-2">Logo & CSS Brand Theme</h2>
+        <h2 className="text-sm font-extrabold uppercase tracking-wide border-b pb-2">{t('platformSettings.branding.section')}</h2>
         <div className="grid grid-cols-2 gap-4 text-xs">
           <div className="space-y-1">
-            <label className="text-[10px] font-bold text-muted-foreground uppercase">App Brand Hex Code Color</label>
+            <label className="text-[10px] font-bold text-muted-foreground uppercase">{t('platformSettings.branding.color')}</label>
             <div className="flex space-x-2">
               <input type="color" defaultValue="#3b82f6" className="w-10 h-8 rounded border p-0 cursor-pointer" />
               <input defaultValue="#3b82f6" className="flex-1 p-2 rounded border bg-secondary text-xs font-semibold" />
             </div>
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] font-bold text-muted-foreground uppercase">Brand Custom Domain Mapping</label>
+            <label className="text-[10px] font-bold text-muted-foreground uppercase">{t('platformSettings.branding.domain')}</label>
             <input defaultValue="app.doorloop-apex.com" className="w-full p-2 rounded border bg-secondary text-xs font-semibold" />
           </div>
         </div>
         <div className="border-t pt-4 flex justify-end">
-          <Button className="font-bold bg-primary text-white hover:bg-primary/95">Save Branding Options</Button>
+          <Button className="font-bold bg-primary text-white hover:bg-primary/95">{t('platformSettings.branding.saveBtn')}</Button>
         </div>
       </div>
     </div>
@@ -3264,6 +3296,7 @@ const PlatformSettingsBrandingView: React.FC = () => {
 
 // 8a. PLATFORM INTEGRATIONS CONNECTED APPS
 const PlatformIntegrationsConnectedView: React.FC = () => {
+  const { t } = useTranslation();
   const apps = [
     { name: 'Stripe Payments', category: 'Payment Gateways', desc: 'SaaS subscription processing integration', connected: 'Yes', status: 'Active' },
     { name: 'Twilio SMS', category: 'SMS Gateway', desc: 'System notification SMS messages dispatch', connected: 'Yes', status: 'Active' },
@@ -3274,20 +3307,24 @@ const PlatformIntegrationsConnectedView: React.FC = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Authorized Connected Applications"
-        description="Verify third-party client credentials, system-level SMTP bridges, and SMS gateways connected globally."
-        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Integrations' }, { label: 'Connected Apps' }]}
+        title={t('platformIntegrations.connectedApps.title')}
+        description={t('platformIntegrations.connectedApps.description')}
+        breadcrumbs={[
+          { label: t('nav.home'), href: '/' },
+          { label: t('nav.integrationsMarketplace') },
+          { label: t('platformIntegrations.connectedApps.breadcrumb') }
+        ]}
       />
       <div className="bg-card border rounded-xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-muted/50 border-b text-muted-foreground font-bold uppercase tracking-wider">
-                <th className="p-4">Application Name</th>
-                <th className="p-4">Category</th>
-                <th className="p-4">Description</th>
-                <th className="p-4">Connected status</th>
-                <th className="p-4">Actions</th>
+                <th className="p-4">{t('platformIntegrations.connectedApps.table.name')}</th>
+                <th className="p-4">{t('platformIntegrations.connectedApps.table.category')}</th>
+                <th className="p-4">{t('platformIntegrations.connectedApps.table.description')}</th>
+                <th className="p-4">{t('platformIntegrations.connectedApps.table.connectedStatus')}</th>
+                <th className="p-4">{t('platformIntegrations.connectedApps.table.actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y font-medium text-foreground">
@@ -3299,7 +3336,7 @@ const PlatformIntegrationsConnectedView: React.FC = () => {
                   <td className="p-4"><StatusBadge status={app.status} /></td>
                   <td className="p-4">
                     <Button variant="outline" size="sm" className="font-bold text-[10px]">
-                      {app.connected === 'Yes' ? 'Disconnect' : 'Connect'}
+                      {app.connected === 'Yes' ? t('platformIntegrations.connectedApps.actions.disconnect') : t('platformIntegrations.connectedApps.actions.connect')}
                     </Button>
                   </td>
                 </tr>
@@ -3314,6 +3351,7 @@ const PlatformIntegrationsConnectedView: React.FC = () => {
 
 // 8b. PLATFORM API KEYS
 const PlatformIntegrationsKeysView: React.FC = () => {
+  const { t } = useTranslation();
   const keys = [
     { name: 'Production Dashboard API Key', scope: 'Read/Write', prefix: 'pk_live_••••a899', created: '2026-01-20', status: 'Active' },
     { name: 'Staging Sandbox Testing Key', scope: 'Read-Only', prefix: 'pk_test_••••1100', created: '2026-03-12', status: 'Active' }
@@ -3322,11 +3360,15 @@ const PlatformIntegrationsKeysView: React.FC = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Developer API Credentials"
-        description="Provision global authentication keys, developer credentials, and restrict scopes for corporate account APIs."
-        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Integrations' }, { label: 'API Keys' }]}
+        title={t('platformIntegrations.apiKeys.title')}
+        description={t('platformIntegrations.apiKeys.description')}
+        breadcrumbs={[
+          { label: t('nav.home'), href: '/' },
+          { label: t('nav.integrationsMarketplace') },
+          { label: t('platformIntegrations.apiKeys.breadcrumb') }
+        ]}
         action={{
-          label: 'Generate API Key',
+          label: t('platformIntegrations.apiKeys.generateBtn'),
           onClick: () => { },
           icon: <Plus className="w-4 h-4" />
         }}
@@ -3336,11 +3378,11 @@ const PlatformIntegrationsKeysView: React.FC = () => {
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-muted/50 border-b text-muted-foreground font-bold uppercase tracking-wider">
-                <th className="p-4">API Key Description</th>
-                <th className="p-4">Access Scope</th>
-                <th className="p-4">Token Preview</th>
-                <th className="p-4">Created Date</th>
-                <th className="p-4">Status</th>
+                <th className="p-4">{t('platformIntegrations.apiKeys.table.description')}</th>
+                <th className="p-4">{t('platformIntegrations.apiKeys.table.scope')}</th>
+                <th className="p-4">{t('platformIntegrations.apiKeys.table.preview')}</th>
+                <th className="p-4">{t('platformIntegrations.apiKeys.table.createdDate')}</th>
+                <th className="p-4">{t('platformIntegrations.apiKeys.table.status')}</th>
               </tr>
             </thead>
             <tbody className="divide-y font-medium text-foreground">
@@ -3363,6 +3405,7 @@ const PlatformIntegrationsKeysView: React.FC = () => {
 
 // 8c. PLATFORM WEBHOOK ENDPOINTS
 const PlatformIntegrationsWebhooksView: React.FC = () => {
+  const { t } = useTranslation();
   const webhooks = [
     { url: 'https://api.doorloop-apex.com/v1/billing/stripe', events: 'invoice.paid, invoice.payment_failed', status: 'Active' },
     { url: 'https://api.doorloop-apex.com/v1/notifications/twilio-sms', events: 'message.delivered, message.failed', status: 'Active' }
@@ -3371,11 +3414,15 @@ const PlatformIntegrationsWebhooksView: React.FC = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Incoming & Outgoing Webhooks"
-        description="Administer secure system webhook listening triggers and configure automated response patterns."
-        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Integrations' }, { label: 'Webhooks' }]}
+        title={t('platformIntegrations.webhooks.title')}
+        description={t('platformIntegrations.webhooks.description')}
+        breadcrumbs={[
+          { label: t('nav.home'), href: '/' },
+          { label: t('nav.integrationsMarketplace') },
+          { label: t('platformIntegrations.webhooks.breadcrumb') }
+        ]}
         action={{
-          label: 'Add Webhook Endpoint',
+          label: t('platformIntegrations.webhooks.addBtn'),
           onClick: () => { },
           icon: <Plus className="w-4 h-4" />
         }}
@@ -3385,9 +3432,9 @@ const PlatformIntegrationsWebhooksView: React.FC = () => {
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-muted/50 border-b text-muted-foreground font-bold uppercase tracking-wider">
-                <th className="p-4">Target Endpoint URL</th>
-                <th className="p-4">Trigger Event Types</th>
-                <th className="p-4">Status</th>
+                <th className="p-4">{t('platformIntegrations.webhooks.table.endpoint')}</th>
+                <th className="p-4">{t('platformIntegrations.webhooks.table.events')}</th>
+                <th className="p-4">{t('platformIntegrations.webhooks.table.status')}</th>
               </tr>
             </thead>
             <tbody className="divide-y font-medium text-foreground">
@@ -3408,29 +3455,34 @@ const PlatformIntegrationsWebhooksView: React.FC = () => {
 
 // 9a. PLATFORM SECURITY AUDIT LOGS
 const PlatformSecurityAuditView: React.FC = () => {
+  const { t } = useTranslation();
   const logs = [
-    { id: '1', action: 'Company Suspension', user: 'admin@apexpm.com', ip: '198.162.0.12', time: '2026-07-20 05:39' },
-    { id: '2', action: 'Changed Platform SMTP settings', user: 'admin@apexpm.com', ip: '198.162.0.12', time: '2026-07-20 04:12' },
-    { id: '3', action: 'Generated New Production API Key', user: 'admin@apexpm.com', ip: '198.162.0.8', time: '2026-07-19 11:05' }
+    { id: '1', action: t('platformSecurity.auditLogs.actions.companySuspension'), user: 'admin@apexpm.com', ip: '198.162.0.12', time: '2026-07-20 05:39' },
+    { id: '2', action: t('platformSecurity.auditLogs.actions.changedSmtp'), user: 'admin@apexpm.com', ip: '198.162.0.12', time: '2026-07-20 04:12' },
+    { id: '3', action: t('platformSecurity.auditLogs.actions.generatedApiKey'), user: 'admin@apexpm.com', ip: '198.162.0.8', time: '2026-07-19 11:05' }
   ];
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Administrative Audit Logs"
-        description="Verify system audit trails, corporate policy overrides, and platform configuration changes."
-        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Security' }, { label: 'Audit Logs' }]}
+        title={t('platformSecurity.auditLogs.title')}
+        description={t('platformSecurity.auditLogs.description')}
+        breadcrumbs={[
+          { label: t('nav.home'), href: '/' },
+          { label: t('platformSecurity.security'), href: '/platform-security/audit' },
+          { label: t('platformSecurity.auditLogs.breadcrumb') }
+        ]}
       />
       <div className="bg-card border rounded-xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-muted/50 border-b text-muted-foreground font-bold uppercase tracking-wider">
-                <th className="p-4">Audit ID</th>
-                <th className="p-4">Action Taken</th>
-                <th className="p-4">Authorized User</th>
-                <th className="p-4">IP Address</th>
-                <th className="p-4">Timestamp</th>
+                <th className="p-4">{t('platformSecurity.auditLogs.table.auditId')}</th>
+                <th className="p-4">{t('platformSecurity.auditLogs.table.actionTaken')}</th>
+                <th className="p-4">{t('platformSecurity.auditLogs.table.authorizedUser')}</th>
+                <th className="p-4">{t('platformSecurity.auditLogs.table.ipAddress')}</th>
+                <th className="p-4">{t('platformSecurity.auditLogs.table.timestamp')}</th>
               </tr>
             </thead>
             <tbody className="divide-y font-medium text-foreground">
@@ -3453,31 +3505,36 @@ const PlatformSecurityAuditView: React.FC = () => {
 
 // 9b. PLATFORM LOGIN HISTORY
 const PlatformSecurityLoginView: React.FC = () => {
+  const { t } = useTranslation();
   const logins = [
-    { email: 'admin@apexpm.com', role: 'Super Admin', ip: '198.162.0.12', device: 'Chrome on Windows', status: 'Success', time: '2026-07-20 05:12' },
-    { email: 'manager@apexpm.com', role: 'Property Manager', ip: '198.162.0.15', device: 'Safari on macOS', status: 'Success', time: '2026-07-20 04:33' },
-    { email: 'owner@apexpm.com', role: 'Owner', ip: '198.162.0.22', device: 'Firefox on Linux', status: 'Success', time: '2026-07-19 14:02' },
-    { email: 'invalid@hacker.com', role: 'Unknown', ip: '45.12.88.9', device: 'Chrome on Windows', status: 'Failed', time: '2026-07-19 10:11' }
+    { email: 'admin@apexpm.com', role: 'Super Admin', ip: '198.162.0.12', device: t('platformSecurity.loginHistory.devices.chromeWin'), status: 'Success', time: '2026-07-20 05:12' },
+    { email: 'manager@apexpm.com', role: 'Property Manager', ip: '198.162.0.15', device: t('platformSecurity.loginHistory.devices.safariMac'), status: 'Success', time: '2026-07-20 04:33' },
+    { email: 'owner@apexpm.com', role: 'Owner', ip: '198.162.0.22', device: t('platformSecurity.loginHistory.devices.firefoxLinux'), status: 'Success', time: '2026-07-19 14:02' },
+    { email: 'invalid@hacker.com', role: 'Unknown', ip: '45.12.88.9', device: t('platformSecurity.loginHistory.devices.chromeWin'), status: 'Failed', time: '2026-07-19 10:11' }
   ];
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Session Login History"
-        description="Monitor user sessions, login devices, geolocation IPs, and failed authentication attempts."
-        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Security' }, { label: 'Login History' }]}
+        title={t('platformSecurity.loginHistory.title')}
+        description={t('platformSecurity.loginHistory.description')}
+        breadcrumbs={[
+          { label: t('nav.home'), href: '/' },
+          { label: t('platformSecurity.security') },
+          { label: t('platformSecurity.loginHistory.breadcrumb') }
+        ]}
       />
       <div className="bg-card border rounded-xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-muted/50 border-b text-muted-foreground font-bold uppercase tracking-wider">
-                <th className="p-4">Login Email</th>
-                <th className="p-4">Assigned Role</th>
-                <th className="p-4">IP Address</th>
-                <th className="p-4">Browser & Device</th>
-                <th className="p-4">Status</th>
-                <th className="p-4">Login Timestamp</th>
+                <th className="p-4">{t('platformSecurity.loginHistory.table.email')}</th>
+                <th className="p-4">{t('platformSecurity.loginHistory.table.role')}</th>
+                <th className="p-4">{t('platformSecurity.loginHistory.table.ip')}</th>
+                <th className="p-4">{t('platformSecurity.loginHistory.table.device')}</th>
+                <th className="p-4">{t('platformSecurity.loginHistory.table.status')}</th>
+                <th className="p-4">{t('platformSecurity.loginHistory.table.timestamp')}</th>
               </tr>
             </thead>
             <tbody className="divide-y font-medium text-foreground">
@@ -3501,44 +3558,49 @@ const PlatformSecurityLoginView: React.FC = () => {
 
 // 9c. PLATFORM SECURITY POLICIES
 const PlatformSecurityPoliciesView: React.FC = () => {
+  const { t } = useTranslation();
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <PageHeader
-        title="System Security Policies"
-        description="Enforce strong multi-factor authentication (MFA), password rotation, and idle session lock policies."
-        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Security' }, { label: 'Policies' }]}
+        title={t('platformSecurity.policies.title')}
+        description={t('platformSecurity.policies.description')}
+        breadcrumbs={[
+          { label: t('nav.home'), href: '/' },
+          { label: t('platformSecurity.security') },
+          { label: t('platformSecurity.policies.breadcrumb') }
+        ]}
       />
       <div className="bg-card border rounded-xl p-6 shadow-sm space-y-6">
-        <h2 className="text-sm font-extrabold uppercase tracking-wide border-b pb-2">Global Policies & MFA Settings</h2>
+        <h2 className="text-sm font-extrabold uppercase tracking-wide border-b pb-2">{t('platformSecurity.policies.globalSection')}</h2>
         <div className="grid grid-cols-2 gap-4 text-xs">
           <div className="space-y-1">
-            <label className="text-[10px] font-bold text-muted-foreground uppercase">Minimum Password Length</label>
+            <label className="text-[10px] font-bold text-muted-foreground uppercase">{t('platformSecurity.policies.minPasswordLength')}</label>
             <select className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold focus:outline-none">
-              <option>8 Characters</option>
-              <option>12 Characters (Recommended)</option>
-              <option>16 Characters</option>
+              <option>{t('platformSecurity.policies.options.eight')}</option>
+              <option>{t('platformSecurity.policies.options.twelve')}</option>
+              <option>{t('platformSecurity.policies.options.sixteen')}</option>
             </select>
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] font-bold text-muted-foreground uppercase">Idle Session Timeout (Minutes)</label>
+            <label className="text-[10px] font-bold text-muted-foreground uppercase">{t('platformSecurity.policies.idleTimeout')}</label>
             <input defaultValue="30" type="number" className="w-full p-2 rounded border bg-secondary text-xs font-semibold" />
           </div>
         </div>
         <div className="space-y-4 border-t pt-4">
-          <h2 className="text-sm font-extrabold uppercase tracking-wide border-b pb-2">Authentication Enforcement</h2>
+          <h2 className="text-sm font-extrabold uppercase tracking-wide border-b pb-2">{t('platformSecurity.policies.authEnforcement')}</h2>
           <div className="space-y-2 text-xs">
             <div className="flex items-center space-x-2">
               <input type="checkbox" defaultChecked className="rounded border-border text-primary" />
-              <span className="font-bold">Require Multi-Factor Authentication (MFA) for Super Admins</span>
+              <span className="font-bold">{t('platformSecurity.policies.requireMfa')}</span>
             </div>
             <div className="flex items-center space-x-2">
               <input type="checkbox" className="rounded border-border text-primary" />
-              <span className="font-bold">Force Periodic Password Rotation (Every 90 Days)</span>
+              <span className="font-bold">{t('platformSecurity.policies.forceRotation')}</span>
             </div>
           </div>
         </div>
         <div className="border-t pt-4 flex justify-end">
-          <Button className="font-bold bg-primary text-white hover:bg-primary/95">Apply Security Policies</Button>
+          <Button className="font-bold bg-primary text-white hover:bg-primary/95">{t('platformSecurity.policies.applyBtn')}</Button>
         </div>
       </div>
     </div>
@@ -4260,6 +4322,7 @@ const LateFeesPage: React.FC = () => {
 
 // 7. TENANT DOCUMENTS VIEW
 const ManagerTenantDocumentsPage: React.FC = () => {
+  const { t } = useTranslation();
   const documents = [
     { name: 'Signed Rent Lease Agreement.pdf', category: 'Lease', size: '1.4 MB', tenant: 'Robert Johnson', date: '2026-07-20' },
     { name: 'Income Verification Statement.pdf', category: 'Agreement', size: '850 KB', tenant: 'Michael Jordan', date: '2026-07-15' }
@@ -4268,20 +4331,20 @@ const ManagerTenantDocumentsPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Tenant Documents categories"
-        description="Access leases, notices, and income agreements uploaded by tenant residents."
-        breadcrumbs={[{ label: 'Tenants', href: '/tenants' }, { label: 'Documents' }]}
+        title={t('tenantDocumentsView.title')}
+        description={t('tenantDocumentsView.description')}
+        breadcrumbs={[{ label: t('nav.tenants'), href: '/tenants' }, { label: t('tenantDocumentsView.breadcrumb') }]}
       />
       <div className="bg-card border rounded-xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-muted/50 border-b text-muted-foreground font-bold uppercase tracking-wider">
-                <th className="p-4">Document File Name</th>
-                <th className="p-4">Type Category</th>
-                <th className="p-4">File Size</th>
-                <th className="p-4">Tenant Resident</th>
-                <th className="p-4">Uploaded Date</th>
+                <th className="p-4">{t('tenantDocumentsView.table.fileName')}</th>
+                <th className="p-4">{t('tenantDocumentsView.table.category')}</th>
+                <th className="p-4">{t('tenantDocumentsView.table.fileSize')}</th>
+                <th className="p-4">{t('tenantDocumentsView.table.tenant')}</th>
+                <th className="p-4">{t('tenantDocumentsView.table.uploadedDate')}</th>
               </tr>
             </thead>
             <tbody className="divide-y font-medium text-foreground">
@@ -4304,6 +4367,7 @@ const ManagerTenantDocumentsPage: React.FC = () => {
 
 // 8. OWNERS STATEMENTS PAGE
 const OwnersStatementsPage: React.FC = () => {
+  const { t } = useTranslation();
   const statements = [
     { date: '2026-06-30', property: 'Sunset Villas Complex', income: 14500, expenses: 3200, net: 11300, status: 'Sent' },
     { date: '2026-05-31', property: 'Sunset Villas Complex', income: 14500, expenses: 4500, net: 10000, status: 'Sent' }
@@ -4312,21 +4376,21 @@ const OwnersStatementsPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Owner Financial Statements"
-        description="Fiduciary records of property income statements, expense logs, and net cash balances."
-        breadcrumbs={[{ label: 'Owners', href: '/owners' }, { label: 'Statements' }]}
+        title={t('ownersStatementsView.title')}
+        description={t('ownersStatementsView.description')}
+        breadcrumbs={[{ label: t('nav.owners'), href: '/owners' }, { label: t('ownersStatementsView.breadcrumb') }]}
       />
       <div className="bg-card border rounded-xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-muted/50 border-b text-muted-foreground font-bold uppercase tracking-wider">
-                <th className="p-4">Statement Period Date</th>
-                <th className="p-4">Property</th>
-                <th className="p-4">Gross Income</th>
-                <th className="p-4">Operating Expenses</th>
-                <th className="p-4">Net Cash Income</th>
-                <th className="p-4">Status</th>
+                <th className="p-4">{t('ownersStatementsView.table.periodDate')}</th>
+                <th className="p-4">{t('ownersStatementsView.table.property')}</th>
+                <th className="p-4">{t('ownersStatementsView.table.grossIncome')}</th>
+                <th className="p-4">{t('ownersStatementsView.table.expenses')}</th>
+                <th className="p-4">{t('ownersStatementsView.table.netIncome')}</th>
+                <th className="p-4">{t('ownersStatementsView.table.status')}</th>
               </tr>
             </thead>
             <tbody className="divide-y font-medium text-foreground">
@@ -4350,6 +4414,7 @@ const OwnersStatementsPage: React.FC = () => {
 
 // 8a. RENT ROLL REPORT
 const RentRollReportPage: React.FC = () => {
+  const { t } = useTranslation();
   const data = [
     { unit: 'Apt 101', tenant: 'Robert Johnson', rent: 1200, start: '2025-08-01', end: '2026-07-31', balance: 0 },
     { unit: 'Apt 102', tenant: 'Michael Jordan', rent: 1850, start: '2026-02-15', end: '2027-02-14', balance: 1850 },
@@ -4359,21 +4424,21 @@ const RentRollReportPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Rent Roll Report Ledger"
-        description="Comprehensive list of properties, tenant names, lease schedules, and monthly rent balances."
-        breadcrumbs={[{ label: 'Reports', href: '/reports' }, { label: 'Rent Roll' }]}
+        title={t('rentRollReportView.title')}
+        description={t('rentRollReportView.description')}
+        breadcrumbs={[{ label: t('nav.reports'), href: '/reports' }, { label: t('rentRollReportView.breadcrumb') }]}
       />
       <div className="bg-card border rounded-xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-muted/50 border-b text-muted-foreground font-bold uppercase tracking-wider">
-                <th className="p-4">Unit Name</th>
-                <th className="p-4">Tenant Resident</th>
-                <th className="p-4">Monthly Rent</th>
-                <th className="p-4">Lease Start</th>
-                <th className="p-4">Lease End</th>
-                <th className="p-4">Current Balance Due</th>
+                <th className="p-4">{t('rentRollReportView.table.unit')}</th>
+                <th className="p-4">{t('rentRollReportView.table.tenant')}</th>
+                <th className="p-4">{t('rentRollReportView.table.monthlyRent')}</th>
+                <th className="p-4">{t('rentRollReportView.table.start')}</th>
+                <th className="p-4">{t('rentRollReportView.table.end')}</th>
+                <th className="p-4">{t('rentRollReportView.table.balance')}</th>
               </tr>
             </thead>
             <tbody className="divide-y font-medium text-foreground">
@@ -4397,6 +4462,7 @@ const RentRollReportPage: React.FC = () => {
 
 // 8b. OCCUPANCY REPORT
 const OccupancyReportPage: React.FC = () => {
+  const { t } = useTranslation();
   const data = [
     { property: 'Sunset Villas Complex', total: 40, occupied: 38, vacant: 2, rate: '95%' },
     { property: 'Summit Group Commercial Loft', total: 10, occupied: 7, vacant: 3, rate: '70%' }
@@ -4405,20 +4471,20 @@ const OccupancyReportPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Occupancy & Vacancy Report"
-        description="Monitor rental occupancy rates, vacancy statistics, and unit counts by building."
-        breadcrumbs={[{ label: 'Reports', href: '/reports' }, { label: 'Occupancy' }]}
+        title={t('occupancyReportView.title')}
+        description={t('occupancyReportView.description')}
+        breadcrumbs={[{ label: t('nav.reports'), href: '/reports' }, { label: t('occupancyReportView.breadcrumb') }]}
       />
       <div className="bg-card border rounded-xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-muted/50 border-b text-muted-foreground font-bold uppercase tracking-wider">
-                <th className="p-4">Property / Building Name</th>
-                <th className="p-4">Total Units</th>
-                <th className="p-4">Occupied Units</th>
-                <th className="p-4">Vacant Units</th>
-                <th className="p-4">Occupancy Rate (%)</th>
+                <th className="p-4">{t('occupancyReportView.table.property')}</th>
+                <th className="p-4">{t('occupancyReportView.table.total')}</th>
+                <th className="p-4">{t('occupancyReportView.table.occupied')}</th>
+                <th className="p-4">{t('occupancyReportView.table.vacant')}</th>
+                <th className="p-4">{t('occupancyReportView.table.rate')}</th>
               </tr>
             </thead>
             <tbody className="divide-y font-medium text-foreground">
@@ -4441,6 +4507,7 @@ const OccupancyReportPage: React.FC = () => {
 
 // 8c. DELINQUENCY REPORT
 const DelinquencyReportPage: React.FC = () => {
+  const { t } = useTranslation();
   const data = [
     { tenant: 'Michael Jordan', unit: 'Apt 102', overdue: 1850, days: 5, status: 'Overdue' },
     { tenant: 'Brittany Spears', unit: 'Apt 204', overdue: 950, days: 12, status: 'Delinquent' }
@@ -4449,20 +4516,20 @@ const DelinquencyReportPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Delinquent Payments Ledger"
-        description="Verify late property rent payments, accrued late fee balances, and days delinquent."
-        breadcrumbs={[{ label: 'Reports', href: '/reports' }, { label: 'Delinquency' }]}
+        title={t('delinquencyReportView.title')}
+        description={t('delinquencyReportView.description')}
+        breadcrumbs={[{ label: t('nav.reports'), href: '/reports' }, { label: t('delinquencyReportView.breadcrumb') }]}
       />
       <div className="bg-card border rounded-xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-muted/50 border-b text-muted-foreground font-bold uppercase tracking-wider">
-                <th className="p-4">Tenant Name</th>
-                <th className="p-4">Unit Name</th>
-                <th className="p-4">Outstanding Overdue Balance</th>
-                <th className="p-4">Days Overdue</th>
-                <th className="p-4">Payment Fiduciary Status</th>
+                <th className="p-4">{t('delinquencyReportView.table.tenant')}</th>
+                <th className="p-4">{t('delinquencyReportView.table.unit')}</th>
+                <th className="p-4">{t('delinquencyReportView.table.balance')}</th>
+                <th className="p-4">{t('delinquencyReportView.table.days')}</th>
+                <th className="p-4">{t('delinquencyReportView.table.status')}</th>
               </tr>
             </thead>
             <tbody className="divide-y font-medium text-foreground">

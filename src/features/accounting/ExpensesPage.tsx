@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { ExpenseRecord } from '../../types';
 import { PageHeader } from '../../components/PageHeader';
@@ -15,6 +16,7 @@ import { Plus, Check, X, Loader2 } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
 
 export const ExpensesPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
@@ -22,7 +24,7 @@ export const ExpensesPage: React.FC = () => {
   // Dialog state
   const [isOpen, setIsOpen] = useState(false);
   const [vendorName, setVendorName] = useState('');
-  const [category, setCategory] = useState('Repairs');
+  const [category, setCategory] = useState('Maintenance');
   const [amount, setAmount] = useState(250);
   const [propertyId, setPropertyId] = useState('');
 
@@ -74,30 +76,30 @@ export const ExpensesPage: React.FC = () => {
   });
 
   const columns: ColumnDef<ExpenseRecord>[] = [
-    { accessorKey: 'date', header: 'Expense Date', id: 'date' },
-    { accessorKey: 'vendorName', header: 'Vendor / Partner', id: 'vendor' },
-    { accessorKey: 'propertyName', header: 'Property Location', id: 'property' },
+    { accessorKey: 'date', header: t('pmExpenses.expenseDate'), id: 'date' },
+    { accessorKey: 'vendorName', header: t('pmExpenses.vendorPartner'), id: 'vendor' },
+    { accessorKey: 'propertyName', header: t('pmIncome.propertyLocation'), id: 'property' },
     {
       accessorKey: 'category',
-      header: 'Category',
+      header: t('pmIncome.category'),
       id: 'category',
       cell: ({ row }) => <span className="font-bold text-[10px] bg-secondary px-2 py-0.5 rounded-lg border uppercase">{row.original.category}</span>,
     },
     {
       accessorKey: 'amount',
-      header: 'Amount Paid',
+      header: t('pmExpenses.amountPaid'),
       id: 'amount',
       cell: ({ row }) => <span className="font-extrabold text-rose-500">${row.original.amount.toLocaleString()}</span>,
     },
     {
       accessorKey: 'status',
-      header: 'Status',
+      header: t('pmIncome.status'),
       id: 'status',
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
     {
       id: 'actions',
-      header: 'Approval Action',
+      header: t('pmExpenses.approvalAction'),
       cell: ({ row }) => {
         if (row.original.status === 'Pending Approval') {
           return (
@@ -131,15 +133,15 @@ export const ExpensesPage: React.FC = () => {
   return (
     <div>
       <PageHeader
-        title="Expense Tracker"
-        description="Verify property business landscaping bills, utility invoices, repairs, and payroll distributions."
+        title={t('pmExpenses.title')}
+        description={t('pmExpenses.desc')}
         breadcrumbs={[
-          { label: 'Home', href: '/' },
-          { label: 'Accounting', href: '/accounting' },
-          { label: 'Expenses' },
+          { label: t('header.home'), href: '/' },
+          { label: t('nav.accounting'), href: '/accounting' },
+          { label: t('pmExpenses.title') },
         ]}
         action={{
-          label: 'Record Expense',
+          label: t('pmExpenses.recordExpense'),
           onClick: () => setIsOpen(true),
           icon: <Plus className="w-4.5 h-4.5" />,
         }}
@@ -148,12 +150,12 @@ export const ExpensesPage: React.FC = () => {
       <FilterBar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        searchPlaceholder="Search expenses by vendor or property..."
+        searchPlaceholder={t('pmExpenses.searchPlaceholder')}
         filters={[
           {
             key: 'category',
             value: categoryFilter,
-            placeholder: 'Expense Category',
+            placeholder: t('pmExpenses.expenseCategory'),
             options: [
               { label: 'Repairs', value: 'Repairs' },
               { label: 'Maintenance', value: 'Maintenance' },

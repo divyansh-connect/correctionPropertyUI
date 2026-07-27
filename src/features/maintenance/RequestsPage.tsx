@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
+import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { MaintenanceRequest } from '../../types';
 import { PageHeader } from '../../components/PageHeader';
@@ -13,6 +14,7 @@ import { Plus, Eye, Trash2, Download } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
 
 export const RequestsPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
@@ -58,7 +60,7 @@ export const RequestsPage: React.FC = () => {
   const columns: ColumnDef<MaintenanceRequest>[] = [
     {
       accessorKey: 'id',
-      header: 'Request NO',
+      header: t('maintenanceRequests.requestNo'),
       id: 'id',
       cell: ({ row }) => (
         <span onClick={() => navigate({ to: `/maintenance/requests/${row.original.id}` })} className="font-bold text-primary hover:underline cursor-pointer">
@@ -66,25 +68,25 @@ export const RequestsPage: React.FC = () => {
         </span>
       ),
     },
-    { accessorKey: 'propertyName', header: 'Property Location', id: 'property' },
-    { accessorKey: 'unitNumber', header: 'Unit', id: 'unit' },
-    { accessorKey: 'tenantName', header: 'Resident', id: 'tenant' },
+    { accessorKey: 'propertyName', header: t('maintenanceRequests.propertyLocation'), id: 'property' },
+    { accessorKey: 'unitNumber', header: t('maintenanceRequests.unit'), id: 'unit' },
+    { accessorKey: 'tenantName', header: t('maintenanceRequests.resident'), id: 'tenant' },
     {
       accessorKey: 'priority',
-      header: 'Priority',
+      header: t('maintenanceRequests.priority'),
       id: 'priority',
       cell: ({ row }) => <RequestPriorityBadge priority={row.original.priority as any} />,
     },
     {
       accessorKey: 'status',
-      header: 'Status',
+      header: t('maintenanceRequests.status'),
       id: 'status',
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
-    { accessorKey: 'createdAt', header: 'Submitted Date', id: 'createdAt' },
+    { accessorKey: 'createdAt', header: t('maintenanceRequests.submittedDate'), id: 'createdAt' },
     {
       id: 'actions',
-      header: 'Actions',
+      header: t('maintenanceRequests.actions'),
       cell: ({ row }) => (
         <div className="flex space-x-1">
           <Button variant="ghost" size="icon" onClick={() => navigate({ to: `/maintenance/requests/${row.original.id}` })} title="View Detail">
@@ -107,15 +109,15 @@ export const RequestsPage: React.FC = () => {
   return (
     <div>
       <PageHeader
-        title="Service Tickets & Requests"
-        description="Verify property issues, emergency service dispatches, and appliance failures."
+        title={t('maintenanceRequests.title')}
+        description={t('maintenanceRequests.desc')}
         breadcrumbs={[
-          { label: 'Home', href: '/' },
-          { label: 'Maintenance', href: '/maintenance' },
-          { label: 'Service Requests' },
+          { label: t('header.home'), href: '/' },
+          { label: t('nav.maintenance'), href: '/maintenance' },
+          { label: t('maintenanceRequests.title') },
         ]}
         action={{
-          label: 'Submit Service Ticket',
+          label: t('maintenanceRequests.submitTicket'),
           onClick: () => navigate({ to: '/maintenance/requests/new' }),
           icon: <Plus className="w-4.5 h-4.5" />,
         }}
@@ -123,18 +125,18 @@ export const RequestsPage: React.FC = () => {
 
       <div className="flex justify-between items-center mb-3">
         <span className="text-xs font-bold text-muted-foreground uppercase">
-          Total {filteredRequests.length} Service Tickets Found
+          {t('maintenanceRequests.totalFound', { count: filteredRequests.length })}
         </span>
         <Button variant="outline" size="sm" onClick={handleExport} className="text-xs font-semibold flex items-center gap-1.5">
           <Download className="w-3.5 h-3.5" />
-          Export CSV
+          {t('maintenanceRequests.exportCsv')}
         </Button>
       </div>
 
       <FilterBar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        searchPlaceholder="Search tickets by resident or issue..."
+        searchPlaceholder={t('maintenanceRequests.searchPlaceholder')}
         filters={[
           {
             key: 'priority',

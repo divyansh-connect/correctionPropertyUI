@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { PageHeader } from '../../components/PageHeader';
 import { Card } from '../../components/ui/Card';
@@ -10,6 +11,7 @@ import { OwnerMessageThread } from '../../components/OwnerComponents';
 import { User, MessageSquare, Shield, Landmark, Phone, Mail } from 'lucide-react';
 
 export const CommInboxPage: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [selectedConvId, setSelectedConvId] = useState<string>('conv-1');
 
@@ -48,11 +50,11 @@ export const CommInboxPage: React.FC = () => {
   return (
     <div className="space-y-6 text-foreground h-[calc(100vh-140px)] flex flex-col">
       <PageHeader
-        title="Unified Messaging Inbox"
-        description="Verify manager discussions, resident updates, or vendor coordination threads."
+        title={t('commInbox.title')}
+        description={t('commInbox.desc')}
         breadcrumbs={[
-          { label: 'Home', href: '/communication' },
-          { label: 'Unified Inbox' },
+          { label: t('header.home'), href: '/communication' },
+          { label: t('commInbox.title') },
         ]}
       />
 

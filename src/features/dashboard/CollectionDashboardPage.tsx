@@ -14,8 +14,10 @@ import {
 } from 'recharts';
 import { useAuthStore } from '../../store/useStore';
 import { Button } from '../../components/ui/Button';
+import { useTranslation } from 'react-i18next';
 
 export const CollectionDashboardPage: React.FC = () => {
+  const { t } = useTranslation();
   // Query Metrics
   const { data: metrics, isLoading: loadingMetrics, refetch: refetchMetrics } = useQuery({
     queryKey: ['dashboard-metrics'],
@@ -53,14 +55,14 @@ export const CollectionDashboardPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Cashflow & Collections"
-        description="Monitor tenant rent receipts, owner distribution payouts, and vendor repair payments."
+        title={t('collectionDashboard.title')}
+        description={t('collectionDashboard.desc')}
         breadcrumbs={[
-          { label: 'Home', href: '/' },
-          { label: 'Collections' }
+          { label: t('ai.breadcrumbs.home'), href: '/' },
+          { label: t('collectionDashboard.collections') }
         ]}
         action={{
-          label: 'Refresh Ledger',
+          label: t('collectionDashboard.refreshLedger'),
           onClick: refreshAll,
           icon: <RefreshCw className="w-4 h-4" />,
           variant: 'outline'
@@ -70,35 +72,35 @@ export const CollectionDashboardPage: React.FC = () => {
       {/* --- 4 FINANCIAL STATS CARDS --- */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard
-          title="Tenant Collections"
+          title={t('collectionDashboard.tenantCollections')}
           value={`$${(metrics?.monthlyRevenue ?? 0).toLocaleString()}`}
           icon={<ArrowUpRight className="w-5 h-5 text-emerald-500" />}
           trend="up"
           trendLabel="+12.4%"
-          description="Gross rent inflow this month"
+          description={t('collectionDashboard.grossInflow')}
           loading={loadingMetrics}
         />
         <StatsCard
-          title="Tenant Overdue Balance"
+          title={t('collectionDashboard.tenantOverdue')}
           value={`$${(metrics?.pendingRent ?? 0).toLocaleString()}`}
           icon={<AlertCircle className="w-5 h-5 text-rose-500" />}
           trend="down"
           trendLabel="-8.5%"
-          description="Pending follow-up accounts"
+          description={t('collectionDashboard.pendingAccounts')}
           loading={loadingMetrics}
         />
         <StatsCard
-          title="Owner Payouts"
+          title={t('collectionDashboard.ownerPayouts')}
           value={`$${((metrics?.monthlyRevenue ?? 0) * 0.72).toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
           icon={<HandCoins className="w-5 h-5 text-indigo-500" />}
-          description="Distributions processed"
+          description={t('collectionDashboard.distributionsProcessed')}
           loading={loadingMetrics}
         />
         <StatsCard
-          title="Maintenance Expenses"
+          title={t('collectionDashboard.maintenanceExpenses')}
           value={`$${(metrics?.expenses ?? 0).toLocaleString()}`}
           icon={<ArrowDownRight className="w-5 h-5 text-amber-500" />}
-          description="Invoices paid to vendors"
+          description={t('collectionDashboard.invoicesPaid')}
           loading={loadingMetrics}
         />
       </div>
@@ -108,8 +110,8 @@ export const CollectionDashboardPage: React.FC = () => {
         {/* Cashflow timeline */}
         <div className="lg:col-span-2">
           <ChartCard
-            title="Cashflow Inflow vs Outflow"
-            description="Comparison of monthly rent collected vs payouts and expenses"
+            title={t('collectionDashboard.cashflowInflowVsOutflow')}
+            description={t('collectionDashboard.cashflowDesc')}
             loading={loadingCharts}
           >
             <ResponsiveContainer width="100%" height="100%">
@@ -136,8 +138,8 @@ export const CollectionDashboardPage: React.FC = () => {
                   }}
                 />
                 <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '11px' }} />
-                <Area type="monotone" name="Inflow (Rent)" dataKey="revenue" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorInflow)" />
-                <Area type="monotone" name="Outflow (Payouts)" dataKey="expenses" stroke="#ef4444" strokeWidth={2} fillOpacity={1} fill="url(#colorOutflow)" />
+                <Area type="monotone" name={t('collectionDashboard.inflowRent')} dataKey="revenue" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorInflow)" />
+                <Area type="monotone" name={t('collectionDashboard.outflowPayouts')} dataKey="expenses" stroke="#ef4444" strokeWidth={2} fillOpacity={1} fill="url(#colorOutflow)" />
               </AreaChart>
             </ResponsiveContainer>
           </ChartCard>
@@ -147,20 +149,20 @@ export const CollectionDashboardPage: React.FC = () => {
         <div className="bg-card border rounded-2xl p-5 flex flex-col justify-between">
           <div className="space-y-4">
             <div>
-              <h3 className="font-extrabold text-sm text-foreground">Follow-Up Required</h3>
-              <p className="text-[11px] text-muted-foreground">Tenants with outstanding balances requiring contact</p>
+              <h3 className="font-extrabold text-sm text-foreground">{t('collectionDashboard.followUpRequired')}</h3>
+              <p className="text-[11px] text-muted-foreground">{t('collectionDashboard.followUpDesc')}</p>
             </div>
             <div className="space-y-3">
-              {overdueTenants.map((t) => (
-                <div key={t.id} className="flex justify-between items-center bg-secondary/10 p-3 rounded-xl border border-border/20">
+              {overdueTenants.map((tItem) => (
+                <div key={tItem.id} className="flex justify-between items-center bg-secondary/10 p-3 rounded-xl border border-border/20">
                   <div className="space-y-0.5">
-                    <p className="text-xs font-bold text-foreground leading-none">{t.name}</p>
-                    <p className="text-[10px] text-muted-foreground">{t.unit} • <span className="text-rose-500 font-semibold">{t.daysOverdue} days late</span></p>
+                    <p className="text-xs font-bold text-foreground leading-none">{tItem.name}</p>
+                    <p className="text-[10px] text-muted-foreground">{tItem.unit} • <span className="text-rose-500 font-semibold">{t('collectionDashboard.daysLate', { days: tItem.daysOverdue })}</span></p>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs font-black text-rose-500">${t.balance}</p>
+                    <p className="text-xs font-black text-rose-500">${tItem.balance}</p>
                     <button className="text-[9px] text-primary hover:underline font-bold mt-0.5 flex items-center gap-0.5">
-                      <MessageSquare className="w-2.5 h-2.5" /> Send Alert
+                      <MessageSquare className="w-2.5 h-2.5" /> {t('collectionDashboard.sendAlert')}
                     </button>
                   </div>
                 </div>
@@ -173,18 +175,18 @@ export const CollectionDashboardPage: React.FC = () => {
       {/* --- RECENT TRANSACTIONS LOG TABLE --- */}
       <div className="bg-card border rounded-2xl p-5 space-y-4">
         <div>
-          <h3 className="font-extrabold text-sm text-foreground">Recent Cashflow Transactions</h3>
-          <p className="text-[11px] text-muted-foreground">Real-time ledger audit log of bank disbursements and rent collections.</p>
+          <h3 className="font-extrabold text-sm text-foreground">{t('collectionDashboard.recentCashflow')}</h3>
+          <p className="text-[11px] text-muted-foreground">{t('collectionDashboard.ledgerAuditLog')}</p>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left border-collapse">
             <thead>
               <tr className="border-b border-border/40 text-muted-foreground uppercase text-[9px] tracking-wider font-bold">
-                <th className="py-2">Date</th>
-                <th className="py-2">Type</th>
-                <th className="py-2">Party</th>
-                <th className="py-2">Amount</th>
-                <th className="py-2">Status</th>
+                <th className="py-2">{t('collectionDashboard.date')}</th>
+                <th className="py-2">{t('collectionDashboard.type')}</th>
+                <th className="py-2">{t('collectionDashboard.party')}</th>
+                <th className="py-2">{t('collectionDashboard.amount')}</th>
+                <th className="py-2">{t('collectionDashboard.status')}</th>
               </tr>
             </thead>
             <tbody>

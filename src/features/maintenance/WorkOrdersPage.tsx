@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
+import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { WorkOrder } from '../../types';
 import { PageHeader } from '../../components/PageHeader';
@@ -8,30 +9,33 @@ import { DataTable } from '../../components/DataTable';
 import { FilterBar } from '../../components/FilterBar';
 import { Button } from '../../components/ui/Button';
 import { StatusBadge } from '../../components/StatusBadge';
-import { Plus, Eye, Download } from 'lucide-react';
+import { Eye, Download } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
 
 export const WorkOrdersPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
 
   // Queries
-  const { data: workOrdersList = [], isLoading } = useQuery({ queryKey: ['work-orders-list'], queryFn: () => api.workOrders.getAll() });
+  const { data: workOrders = [], isLoading } = useQuery({ queryKey: ['work-orders-list'], queryFn: () => api.workOrders.getAll() });
 
-  const filteredOrders = workOrdersList.filter((w) => {
-    const searchMatch = w.workOrderNumber.toLowerCase().includes(searchQuery.toLowerCase()) || w.vendorName.toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredOrders = workOrders.filter((w) => {
+    const numVal = w.workOrderNumber || '';
+    const vendorVal = w.vendorName || '';
+    const searchMatch = numVal.toLowerCase().includes(searchQuery.toLowerCase()) || vendorVal.toLowerCase().includes(searchQuery.toLowerCase());
     const statusMatch = statusFilter === '' || w.status === statusFilter;
     return searchMatch && statusMatch;
   });
 
   const handleExport = () => {
-    const headers = 'WO Number,Property,Unit,Vendor,Technician,Scheduled Date,Estimated Cost,Actual Cost,Status\n';
+    const headers = 'ID,WO Number,Property,Unit,Vendor,Tech,Scheduled Date,Est Cost,Actual Cost,Status\n';
     const rows = filteredOrders
       .slice(0, 500)
       .map(
         (w) =>
-          `"${w.workOrderNumber}","${w.propertyName}","${w.unitNumber}","${w.vendorName}","${w.assignedTechnician}","${w.scheduledDate}",${w.estimatedCost},${w.actualCost},"${w.status}"`
+          `"${w.id}","${w.workOrderNumber}","${w.propertyName}","${w.unitNumber}","${w.vendorName}","${w.assignedTechnician}","${w.scheduledDate}","${w.estimatedCost}","${w.actualCost}","${w.status}"`
       )
       .join('\n');
     const blob = new Blob([headers + rows], { type: 'text/csv' });
@@ -45,7 +49,7 @@ export const WorkOrdersPage: React.FC = () => {
   const columns: ColumnDef<WorkOrder>[] = [
     {
       accessorKey: 'workOrderNumber',
-      header: 'Work Order Number',
+      header: t('maintenanceRequests.requestNo'),
       id: 'workOrderNumber',
       cell: ({ row }) => (
         <span onClick={() => navigate({ to: `/maintenance/work-orders/${row.original.id}` })} className="font-bold text-primary hover:underline cursor-pointer">
@@ -53,20 +57,20 @@ export const WorkOrdersPage: React.FC = () => {
         </span>
       ),
     },
-    { accessorKey: 'propertyName', header: 'Property Location', id: 'property' },
-    { accessorKey: 'unitNumber', header: 'Unit', id: 'unit' },
-    { accessorKey: 'vendorName', header: 'Contractor Vendor', id: 'vendor' },
-    { accessorKey: 'assignedTechnician', header: 'Assigned Tech', id: 'tech' },
-    { accessorKey: 'scheduledDate', header: 'Scheduled Date', id: 'date' },
+    { accessorKey: 'propertyName', header: t('maintenanceRequests.propertyLocation'), id: 'property' },
+    { accessorKey: 'unitNumber', header: t('maintenanceRequests.unit'), id: 'unit' },
+    { accessorKey: 'vendorName', header: t('maintenanceWorkOrders.contractorVendor'), id: 'vendor' },
+    { accessorKey: 'assignedTechnician', header: t('maintenanceWorkOrders.assignedTech'), id: 'tech' },
+    { accessorKey: 'scheduledDate', header: t('maintenanceWorkOrders.scheduledDate'), id: 'date' },
     {
       accessorKey: 'estimatedCost',
-      header: 'Est. Cost',
+      header: t('maintenanceWorkOrders.estCost'),
       id: 'estCost',
       cell: ({ row }) => <span>${row.original.estimatedCost.toLocaleString()}</span>,
     },
     {
       accessorKey: 'actualCost',
-      header: 'Actual Cost',
+      header: t('maintenanceWorkOrders.actualCost'),
       id: 'actCost',
       cell: ({ row }) => (
         <span className="font-bold text-rose-500">
@@ -76,13 +80,13 @@ export const WorkOrdersPage: React.FC = () => {
     },
     {
       accessorKey: 'status',
-      header: 'Status',
+      header: t('maintenanceRequests.status'),
       id: 'status',
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
     {
       id: 'actions',
-      header: 'Actions',
+      header: t('maintenanceRequests.actions'),
       cell: ({ row }) => (
         <Button variant="ghost" size="icon" onClick={() => navigate({ to: `/maintenance/work-orders/${row.original.id}` })} title="View Detail">
           <Eye className="w-4 h-4" />
@@ -94,18 +98,18 @@ export const WorkOrdersPage: React.FC = () => {
   return (
     <div>
       <PageHeader
-        title="Work Orders & Dispatches"
-        description="Verify service diagnostics dispatches, material expenses, and vendor logs."
+        title={t('maintenanceWorkOrders.title')}
+        description={t('maintenanceWorkOrders.desc')}
         breadcrumbs={[
-          { label: 'Home', href: '/' },
-          { label: 'Maintenance', href: '/maintenance' },
-          { label: 'Work Orders' },
+          { label: t('header.home'), href: '/' },
+          { label: t('nav.maintenance'), href: '/maintenance' },
+          { label: t('maintenanceWorkOrders.title') },
         ]}
       />
 
       <div className="flex justify-between items-center mb-3">
         <span className="text-xs font-bold text-muted-foreground uppercase">
-          Total {filteredOrders.length} Dispatched Work Orders Found
+          {t('maintenanceWorkOrders.totalFound', { count: filteredOrders.length })}
         </span>
         <Button variant="outline" size="sm" onClick={handleExport} className="text-xs font-semibold flex items-center gap-1.5">
           <Download className="w-3.5 h-3.5" />

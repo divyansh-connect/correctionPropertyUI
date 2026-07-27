@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   useReactTable,
   getCoreRowModel,
@@ -28,9 +29,11 @@ export function DataTable<TData, TValue>({
   data,
   loading = false,
   error = null,
-  emptyStateMessage = 'No results found.',
+  emptyStateMessage,
   onRowClick,
 }: DataTableProps<TData, TValue>) {
+  const { t } = useTranslation();
+  const defaultEmptyMsg = emptyStateMessage || t('common.noResults', 'No se encontraron resultados.');
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnVisibility, setColumnVisibility] = useState({});
   const [showVisibilityMenu, setShowVisibilityMenu] = useState(false);
@@ -161,7 +164,7 @@ export function DataTable<TData, TValue>({
               ) : table.getRowModel().rows.length === 0 ? (
                 <tr>
                   <td colSpan={columns.length} className="p-12 text-center text-muted-foreground">
-                    <p className="text-sm font-medium">{emptyStateMessage}</p>
+                    <p className="text-sm font-medium">{defaultEmptyMsg}</p>
                   </td>
                 </tr>
               ) : (

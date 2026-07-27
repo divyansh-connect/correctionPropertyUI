@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { PageHeader } from '../../components/PageHeader';
 import { FilterBar } from '../../components/FilterBar';
@@ -14,6 +15,7 @@ import { FileTypeIcon } from '../../components/DocumentComponents';
 import { useNavigate } from '@tanstack/react-router';
 
 export const DocsAllPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
@@ -45,21 +47,21 @@ export const DocsAllPage: React.FC = () => {
   });
 
   const columns: ColumnDef<any>[] = [
-    { accessorKey: 'name', header: 'Document Name', id: 'name', cell: ({ row }) => (
+    { accessorKey: 'name', header: t('pmDocuments.docName'), id: 'name', cell: ({ row }) => (
       <div className="flex items-center gap-2">
         <FileTypeIcon name={row.original.name} />
         <span className="font-bold text-sm">{row.original.name}</span>
       </div>
     )},
-    { accessorKey: 'category', header: 'Category', id: 'category', cell: ({ row }) => <span className="text-[9px] font-black uppercase bg-secondary border px-2 py-0.5 rounded">{row.original.category}</span> },
-    { accessorKey: 'folderName', header: 'Folder', id: 'folder' },
-    { accessorKey: 'owner', header: 'Owner', id: 'owner' },
-    { accessorKey: 'property', header: 'Property', id: 'property' },
-    { accessorKey: 'size', header: 'Size', id: 'size' },
-    { accessorKey: 'version', header: 'Version', id: 'version', cell: ({ row }) => <span className="font-bold">v{row.original.version}</span> },
-    { accessorKey: 'status', header: 'Status', id: 'status', cell: ({ row }) => <StatusBadge status={row.original.status} /> },
-    { accessorKey: 'updatedAt', header: 'Updated', id: 'updated' },
-    { id: 'actions', header: 'Actions', cell: ({ row }) => (
+    { accessorKey: 'category', header: t('pmDocuments.category'), id: 'category', cell: ({ row }) => <span className="text-[9px] font-black uppercase bg-secondary border px-2 py-0.5 rounded">{row.original.category}</span> },
+    { accessorKey: 'folderName', header: t('pmDocuments.folder'), id: 'folder' },
+    { accessorKey: 'owner', header: t('pmDocuments.owner'), id: 'owner' },
+    { accessorKey: 'property', header: t('pmDocuments.property'), id: 'property' },
+    { accessorKey: 'size', header: t('pmDocuments.size'), id: 'size' },
+    { accessorKey: 'version', header: t('pmDocuments.version'), id: 'version', cell: ({ row }) => <span className="font-bold">v{row.original.version}</span> },
+    { accessorKey: 'status', header: t('pmDocuments.status'), id: 'status', cell: ({ row }) => <StatusBadge status={row.original.status} /> },
+    { accessorKey: 'updatedAt', header: t('pmDocuments.updated'), id: 'updated' },
+    { id: 'actions', header: t('pmDocuments.actions'), cell: ({ row }) => (
       <div className="flex gap-1">
         <Button variant="ghost" size="sm" className="text-[9px]" onClick={() => alert(`Downloading ${row.original.name}`)}>Download</Button>
         <Button variant="ghost" size="sm" className="text-[9px] text-rose-500" onClick={() => archiveMutation.mutate(row.original.id)}>Archive</Button>
@@ -72,10 +74,10 @@ export const DocsAllPage: React.FC = () => {
   return (
     <div>
       <PageHeader
-        title="All Documents Library"
-        description="Browse, search, filter, and manage all uploaded files across properties, tenants, and leases."
-        breadcrumbs={[{ label: 'Documents', href: '/documents' }, { label: 'All Documents' }]}
-        action={{ label: 'Upload Document', onClick: () => navigate({ to: '/documents/upload' }), icon: <Upload className="w-4 h-4" /> }}
+        title={t('pmDocuments.allTitle')}
+        description={t('pmDocuments.allDesc')}
+        breadcrumbs={[{ label: t('header.home'), href: '/' }, { label: t('nav.documents'), href: '/documents' }, { label: t('pmDocuments.allTitle') }]}
+        action={{ label: t('pmDocuments.uploadDocument'), onClick: () => navigate({ to: '/documents/upload' }), icon: <Upload className="w-4 h-4" /> }}
       />
 
       {/* Role Filters */}
@@ -86,7 +88,7 @@ export const DocsAllPage: React.FC = () => {
             roleFilter === 'all' ? 'bg-primary text-primary-foreground shadow-sm' : 'hover:bg-secondary text-muted-foreground'
           }`}
         >
-          All Documents
+          {t('pmDocuments.allDocsTab')}
         </button>
         <button
           onClick={() => setRoleFilter('owner')}
@@ -94,7 +96,7 @@ export const DocsAllPage: React.FC = () => {
             roleFilter === 'owner' ? 'bg-primary text-primary-foreground shadow-sm' : 'hover:bg-secondary text-muted-foreground'
           }`}
         >
-          Owner Documents
+          {t('pmDocuments.ownerDocsTab')}
         </button>
         <button
           onClick={() => setRoleFilter('tenant')}
@@ -102,7 +104,7 @@ export const DocsAllPage: React.FC = () => {
             roleFilter === 'tenant' ? 'bg-primary text-primary-foreground shadow-sm' : 'hover:bg-secondary text-muted-foreground'
           }`}
         >
-          Tenant Documents
+          {t('pmDocuments.tenantDocsTab')}
         </button>
       </div>
 
@@ -111,9 +113,9 @@ export const DocsAllPage: React.FC = () => {
           <FilterBar
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
-            searchPlaceholder="Search documents by name..."
+            searchPlaceholder={t('pmDocuments.searchDocs')}
             filters={[{
-              key: 'category', value: categoryFilter, placeholder: 'Category',
+              key: 'category', value: categoryFilter, placeholder: t('pmDocuments.category'),
               options: ['Lease','Invoice','Receipt','Statement','Inspection','Maintenance','Tax','Insurance','Contract','Legal','Other'].map(c => ({ label: c, value: c })),
             }]}
             onFilterChange={(k, v) => { if (k === 'category') setCategoryFilter(v); }}

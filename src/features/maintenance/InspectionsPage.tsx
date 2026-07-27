@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
+import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { InspectionRecord } from '../../types';
 import { PageHeader } from '../../components/PageHeader';
@@ -14,6 +15,7 @@ import { Plus, Eye, Trash2, Printer } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
 
 export const InspectionsPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
@@ -37,13 +39,13 @@ export const InspectionsPage: React.FC = () => {
   );
 
   const columns: ColumnDef<InspectionRecord>[] = [
-    { accessorKey: 'propertyName', header: 'Property Location', id: 'property', cell: ({ row }) => <span className="font-bold">{row.original.propertyName}</span> },
-    { accessorKey: 'unitNumber', header: 'Unit', id: 'unit' },
-    { accessorKey: 'type', header: 'Inspection Type', id: 'type' },
-    { accessorKey: 'date', header: 'Inspection Date', id: 'date' },
+    { accessorKey: 'propertyName', header: t('maintenanceRequests.propertyLocation'), id: 'property', cell: ({ row }) => <span className="font-bold">{row.original.propertyName}</span> },
+    { accessorKey: 'unitNumber', header: t('maintenanceRequests.unit'), id: 'unit' },
+    { accessorKey: 'type', header: t('maintenanceInspections.inspectionType'), id: 'type' },
+    { accessorKey: 'date', header: t('maintenanceWorkOrders.scheduledDate'), id: 'date' },
     {
       accessorKey: 'checklist',
-      header: 'Fails / Checklist',
+      header: t('maintenanceInspections.results'),
       id: 'fails',
       cell: ({ row }) => {
         const fails = row.original.checklist.filter((item) => item.status === 'Fail').length;
@@ -56,13 +58,13 @@ export const InspectionsPage: React.FC = () => {
     },
     {
       accessorKey: 'status',
-      header: 'Status',
+      header: t('maintenanceRequests.status'),
       id: 'status',
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
     {
       id: 'actions',
-      header: 'Actions',
+      header: t('maintenanceRequests.actions'),
       cell: ({ row }) => (
         <div className="flex space-x-1">
           <Button variant="ghost" size="icon" onClick={() => setSelectedIns(row.original)} title="View Checklist">
@@ -85,24 +87,19 @@ export const InspectionsPage: React.FC = () => {
   return (
     <div>
       <PageHeader
-        title="Property Inspections Log"
-        description="Verify move-in, move-out, safety audits, and routine checklist records."
+        title={t('maintenanceInspections.title')}
+        description={t('maintenanceInspections.desc')}
         breadcrumbs={[
-          { label: 'Home', href: '/' },
-          { label: 'Maintenance', href: '/maintenance' },
-          { label: 'Inspections' },
+          { label: t('header.home'), href: '/' },
+          { label: t('nav.maintenance'), href: '/maintenance' },
+          { label: t('maintenanceInspections.title') },
         ]}
-        action={{
-          label: 'Record Inspection Wizard',
-          onClick: () => navigate({ to: '/inspections/new' }),
-          icon: <Plus className="w-4.5 h-4.5" />,
-        }}
       />
 
       <FilterBar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        searchPlaceholder="Search inspections by property or type..."
+        searchPlaceholder={t('maintenanceRequests.searchPlaceholder')}
         onReset={() => setSearchQuery('')}
       />
 

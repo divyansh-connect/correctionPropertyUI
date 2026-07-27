@@ -5,6 +5,8 @@ import { StatusBadge } from './StatusBadge';
 import { FileText, ShieldAlert, Wrench, Download, Send, Star } from 'lucide-react';
 import { clsx } from 'clsx';
 
+import { useTranslation } from 'react-i18next';
+
 // --- OWNER SUMMARY CARD ---
 interface OwnerSummaryCardProps {
   title: string;
@@ -137,6 +139,7 @@ interface OwnerMessageThreadProps {
 }
 
 export const OwnerMessageThread: React.FC<OwnerMessageThreadProps> = ({ messages, onReply }) => {
+  const { t } = useTranslation();
   const [replyText, setReplyText] = React.useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -170,12 +173,12 @@ export const OwnerMessageThread: React.FC<OwnerMessageThreadProps> = ({ messages
         <input
           type="text"
           className="flex-1 text-xs p-2.5 rounded-lg border bg-card text-foreground"
-          placeholder="Type message to management team..."
+          placeholder={t('owner.messages.typePlaceholder')}
           value={replyText}
           onChange={(e) => setReplyText(e.target.value)}
         />
         <Button type="submit" size="sm" className="flex items-center gap-1">
-          <Send className="w-3.5 h-3.5" /> Send
+          <Send className="w-3.5 h-3.5" /> {t('owner.messages.send')}
         </Button>
       </form>
     </Card>

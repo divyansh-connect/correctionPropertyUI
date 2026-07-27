@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { PageHeader } from '../../components/PageHeader';
 import { Button } from '../../components/ui/Button';
 import { StatusBadge } from '../../components/StatusBadge';
@@ -19,6 +20,7 @@ interface MoveInOutPageProps {
 }
 
 export const MoveInOutPage: React.FC<MoveInOutPageProps> = ({ type }) => {
+  const { t } = useTranslation();
   const [moves, setMoves] = React.useState<MoveEvent[]>([
     { id: '1', tenantName: 'Alice Smith', propertyName: 'Oakridge Heights', unitNumber: '101', date: '2026-08-01', type: 'Move In', status: 'Scheduled' },
     { id: '2', tenantName: 'Bob Garcia', propertyName: 'Sunset Villas', unitNumber: '204', date: '2026-07-31', type: 'Move Out', status: 'Pending Inspection' },
@@ -80,17 +82,22 @@ export const MoveInOutPage: React.FC<MoveInOutPageProps> = ({ type }) => {
     setShowForm(false);
   };
 
+  const titleText = type === 'Move In' ? t('pmLeasing.moveInTitle') : type === 'Move Out' ? t('pmLeasing.moveOutTitle') : "Move In / Move Out Inspections";
+  const descText = type === 'Move In' ? t('pmLeasing.moveInDesc') : type === 'Move Out' ? t('pmLeasing.moveOutDesc') : "Verify upcoming resident move schedules, key handovers, and condition reports.";
+  const actionText = type === 'Move In' ? t('pmLeasing.scheduleMoveIn') : type === 'Move Out' ? t('pmLeasing.scheduleMoveOut') : "Schedule Move";
+
   return (
     <div className="space-y-6">
       <PageHeader
-        title={type ? `${type} Registry` : "Move In / Move Out Inspections"}
-        description={type ? `Manage scheduled ${type.toLowerCase()} dates, tenant keys, and unit inspect forms.` : "Verify upcoming resident move schedules, key handovers, and condition reports."}
+        title={titleText}
+        description={descText}
         breadcrumbs={[
-          { label: 'Leasing', href: '/leasing/leases' },
-          { label: type || 'Move In Out' },
+          { label: t('header.home'), href: '/' },
+          { label: t('nav.leasing'), href: '/leasing' },
+          { label: titleText },
         ]}
         action={{
-          label: editingId ? 'Edit Event' : `Schedule ${type || 'Move'}`,
+          label: editingId ? 'Edit Event' : actionText,
           onClick: () => {
             if (showForm) {
               setEditingId(null);
@@ -142,6 +149,7 @@ export const MoveInOutPage: React.FC<MoveInOutPageProps> = ({ type }) => {
               <label className="text-[10px] font-bold text-muted-foreground uppercase">Scheduled Date</label>
               <input 
                 type="date" 
+                required 
                 value={form.date} 
                 onChange={e => setForm(prev => ({ ...prev, date: e.target.value }))}
                 className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold" 
@@ -172,13 +180,13 @@ export const MoveInOutPage: React.FC<MoveInOutPageProps> = ({ type }) => {
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-muted/50 border-b text-muted-foreground font-bold uppercase tracking-wider">
-                <th className="p-4">Resident</th>
-                <th className="p-4">Property</th>
-                <th className="p-4">Unit #</th>
-                <th className="p-4">Scheduled Date</th>
-                <th className="p-4">Type</th>
-                <th className="p-4">Inspection Status</th>
-                <th className="p-4 text-right">Actions</th>
+                <th className="p-4">{t('pmLeasing.resident')}</th>
+                <th className="p-4">{t('pmLeasing.property')}</th>
+                <th className="p-4">{t('pmLeasing.unit')}</th>
+                <th className="p-4">{t('pmLeasing.scheduledDate')}</th>
+                <th className="p-4">{t('pmLeasing.type')}</th>
+                <th className="p-4">{t('pmLeasing.inspectionStatus')}</th>
+                <th className="p-4 text-right">{t('pmLeasing.actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y font-medium text-foreground">
