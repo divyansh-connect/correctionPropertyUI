@@ -31,19 +31,19 @@ export const OwnerStatementsPage: React.FC = () => {
       accessorKey: 'income',
       header: t('ownerStatementsPage.grossIncome'),
       id: 'income',
-      cell: ({ row }) => <span>${row.original.income.toLocaleString()}</span>,
+      cell: ({ row }) => <span>${(Number(row.original.income || row.original.totalIncome) || 0).toLocaleString()}</span>,
     },
     {
       accessorKey: 'expenses',
       header: t('ownerStatementsPage.totalExpenses'),
       id: 'expenses',
-      cell: ({ row }) => <span className="text-rose-500 font-semibold">${row.original.expenses.toLocaleString()}</span>,
+      cell: ({ row }) => <span className="text-rose-500 font-semibold">${(Number(row.original.expenses || row.original.totalExpenses) || 0).toLocaleString()}</span>,
     },
     {
       accessorKey: 'netDistribution',
       header: t('ownerStatementsPage.netDistribution'),
       id: 'netDistribution',
-      cell: ({ row }) => <span className="font-extrabold text-emerald-500">${row.original.netDistribution.toLocaleString()}</span>,
+      cell: ({ row }) => <span className="font-extrabold text-emerald-500">${(Number(row.original.netDistribution) || 0).toLocaleString()}</span>,
     },
     {
       accessorKey: 'status',

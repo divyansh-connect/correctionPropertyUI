@@ -29,7 +29,7 @@ export const OwnerDistributionsPage: React.FC = () => {
       accessorKey: 'amount',
       header: t('owner.distributions.amount'),
       id: 'amount',
-      cell: ({ row }) => <span className="font-extrabold text-emerald-500">${row.original.amount.toLocaleString()}</span>,
+      cell: ({ row }) => <span className="font-extrabold text-emerald-500">${(Number(row.original.amount) || 0).toLocaleString()}</span>,
     },
     { accessorKey: 'method', header: t('owner.distributions.method'), id: 'method' },
     {

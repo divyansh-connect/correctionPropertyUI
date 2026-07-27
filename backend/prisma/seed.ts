@@ -411,6 +411,78 @@ async function main() {
     });
   }
 
+  // 15. Create SaaS Companies & Company Users
+  const companyCount = await prisma.company.count();
+  if (companyCount === 0) {
+    const apex = await prisma.company.create({
+      data: {
+        name: 'Apex Property Management',
+        code: 'APEX',
+        contactName: 'Sarah Davis',
+        email: 'contact@apexpm.com',
+        phone: '(512) 555-0100',
+        planName: 'Enterprise SaaS',
+        storageUsed: '4.8 GB',
+        status: 'Active',
+      },
+    });
+
+    const skyline = await prisma.company.create({
+      data: {
+        name: 'Skyline Investment Group',
+        code: 'SKYL',
+        contactName: 'Robert Vance',
+        email: 'info@skylineig.com',
+        phone: '(415) 555-0199',
+        planName: 'Pro Plan',
+        storageUsed: '2.1 GB',
+        status: 'Active',
+      },
+    });
+
+    const summit = await prisma.company.create({
+      data: {
+        name: 'Summit Property Partners',
+        code: 'SUMM',
+        contactName: 'Jessica Taylor',
+        email: 'admin@summitpp.com',
+        phone: '(212) 555-0142',
+        planName: 'Growth Plan',
+        storageUsed: '850 MB',
+        status: 'Active',
+      },
+    });
+
+    await prisma.companyUser.createMany({
+      data: [
+        { companyId: apex.id, name: 'Sarah Davis', email: 'sarah@apexpm.com', role: 'Super Admin', status: 'Active' },
+        { companyId: apex.id, name: 'Mark Miller', email: 'mark@apexpm.com', role: 'Property Manager', status: 'Active' },
+        { companyId: skyline.id, name: 'Robert Vance', email: 'robert@skylineig.com', role: 'Owner Admin', status: 'Active' },
+        { companyId: summit.id, name: 'Jessica Taylor', email: 'jessica@summitpp.com', role: 'Billing Admin', status: 'Active' },
+      ],
+    });
+
+    await prisma.saaSInvoice.createMany({
+      data: [
+        { companyId: apex.id, companyName: apex.name, amount: 499.0, status: 'Paid', dueDate: new Date('2026-07-01'), paidDate: new Date('2026-07-01') },
+        { companyId: skyline.id, companyName: skyline.name, amount: 299.0, status: 'Paid', dueDate: new Date('2026-07-01'), paidDate: new Date('2026-07-01') },
+        { companyId: summit.id, companyName: summit.name, amount: 149.0, status: 'Paid', dueDate: new Date('2026-07-01'), paidDate: new Date('2026-07-01') },
+      ],
+    });
+  }
+
+  // 16. Create SaaS Plans
+  const saasPlanCount = await prisma.saaSPlan.count();
+  if (saasPlanCount === 0) {
+    await prisma.saaSPlan.createMany({
+      data: [
+        { name: 'Starter Plan', price: 99.0, billingCycle: 'Monthly', maxProperties: 10, maxUnits: 100, features: 'Core Accounting, Basic Reporting, Portal Access' },
+        { name: 'Pro Plan', price: 299.0, billingCycle: 'Monthly', maxProperties: 50, maxUnits: 500, features: 'Advanced Accounting, CRM, Online Payments, Tenant Screening' },
+        { name: 'Enterprise SaaS', price: 499.0, billingCycle: 'Monthly', maxProperties: 500, maxUnits: 5000, features: 'Unlimited Users, Dedicated Support, Custom Workflows, API Access' },
+      ],
+    });
+  }
+
   console.log('✅ DoorLoop ERP Database Seeding Completed!');
 }
 
@@ -422,3 +494,4 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+

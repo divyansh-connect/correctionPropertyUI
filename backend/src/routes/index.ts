@@ -11,6 +11,7 @@ import workOrderRoutes from './workorder.routes';
 import dashboardRoutes from './dashboard.routes';
 import secondaryRoutes from './secondary.routes';
 import portalRoutes from './portal.routes';
+import superAdminRoutes from './superadmin.routes';
 
 const router = Router();
 
@@ -33,6 +34,7 @@ router.use('/vendors', vendorRoutes);
 router.use('/work-orders', workOrderRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/portal', portalRoutes);
+router.use('/superadmin', superAdminRoutes);
 router.use('/', secondaryRoutes);
 
 export default router;

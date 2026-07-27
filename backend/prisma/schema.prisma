@@ -133,6 +133,7 @@ model Owner {
   lastName             String
   email                String              @unique
   phone                String
+  streetAddress        String?
   payoutMethod         String              @default("ACH/Direct Deposit")
   propertiesOwnedCount Int                 @default(0)
   createdAt            DateTime            @default(now())
@@ -533,4 +534,97 @@ model Violation {
 
   @@map("violations")
 }
+
+model Company {
+  id          String        @id @default(uuid())
+  name        String
+  code        String        @unique
+  contactName String
+  email       String        @unique
+  phone       String
+  planName    String        @default("Pro Plan")
+  storageUsed String        @default("1.2 GB")
+  status      String        @default("Active")
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  users       CompanyUser[]
+  invoices    SaaSInvoice[]
+
+  @@map("companies")
+}
+
+model CompanyUser {
+  id        String   @id @default(uuid())
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name      String
+  email     String   @unique
+  role      String   @default("Admin")
+  status    String   @default("Active")
+  createdAt DateTime @default(now())
+
+  @@map("company_users")
+}
+
+model SaaSPlan {
+  id            String   @id @default(uuid())
+  name          String   @unique
+  price         Float
+  billingCycle  String   @default("Monthly")
+  maxProperties Int      @default(50)
+  maxUnits      Int      @default(500)
+  features      String   @db.Text
+  createdAt     DateTime @default(now())
+
+  @@map("saas_plans")
+}
+
+model SaaSInvoice {
+  id          String    @id @default(uuid())
+  companyId   String
+  company     Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  companyName String
+  amount      Float
+  status      String    @default("Paid")
+  dueDate     DateTime
+  paidDate    DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@map("saas_invoices")
+}
+
+model PlatformSetting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
+
+  @@map("platform_settings")
+}
+
+model OwnerDocument {
+  id         String   @id @default(uuid())
+  name       String
+  category   String   @default("Statements")
+  size       String   @default("1.2 MB")
+  uploadedAt DateTime @default(now())
+  fileUrl    String?
+
+  @@map("owner_documents")
+}
+
+model OwnerMessage {
+  id        String   @id @default(uuid())
+  sender    String
+  recipient String
+  subject   String
+  body      String   @db.Text
+  createdAt DateTime @default(now())
+
+  @@map("owner_messages")
+}
+
+
+
 

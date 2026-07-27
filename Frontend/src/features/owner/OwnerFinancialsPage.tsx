@@ -35,7 +35,7 @@ export const OwnerFinancialsPage: React.FC = () => {
       accessorKey: 'amount',
       header: t('owner.financials.grossRevenue'),
       id: 'amount',
-      cell: ({ row }) => <span className="font-extrabold text-emerald-500">${row.original.amount.toLocaleString()}</span>,
+      cell: ({ row }) => <span className="font-extrabold text-emerald-500">${(Number(row.original.amount) || 0).toLocaleString()}</span>,
     },
   ];
 

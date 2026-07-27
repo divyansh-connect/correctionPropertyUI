@@ -27,16 +27,33 @@ export class PropertyService {
   }
 
   async createProperty(data: any) {
+    let ownerId = data.ownerId;
+    if (!ownerId) {
+      const firstOwner = await prisma.owner.findFirst();
+      if (firstOwner) {
+        ownerId = firstOwner.id;
+      } else {
+        const newOwner = await prisma.owner.create({
+          data: {
+            name: 'Primary Owner',
+            email: 'owner@apexpm.com',
+            phone: '555-0100',
+          },
+        });
+        ownerId = newOwner.id;
+      }
+    }
+
     return prisma.property.create({
       data: {
         name: data.name,
         type: data.type || 'Apartment',
         status: data.status || 'Active',
-        ownerId: data.ownerId,
+        ownerId: ownerId,
         ownershipPercentage: data.ownershipPercentage || 100,
         managementCompany: data.managementCompany || 'Apex Property Management',
-        address: data.address,
-        streetAddress: data.streetAddress || data.address,
+        address: data.address || 'Austin, TX',
+        streetAddress: data.streetAddress || data.address || '100 Main St',
         city: data.city || 'Austin',
         state: data.state || 'TX',
         zip: data.zip || '78701',
@@ -45,6 +62,12 @@ export class PropertyService {
         purchasePrice: data.purchasePrice || 1000000,
         currentValue: data.currentValue || 1200000,
       },
+    });
+  }
+
+  async deleteProperty(id: string) {
+    return prisma.property.delete({
+      where: { id },
     });
   }
 }

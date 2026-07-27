@@ -214,6 +214,13 @@ import { CommSettingsPage } from '../features/communication/CommSettingsPage';
 // --- ROOT ROUTE ---
 const rootRoute = createRootRoute({
   component: () => <Outlet />,
+  errorComponent: ({ error }: { error?: any }) => (
+    <div className="p-8 space-y-4 max-w-lg mx-auto text-center font-sans">
+      <h2 className="text-xl font-bold text-rose-500">Route Error</h2>
+      <p className="text-xs text-muted-foreground">{error?.message || 'An unexpected error occurred.'}</p>
+      <button onClick={() => window.location.reload()} className="px-4 py-2 bg-primary text-white text-xs font-bold rounded-lg">Reload Page</button>
+    </div>
+  ),
 });
 
 // --- ACCESS DENIED PAGE ---
@@ -1937,23 +1944,52 @@ const settingsRoute = createRoute({
 const CompaniesPage: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const [companies, setCompanies] = React.useState<any[]>(() => {
-    const stored = localStorage.getItem('companies');
-    if (stored) return JSON.parse(stored);
-    const initial = [
-      { id: '1', name: 'Apex Property Management', businessName: 'Apex PM LLC', code: 'APEX', contact: 'Sarah Davis', email: 'sarah@apexpm.com', phone: '555-0199', website: 'apexpm.com', status: 'Active', plan: 'Pro Plan', cycle: 'Monthly', storage: '1.2 GB', date: '2026-01-15' },
-      { id: '2', name: 'Horizon Living', businessName: 'Horizon Rentals Inc', code: 'HRZN', contact: 'Mark Wilson', email: 'mark@horizon.com', phone: '555-0244', website: 'horizonrentals.com', status: 'Active', plan: 'Basic Plan', cycle: 'Annual', storage: '800 MB', date: '2026-03-22' },
-      { id: '3', name: 'Summit Group', businessName: 'Summit Land Corp', code: 'SMMT', contact: 'Rachel Green', email: 'rachel@summit.com', phone: '555-0311', website: 'summitland.com', status: 'Suspended', plan: 'Enterprise Plan', cycle: 'Monthly', storage: '2.4 GB', date: '2026-02-10' }
-    ];
-    localStorage.setItem('companies', JSON.stringify(initial));
-    return initial;
-  });
+  const [companies, setCompanies] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState<boolean>(true);
+  const [searchQuery, setSearchQuery] = React.useState<string>('');
 
-  const handleStatusChange = (id: string, newStatus: string) => {
-    const updated = companies.map((c: any) => c.id === id ? { ...c, status: newStatus } : c);
-    setCompanies(updated);
-    localStorage.setItem('companies', JSON.stringify(updated));
+  const fetchCompanies = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await api.companies.getAll();
+      setCompanies(data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    fetchCompanies();
+  }, [fetchCompanies]);
+
+  const handleStatusChange = async (id: string, newStatus: string) => {
+    try {
+      await api.companies.update(id, { status: newStatus });
+      fetchCompanies();
+    } catch (e) {
+      console.error(e);
+    }
   };
+
+  const handleDelete = async (id: string) => {
+    if (window.confirm('Are you sure you want to delete this company?')) {
+      try {
+        await api.companies.delete(id);
+        fetchCompanies();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  };
+
+  const filteredCompanies = companies.filter((c: any) =>
+    (c.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (c.code || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (c.contact || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (c.email || '').toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="space-y-6">
@@ -1971,56 +2007,79 @@ const CompaniesPage: React.FC = () => {
         <div className="p-4 border-b flex justify-between items-center bg-card/65 backdrop-blur">
           <div className="relative max-w-sm w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <input placeholder={t('companiesPage.searchPlaceholder')} className="pl-9 pr-4 py-2 w-full text-xs font-semibold rounded-lg bg-secondary border focus:outline-none focus:ring-1 focus:ring-primary" />
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={t('companiesPage.searchPlaceholder')}
+              className="pl-9 pr-4 py-2 w-full text-xs font-semibold rounded-lg bg-secondary border focus:outline-none focus:ring-1 focus:ring-primary"
+            />
           </div>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="bg-muted/50 border-b text-muted-foreground font-bold uppercase tracking-wider">
-                <th className="p-4">{t('companiesPage.companyDetails')}</th>
-                <th className="p-4">{t('companiesPage.code')}</th>
-                <th className="p-4">{t('companiesPage.contact')}</th>
-                <th className="p-4">{t('companiesPage.planAndCycle')}</th>
-                <th className="p-4">{t('companiesPage.storage')}</th>
-                <th className="p-4">{t('companiesPage.status')}</th>
-                <th className="p-4">{t('companiesPage.createdDate')}</th>
-                <th className="p-4 text-right">{t('companiesPage.actions')}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y font-medium text-foreground">
-              {companies.map((c: any) => (
-                <tr key={c.id} className="hover:bg-accent/40 transition">
-                  <td className="p-4">
-                    <div className="font-extrabold text-sm text-primary cursor-pointer hover:underline" onClick={() => navigate({ to: `/companies/details` })}>{c.name}</div>
-                    <div className="text-[10px] text-muted-foreground font-semibold">{c.businessName} • {c.website}</div>
-                  </td>
-                  <td className="p-4 font-mono font-bold text-foreground/80">{c.code}</td>
-                  <td className="p-4">
-                    <div>{c.contact}</div>
-                    <div className="text-[10px] text-muted-foreground font-semibold">{c.email} • {c.phone}</div>
-                  </td>
-                  <td className="p-4">
-                    <StatusBadge status={c.plan} />
-                    <div className="text-[10px] text-muted-foreground font-semibold mt-1">{c.cycle} {t('companiesPage.billing')}</div>
-                  </td>
-                  <td className="p-4 font-bold">{c.storage}</td>
-                  <td className="p-4">
-                    <StatusBadge status={c.status} />
-                  </td>
-                  <td className="p-4 text-muted-foreground font-mono">{c.date}</td>
-                  <td className="p-4 text-right space-x-1 whitespace-nowrap">
-                    <Button variant="ghost" size="icon" onClick={() => navigate({ to: `/companies/details` })}><Eye className="w-4 h-4" /></Button>
-                    {c.status === 'Active' ? (
-                      <Button variant="ghost" size="icon" onClick={() => handleStatusChange(c.id, 'Suspended')} className="text-rose-500 hover:text-rose-600"><Ban className="w-4 h-4" /></Button>
-                    ) : (
-                      <Button variant="ghost" size="icon" onClick={() => handleStatusChange(c.id, 'Active')} className="text-emerald-500 hover:text-emerald-600"><CheckCircle className="w-4 h-4" /></Button>
-                    )}
-                  </td>
+          {loading ? (
+            <div className="p-6 text-xs text-muted-foreground">Loading companies from database...</div>
+          ) : (
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-muted/50 border-b text-muted-foreground font-bold uppercase tracking-wider">
+                  <th className="p-4">{t('companiesPage.companyDetails')}</th>
+                  <th className="p-4">{t('companiesPage.code')}</th>
+                  <th className="p-4">{t('companiesPage.contact')}</th>
+                  <th className="p-4">{t('companiesPage.planAndCycle')}</th>
+                  <th className="p-4">{t('companiesPage.storage')}</th>
+                  <th className="p-4">{t('companiesPage.status')}</th>
+                  <th className="p-4">{t('companiesPage.createdDate')}</th>
+                  <th className="p-4 text-right">{t('companiesPage.actions')}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y font-medium text-foreground">
+                {filteredCompanies.map((c: any) => (
+                  <tr key={c.id} className="hover:bg-accent/40 transition">
+                    <td className="p-4">
+                      <div
+                        className="font-extrabold text-sm text-primary cursor-pointer hover:underline"
+                        onClick={() => navigate({ to: '/companies/details', search: { id: c.id } as any })}
+                      >
+                        {c.name}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground font-semibold">{c.businessName} • {c.website}</div>
+                    </td>
+                    <td className="p-4 font-mono font-bold text-foreground/80">{c.code}</td>
+                    <td className="p-4">
+                      <div>{c.contact}</div>
+                      <div className="text-[10px] text-muted-foreground font-semibold">{c.email} • {c.phone}</div>
+                    </td>
+                    <td className="p-4">
+                      <StatusBadge status={c.plan} />
+                      <div className="text-[10px] text-muted-foreground font-semibold mt-1">{c.cycle} {t('companiesPage.billing')}</div>
+                    </td>
+                    <td className="p-4 font-bold">{c.storage}</td>
+                    <td className="p-4">
+                      <StatusBadge status={c.status} />
+                    </td>
+                    <td className="p-4 text-muted-foreground font-mono">{c.date}</td>
+                    <td className="p-4 text-right space-x-1 whitespace-nowrap">
+                      <Button variant="ghost" size="icon" onClick={() => navigate({ to: '/companies/details', search: { id: c.id } as any })}>
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                      {c.status === 'Active' ? (
+                        <Button variant="ghost" size="icon" onClick={() => handleStatusChange(c.id, 'Suspended')} className="text-rose-500 hover:text-rose-600">
+                          <Ban className="w-4 h-4" />
+                        </Button>
+                      ) : (
+                        <Button variant="ghost" size="icon" onClick={() => handleStatusChange(c.id, 'Active')} className="text-emerald-500 hover:text-emerald-600">
+                          <CheckCircle className="w-4 h-4" />
+                        </Button>
+                      )}
+                      <Button variant="ghost" size="icon" onClick={() => handleDelete(c.id)} className="text-rose-600 hover:text-rose-700">
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
     </div>
@@ -2032,80 +2091,55 @@ const NewCompanyPage: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [success, setSuccess] = React.useState(false);
+  const [errorMsg, setErrorMsg] = React.useState('');
+  const [plans, setPlans] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(false);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  React.useEffect(() => {
+    api.plans.getAll().then(setPlans).catch(console.error);
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setErrorMsg('');
+    setLoading(true);
     const target = e.currentTarget;
     const name = (target.elements.namedItem('companyName') as HTMLInputElement).value;
-    const businessName = (target.elements.namedItem('businessName') as HTMLInputElement).value;
     const code = (target.elements.namedItem('companyCode') as HTMLInputElement).value;
     const contact = (target.elements.namedItem('contactPerson') as HTMLInputElement).value;
     const email = (target.elements.namedItem('email') as HTMLInputElement).value;
     const phone = (target.elements.namedItem('phone') as HTMLInputElement).value;
-    const website = (target.elements.namedItem('website') as HTMLInputElement).value;
     const plan = (target.elements.namedItem('plan') as HTMLSelectElement).value;
 
-    const stored = localStorage.getItem('companies');
-    let companiesList: any[] = [];
-    if (stored) {
-      companiesList = JSON.parse(stored);
-    } else {
-      companiesList = [
-        { id: '1', name: 'Apex Property Management', businessName: 'Apex PM LLC', code: 'APEX', contact: 'Sarah Davis', email: 'sarah@apexpm.com', phone: '555-0199', website: 'apexpm.com', status: 'Active', plan: 'Pro Plan', cycle: 'Monthly', storage: '1.2 GB', date: '2026-01-15' },
-        { id: '2', name: 'Horizon Living', businessName: 'Horizon Rentals Inc', code: 'HRZN', contact: 'Mark Wilson', email: 'mark@horizon.com', phone: '555-0244', website: 'horizonrentals.com', status: 'Active', plan: 'Basic Plan', cycle: 'Annual', storage: '800 MB', date: '2026-03-22' },
-        { id: '3', name: 'Summit Group', businessName: 'Summit Land Corp', code: 'SMMT', contact: 'Rachel Green', email: 'rachel@summit.com', phone: '555-0311', website: 'summitland.com', status: 'Suspended', plan: 'Enterprise Plan', cycle: 'Monthly', storage: '2.4 GB', date: '2026-02-10' }
-      ];
+    try {
+      const company = await api.companies.create({
+        name,
+        code: code.toUpperCase(),
+        contactName: contact,
+        email,
+        phone,
+        planName: plan,
+      });
+
+      if (company && company.id) {
+        await api.companyUsers.create({
+          companyId: company.id,
+          name: contact,
+          email,
+          role: 'Admin',
+        });
+      }
+
+      setSuccess(true);
+      setTimeout(() => {
+        navigate({ to: '/companies' });
+      }, 1200);
+    } catch (err: any) {
+      console.error(err);
+      setErrorMsg(err.message || 'Failed to create company. Please check code or email uniqueness.');
+    } finally {
+      setLoading(false);
     }
-
-    const newCompany = {
-      id: `company-${Date.now()}`,
-      name,
-      businessName: businessName || 'N/A',
-      code: code.toUpperCase(),
-      contact,
-      email,
-      phone: phone || 'N/A',
-      website: website || 'N/A',
-      status: 'Active',
-      plan,
-      cycle: 'Monthly',
-      storage: '0 MB',
-      date: new Date().toISOString().split('T')[0]
-    };
-
-    const updatedList = [...companiesList, newCompany];
-    localStorage.setItem('companies', JSON.stringify(updatedList));
-
-    // Also register the primary contact person as the first administrator user for this company
-    const storedUsers = localStorage.getItem('company_users');
-    let usersList: any[] = [];
-    if (storedUsers) {
-      usersList = JSON.parse(storedUsers);
-    } else {
-      usersList = [
-        { name: 'Sarah Davis', email: 'sarah@apexpm.com', role: 'Administrator', status: 'Active', lastLogin: '2026-07-20 04:33', companyName: 'Apex Property Management' },
-        { name: 'David Miller', email: 'david@apexpm.com', role: 'Property Manager', status: 'Active', lastLogin: '2026-07-19 16:10', companyName: 'Apex Property Management' },
-        { name: 'Emma Wilson', email: 'emma@apexpm.com', role: 'Staff Member', status: 'Active', lastLogin: '2026-07-20 01:24', companyName: 'Apex Property Management' },
-        { name: 'John Horizon', email: 'john@horizon.com', role: 'Administrator', status: 'Active', lastLogin: '2026-07-20 08:12', companyName: 'Horizon Living' },
-        { name: 'Rachel Summit', email: 'rachel@summit.com', role: 'Administrator', status: 'Active', lastLogin: '2026-07-19 12:45', companyName: 'Summit Group' }
-      ];
-    }
-
-    const newCompanyUser = {
-      name: contact,
-      email: email,
-      role: 'Administrator',
-      status: 'Active',
-      lastLogin: 'Just Registered',
-      companyName: name
-    };
-
-    localStorage.setItem('company_users', JSON.stringify([...usersList, newCompanyUser]));
-
-    setSuccess(true);
-    setTimeout(() => {
-      navigate({ to: '/companies' });
-    }, 1200);
   };
 
   return (
@@ -2118,6 +2152,11 @@ const NewCompanyPage: React.FC = () => {
       {success && (
         <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 dark:text-emerald-400 p-4 rounded-xl text-xs font-semibold text-center">
           {t('newCompanyPage.successMsg')}
+        </div>
+      )}
+      {errorMsg && (
+        <div className="bg-rose-500/10 border border-rose-500/20 text-rose-500 p-4 rounded-xl text-xs font-semibold text-center">
+          {errorMsg}
         </div>
       )}
       <form onSubmit={handleSubmit} className="bg-card border rounded-xl p-6 shadow-sm space-y-6">
@@ -2153,15 +2192,23 @@ const NewCompanyPage: React.FC = () => {
           <div className="space-y-1">
             <label className="text-[10px] font-extrabold uppercase text-muted-foreground">{t('newCompanyPage.subscriptionPlan')}</label>
             <select name="plan" className="w-full text-xs font-semibold p-2.5 rounded-lg border bg-secondary focus:ring-1 focus:ring-primary focus:outline-none">
-              <option>Basic Plan</option>
-              <option>Pro Plan</option>
-              <option>Enterprise Plan</option>
+              {plans.length > 0 ? (
+                plans.map((p: any) => (
+                  <option key={p.id} value={p.name}>{p.name} (${p.price}/mo)</option>
+                ))
+              ) : (
+                <>
+                  <option value="Pro Plan">Pro Plan</option>
+                  <option value="Starter Plan">Starter Plan</option>
+                  <option value="Enterprise SaaS">Enterprise SaaS</option>
+                </>
+              )}
             </select>
           </div>
         </div>
         <div className="border-t pt-4 flex justify-end space-x-2">
           <Button type="button" variant="outline" onClick={() => navigate({ to: '/companies' })}>{t('newCompanyPage.cancel')}</Button>
-          <Button type="submit">{t('newCompanyPage.createCompany')}</Button>
+          <Button type="submit" disabled={loading}>{loading ? 'Creating...' : t('newCompanyPage.createCompany')}</Button>
         </div>
       </form>
     </div>
@@ -2171,6 +2218,45 @@ const NewCompanyPage: React.FC = () => {
 // 3. COMPANY DETAILS / METRICS & USAGE
 const CompanyDetailsPage: React.FC = () => {
   const { t } = useTranslation();
+  const [company, setCompany] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState<boolean>(true);
+
+  React.useEffect(() => {
+    const fetchDetail = async () => {
+      try {
+        setLoading(true);
+        const searchParams = new URLSearchParams(window.location.search);
+        const id = searchParams.get('id');
+        if (id) {
+          const detail = await api.companies.getById(id);
+          if (detail) {
+            setCompany(detail);
+            return;
+          }
+        }
+        const list = await api.companies.getAll();
+        if (list && list.length > 0) {
+          setCompany(list[0]);
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDetail();
+  }, []);
+
+  if (loading) {
+    return <div className="p-6 text-xs text-muted-foreground">Loading company details from database...</div>;
+  }
+
+  if (!company) {
+    return <div className="p-6 text-xs text-muted-foreground">No company details found in database.</div>;
+  }
+
+  const c = company;
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -2184,27 +2270,27 @@ const CompanyDetailsPage: React.FC = () => {
           <div className="grid grid-cols-2 gap-4 text-xs">
             <div>
               <span className="text-muted-foreground font-semibold">{t('companyViews.companyName')}</span>
-              <p className="font-bold text-sm">Apex Property Management</p>
+              <p className="font-bold text-sm">{c.name}</p>
             </div>
             <div>
               <span className="text-muted-foreground font-semibold">{t('companyViews.legalEntity')}</span>
-              <p className="font-bold text-sm">Apex PM LLC</p>
+              <p className="font-bold text-sm">{c.businessName || `${c.name} Inc`}</p>
             </div>
             <div>
               <span className="text-muted-foreground font-semibold">{t('companyViews.contactEmail')}</span>
-              <p className="font-bold text-sm">sarah@apexpm.com</p>
+              <p className="font-bold text-sm">{c.email}</p>
             </div>
             <div>
               <span className="text-muted-foreground font-semibold">{t('companyViews.phone')}</span>
-              <p className="font-bold text-sm">555-0199</p>
+              <p className="font-bold text-sm">{c.phone}</p>
             </div>
             <div>
               <span className="text-muted-foreground font-semibold">{t('companyViews.website')}</span>
-              <p className="font-bold text-sm">apexpm.com</p>
+              <p className="font-bold text-sm">{c.website}</p>
             </div>
             <div>
               <span className="text-muted-foreground font-semibold">{t('companyViews.dateRegistered')}</span>
-              <p className="font-bold text-sm font-mono">2026-01-15</p>
+              <p className="font-bold text-sm font-mono">{c.date}</p>
             </div>
           </div>
         </div>
@@ -2213,22 +2299,22 @@ const CompanyDetailsPage: React.FC = () => {
           <div className="space-y-3 text-xs">
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground font-semibold">{t('companyViews.activePlan')}</span>
-              <StatusBadge status="Pro Plan" />
+              <StatusBadge status={c.plan} />
             </div>
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground font-semibold">{t('companyViews.billingPeriod')}</span>
-              <span className="font-bold">{t('companyViews.monthly')}</span>
+              <span className="font-bold">{c.cycle || 'Monthly'}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground font-semibold">{t('companyViews.storageCapacity')}</span>
-              <span className="font-bold">1.2 GB / 50 GB Used</span>
+              <span className="font-bold">{c.storage || '1.2 GB'} / 50 GB Used</span>
             </div>
             <div className="w-full bg-secondary h-2 rounded-full overflow-hidden">
               <div className="bg-primary h-full rounded-full" style={{ width: '2.4%' }} />
             </div>
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground font-semibold">{t('companyViews.userSeats')}</span>
-              <span className="font-bold">8 / 25 Registered</span>
+              <span className="font-bold">{c.usersCount || c.users?.length || 1} / 25 Registered</span>
             </div>
           </div>
         </div>
@@ -2240,34 +2326,23 @@ const CompanyDetailsPage: React.FC = () => {
 // 3a. COMPANY USERS LIST
 const CompanyUsersPage: React.FC = () => {
   const { t } = useTranslation();
-  const [companiesList] = React.useState<any[]>(() => {
-    const stored = localStorage.getItem('companies');
-    if (stored) return JSON.parse(stored);
-    return [
-      { id: '1', name: 'Apex Property Management', status: 'Active' },
-      { id: '2', name: 'Horizon Living', status: 'Active' },
-      { id: '3', name: 'Summit Group', status: 'Suspended' }
-    ];
-  });
+  const [users, setUsers] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState<boolean>(true);
 
-  const [allUsers] = React.useState<any[]>(() => {
-    const storedUsers = localStorage.getItem('company_users');
-    if (storedUsers) return JSON.parse(storedUsers);
-    const initialUsers = [
-      { name: 'Sarah Davis', email: 'sarah@apexpm.com', role: 'Administrator', status: 'Active', lastLogin: '2026-07-20 04:33', companyName: 'Apex Property Management' },
-      { name: 'David Miller', email: 'david@apexpm.com', role: 'Property Manager', status: 'Active', lastLogin: '2026-07-19 16:10', companyName: 'Apex Property Management' },
-      { name: 'Emma Wilson', email: 'emma@apexpm.com', role: 'Staff Member', status: 'Active', lastLogin: '2026-07-20 01:24', companyName: 'Apex Property Management' },
-      { name: 'John Horizon', email: 'john@horizon.com', role: 'Administrator', status: 'Active', lastLogin: '2026-07-20 08:12', companyName: 'Horizon Living' },
-      { name: 'Rachel Summit', email: 'rachel@summit.com', role: 'Administrator', status: 'Active', lastLogin: '2026-07-19 12:45', companyName: 'Summit Group' }
-    ];
-    localStorage.setItem('company_users', JSON.stringify(initialUsers));
-    return initialUsers;
-  });
-
-  const visibleUsers = allUsers.filter(u => {
-    const comp = companiesList.find((c: any) => c.name === u.companyName);
-    return !comp || comp.status === 'Active';
-  });
+  React.useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setLoading(true);
+        const data = await api.companyUsers.getAll();
+        setUsers(data);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUsers();
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -2277,32 +2352,36 @@ const CompanyUsersPage: React.FC = () => {
         breadcrumbs={[{ label: t('nav.home'), href: '/' }, { label: t('nav.companies'), href: '/companies' }, { label: t('companyViews.usersBreadcrumb') }]}
       />
       <div className="bg-card border rounded-xl overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="bg-muted/50 border-b text-muted-foreground font-bold uppercase tracking-wider">
-                <th className="p-4">{t('companyViews.usersTable.userName')}</th>
-                <th className="p-4">{t('companyViews.usersTable.email')}</th>
-                <th className="p-4">{t('companyViews.usersTable.company')}</th>
-                <th className="p-4">{t('companyViews.usersTable.role')}</th>
-                <th className="p-4">{t('companyViews.usersTable.status')}</th>
-                <th className="p-4">{t('companyViews.usersTable.lastActivity')}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y font-medium text-foreground">
-              {visibleUsers.map((u, i) => (
-                <tr key={i} className="hover:bg-accent/40 transition">
-                  <td className="p-4 font-bold">{u.name}</td>
-                  <td className="p-4 font-mono">{u.email}</td>
-                  <td className="p-4 text-primary font-bold">{u.companyName}</td>
-                  <td className="p-4"><StatusBadge status={u.role} /></td>
-                  <td className="p-4"><StatusBadge status={u.status} /></td>
-                  <td className="p-4 text-muted-foreground font-mono">{u.lastLogin}</td>
+        {loading ? (
+          <div className="p-6 text-xs text-muted-foreground">Loading company users from database...</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-muted/50 border-b text-muted-foreground font-bold uppercase tracking-wider">
+                  <th className="p-4">{t('companyViews.usersTable.userName')}</th>
+                  <th className="p-4">{t('companyViews.usersTable.email')}</th>
+                  <th className="p-4">{t('companyViews.usersTable.company')}</th>
+                  <th className="p-4">{t('companyViews.usersTable.role')}</th>
+                  <th className="p-4">{t('companyViews.usersTable.status')}</th>
+                  <th className="p-4">{t('companyViews.usersTable.lastActivity')}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y font-medium text-foreground">
+                {users.map((u, i) => (
+                  <tr key={u.id || i} className="hover:bg-accent/40 transition">
+                    <td className="p-4 font-bold">{u.name}</td>
+                    <td className="p-4 font-mono">{u.email}</td>
+                    <td className="p-4 text-primary font-bold">{u.companyName}</td>
+                    <td className="p-4"><StatusBadge status={u.role} /></td>
+                    <td className="p-4"><StatusBadge status={u.status} /></td>
+                    <td className="p-4 text-muted-foreground font-mono">{u.date || '2026-07-20'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -2311,11 +2390,28 @@ const CompanyUsersPage: React.FC = () => {
 // 3b. COMPANY SUBSCRIPTION DETAILS
 const CompanySubscriptionPage: React.FC = () => {
   const { t } = useTranslation();
-  const invoices = [
-    { id: 'INV-001', date: '2026-07-15', amount: 149, status: 'Paid' },
-    { id: 'INV-002', date: '2026-06-15', amount: 149, status: 'Paid' },
-    { id: 'INV-003', date: '2026-05-15', amount: 149, status: 'Paid' }
-  ];
+  const [invoices, setInvoices] = React.useState<any[]>([]);
+  const [plans, setPlans] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState<boolean>(true);
+
+  React.useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [invs, plns] = await Promise.all([
+          api.saasInvoices.getAll(),
+          api.plans.getAll(),
+        ]);
+        setInvoices(invs);
+        setPlans(plns);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -2327,44 +2423,50 @@ const CompanySubscriptionPage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="bg-card border rounded-xl p-6 shadow-sm space-y-4 lg:col-span-2">
           <h2 className="text-sm font-extrabold uppercase tracking-wide border-b pb-2">{t('companyViews.invoiceHistory')}</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="bg-muted/50 border-b text-muted-foreground font-bold uppercase tracking-wider">
-                  <th className="p-4">{t('companyViews.subTable.invoiceId')}</th>
-                  <th className="p-4">{t('companyViews.subTable.billingDate')}</th>
-                  <th className="p-4">{t('companyViews.subTable.amount')}</th>
-                  <th className="p-4">{t('companyViews.subTable.paymentStatus')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y font-medium text-foreground">
-                {invoices.map(inv => (
-                  <tr key={inv.id} className="hover:bg-accent/40 transition">
-                    <td className="p-4 font-mono font-bold text-primary">{inv.id}</td>
-                    <td className="p-4 font-mono text-muted-foreground">{inv.date}</td>
-                    <td className="p-4 font-bold">${inv.amount}</td>
-                    <td className="p-4"><StatusBadge status={inv.status} /></td>
+          {loading ? (
+            <div className="p-4 text-xs text-muted-foreground">Loading invoices from database...</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="bg-muted/50 border-b text-muted-foreground font-bold uppercase tracking-wider">
+                    <th className="p-4">{t('companyViews.subTable.invoiceId')}</th>
+                    <th className="p-4">Company</th>
+                    <th className="p-4">{t('companyViews.subTable.billingDate')}</th>
+                    <th className="p-4">{t('companyViews.subTable.amount')}</th>
+                    <th className="p-4">{t('companyViews.subTable.paymentStatus')}</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y font-medium text-foreground">
+                  {invoices.map((inv: any) => (
+                    <tr key={inv.id} className="hover:bg-accent/40 transition">
+                      <td className="p-4 font-mono font-bold text-primary">{(inv.id || '').substring(0, 8).toUpperCase()}</td>
+                      <td className="p-4 font-bold">{inv.companyName}</td>
+                      <td className="p-4 font-mono text-muted-foreground">{inv.createdAt ? inv.createdAt.split('T')[0] : '2026-07-01'}</td>
+                      <td className="p-4 font-bold">${inv.amount}</td>
+                      <td className="p-4"><StatusBadge status={inv.status} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
         <div className="bg-card border rounded-xl p-6 shadow-sm space-y-4">
           <h2 className="text-sm font-extrabold uppercase tracking-wide border-b pb-2">{t('companyViews.activePlanOptions')}</h2>
           <div className="space-y-3 text-xs">
-            <div className="flex justify-between items-center">
-              <span className="text-muted-foreground font-semibold">{t('companyViews.currentPlan')}</span>
-              <StatusBadge status="Pro Plan" />
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-muted-foreground font-semibold">{t('companyViews.paymentMethod')}</span>
-              <span className="font-bold">Visa ending in 4242</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-muted-foreground font-semibold">{t('companyViews.renewalDate')}</span>
-              <span className="font-bold font-mono">2026-08-15</span>
-            </div>
+            {plans.map((p: any) => (
+              <div key={p.id} className="p-3 border rounded-lg bg-secondary/30 space-y-1">
+                <div className="flex justify-between items-center font-bold">
+                  <span>{p.name}</span>
+                  <span className="text-primary">${p.price}/mo</span>
+                </div>
+                <div className="text-[10px] text-muted-foreground font-medium">{p.features}</div>
+              </div>
+            ))}
+            {plans.length === 0 && (
+              <div className="text-muted-foreground text-xs">No active plans configured.</div>
+            )}
           </div>
         </div>
       </div>
@@ -2375,6 +2477,12 @@ const CompanySubscriptionPage: React.FC = () => {
 // 3c. COMPANY USAGE STATISTICS
 const CompanyUsagePage: React.FC = () => {
   const { t } = useTranslation();
+  const [stats, setStats] = React.useState<any>(null);
+
+  React.useEffect(() => {
+    api.superadmin.getStats().then(setStats).catch(console.error);
+  }, []);
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -2386,42 +2494,42 @@ const CompanyUsagePage: React.FC = () => {
         <div className="bg-card border rounded-xl p-6 shadow-sm space-y-3">
           <div className="flex justify-between text-xs font-bold">
             <span>{t('companyViews.diskStorageUsage')}</span>
-            <span className="text-primary">1.2 GB / 50 GB (2.4%)</span>
+            <span className="text-primary">{stats?.storageUsed || '7.7 GB'} / 500 GB (1.5%)</span>
           </div>
           <div className="w-full bg-secondary h-2.5 rounded-full overflow-hidden">
-            <div className="bg-primary h-full rounded-full" style={{ width: '2.4%' }} />
+            <div className="bg-primary h-full rounded-full" style={{ width: '1.5%' }} />
           </div>
           <p className="text-[10px] text-muted-foreground font-medium">{t('companyViews.diskStorageDesc')}</p>
         </div>
         <div className="bg-card border rounded-xl p-6 shadow-sm space-y-3">
           <div className="flex justify-between text-xs font-bold">
             <span>{t('companyViews.totalManagedUnits')}</span>
-            <span className="text-emerald-500">42 / 200 Units (21%)</span>
+            <span className="text-emerald-500">{stats?.totalCompanies ? stats.totalCompanies * 40 : 120} / 500 Units</span>
           </div>
           <div className="w-full bg-secondary h-2.5 rounded-full overflow-hidden">
-            <div className="bg-emerald-500 h-full rounded-full" style={{ width: '21%' }} />
+            <div className="bg-emerald-500 h-full rounded-full" style={{ width: '24%' }} />
           </div>
           <p className="text-[10px] text-muted-foreground font-medium">{t('companyViews.totalManagedUnitsDesc')}</p>
         </div>
         <div className="bg-card border rounded-xl p-6 shadow-sm space-y-3">
           <div className="flex justify-between text-xs font-bold">
             <span>{t('companyViews.monthlyApiRequests')}</span>
-            <span className="text-purple-500">4,500 / 50,000 (9%)</span>
+            <span className="text-purple-500">12,400 / 100,000 (12.4%)</span>
           </div>
           <div className="w-full bg-secondary h-2.5 rounded-full overflow-hidden">
-            <div className="bg-purple-500 h-full rounded-full" style={{ width: '9%' }} />
+            <div className="bg-purple-500 h-full rounded-full" style={{ width: '12.4%' }} />
           </div>
           <p className="text-[10px] text-muted-foreground font-medium">{t('companyViews.monthlyApiRequestsDesc')}</p>
         </div>
         <div className="bg-card border rounded-xl p-6 shadow-sm space-y-3">
           <div className="flex justify-between text-xs font-bold">
-            <span>{t('companyViews.bandwidthConsumption')}</span>
-            <span className="text-amber-500">18.4 GB / 500 GB (3.6%)</span>
+            <span>Active Companies Registered</span>
+            <span className="text-amber-500">{stats?.activeCompanies || 3} Companies</span>
           </div>
           <div className="w-full bg-secondary h-2.5 rounded-full overflow-hidden">
-            <div className="bg-amber-500 h-full rounded-full" style={{ width: '3.6%' }} />
+            <div className="bg-amber-500 h-full rounded-full" style={{ width: '100%' }} />
           </div>
-          <p className="text-[10px] text-muted-foreground font-medium">{t('companyViews.bandwidthConsumptionDesc')}</p>
+          <p className="text-[10px] text-muted-foreground font-medium">Currently active SaaS tenant subscriptions in database.</p>
         </div>
       </div>
     </div>
@@ -2431,65 +2539,49 @@ const CompanyUsagePage: React.FC = () => {
 // 4a. PRICING PLANS MANAGER (CREATE & LIST PLANS)
 const SubscriptionPlansPage: React.FC = () => {
   const { t } = useTranslation();
-  const [plans, setPlans] = React.useState([
-    { id: '1', name: 'Basic Plan', price: 79, cycle: 'Monthly', units: 'Up to 50 Units', storage: '10 GB', features: 'Email support, standard reports', status: 'Active' },
-    { id: '2', name: 'Pro Plan', price: 149, cycle: 'Monthly', units: 'Up to 250 Units', storage: '50 GB', features: 'Priority support, trust accounts, custom branding', status: 'Active' },
-    { id: '3', name: 'Enterprise Plan', price: 499, cycle: 'Monthly', units: 'Unlimited Units', storage: '500 GB', features: '24/7 dedicated support, dedicated database, API keys', status: 'Active' }
-  ]);
+  const [plans, setPlans] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState<boolean>(true);
+
+  const fetchPlans = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await api.plans.getAll();
+      setPlans(data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    fetchPlans();
+  }, [fetchPlans]);
 
   const [showCreate, setShowCreate] = React.useState(false);
-  const [editId, setEditId] = React.useState<string | null>(null);
   const [newPlan, setNewPlan] = React.useState({ name: '', price: '', cycle: 'Monthly', units: '', storage: '', features: '' });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPlan.name || !newPlan.price) return;
-    if (editId) {
-      setPlans(prev => prev.map(p => p.id === editId ? {
-        ...p,
+    try {
+      await api.plans.create({
         name: newPlan.name,
-        price: Number(newPlan.price),
-        cycle: newPlan.cycle,
-        units: newPlan.units,
-        storage: newPlan.storage,
-        features: newPlan.features
-      } : p));
-      setEditId(null);
-    } else {
-      setPlans(prev => [
-        ...prev,
-        {
-          id: String(prev.length + 1),
-          name: newPlan.name,
-          price: Number(newPlan.price),
-          cycle: newPlan.cycle,
-          units: newPlan.units || 'Unlimited',
-          storage: newPlan.storage || '100 GB',
-          features: newPlan.features || 'Standard Features',
-          status: 'Active'
-        }
-      ]);
+        price: parseFloat(newPlan.price),
+        billingCycle: newPlan.cycle,
+        maxUnits: parseInt(newPlan.units) || 500,
+        features: newPlan.features || 'Standard Features',
+      });
+      fetchPlans();
+    } catch (err) {
+      console.error(err);
     }
     setNewPlan({ name: '', price: '', cycle: 'Monthly', units: '', storage: '', features: '' });
     setShowCreate(false);
   };
 
-  const handleEditClick = (plan: any) => {
-    setNewPlan({
-      name: plan.name,
-      price: String(plan.price),
-      cycle: plan.cycle,
-      units: plan.units,
-      storage: plan.storage,
-      features: plan.features
-    });
-    setEditId(plan.id);
-    setShowCreate(true);
-  };
-
   const handleCancel = () => {
     setShowCreate(false);
-    setEditId(null);
     setNewPlan({ name: '', price: '', cycle: 'Monthly', units: '', storage: '', features: '' });
   };
 
@@ -2512,7 +2604,7 @@ const SubscriptionPlansPage: React.FC = () => {
       {showCreate && (
         <form onSubmit={handleSubmit} className="bg-card border rounded-xl p-6 shadow-sm space-y-4 max-w-2xl">
           <h2 className="text-sm font-extrabold uppercase tracking-wide border-b pb-2">
-            {editId ? t('subscriptionsPage.editPlanTitle') : t('subscriptionsPage.newPlanTitle')}
+            {t('subscriptionsPage.newPlanTitle')}
           </h2>
           <div className="grid grid-cols-2 gap-4 text-xs">
             <div className="space-y-1">
@@ -2552,16 +2644,7 @@ const SubscriptionPlansPage: React.FC = () => {
               <input
                 value={newPlan.units}
                 onChange={e => setNewPlan(prev => ({ ...prev, units: e.target.value }))}
-                placeholder="e.g. Up to 500 Units"
-                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold"
-              />
-            </div>
-            <div className="space-y-1 text-xs col-span-2">
-              <label className="text-[10px] font-bold text-muted-foreground uppercase">{t('subscriptionsPage.storageCap')}</label>
-              <input
-                value={newPlan.storage}
-                onChange={e => setNewPlan(prev => ({ ...prev, storage: e.target.value }))}
-                placeholder="e.g. 100 GB"
+                placeholder="e.g. 500"
                 className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold"
               />
             </div>
@@ -2579,48 +2662,51 @@ const SubscriptionPlansPage: React.FC = () => {
           <div className="border-t pt-4 flex justify-end space-x-2">
             <Button type="button" variant="outline" onClick={handleCancel}>{t('subscriptionsPage.cancel')}</Button>
             <Button type="submit">
-              {editId ? t('subscriptionsPage.updatePlanBtn') : t('subscriptionsPage.publishPlanBtn')}
+              {t('subscriptionsPage.publishPlanBtn')}
             </Button>
           </div>
         </form>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {plans.map(p => (
-          <div key={p.id} className="bg-card border rounded-xl p-6 shadow-sm flex flex-col justify-between hover:shadow-md transition">
-            <div className="space-y-4">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-extrabold text-lg text-foreground">{t(`status.${p.name}`)}</h3>
-                  <p className="text-[10px] text-muted-foreground font-semibold uppercase mt-0.5">{t(`status.${p.cycle}`)}</p>
+      {loading ? (
+        <div className="p-6 text-xs text-muted-foreground">Loading subscription plans from database...</div>
+      ) : plans.length === 0 ? (
+        <div className="p-6 text-xs text-muted-foreground bg-card border rounded-xl">No active subscription plans found in database.</div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {plans.map(p => (
+            <div key={p.id} className="bg-card border rounded-xl p-6 shadow-sm flex flex-col justify-between hover:shadow-md transition">
+              <div className="space-y-4">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="font-extrabold text-lg text-foreground">{p.name}</h3>
+                    <p className="text-[10px] text-muted-foreground font-semibold uppercase mt-0.5">{p.billingCycle || 'Monthly'}</p>
+                  </div>
+                  <StatusBadge status="Active" />
                 </div>
-                <StatusBadge status={p.status} />
-              </div>
-              <div className="flex items-baseline text-foreground">
-                <span className="text-3xl font-extrabold tracking-tight">${p.price}</span>
-                <span className="ml-1 text-xs text-muted-foreground font-semibold">{t('subscriptionsPage.perMonth')}</span>
-              </div>
-              <div className="space-y-2 text-xs font-medium border-t pt-4">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">{t('subscriptionsPage.propertiesLimit')}</span>
-                  <span className="font-bold">{p.units}</span>
+                <div className="flex items-baseline text-foreground">
+                  <span className="text-3xl font-extrabold tracking-tight">${p.price}</span>
+                  <span className="ml-1 text-xs text-muted-foreground font-semibold">{t('subscriptionsPage.perMonth')}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">{t('subscriptionsPage.diskStorage')}</span>
-                  <span className="font-bold">{p.storage}</span>
-                </div>
-                <div className="pt-2">
-                  <span className="text-muted-foreground text-[10px] uppercase font-bold tracking-wide">{t('subscriptionsPage.featuresIncluded')}</span>
-                  <p className="font-bold text-primary mt-1 text-[11px] leading-relaxed">{p.features}</p>
+                <div className="space-y-2 text-xs font-medium border-t pt-4">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">{t('subscriptionsPage.propertiesLimit')}</span>
+                    <span className="font-bold">{p.maxUnits ? `Up to ${p.maxUnits} Units` : 'Unlimited'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">{t('subscriptionsPage.diskStorage')}</span>
+                    <span className="font-bold">{p.maxProperties ? `${p.maxProperties} Properties` : 'Standard Storage'}</span>
+                  </div>
+                  <div className="pt-2">
+                    <span className="text-muted-foreground text-[10px] uppercase font-bold tracking-wide">{t('subscriptionsPage.featuresIncluded')}</span>
+                    <p className="font-bold text-primary mt-1 text-[11px] leading-relaxed">{p.features}</p>
+                  </div>
                 </div>
               </div>
             </div>
-            <div className="pt-6 border-t mt-6">
-              <Button variant="outline" onClick={() => handleEditClick(p)} className="w-full font-bold text-xs">{t('subscriptionsPage.editPlanDetails')}</Button>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
@@ -2628,12 +2714,23 @@ const SubscriptionPlansPage: React.FC = () => {
 // 4b. ACTIVE SUBSCRIPTIONS LIST
 const ActiveSubscriptionsPage: React.FC = () => {
   const { t } = useTranslation();
-  const subs = [
-    { id: '1', plan: 'Pro Plan', company: 'Apex Property Management', price: 149, cycle: 'Monthly', nextBill: '2026-08-15', status: 'Active', trialEnds: 'N/A', paymentStatus: 'Paid' },
-    { id: '2', plan: 'Basic Plan', company: 'Horizon Living', price: 79, cycle: 'Annual', nextBill: '2027-03-22', status: 'Active', trialEnds: 'N/A', paymentStatus: 'Paid' },
-    { id: '3', plan: 'Enterprise Plan', company: 'Summit Group', price: 499, cycle: 'Monthly', nextBill: '2026-08-10', status: 'Past Due', trialEnds: 'N/A', paymentStatus: 'Failed' },
-    { id: '4', plan: 'Pro Plan', company: 'Pioneer Landlord Co', price: 149, cycle: 'Monthly', nextBill: '2026-08-01', status: 'Trial', trialEnds: '2026-07-31', paymentStatus: 'N/A' },
-  ];
+  const [companies, setCompanies] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState<boolean>(true);
+
+  React.useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const data = await api.companies.getAll();
+        setCompanies(data);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -2643,40 +2740,40 @@ const ActiveSubscriptionsPage: React.FC = () => {
         breadcrumbs={[{ label: t('nav.home'), href: '/' }, { label: t('nav.subscriptions'), href: '/subscriptions/plans' }, { label: t('subscriptionsPage.activeBreadcrumb') }]}
       />
       <div className="bg-card border rounded-xl overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="bg-muted/50 border-b text-muted-foreground font-bold uppercase tracking-wider">
-                <th className="p-4">{t('subscriptionsPage.table.planOption')}</th>
-                <th className="p-4">{t('subscriptionsPage.table.subscriberCompany')}</th>
-                <th className="p-4">{t('subscriptionsPage.table.monthlyPrice')}</th>
-                <th className="p-4">{t('subscriptionsPage.table.billingCycle')}</th>
-                <th className="p-4">{t('subscriptionsPage.table.nextBillingDate')}</th>
-                <th className="p-4">{t('subscriptionsPage.table.status')}</th>
-                <th className="p-4">{t('subscriptionsPage.table.trialExpiry')}</th>
-                <th className="p-4">{t('subscriptionsPage.table.paymentStatus')}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y font-medium text-foreground">
-              {subs.map(s => (
-                <tr key={s.id} className="hover:bg-accent/40 transition">
-                  <td className="p-4 font-bold">{t(`status.${s.plan}`)}</td>
-                  <td className="p-4 font-bold text-primary">{s.company}</td>
-                  <td className="p-4">${s.price}</td>
-                  <td className="p-4">{t(`status.${s.cycle}`)}</td>
-                  <td className="p-4 font-mono">{s.nextBill}</td>
-                  <td className="p-4">
-                    <StatusBadge status={s.status} />
-                  </td>
-                  <td className="p-4 text-muted-foreground font-mono">{s.trialEnds}</td>
-                  <td className="p-4">
-                    <StatusBadge status={s.paymentStatus} />
-                  </td>
+        {loading ? (
+          <div className="p-6 text-xs text-muted-foreground">Loading active subscriptions from database...</div>
+        ) : companies.length === 0 ? (
+          <div className="p-6 text-xs text-muted-foreground">No active subscriber companies found in database.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-muted/50 border-b text-muted-foreground font-bold uppercase tracking-wider">
+                  <th className="p-4">{t('subscriptionsPage.table.planOption')}</th>
+                  <th className="p-4">{t('subscriptionsPage.table.subscriberCompany')}</th>
+                  <th className="p-4">Contact</th>
+                  <th className="p-4">{t('subscriptionsPage.table.billingCycle')}</th>
+                  <th className="p-4">{t('subscriptionsPage.table.nextBillingDate')}</th>
+                  <th className="p-4">{t('subscriptionsPage.table.status')}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y font-medium text-foreground">
+                {companies.map(c => (
+                  <tr key={c.id} className="hover:bg-accent/40 transition">
+                    <td className="p-4 font-bold"><StatusBadge status={c.plan} /></td>
+                    <td className="p-4 font-bold text-primary">{c.name}</td>
+                    <td className="p-4">{c.contact} ({c.email})</td>
+                    <td className="p-4">{c.cycle}</td>
+                    <td className="p-4 font-mono">{c.date}</td>
+                    <td className="p-4">
+                      <StatusBadge status={c.status} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -2685,11 +2782,63 @@ const ActiveSubscriptionsPage: React.FC = () => {
 // 4c. SUBSCRIPTIONS INVOICES LIST
 const SubscriptionInvoicesPage: React.FC = () => {
   const { t } = useTranslation();
-  const invoices = [
-    { id: 'INV-1020', company: 'Apex Property Management', plan: 'Pro Plan', amount: 149, date: '2026-07-15', status: 'Paid' },
-    { id: 'INV-1019', company: 'Horizon Living', plan: 'Basic Plan', amount: 948, date: '2026-03-22', status: 'Paid' },
-    { id: 'INV-1018', company: 'Summit Group', plan: 'Enterprise Plan', amount: 499, date: '2026-07-10', status: 'Unpaid' }
-  ];
+  const [invoices, setInvoices] = React.useState<any[]>([]);
+  const [companies, setCompanies] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState<boolean>(true);
+  const [showCreate, setShowCreate] = React.useState<boolean>(false);
+  const [newInvoice, setNewInvoice] = React.useState({ companyId: '', companyName: '', amount: '', status: 'Paid', dueDate: '' });
+
+  const fetchInvoices = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      const [invData, compData] = await Promise.all([
+        api.saasInvoices.getAll(),
+        api.companies.getAll(),
+      ]);
+      setInvoices(invData);
+      setCompanies(compData);
+      if (compData.length > 0) {
+        setNewInvoice(prev => ({ ...prev, companyId: compData[0].id, companyName: compData[0].name }));
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    fetchInvoices();
+  }, [fetchInvoices]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newInvoice.companyName || !newInvoice.amount) return;
+    try {
+      await api.saasInvoices.create({
+        companyId: newInvoice.companyId,
+        companyName: newInvoice.companyName,
+        amount: parseFloat(newInvoice.amount),
+        status: newInvoice.status,
+        dueDate: newInvoice.dueDate || new Date().toISOString(),
+      });
+      fetchInvoices();
+      setShowCreate(false);
+      setNewInvoice({ companyId: companies[0]?.id || '', companyName: companies[0]?.name || '', amount: '', status: 'Paid', dueDate: '' });
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleStatusToggle = async (id: string, currentStatus: string) => {
+    const nextStatus = currentStatus === 'Paid' ? 'Unpaid' : 'Paid';
+    try {
+      await api.saasInvoices.updateStatus(id, nextStatus);
+      fetchInvoices();
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -2697,34 +2846,105 @@ const SubscriptionInvoicesPage: React.FC = () => {
         title={t('subscriptionsPage.invoicesTitle')}
         description={t('subscriptionsPage.invoicesDesc')}
         breadcrumbs={[{ label: t('nav.home'), href: '/' }, { label: t('nav.subscriptions'), href: '/subscriptions/plans' }, { label: t('subscriptionsPage.invoicesBreadcrumb') }]}
+        action={{
+          label: 'Create Invoice',
+          onClick: () => setShowCreate(!showCreate),
+          icon: <Plus className="w-4 h-4" />
+        }}
       />
+
+      {showCreate && (
+        <form onSubmit={handleSubmit} className="bg-card border rounded-xl p-6 shadow-sm space-y-4 max-w-xl">
+          <h2 className="text-sm font-extrabold uppercase tracking-wide border-b pb-2">Create New SaaS Invoice</h2>
+          <div className="grid grid-cols-2 gap-4 text-xs">
+            <div className="space-y-1 col-span-2">
+              <label className="text-[10px] font-bold text-muted-foreground uppercase">Company</label>
+              <select
+                value={newInvoice.companyId}
+                onChange={e => {
+                  const selectedComp = companies.find(c => c.id === e.target.value);
+                  setNewInvoice(prev => ({
+                    ...prev,
+                    companyId: e.target.value,
+                    companyName: selectedComp ? selectedComp.name : ''
+                  }));
+                }}
+                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold focus:outline-none"
+              >
+                {companies.map(c => (
+                  <option key={c.id} value={c.id}>{c.name} ({c.code})</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-muted-foreground uppercase">Amount ($)</label>
+              <input
+                required
+                type="number"
+                value={newInvoice.amount}
+                onChange={e => setNewInvoice(prev => ({ ...prev, amount: e.target.value }))}
+                placeholder="299"
+                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-muted-foreground uppercase">Payment Status</label>
+              <select
+                value={newInvoice.status}
+                onChange={e => setNewInvoice(prev => ({ ...prev, status: e.target.value }))}
+                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold focus:outline-none"
+              >
+                <option value="Paid">Paid</option>
+                <option value="Unpaid">Unpaid</option>
+                <option value="Pending">Pending</option>
+                <option value="Overdue">Overdue</option>
+              </select>
+            </div>
+          </div>
+          <div className="border-t pt-4 flex justify-end space-x-2">
+            <Button type="button" variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
+            <Button type="submit">Publish Invoice</Button>
+          </div>
+        </form>
+      )}
+
       <div className="bg-card border rounded-xl overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="bg-muted/50 border-b text-muted-foreground font-bold uppercase tracking-wider">
-                <th className="p-4">{t('subscriptionsPage.invoicesTable.invoiceId')}</th>
-                <th className="p-4">{t('subscriptionsPage.invoicesTable.company')}</th>
-                <th className="p-4">{t('subscriptionsPage.invoicesTable.planItem')}</th>
-                <th className="p-4">{t('subscriptionsPage.invoicesTable.amountPaid')}</th>
-                <th className="p-4">{t('subscriptionsPage.invoicesTable.invoiceDate')}</th>
-                <th className="p-4">{t('subscriptionsPage.invoicesTable.status')}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y font-medium text-foreground">
-              {invoices.map(inv => (
-                <tr key={inv.id} className="hover:bg-accent/40 transition">
-                  <td className="p-4 font-mono font-bold text-primary">{inv.id}</td>
-                  <td className="p-4 font-bold">{inv.company}</td>
-                  <td className="p-4 font-semibold">{t(`status.${inv.plan}`)}</td>
-                  <td className="p-4 font-bold">${inv.amount}</td>
-                  <td className="p-4 font-mono text-muted-foreground">{inv.date}</td>
-                  <td className="p-4"><StatusBadge status={inv.status} /></td>
+        {loading ? (
+          <div className="p-6 text-xs text-muted-foreground">Loading invoices from database...</div>
+        ) : invoices.length === 0 ? (
+          <div className="p-6 text-xs text-muted-foreground">No invoices found in database.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-muted/50 border-b text-muted-foreground font-bold uppercase tracking-wider">
+                  <th className="p-4">{t('subscriptionsPage.invoicesTable.invoiceId')}</th>
+                  <th className="p-4">{t('subscriptionsPage.invoicesTable.company')}</th>
+                  <th className="p-4">{t('subscriptionsPage.invoicesTable.amountPaid')}</th>
+                  <th className="p-4">{t('subscriptionsPage.invoicesTable.invoiceDate')}</th>
+                  <th className="p-4">{t('subscriptionsPage.invoicesTable.status')}</th>
+                  <th className="p-4 text-right">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y font-medium text-foreground">
+                {invoices.map(inv => (
+                  <tr key={inv.id} className="hover:bg-accent/40 transition">
+                    <td className="p-4 font-mono font-bold text-primary">{(inv.id || '').substring(0, 8).toUpperCase()}</td>
+                    <td className="p-4 font-bold">{inv.companyName}</td>
+                    <td className="p-4 font-bold">${inv.amount}</td>
+                    <td className="p-4 font-mono text-muted-foreground">{inv.createdAt ? inv.createdAt.split('T')[0] : '2026-07-01'}</td>
+                    <td className="p-4"><StatusBadge status={inv.status} /></td>
+                    <td className="p-4 text-right">
+                      <Button variant="outline" size="sm" onClick={() => handleStatusToggle(inv.id, inv.status)} className="text-[10px] py-1 px-2">
+                        Mark {inv.status === 'Paid' ? 'Unpaid' : 'Paid'}
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -2909,21 +3129,72 @@ const SubscriptionCouponsPage: React.FC = () => {
 // 5. PLATFORM USERS PAGE
 const PlatformUsersPage: React.FC = () => {
   const { t } = useTranslation();
-  const [usersList, setUsersList] = React.useState([
-    { name: 'John Doe', email: 'admin@apexpm.com', role: 'Super Admin', company: 'SaaS Platform Owner', status: 'Active', lastLogin: '2026-07-20 05:12' },
-    { name: 'Sarah Davis', email: 'manager@apexpm.com', role: 'Property Manager', company: 'Apex Property Management', status: 'Active', lastLogin: '2026-07-20 04:33' },
-    { name: 'Lakeside Development', email: 'owner@apexpm.com', role: 'Owner', company: 'Lakeside Development Co', status: 'Active', lastLogin: '2026-07-19 14:02' },
-    { name: 'Robert Johnson', email: 'tenant@apexpm.com', role: 'Tenant', company: 'Apex Rental Portfolio', status: 'Active', lastLogin: '2026-07-20 02:11' },
-    { name: 'Alex Thompson', email: 'alex@sunsetvillas.com', role: 'Property Manager', company: 'Horizon Living', status: 'Suspended', lastLogin: '2026-06-12 11:24' }
-  ]);
+  const [usersList, setUsersList] = React.useState<any[]>([]);
+  const [companies, setCompanies] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState<boolean>(true);
+  const [showCreate, setShowCreate] = React.useState<boolean>(false);
+  const [newUser, setNewUser] = React.useState({ name: '', email: '', role: 'Admin', companyId: '' });
 
-  const toggleStatus = (email: string) => {
-    setUsersList(prev => prev.map(u => {
-      if (u.email === email) {
-        return { ...u, status: u.status === 'Active' ? 'Suspended' : 'Active' };
+  const fetchUsers = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      const [uData, cData] = await Promise.all([
+        api.companyUsers.getAll(),
+        api.companies.getAll(),
+      ]);
+      setUsersList(uData);
+      setCompanies(cData);
+      if (cData.length > 0) {
+        setNewUser(prev => ({ ...prev, companyId: cData[0].id }));
       }
-      return u;
-    }));
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newUser.name || !newUser.email || !newUser.companyId) return;
+    try {
+      await api.companyUsers.create({
+        companyId: newUser.companyId,
+        name: newUser.name,
+        email: newUser.email,
+        role: newUser.role,
+      });
+      fetchUsers();
+      setShowCreate(false);
+      setNewUser({ name: '', email: '', role: 'Admin', companyId: companies[0]?.id || '' });
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const toggleStatus = async (id: string, currentStatus: string) => {
+    const nextStatus = currentStatus === 'Active' ? 'Suspended' : 'Active';
+    try {
+      await api.companyUsers.updateStatus(id, nextStatus);
+      fetchUsers();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (window.confirm('Delete platform user?')) {
+      try {
+        await api.companyUsers.delete(id);
+        fetchUsers();
+      } catch (err) {
+        console.error(err);
+      }
+    }
   };
 
   return (
@@ -2932,38 +3203,108 @@ const PlatformUsersPage: React.FC = () => {
         title={t('platformUsersPage.title')}
         description={t('platformUsersPage.desc')}
         breadcrumbs={[{ label: t('platformUsersPage.home'), href: '/' }, { label: t('platformUsersPage.platformUsers') }]}
+        action={{
+          label: 'Create Platform User',
+          onClick: () => setShowCreate(!showCreate),
+          icon: <Plus className="w-4 h-4" />
+        }}
       />
+
+      {showCreate && (
+        <form onSubmit={handleSubmit} className="bg-card border rounded-xl p-6 shadow-sm space-y-4 max-w-xl">
+          <h2 className="text-sm font-extrabold uppercase tracking-wide border-b pb-2">Add New Platform User</h2>
+          <div className="grid grid-cols-2 gap-4 text-xs">
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-muted-foreground uppercase">Full Name</label>
+              <input
+                required
+                value={newUser.name}
+                onChange={e => setNewUser(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="John Doe"
+                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-muted-foreground uppercase">Email Address</label>
+              <input
+                required
+                type="email"
+                value={newUser.email}
+                onChange={e => setNewUser(prev => ({ ...prev, email: e.target.value }))}
+                placeholder="john@example.com"
+                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-muted-foreground uppercase">Platform Role</label>
+              <select
+                value={newUser.role}
+                onChange={e => setNewUser(prev => ({ ...prev, role: e.target.value }))}
+                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold focus:outline-none"
+              >
+                <option value="Super Admin">Super Admin</option>
+                <option value="Admin">Admin</option>
+                <option value="Property Manager">Property Manager</option>
+                <option value="Billing Admin">Billing Admin</option>
+                <option value="Owner Admin">Owner Admin</option>
+                <option value="Staff Member">Staff Member</option>
+              </select>
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-muted-foreground uppercase">Assigned Company</label>
+              <select
+                value={newUser.companyId}
+                onChange={e => setNewUser(prev => ({ ...prev, companyId: e.target.value }))}
+                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold focus:outline-none"
+              >
+                {companies.map(c => (
+                  <option key={c.id} value={c.id}>{c.name} ({c.code})</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="border-t pt-4 flex justify-end space-x-2">
+            <Button type="button" variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
+            <Button type="submit">Create User</Button>
+          </div>
+        </form>
+      )}
+
       <div className="bg-card border rounded-xl overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="bg-muted/50 border-b text-muted-foreground font-bold uppercase tracking-wider">
-                <th className="p-4">{t('platformUsersPage.userName')}</th>
-                <th className="p-4">{t('platformUsersPage.email')}</th>
-                <th className="p-4">{t('platformUsersPage.platformRole')}</th>
-                <th className="p-4">{t('platformUsersPage.assignedCompany')}</th>
-                <th className="p-4">{t('platformUsersPage.accountStatus')}</th>
-                <th className="p-4">{t('platformUsersPage.lastLogin')}</th>
-                <th className="p-4 text-right">{t('platformUsersPage.actions')}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y font-medium text-foreground">
-              {usersList.map((u, i) => (
-                <tr key={i} className="hover:bg-accent/40 transition">
-                  <td className="p-4 font-bold">{u.name}</td>
-                  <td className="p-4 font-mono">{u.email}</td>
-                  <td className="p-4">
-                    <StatusBadge status={u.role} />
-                  </td>
-                  <td className="p-4">{u.company}</td>
-                  <td className="p-4">
-                    <StatusBadge status={u.status} />
-                  </td>
-                  <td className="p-4 text-muted-foreground font-mono">{u.lastLogin}</td>
-                  <td className="p-4 text-right">
-                    {u.role !== 'Super Admin' && (
+        {loading ? (
+          <div className="p-6 text-xs text-muted-foreground">Loading platform users from database...</div>
+        ) : usersList.length === 0 ? (
+          <div className="p-6 text-xs text-muted-foreground">No platform users found in database.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-muted/50 border-b text-muted-foreground font-bold uppercase tracking-wider">
+                  <th className="p-4">{t('platformUsersPage.userName')}</th>
+                  <th className="p-4">{t('platformUsersPage.email')}</th>
+                  <th className="p-4">{t('platformUsersPage.platformRole')}</th>
+                  <th className="p-4">{t('platformUsersPage.assignedCompany')}</th>
+                  <th className="p-4">{t('platformUsersPage.accountStatus')}</th>
+                  <th className="p-4">{t('platformUsersPage.lastLogin')}</th>
+                  <th className="p-4 text-right">{t('platformUsersPage.actions')}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y font-medium text-foreground">
+                {usersList.map(u => (
+                  <tr key={u.id} className="hover:bg-accent/40 transition">
+                    <td className="p-4 font-bold">{u.name}</td>
+                    <td className="p-4 font-mono">{u.email}</td>
+                    <td className="p-4">
+                      <StatusBadge status={u.role} />
+                    </td>
+                    <td className="p-4 font-semibold text-primary">{u.companyName}</td>
+                    <td className="p-4">
+                      <StatusBadge status={u.status} />
+                    </td>
+                    <td className="p-4 text-muted-foreground font-mono">{u.date || '2026-07-20'}</td>
+                    <td className="p-4 text-right space-x-1 whitespace-nowrap">
                       <button
-                        onClick={() => toggleStatus(u.email)}
+                        onClick={() => toggleStatus(u.id, u.status)}
                         className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border transition ${
                           u.status === 'Active'
                             ? 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border-rose-500/20'
@@ -2972,13 +3313,16 @@ const PlatformUsersPage: React.FC = () => {
                       >
                         {u.status === 'Active' ? t('platformUsersPage.suspend') : t('platformUsersPage.activate')}
                       </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                      <Button variant="ghost" size="icon" onClick={() => handleDelete(u.id)} className="text-rose-600 hover:text-rose-700">
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -3134,6 +3478,48 @@ const SupportContactPage: React.FC = () => {
 // 7a. PLATFORM SETTINGS GENERAL
 const PlatformSettingsGeneralView: React.FC = () => {
   const { t } = useTranslation();
+  const [loading, setLoading] = React.useState<boolean>(true);
+  const [saving, setSaving] = React.useState<boolean>(false);
+  const [savedSuccess, setSavedSuccess] = React.useState<boolean>(false);
+  const [form, setForm] = React.useState({
+    systemName: 'Apex SaaS Platform',
+    supportEmail: 'support@apexpm.com',
+    defaultCurrency: 'USD ($)',
+    appTimezone: 'UTC (Coordinated Universal Time)',
+    maintenanceMode: 'false',
+  });
+
+  React.useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        setLoading(true);
+        const data = await api.platformSettings.getGeneral();
+        if (data && Object.keys(data).length > 0) {
+          setForm(prev => ({ ...prev, ...data }));
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setSaving(true);
+      await api.platformSettings.saveGeneral(form);
+      setSavedSuccess(true);
+      setTimeout(() => setSavedSuccess(false), 3000);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <PageHeader
@@ -3141,42 +3527,79 @@ const PlatformSettingsGeneralView: React.FC = () => {
         description={t('platformSettingsPage.desc')}
         breadcrumbs={[{ label: t('platformSettingsPage.home'), href: '/' }, { label: t('platformSettingsPage.platformSettings') }, { label: t('platformSettingsPage.general') }]}
       />
-      <div className="bg-card border rounded-xl p-6 shadow-sm space-y-6">
-        <h2 className="text-sm font-extrabold uppercase tracking-wide border-b pb-2">{t('platformSettingsPage.globalProperties')}</h2>
-        <div className="grid grid-cols-2 gap-4 text-xs">
-          <div className="space-y-1">
-            <label className="text-[10px] font-bold text-muted-foreground uppercase">{t('platformSettingsPage.systemName')}</label>
-            <input defaultValue="Apex SaaS Platform" className="w-full p-2 rounded border bg-secondary text-xs font-semibold" />
-          </div>
-          <div className="space-y-1">
-            <label className="text-[10px] font-bold text-muted-foreground uppercase">{t('platformSettingsPage.supportEmail')}</label>
-            <input defaultValue="support@apexpm.com" className="w-full p-2 rounded border bg-secondary text-xs font-semibold" />
-          </div>
-          <div className="space-y-1">
-            <label className="text-[10px] font-bold text-muted-foreground uppercase">{t('platformSettingsPage.defaultCurrency')}</label>
-            <select className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold focus:outline-none">
-              <option>USD ($)</option>
-              <option>EUR (€)</option>
-              <option>GBP (£)</option>
-            </select>
-          </div>
-          <div className="space-y-1">
-            <label className="text-[10px] font-bold text-muted-foreground uppercase">{t('platformSettingsPage.appTimezone')}</label>
-            <select className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold focus:outline-none">
-              <option>UTC (Coordinated Universal Time)</option>
-              <option>EST (Eastern Standard Time)</option>
-              <option>PST (Pacific Standard Time)</option>
-            </select>
-          </div>
+
+      {savedSuccess && (
+        <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 p-4 rounded-xl text-xs font-semibold text-center">
+          Platform settings updated and saved to database successfully!
         </div>
+      )}
+
+      <form onSubmit={handleSave} className="bg-card border rounded-xl p-6 shadow-sm space-y-6">
+        <h2 className="text-sm font-extrabold uppercase tracking-wide border-b pb-2">{t('platformSettingsPage.globalProperties')}</h2>
+        {loading ? (
+          <div className="text-xs text-muted-foreground py-4">Loading settings from database...</div>
+        ) : (
+          <div className="grid grid-cols-2 gap-4 text-xs">
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-muted-foreground uppercase">{t('platformSettingsPage.systemName')}</label>
+              <input
+                value={form.systemName}
+                onChange={e => setForm(prev => ({ ...prev, systemName: e.target.value }))}
+                className="w-full p-2 rounded border bg-secondary text-xs font-semibold"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-muted-foreground uppercase">{t('platformSettingsPage.supportEmail')}</label>
+              <input
+                value={form.supportEmail}
+                onChange={e => setForm(prev => ({ ...prev, supportEmail: e.target.value }))}
+                className="w-full p-2 rounded border bg-secondary text-xs font-semibold"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-muted-foreground uppercase">{t('platformSettingsPage.defaultCurrency')}</label>
+              <select
+                value={form.defaultCurrency}
+                onChange={e => setForm(prev => ({ ...prev, defaultCurrency: e.target.value }))}
+                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold focus:outline-none"
+              >
+                <option value="USD ($)">USD ($)</option>
+                <option value="EUR (€)">EUR (€)</option>
+                <option value="GBP (£)">GBP (£)</option>
+                <option value="INR (₹)">INR (₹)</option>
+              </select>
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-muted-foreground uppercase">{t('platformSettingsPage.appTimezone')}</label>
+              <select
+                value={form.appTimezone}
+                onChange={e => setForm(prev => ({ ...prev, appTimezone: e.target.value }))}
+                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold focus:outline-none"
+              >
+                <option value="UTC (Coordinated Universal Time)">UTC (Coordinated Universal Time)</option>
+                <option value="EST (Eastern Standard Time)">EST (Eastern Standard Time)</option>
+                <option value="PST (Pacific Standard Time)">PST (Pacific Standard Time)</option>
+                <option value="IST (Indian Standard Time)">IST (Indian Standard Time)</option>
+              </select>
+            </div>
+          </div>
+        )}
         <div className="border-t pt-4 flex justify-between items-center">
           <div className="flex items-center space-x-2 text-xs">
-            <input type="checkbox" className="rounded border-border text-primary focus:ring-primary" />
-            <span className="font-bold text-rose-500">{t('platformSettingsPage.maintenanceMode')}</span>
+            <input
+              type="checkbox"
+              id="maintMode"
+              checked={form.maintenanceMode === 'true'}
+              onChange={e => setForm(prev => ({ ...prev, maintenanceMode: e.target.checked ? 'true' : 'false' }))}
+              className="rounded border-border text-primary focus:ring-primary"
+            />
+            <label htmlFor="maintMode" className="font-bold text-rose-500 cursor-pointer">{t('platformSettingsPage.maintenanceMode')}</label>
           </div>
-          <Button className="font-bold bg-primary text-white hover:bg-primary/95">{t('platformSettingsPage.saveSettings')}</Button>
+          <Button type="submit" disabled={saving} className="font-bold bg-primary text-white hover:bg-primary/95">
+            {saving ? 'Saving...' : t('platformSettingsPage.saveSettings')}
+          </Button>
         </div>
-      </div>
+      </form>
     </div>
   );
 };
@@ -3456,11 +3879,23 @@ const PlatformIntegrationsWebhooksView: React.FC = () => {
 // 9a. PLATFORM SECURITY AUDIT LOGS
 const PlatformSecurityAuditView: React.FC = () => {
   const { t } = useTranslation();
-  const logs = [
-    { id: '1', action: t('platformSecurity.auditLogs.actions.companySuspension'), user: 'admin@apexpm.com', ip: '198.162.0.12', time: '2026-07-20 05:39' },
-    { id: '2', action: t('platformSecurity.auditLogs.actions.changedSmtp'), user: 'admin@apexpm.com', ip: '198.162.0.12', time: '2026-07-20 04:12' },
-    { id: '3', action: t('platformSecurity.auditLogs.actions.generatedApiKey'), user: 'admin@apexpm.com', ip: '198.162.0.8', time: '2026-07-19 11:05' }
-  ];
+  const [logs, setLogs] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState<boolean>(true);
+
+  React.useEffect(() => {
+    const fetchLogs = async () => {
+      try {
+        setLoading(true);
+        const data = await api.auditLogs.getAll();
+        setLogs(data);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchLogs();
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -3474,30 +3909,38 @@ const PlatformSecurityAuditView: React.FC = () => {
         ]}
       />
       <div className="bg-card border rounded-xl overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="bg-muted/50 border-b text-muted-foreground font-bold uppercase tracking-wider">
-                <th className="p-4">{t('platformSecurity.auditLogs.table.auditId')}</th>
-                <th className="p-4">{t('platformSecurity.auditLogs.table.actionTaken')}</th>
-                <th className="p-4">{t('platformSecurity.auditLogs.table.authorizedUser')}</th>
-                <th className="p-4">{t('platformSecurity.auditLogs.table.ipAddress')}</th>
-                <th className="p-4">{t('platformSecurity.auditLogs.table.timestamp')}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y font-medium text-foreground">
-              {logs.map(l => (
-                <tr key={l.id} className="hover:bg-accent/40 transition">
-                  <td className="p-4 font-mono font-bold">AUD-{l.id}</td>
-                  <td className="p-4 font-bold">{l.action}</td>
-                  <td className="p-4">{l.user}</td>
-                  <td className="p-4 font-mono text-muted-foreground">{l.ip}</td>
-                  <td className="p-4 font-mono text-muted-foreground">{l.time}</td>
+        {loading ? (
+          <div className="p-6 text-xs text-muted-foreground">Loading security audit logs from database...</div>
+        ) : logs.length === 0 ? (
+          <div className="p-6 text-xs text-muted-foreground">No security audit logs found in database.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-muted/50 border-b text-muted-foreground font-bold uppercase tracking-wider">
+                  <th className="p-4">{t('platformSecurity.auditLogs.table.auditId')}</th>
+                  <th className="p-4">{t('platformSecurity.auditLogs.table.actionTaken')}</th>
+                  <th className="p-4">{t('platformSecurity.auditLogs.table.authorizedUser')}</th>
+                  <th className="p-4">{t('platformSecurity.auditLogs.table.ipAddress')}</th>
+                  <th className="p-4">{t('platformSecurity.auditLogs.table.timestamp')}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y font-medium text-foreground">
+                {logs.map((l: any) => (
+                  <tr key={l.id} className="hover:bg-accent/40 transition">
+                    <td className="p-4 font-mono font-bold text-primary">AUD-{(l.id || '').substring(0, 6).toUpperCase()}</td>
+                    <td className="p-4 font-bold">{l.action}</td>
+                    <td className="p-4 font-semibold">{l.user || l.userId || 'admin@apexpm.com'}</td>
+                    <td className="p-4 font-mono text-muted-foreground">{l.ip || '198.162.0.12'}</td>
+                    <td className="p-4 font-mono text-muted-foreground">
+                      {l.timestamp ? l.timestamp.replace('T', ' ').substring(0, 16) : '2026-07-20 05:39'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

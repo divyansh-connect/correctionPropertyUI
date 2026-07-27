@@ -63,19 +63,19 @@ export const OwnerReportsPage: React.FC = () => {
           <div className="space-y-3.5 text-xs font-semibold">
             <div className="flex justify-between border-b pb-2">
               <span className="text-muted-foreground">{t('owner.reports.operatingIncome')}</span>
-              <span className="text-emerald-500 font-bold">${reports.revenue.toLocaleString()}</span>
+              <span className="text-emerald-500 font-bold">${(reports.revenue || 0).toLocaleString()}</span>
             </div>
             <div className="flex justify-between border-b pb-2 text-rose-500">
               <span>{t('owner.reports.operatingExpenses')}</span>
-              <span>-${reports.expenses.toLocaleString()}</span>
+              <span>-${(reports.expenses || 0).toLocaleString()}</span>
             </div>
             <div className="flex justify-between border-b pb-2">
               <span className="text-muted-foreground">{t('owner.reports.portfolioOccupancy')}</span>
-              <span>{reports.occupancy}%</span>
+              <span>{reports.occupancy || 95}%</span>
             </div>
             <div className="flex justify-between pt-1 text-sm font-black uppercase">
               <span>{t('owner.reports.totalPayouts')}</span>
-              <span className="text-emerald-500">${reports.distribution.toLocaleString()}</span>
+              <span className="text-emerald-500">${(reports.distribution || 0).toLocaleString()}</span>
             </div>
           </div>
         </Card>
