@@ -95,6 +95,130 @@ export const api = {
       return res.data;
     },
   },
+
+  tenant: {
+    ...mockApi.tenant,
+    getAll: async () => {
+      try {
+        const res: any = await apiClient.get('/tenants');
+        return (res.data || []).map((t: any) => ({
+          id: t.id,
+          firstName: t.firstName,
+          lastName: t.lastName,
+          email: t.email,
+          phone: t.phone,
+          unitName: t.unit?.unitNumber || 'Unassigned',
+          propertyName: t.unit?.property?.name || 'Unassigned',
+          status: t.status,
+          createdAt: t.createdAt,
+        }));
+      } catch (e) {
+        console.error('Tenants fetch failed:', e);
+        return [];
+      }
+    },
+    create: async (data: any) => {
+      const res: any = await apiClient.post('/tenants', data);
+      return res.data;
+    },
+  },
+
+  owner: {
+    ...mockApi.owner,
+    getAll: async () => {
+      try {
+        const res: any = await apiClient.get('/owners');
+        return (res.data || []).map((o: any) => ({
+          id: o.id,
+          firstName: o.firstName,
+          lastName: o.lastName,
+          email: o.email,
+          phone: o.phone,
+          payoutMethod: o.payoutMethod,
+          propertiesOwnedCount: o.properties?.length || 0,
+        }));
+      } catch (e) {
+        console.error('Owners fetch failed:', e);
+        return [];
+      }
+    },
+    create: async (data: any) => {
+      const res: any = await apiClient.post('/owners', data);
+      return res.data;
+    },
+  },
+
+  vendor: {
+    ...mockApi.vendor,
+    getAll: async () => {
+      try {
+        const res: any = await apiClient.get('/vendors');
+        return (res.data || []).map((v: any) => ({
+          id: v.id,
+          companyName: v.companyName,
+          contactName: v.contactName,
+          email: v.email,
+          phone: v.phone,
+          serviceType: v.serviceType,
+          rating: v.rating,
+          activeJobs: v.workOrders?.filter((w: any) => w.status !== 'Completed').length || 0,
+        }));
+      } catch (e) {
+        console.error('Vendors fetch failed:', e);
+        return [];
+      }
+    },
+  },
+
+  workOrders: {
+    ...mockApi.workOrders,
+    getAll: async () => {
+      try {
+        const res: any = await apiClient.get('/work-orders');
+        return (res.data || []).map((w: any) => ({
+          id: w.id,
+          title: w.title,
+          description: w.description,
+          propertyName: w.property?.name || 'Property',
+          vendorName: w.vendor?.companyName || 'Unassigned',
+          priority: w.priority,
+          status: w.status === 'InProgress' ? 'In Progress' : w.status,
+          estimatedCost: w.estimatedCost || 0,
+          actualCost: w.actualCost || 0,
+          createdAt: w.createdAt,
+        }));
+      } catch (e) {
+        console.error('Work orders fetch failed:', e);
+        return [];
+      }
+    },
+    create: async (data: any) => {
+      const res: any = await apiClient.post('/work-orders', data);
+      return res.data;
+    },
+  },
+
+  dashboard: {
+    ...mockApi.dashboard,
+    getMetrics: async () => {
+      try {
+        const res: any = await apiClient.get('/dashboard/metrics');
+        return res.data;
+      } catch (e) {
+        console.error('Dashboard metrics fetch failed:', e);
+        return mockApi.dashboard.getMetrics();
+      }
+    },
+    getChartData: async () => {
+      try {
+        const res: any = await apiClient.get('/dashboard/charts');
+        return res.data;
+      } catch (e) {
+        console.error('Dashboard charts fetch failed:', e);
+        return mockApi.dashboard.getChartData();
+      }
+    },
+  },
 };
 
 export default api;
