@@ -1,0 +1,11 @@
+{
+  "name": "doorloop-root",
+  "private": true,
+  "scripts": {
+    "backend:dev": "npm --prefix backend run dev",
+    "backend:build": "npm --prefix backend run build",
+    "backend:seed": "npm --prefix backend run prisma:seed",
+    "prisma:seed": "npm --prefix backend run prisma:seed",
+    "frontend:dev": "npm --prefix Frontend run dev"
+  }
+}
