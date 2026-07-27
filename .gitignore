@@ -7,8 +7,8 @@ dist
 **/dist
 
 # Environment Variables
-.env
-**/.env
+# .env
+# **/.env
 
 # Archive & Zip Files
 *.zip
