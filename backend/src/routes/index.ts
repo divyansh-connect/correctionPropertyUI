@@ -1,15 +1,16 @@
 import { Router } from 'express';
-import authRoutes from './auth.routes';
-import propertyRoutes from './property.routes';
-import leaseRoutes from './lease.routes';
-import paymentRoutes from './payment.routes';
-import accountingRoutes from './accounting.routes';
-import tenantRoutes from './tenant.routes';
-import ownerRoutes from './owner.routes';
-import vendorRoutes from './vendor.routes';
-import workOrderRoutes from './workorder.routes';
-import dashboardRoutes from './dashboard.routes';
-import secondaryRoutes from './secondary.routes';
+import authRoutes from './auth.routes.js';
+import propertyRoutes from './property.routes.js';
+import leaseRoutes from './lease.routes.js';
+import paymentRoutes from './payment.routes.js';
+import accountingRoutes from './accounting.routes.js';
+import tenantRoutes from './tenant.routes.js';
+import ownerRoutes from './owner.routes.js';
+import vendorRoutes from './vendor.routes.js';
+import workOrderRoutes from './workorder.routes.js';
+import dashboardRoutes from './dashboard.routes.js';
+import secondaryRoutes from './secondary.routes.js';
+import portalRoutes from './portal.routes.js';
 
 const router = Router();
 
@@ -31,6 +32,7 @@ router.use('/owners', ownerRoutes);
 router.use('/vendors', vendorRoutes);
 router.use('/work-orders', workOrderRoutes);
 router.use('/dashboard', dashboardRoutes);
+router.use('/portal', portalRoutes);
 router.use('/', secondaryRoutes);
 
 export default router;

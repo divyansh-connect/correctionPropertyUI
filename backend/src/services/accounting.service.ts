@@ -1,11 +1,96 @@
-import prisma from '../config/database';
-import { AppError } from '../utils/appError';
+import prisma from '../config/database.js';
+import { AppError } from '../utils/appError.js';
 
 export class AccountingService {
   async getChartOfAccounts() {
     return prisma.coAAccount.findMany({
       orderBy: { accountCode: 'asc' },
     });
+  }
+
+  async createAccount(data: { accountCode: string; accountName: string; type: string; balance?: number }) {
+    return prisma.coAAccount.create({
+      data: {
+        accountCode: data.accountCode,
+        accountName: data.accountName,
+        type: data.type,
+        balance: data.balance || 0,
+      },
+    });
+  }
+
+  async deleteAccount(id: string) {
+    return prisma.coAAccount.delete({
+      where: { id },
+    });
+  }
+
+  async getJournalEntries() {
+    return prisma.journalEntry.findMany({
+      include: {
+        lines: {
+          include: {
+            account: true,
+          },
+        },
+      },
+      orderBy: { date: 'desc' },
+    });
+  }
+
+  async getGeneralLedger() {
+    // Return all journal entry lines representing the ledger transactions
+    return prisma.journalEntryLine.findMany({
+      include: {
+        account: true,
+        journalEntry: true,
+      },
+      orderBy: {
+        journalEntry: {
+          date: 'desc',
+        },
+      },
+    });
+  }
+
+  async getBankAccounts() {
+    return prisma.bankAccount.findMany({
+      orderBy: { name: 'asc' },
+    });
+  }
+
+  async createBankAccount(data: any) {
+    return prisma.bankAccount.create({
+      data: {
+        name: data.name,
+        institution: data.institution,
+        accountNumber: data.accountNumber,
+        balance: parseFloat(data.balance || '0'),
+        type: data.type || 'Checking',
+        status: data.status || 'Active',
+      },
+    });
+  }
+
+  async deleteBankAccount(id: string) {
+    return prisma.bankAccount.delete({
+      where: { id },
+    });
+  }
+
+  async getBankReconciliation() {
+    // Return simple bank reconciliation data
+    const bankAccounts = await this.getBankAccounts();
+    return bankAccounts.map((ba) => ({
+      id: `rec-${ba.id}`,
+      bankAccountId: ba.id,
+      bankAccountName: ba.name,
+      statementDate: new Date(),
+      statementEndingBalance: ba.balance,
+      clearedBalance: ba.balance,
+      difference: 0.00,
+      status: 'Reconciled',
+    }));
   }
 
   async postJournalEntry(data: { description: string; lines: Array<{ accountId: string; debit: number; credit: number }> }) {

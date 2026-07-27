@@ -213,6 +213,7 @@ model Unit {
   tenants          Tenant[]
   leases           Lease[]
   rentPayments     RentPayment[]
+  violations       Violation[]
 
   @@map("units")
 }
@@ -231,6 +232,8 @@ model Tenant {
   leases            Lease[]
   payments          RentPayment[]
   insurancePolicies InsurancePolicy[]
+  paymentPlans      PaymentPlan[]
+  screeningReports  ScreeningReport[]
 
   @@map("tenants")
 }
@@ -444,5 +447,90 @@ model AiChatLog {
   createdAt DateTime @default(now())
 
   @@map("ai_chat_logs")
+}
+
+model BankAccount {
+  id            String   @id @default(uuid())
+  name          String
+  institution   String
+  accountNumber String
+  balance       Float    @default(0.0)
+  type          String
+  status        String   @default("Active")
+  createdAt     DateTime @default(now())
+
+  @@map("bank_accounts")
+}
+
+model SubscriptionPlan {
+  id           String   @id @default(uuid())
+  planName     String
+  price        Float
+  billingCycle String
+  nextInvoice  DateTime
+  usageLimit   String
+  createdAt    DateTime @default(now())
+
+  @@map("subscription_plans")
+}
+
+model SecurityPolicy {
+  id             String   @id @default(uuid())
+  mfaRequired    Boolean  @default(true)
+  sessionTimeout Int      @default(30)
+  passwordPolicy String   @default("Strong")
+  ipWhitelist    String   @default("192.168.1.0/24")
+
+  @@map("security_policies")
+}
+
+model PaymentPlan {
+  id          String   @id @default(uuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  totalAmount Float
+  frequency   String
+  status      String   @default("Active")
+  createdAt   DateTime @default(now())
+
+  @@map("payment_plans")
+}
+
+model CrmLead {
+  id        String   @id @default(uuid())
+  name      String
+  email     String
+  phone     String
+  source    String
+  status    String   @default("New")
+  createdAt DateTime @default(now())
+
+  @@map("crm_leads")
+}
+
+model ScreeningReport {
+  id           String   @id @default(uuid())
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  creditScore  Int
+  criminalPass Boolean  @default(true)
+  evictionPass Boolean  @default(true)
+  status       String   @default("Approved")
+  createdAt    DateTime @default(now())
+
+  @@map("screening_reports")
+}
+
+model Violation {
+  id          String   @id @default(uuid())
+  unitId      String
+  unit        Unit     @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  title       String
+  description String   @db.Text
+  fineAmount  Float    @default(0.0)
+  status      String   @default("Open")
+  createdAt   DateTime @default(now())
+
+  @@map("violations")
 }
 

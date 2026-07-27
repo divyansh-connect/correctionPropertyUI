@@ -360,6 +360,57 @@ async function main() {
     });
   }
 
+  // 11. Create Bank Accounts
+  const bankAccountCount = await prisma.bankAccount.count();
+  if (bankAccountCount === 0) {
+    await prisma.bankAccount.createMany({
+      data: [
+        { name: 'Operating Account', institution: 'Chase Bank', accountNumber: '...4829', balance: 142500, type: 'Checking', status: 'Active' },
+        { name: 'Security Deposit Escrow', institution: 'Wells Fargo', accountNumber: '...9012', balance: 45000, type: 'Escrow/Savings', status: 'Active' },
+        { name: 'Reserve Fund', institution: 'Bank of America', accountNumber: '...1134', balance: 25000, type: 'Savings', status: 'Active' },
+      ],
+    });
+  }
+
+  // 12. Create Subscription Plans (SaaS Billing)
+  const subCount = await prisma.subscriptionPlan.count();
+  if (subCount === 0) {
+    await prisma.subscriptionPlan.create({
+      data: {
+        planName: 'Enterprise SaaS Tier',
+        price: 499.0,
+        billingCycle: 'Monthly',
+        nextInvoice: new Date('2026-08-01'),
+        usageLimit: 'Unlimited Properties',
+      },
+    });
+  }
+
+  // 13. Create Security Policies
+  const policyCount = await prisma.securityPolicy.count();
+  if (policyCount === 0) {
+    await prisma.securityPolicy.create({
+      data: {
+        mfaRequired: true,
+        sessionTimeout: 30,
+        passwordPolicy: 'Strong (min 10 chars, symbols)',
+        ipWhitelist: '192.168.1.0/24',
+      },
+    });
+  }
+
+  // 14. Create CRM Leads
+  const leadCount = await prisma.crmLead.count();
+  if (leadCount === 0) {
+    await prisma.crmLead.createMany({
+      data: [
+        { name: 'Alice Cooper', email: 'alice@example.com', phone: '(512) 555-0210', source: 'Website', status: 'New' },
+        { name: 'Charlie Brown', email: 'charlie@example.com', phone: '(512) 555-0211', source: 'Referral', status: 'Contacted' },
+        { name: 'Dana Scully', email: 'dana@example.com', phone: '(512) 555-0212', source: 'Zillow', status: 'Qualified' },
+      ],
+    });
+  }
+
   console.log('✅ DoorLoop ERP Database Seeding Completed!');
 }
 
