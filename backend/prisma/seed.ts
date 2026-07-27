@@ -312,6 +312,54 @@ async function main() {
     });
   }
 
+  // 7. Create Announcements
+  const announcementCount = await prisma.announcement.count();
+  if (announcementCount === 0) {
+    await prisma.announcement.createMany({
+      data: [
+        { title: 'Annual Fire Inspection Scheduled', content: 'Building A fire safety inspection scheduled for August 10th.', category: 'Maintenance', author: 'Property Manager', isPinned: true },
+        { title: 'Pool Maintenance Window', content: 'Community pool will be closed on Monday morning for routine maintenance.', category: 'General', author: 'Operations Team', isPinned: false },
+        { title: 'New Tenant Portal Features Active', content: 'Online maintenance requests and ACH payment options are now fully activated.', category: 'Product', author: 'IT Support', isPinned: true },
+      ],
+    });
+  }
+
+  // 8. Create Promotions/Coupons
+  const promoCount = await prisma.promotion.count();
+  if (promoCount === 0) {
+    await prisma.promotion.createMany({
+      data: [
+        { code: 'SUMMER2026', discount: '10% OFF', duration: 'First 3 Months', used: 14, maxUses: 50, status: 'Active' },
+        { code: 'MOVEIN50', discount: '$50 Credit', duration: 'One-time', used: 28, maxUses: 100, status: 'Active' },
+        { code: 'EARLYPAY5', discount: '5% Rebate', duration: 'Monthly', used: 42, maxUses: 200, status: 'Active' },
+      ],
+    });
+  }
+
+  // 9. Create Notifications
+  const notifCount = await prisma.notification.count();
+  if (notifCount === 0) {
+    await prisma.notification.createMany({
+      data: [
+        { title: 'Lease Renewal Signed', message: 'Tenant Sarah Connor signed lease renewal for Unit 304', type: 'success', read: false },
+        { title: 'Rent Payment Received', message: 'Payment of $1,850 received from David Miller', type: 'info', read: false },
+        { title: 'Work Order Updated', message: 'Plumbing repair for Unit 102 marked InProgress', type: 'warning', read: true },
+      ],
+    });
+  }
+
+  // 10. Create Documents
+  const docCount = await prisma.document.count();
+  if (docCount === 0) {
+    await prisma.document.createMany({
+      data: [
+        { name: 'Standard Lease Agreement Template 2026.pdf', category: 'Leasing', fileUrl: '/docs/lease-template.pdf', fileSize: '2.4 MB', uploadedBy: 'Legal Dept' },
+        { name: 'Property Building Safety Manual.pdf', category: 'Compliance', fileUrl: '/docs/safety-manual.pdf', fileSize: '4.1 MB', uploadedBy: 'Operations' },
+        { name: 'Tenant Move-In Checklist.pdf', category: 'Onboarding', fileUrl: '/docs/move-in-checklist.pdf', fileSize: '850 KB', uploadedBy: 'Leasing Team' },
+      ],
+    });
+  }
+
   console.log('✅ DoorLoop ERP Database Seeding Completed!');
 }
 

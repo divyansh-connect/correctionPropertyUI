@@ -228,8 +228,9 @@ model Tenant {
   status    TenantStatus @default(Pending)
   createdAt DateTime     @default(now())
 
-  leases   Lease[]
-  payments RentPayment[]
+  leases            Lease[]
+  payments          RentPayment[]
+  insurancePolicies InsurancePolicy[]
 
   @@map("tenants")
 }
@@ -369,3 +370,79 @@ model AuditLog {
 
   @@map("audit_logs")
 }
+
+model Announcement {
+  id        String   @id @default(uuid())
+  title     String
+  content   String   @db.Text
+  category  String   @default("General")
+  author    String   @default("Property Management")
+  isPinned  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("announcements")
+}
+
+model InsurancePolicy {
+  id             String   @id @default(uuid())
+  tenantId       String
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  policyNumber   String
+  provider       String
+  coverageAmount Float
+  startDate      DateTime
+  endDate        DateTime
+  status         String   @default("Active")
+  createdAt      DateTime @default(now())
+
+  @@map("insurance_policies")
+}
+
+model Promotion {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  discount  String
+  duration  String
+  used      Int      @default(0)
+  maxUses   Int      @default(100)
+  status    String   @default("Active")
+  createdAt DateTime @default(now())
+
+  @@map("promotions")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String?
+  title     String
+  message   String   @db.Text
+  type      String   @default("info")
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("notifications")
+}
+
+model Document {
+  id         String   @id @default(uuid())
+  name       String
+  category   String   @default("General")
+  fileUrl    String
+  fileSize   String   @default("1.2 MB")
+  uploadedBy String   @default("Property Manager")
+  createdAt  DateTime @default(now())
+
+  @@map("documents")
+}
+
+model AiChatLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  prompt    String   @db.Text
+  response  String   @db.Text
+  createdAt DateTime @default(now())
+
+  @@map("ai_chat_logs")
+}
+
