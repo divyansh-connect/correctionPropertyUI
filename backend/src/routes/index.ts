@@ -1,16 +1,16 @@
 import { Router } from 'express';
-import authRoutes from './auth.routes.js';
-import propertyRoutes from './property.routes.js';
-import leaseRoutes from './lease.routes.js';
-import paymentRoutes from './payment.routes.js';
-import accountingRoutes from './accounting.routes.js';
-import tenantRoutes from './tenant.routes.js';
-import ownerRoutes from './owner.routes.js';
-import vendorRoutes from './vendor.routes.js';
-import workOrderRoutes from './workorder.routes.js';
-import dashboardRoutes from './dashboard.routes.js';
-import secondaryRoutes from './secondary.routes.js';
-import portalRoutes from './portal.routes.js';
+import authRoutes from './auth.routes';
+import propertyRoutes from './property.routes';
+import leaseRoutes from './lease.routes';
+import paymentRoutes from './payment.routes';
+import accountingRoutes from './accounting.routes';
+import tenantRoutes from './tenant.routes';
+import ownerRoutes from './owner.routes';
+import vendorRoutes from './vendor.routes';
+import workOrderRoutes from './workorder.routes';
+import dashboardRoutes from './dashboard.routes';
+import secondaryRoutes from './secondary.routes';
+import portalRoutes from './portal.routes';
 
 const router = Router();
 

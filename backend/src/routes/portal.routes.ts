@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { portalController } from '../controllers/portal.controller.js';
+import { portalController } from '../controllers/portal.controller';
 
 const router = Router();
 

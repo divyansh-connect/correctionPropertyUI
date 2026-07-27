@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { accountingService } from '../services/accounting.service.js';
-import { sendSuccess } from '../utils/apiResponse.js';
+import { accountingService } from '../services/accounting.service';
+import { sendSuccess } from '../utils/apiResponse';
 
 export class AccountingController {
   async getCoA(req: Request, res: Response, next: NextFunction) {

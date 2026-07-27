@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import prisma from '../config/database.js';
-import { sendSuccess } from '../utils/apiResponse.js';
+import prisma from '../config/database';
+import { sendSuccess } from '../utils/apiResponse';
 
 export class PortalController {
   // --- Tenant Portal Views ---
