@@ -3131,6 +3131,10 @@ export const mockApi = {
         vehicles: 'Toyota Camry (Silver, 2021) - LIC# TX-77B12',
         pets: 'Golden Retriever (Rex)',
         preferredLanguage: 'English',
+        companyName: 'Apex Living Property Management',
+        companyAddress: '100 Congress Ave, Austin, TX 78701',
+        tenantAddress: '304 Skyline Luxury Lofts, Austin, TX 78702',
+        unitDetails: 'Apt 304 (3rd Floor - Corner Unit)',
       };
     },
   },

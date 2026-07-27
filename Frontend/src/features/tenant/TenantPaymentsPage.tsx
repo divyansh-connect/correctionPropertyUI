@@ -9,8 +9,10 @@ import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { LoadingSkeleton } from '../../components/LoadingSkeleton';
 import { CreditCard, Landmark, CheckCircle, Loader2, Shield, Check, Printer } from 'lucide-react';
-import { ColumnDef } from '@tanstack/react-table';import { clsx } from 'clsx';
+import { ColumnDef } from '@tanstack/react-table';
+import { clsx } from 'clsx';
 import { useTranslation } from 'react-i18next';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/Tabs';
 
 export const TenantPaymentsPage: React.FC = () => {
   const queryClient = useQueryClient();
@@ -383,98 +385,150 @@ export const TenantPaymentsPage: React.FC = () => {
         }}
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        
-        {/* Outstanding Rent balance */}
-        <Card className="md:col-span-2 p-5 border bg-card flex justify-between items-center text-xs font-semibold">
-          <div>
-            <h4 className="font-extrabold uppercase text-muted-foreground text-[10px]">{t('tenantPayments.outstandingBalance')}</h4>
-            <p className={`text-3xl font-black mt-2 flex items-center gap-1.5 ${outstandingBalance > 0 ? 'text-rose-500' : 'text-emerald-500'}`}>
-              ${outstandingBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-              {outstandingBalance === 0 && <CheckCircle className="w-5 h-5 text-emerald-500" />}
-            </p>
-            <p className="text-[10px] text-muted-foreground mt-1">{t('tenantPayments.nextInvoice')}</p>
+      <Tabs defaultValue="payment" className="space-y-6">
+        <TabsList className="mb-2">
+          <TabsTrigger value="payment">{t('tenantPayments.tabPayment')}</TabsTrigger>
+          <TabsTrigger value="ledger">{t('tenantPayments.tabLedger')}</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="payment" className="space-y-6 outline-none">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Outstanding Rent balance */}
+            <Card className="md:col-span-2 p-5 border bg-card flex justify-between items-center text-xs font-semibold">
+              <div>
+                <h4 className="font-extrabold uppercase text-muted-foreground text-[10px]">{t('tenantPayments.outstandingBalance')}</h4>
+                <p className={`text-3xl font-black mt-2 flex items-center gap-1.5 ${outstandingBalance > 0 ? 'text-rose-500' : 'text-emerald-500'}`}>
+                  ${outstandingBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  {outstandingBalance === 0 && <CheckCircle className="w-5 h-5 text-emerald-500" />}
+                </p>
+                <p className="text-[10px] text-muted-foreground mt-1">{t('tenantPayments.nextInvoice')}</p>
+              </div>
+              <Button 
+                disabled={outstandingBalance === 0} 
+                onClick={() => {
+                  setPaymentOption('full');
+                  setIsOpen(true);
+                }}
+                variant={outstandingBalance > 0 ? 'default' : 'outline'} 
+                className={outstandingBalance > 0 ? '' : 'border-slate-200 dark:border-white/10 text-muted-foreground bg-transparent'}
+              >
+                {outstandingBalance > 0 ? t('tenantPayments.payRent') : t('tenantPayments.noBalance')}
+              </Button>
+            </Card>
+
+            {/* Autopay status card */}
+            <Card className="md:col-span-1 p-5 border bg-card space-y-3 text-xs font-semibold">
+              <div className="flex items-center space-x-2 border-b pb-2">
+                <Landmark className="w-5 h-5 text-emerald-500 shrink-0" />
+                <h4 className="font-extrabold uppercase">{t('tenantPayments.autopaySetup')}</h4>
+              </div>
+              <div className="flex justify-between items-center">
+                <span>{t('tenantPayments.status')}</span>
+                <span className="text-emerald-500 font-extrabold uppercase text-[10px] bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">{t('tenantPayments.enabled')}</span>
+              </div>
+              <p className="text-[10px] text-muted-foreground">{t('tenantPayments.autopayDesc')}</p>
+            </Card>
           </div>
-          <Button 
-            disabled={outstandingBalance === 0} 
-            onClick={() => {
-              setPaymentOption('full');
-              setIsOpen(true);
-            }}
-            variant={outstandingBalance > 0 ? 'default' : 'outline'} 
-            className={outstandingBalance > 0 ? '' : 'border-slate-200 dark:border-white/10 text-muted-foreground bg-transparent'}
-          >
-            {outstandingBalance > 0 ? t('tenantPayments.payRent') : t('tenantPayments.noBalance')}
-          </Button>
-        </Card>
 
-        {/* Autopay status card */}
-        <Card className="md:col-span-1 p-5 border bg-card space-y-3 text-xs font-semibold">
-          <div className="flex items-center space-x-2 border-b pb-2">
-            <Landmark className="w-5 h-5 text-emerald-500 shrink-0" />
-            <h4 className="font-extrabold uppercase">{t('tenantPayments.autopaySetup')}</h4>
+          <div className="bg-card border rounded-2xl p-5 space-y-4">
+            <div className="text-xs font-bold text-muted-foreground uppercase">{t('tenantPayments.ledger')}</div>
+            <DataTable columns={columns} data={ledgerEntries} loading={isLoading} />
           </div>
-          <div className="flex justify-between items-center">
-            <span>{t('tenantPayments.status')}</span>
-            <span className="text-emerald-500 font-extrabold uppercase text-[10px] bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">{t('tenantPayments.enabled')}</span>
+        </TabsContent>
+
+        <TabsContent value="ledger" className="outline-none">
+          <div className="bg-card border rounded-2xl p-6 shadow-sm space-y-6" id="printable-tenant-ledger-area">
+            <style>{`
+              @page {
+                size: A4 portrait;
+                margin: 15mm;
+              }
+              @media print {
+                body {
+                  background: white !important;
+                  color: black !important;
+                }
+                body * {
+                  visibility: hidden !important;
+                }
+                #printable-tenant-ledger-area, #printable-tenant-ledger-area * {
+                  visibility: visible !important;
+                }
+                #printable-tenant-ledger-area {
+                  position: absolute !important;
+                  left: 0 !important;
+                  top: 0 !important;
+                  width: 100% !important;
+                  border: none !important;
+                  box-shadow: none !important;
+                  background: white !important;
+                  color: black !important;
+                  padding: 0 !important;
+                  margin: 0 !important;
+                }
+                .no-print {
+                  display: none !important;
+                }
+                table {
+                  width: 100% !important;
+                  border-collapse: collapse !important;
+                }
+                th, td {
+                  border-bottom: 1px solid #e2e8f0 !important;
+                  padding: 8px 4px !important;
+                  color: black !important;
+                }
+                th {
+                  font-weight: 800 !important;
+                }
+              }
+            `}</style>
+
+            <div className="flex justify-between items-center border-b pb-4 no-print">
+              <h3 className="font-black text-sm uppercase tracking-wider text-muted-foreground">{t('tenantPayments.tabLedger')}</h3>
+              <Button variant="outline" size="sm" onClick={() => window.print()} className="text-xs font-bold flex items-center gap-1.5 h-9">
+                <Printer className="w-4 h-4" /> {t('tenantPayments.printStatement')}
+              </Button>
+            </div>
+
+            {/* Statement Info Header Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-b pb-6 text-xs">
+              {/* Company Info */}
+              <div className="space-y-2">
+                <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block">{t('tenantPayments.companyName')}</span>
+                <p className="font-black text-sm text-primary">{profile?.companyName || 'Apex Living Property Management'}</p>
+                <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block mt-4">{t('tenantPayments.companyAddress')}</span>
+                <p className="font-bold text-muted-foreground leading-relaxed whitespace-pre-line">{profile?.companyAddress || '100 Congress Ave,\nAustin, TX 78701'}</p>
+              </div>
+
+              {/* Tenant & Unit Info */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block">{t('tenantPayments.tenantName')}</span>
+                  <p className="font-black text-foreground">{tenantName}</p>
+                  <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block mt-4">{t('tenantPayments.emailAddress')}</span>
+                  <p className="font-semibold text-muted-foreground truncate">{profile?.email || 'sarah.c@skyline-rentals.com'}</p>
+                  <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block mt-4">{t('tenantPayments.phoneNumber')}</span>
+                  <p className="font-semibold text-muted-foreground">{profile?.phone || '(512) 555-0011'}</p>
+                </div>
+                <div className="space-y-2">
+                  <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block">{t('tenantPayments.tenantAddress')}</span>
+                  <p className="font-bold text-muted-foreground leading-relaxed whitespace-pre-line">{profile?.tenantAddress || '304 Skyline Luxury Lofts,\nAustin, TX 78702'}</p>
+                  <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block mt-4">{t('tenantPayments.unitDetails')}</span>
+                  <p className="font-black text-primary uppercase">{profile?.unitDetails || 'Apt 304'}</p>
+                  <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block mt-4">{t('tenantPayments.statementDate')}</span>
+                  <p className="font-semibold text-muted-foreground">{new Date().toLocaleDateString()}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4 pt-4">
+              <h4 className="font-extrabold uppercase text-[10px] text-muted-foreground tracking-wider">{t('tenantPayments.ledger')}</h4>
+              <DataTable columns={columns} data={ledgerEntries} loading={isLoading} />
+            </div>
           </div>
-          <p className="text-[10px] text-muted-foreground">{t('tenantPayments.autopayDesc')}</p>
-        </Card>
-
-      </div>
-
-      <div className="mb-3 text-xs font-bold text-muted-foreground uppercase flex justify-between items-center">
-        <span>{t('tenantPayments.ledger')}</span>
-        <Button variant="outline" size="sm" onClick={() => window.print()} className="text-[10px] font-bold flex items-center gap-1.5 h-8">
-          <Printer className="w-3.5 h-3.5" /> {t('tenantPayments.printLedger')}
-        </Button>
-      </div>
-
-      <div id="printable-tenant-ledger-area">
-        <style>{`
-          @page {
-            size: A4 portrait;
-            margin: 15mm 15mm 15mm 15mm;
-          }
-          @media print {
-            body {
-              background: white !important;
-              color: black !important;
-            }
-            body * {
-              visibility: hidden !important;
-            }
-            #printable-tenant-ledger-area, #printable-tenant-ledger-area * {
-              visibility: visible !important;
-            }
-            #printable-tenant-ledger-area {
-              position: absolute !important;
-              left: 0 !important;
-              top: 0 !important;
-              width: 100% !important;
-              border: none !important;
-              box-shadow: none !important;
-              background: white !important;
-              color: black !important;
-              padding: 0 !important;
-              margin: 0 !important;
-            }
-            table {
-              width: 100% !important;
-              border-collapse: collapse !important;
-            }
-            th, td {
-              border-bottom: 1px solid #e2e8f0 !important;
-              padding: 8px 4px !important;
-              color: black !important;
-            }
-            th {
-              font-weight: 800 !important;
-            }
-          }
-        `}</style>
-        <DataTable columns={columns} data={ledgerEntries} loading={isLoading} />
-      </div>
+        </TabsContent>
+      </Tabs>
 
       {/* RENT PAYMENT DIALOG */}
       <FormDialog open={isOpen} onOpenChange={(val) => {
