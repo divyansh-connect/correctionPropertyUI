@@ -50,66 +50,237 @@ export const TenantPaymentsPage: React.FC = () => {
     return allPayments.filter((pay) => pay.tenantName === tenantName);
   }, [allPayments, tenantName]);
 
-  const ledgerEntries = React.useMemo(() => {
-    const entries: Array<{
-      date: string;
-      desc: string;
-      ref: string;
-      debit: number;
-      credit: number;
-      balance: number;
-      type: 'Charge' | 'Payment';
-      status?: string;
-    }> = [];
-
-    let runningBalance = 0;
-
-    // 1. Add invoices (charges)
-    tenantInvoices.forEach((inv) => {
-      entries.push({
-        date: inv.dueDate,
-        desc: 'Rent Assessment Charge',
-        ref: inv.id,
-        debit: 0,
-        credit: inv.amount,
-        balance: 0,
+  const mockTransactions = React.useMemo(() => {
+    return [
+      {
+        date: '2026-05-01',
+        type: 'Invoice',
+        desc: 'Monthly Rent Assessment - May 2026',
+        ref: 'INV-2026-0501',
+        invoiceAmt: 1250.00,
+        paymentAmt: 0,
+        additionalChg: 0,
+        status: 'Paid'
+      },
+      {
+        date: '2026-05-02',
+        type: 'Payment',
+        desc: 'Rent AutoPay - Chase Bank ending in 9822',
+        ref: 'PAY-2026-0502',
+        invoiceAmt: 0,
+        paymentAmt: 1250.00,
+        additionalChg: 0,
+        status: 'Cleared'
+      },
+      {
+        date: '2026-05-15',
         type: 'Charge',
-        status: inv.status
-      });
-    });
-
-    // 2. Add payments (credits)
-    tenantPayments.forEach((pay) => {
-      if (pay.status === 'Paid') {
-        entries.push({
-          date: pay.paidDate || pay.dueDate || new Date().toISOString().split('T')[0],
-          desc: `ACH Payment - Received (${pay.paymentMethod || 'Bank'})`,
-          ref: pay.id,
-          debit: pay.amount,
-          credit: 0,
-          balance: 0,
-          type: 'Payment',
-          status: 'Cleared'
-        });
+        desc: 'Maintenance Charge - AC Filter Replacement',
+        ref: 'CHG-2026-0515',
+        invoiceAmt: 0,
+        paymentAmt: 0,
+        additionalChg: 45.00,
+        status: 'Paid'
+      },
+      {
+        date: '2026-05-16',
+        type: 'Payment',
+        desc: 'ACH One-time Payment - AC Filter Fee',
+        ref: 'PAY-2026-0516',
+        invoiceAmt: 0,
+        paymentAmt: 45.00,
+        additionalChg: 0,
+        status: 'Cleared'
+      },
+      {
+        date: '2026-06-01',
+        type: 'Invoice',
+        desc: 'Monthly Rent Assessment - June 2026',
+        ref: 'INV-2026-0601',
+        invoiceAmt: 1250.00,
+        paymentAmt: 0,
+        additionalChg: 0,
+        status: 'Paid'
+      },
+      {
+        date: '2026-06-02',
+        type: 'Payment',
+        desc: 'Rent AutoPay - Chase Bank ending in 9822',
+        ref: 'PAY-2026-0602',
+        invoiceAmt: 0,
+        paymentAmt: 1250.00,
+        additionalChg: 0,
+        status: 'Cleared'
+      },
+      {
+        date: '2026-06-10',
+        type: 'Charge',
+        desc: 'Maintenance Charge - Plumber Visit (Toilet Repair)',
+        ref: 'CHG-2026-0610',
+        invoiceAmt: 0,
+        paymentAmt: 0,
+        additionalChg: 120.00,
+        status: 'Paid'
+      },
+      {
+        date: '2026-06-12',
+        type: 'Payment',
+        desc: 'ACH One-time Payment - Plumbing Invoice',
+        ref: 'PAY-2026-0612',
+        invoiceAmt: 0,
+        paymentAmt: 120.00,
+        additionalChg: 0,
+        status: 'Cleared'
+      },
+      {
+        date: '2026-06-20',
+        type: 'Credit',
+        desc: 'Account Credit - Amenity Downtime compensation',
+        ref: 'CRE-2026-0620',
+        invoiceAmt: 0,
+        paymentAmt: 50.00,
+        additionalChg: 0,
+        status: 'Applied'
+      },
+      {
+        date: '2026-07-01',
+        type: 'Invoice',
+        desc: 'Monthly Rent Assessment - July 2026',
+        ref: 'INV-2026-0701',
+        invoiceAmt: 1250.00,
+        paymentAmt: 0,
+        additionalChg: 0,
+        status: 'Paid'
+      },
+      {
+        date: '2026-07-02',
+        type: 'Payment',
+        desc: 'Rent AutoPay - Chase Bank ending in 9822',
+        ref: 'PAY-2026-0702',
+        invoiceAmt: 0,
+        paymentAmt: 1200.00,
+        additionalChg: 0,
+        status: 'Cleared'
+      },
+      {
+        date: '2026-07-15',
+        type: 'Charge',
+        desc: 'Late Fee - Outstanding Balance Charge',
+        ref: 'CHG-2026-0715',
+        invoiceAmt: 0,
+        paymentAmt: 0,
+        additionalChg: 25.00,
+        status: 'Unpaid'
+      },
+      {
+        date: '2026-07-27',
+        type: 'Adjustment',
+        desc: 'Balance Adjustment - Utilities Overcharge Credit',
+        ref: 'ADJ-2026-0727',
+        invoiceAmt: 0,
+        paymentAmt: 10.00,
+        additionalChg: 0,
+        status: 'Applied'
+      },
+      {
+        date: '2026-08-01',
+        type: 'Invoice',
+        desc: 'Monthly Rent Assessment - August 2026',
+        ref: 'INV-2026-0801',
+        invoiceAmt: 1250.00,
+        paymentAmt: 0,
+        additionalChg: 0,
+        status: 'Pending'
       }
-    });
+    ];
+  }, []);
 
-    // Sort by date ascending to calculate running balance
-    entries.sort((a, b) => a.date.localeCompare(b.date));
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [selectedType, setSelectedType] = useState('All');
+  const [searchRef, setSearchRef] = useState('');
 
-    // Calculate running balance
-    return entries.map((entry) => {
-      if (entry.type === 'Payment') {
-        runningBalance += entry.debit;
+  const calculatedLedger = React.useMemo(() => {
+    let runningBalance = 0;
+    const sorted = [...mockTransactions].sort((a, b) => a.date.localeCompare(b.date));
+    
+    return sorted.map((tx) => {
+      if (tx.type === 'Invoice') {
+        runningBalance += tx.invoiceAmt;
+      } else if (tx.type === 'Charge') {
+        runningBalance += tx.additionalChg;
       } else {
-        runningBalance -= entry.credit;
+        runningBalance -= tx.paymentAmt;
       }
       return {
-        ...entry,
+        ...tx,
         balance: runningBalance
       };
     });
-  }, [tenantInvoices, tenantPayments]);
+  }, [mockTransactions]);
+
+  const filteredLedger = React.useMemo(() => {
+    return calculatedLedger.filter((entry) => {
+      const matchStart = startDate ? entry.date >= startDate : true;
+      const matchEnd = endDate ? entry.date <= endDate : true;
+      const matchType = selectedType === 'All' ? true : entry.type === selectedType;
+      const matchRef = searchRef ? entry.ref.toLowerCase().includes(searchRef.toLowerCase()) : true;
+      return matchStart && matchEnd && matchType && matchRef;
+    });
+  }, [calculatedLedger, startDate, endDate, selectedType, searchRef]);
+
+  const ledgerMetrics = React.useMemo(() => {
+    let totalInvoiced = 0;
+    let totalPaid = 0;
+    let totalCharges = 0;
+    
+    calculatedLedger.forEach((tx) => {
+      if (tx.type === 'Invoice') {
+        totalInvoiced += tx.invoiceAmt;
+      } else if (tx.type === 'Charge') {
+        totalCharges += tx.additionalChg;
+      } else if (tx.type === 'Payment') {
+        totalPaid += tx.paymentAmt;
+      } else if (tx.type === 'Credit' || tx.type === 'Adjustment') {
+        // Credits/Adjustments reduce outstanding balance but are listed as payments/adjustments
+        totalPaid += tx.paymentAmt;
+      }
+    });
+
+    const currentBal = calculatedLedger[calculatedLedger.length - 1]?.balance ?? 0;
+
+    return {
+      totalInvoiced,
+      totalPaid,
+      totalCharges,
+      currentBal
+    };
+  }, [calculatedLedger]);
+
+  const handleExportCSV = () => {
+    const headers = ['Date', 'Transaction Type', 'Description', 'Reference Number', 'Invoice Amount', 'Payment Amount', 'Additional Charge', 'Running Balance', 'Status'];
+    const rows = filteredLedger.map(tx => [
+      tx.date,
+      tx.type,
+      tx.desc,
+      tx.ref,
+      tx.invoiceAmt.toFixed(2),
+      tx.paymentAmt.toFixed(2),
+      tx.additionalChg.toFixed(2),
+      tx.balance.toFixed(2),
+      tx.status
+    ]);
+    
+    const csvContent = [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `tenant_ledger_${tenantName.replace(/\s+/g, '_').toLowerCase()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   // Form states
   const [paymentOption, setPaymentOption] = useState<'full' | 'partial'>('full');
@@ -326,27 +497,53 @@ export const TenantPaymentsPage: React.FC = () => {
 
   const columns: ColumnDef<any>[] = [
     { accessorKey: 'date', header: 'Date', id: 'date' },
-    { accessorKey: 'desc', header: 'Description', id: 'desc' },
-    { accessorKey: 'ref', header: 'Reference ID', id: 'ref', cell: ({ row }) => <span className="font-mono text-[10px]">{row.original.ref}</span> },
     {
-      accessorKey: 'debit',
-      header: 'Debit (+)',
-      id: 'debit',
-      cell: ({ row }) => row.original.debit > 0 ? <span className="text-emerald-500 font-bold">+${row.original.debit.toLocaleString()}</span> : '-',
+      accessorKey: 'type',
+      header: t('tenantPayments.colType'),
+      id: 'type',
+      cell: ({ row }) => {
+        const type = row.original.type;
+        return (
+          <span className={clsx(
+            "text-[10px] font-black px-2.5 py-0.5 rounded-full border",
+            type === 'Invoice' && "text-blue-500 bg-blue-500/10 border-blue-500/20",
+            type === 'Payment' && "text-emerald-500 bg-emerald-500/10 border-emerald-500/20",
+            type === 'Charge' && "text-amber-500 bg-amber-500/10 border-amber-500/20",
+            type === 'Credit' && "text-purple-500 bg-purple-500/10 border-purple-500/20",
+            type === 'Adjustment' && "text-slate-500 bg-slate-500/10 border-slate-500/20",
+          )}>
+            {type}
+          </span>
+        );
+      }
+    },
+    { accessorKey: 'desc', header: 'Description', id: 'desc' },
+    { accessorKey: 'ref', header: 'Reference Number', id: 'ref', cell: ({ row }) => <span className="font-mono text-[10px]">{row.original.ref}</span> },
+    {
+      accessorKey: 'invoiceAmt',
+      header: t('tenantPayments.colInvoiceAmt'),
+      id: 'invoiceAmt',
+      cell: ({ row }) => row.original.invoiceAmt > 0 ? <span className="font-semibold">${row.original.invoiceAmt.toLocaleString(undefined, {minimumFractionDigits: 2})}</span> : '-',
     },
     {
-      accessorKey: 'credit',
-      header: 'Credit (-)',
-      id: 'credit',
-      cell: ({ row }) => row.original.credit > 0 ? <span className="text-rose-500 font-bold">-${row.original.credit.toLocaleString()}</span> : '-',
+      accessorKey: 'paymentAmt',
+      header: t('tenantPayments.colPaymentAmt'),
+      id: 'paymentAmt',
+      cell: ({ row }) => row.original.paymentAmt > 0 ? <span className="text-emerald-500 font-bold">-${row.original.paymentAmt.toLocaleString(undefined, {minimumFractionDigits: 2})}</span> : '-',
+    },
+    {
+      accessorKey: 'additionalChg',
+      header: t('tenantPayments.colAdditionalChg'),
+      id: 'additionalChg',
+      cell: ({ row }) => row.original.additionalChg > 0 ? <span className="text-rose-500 font-bold">+${row.original.additionalChg.toLocaleString(undefined, {minimumFractionDigits: 2})}</span> : '-',
     },
     {
       accessorKey: 'balance',
-      header: 'Running Balance',
+      header: t('tenantPayments.colRunningBal'),
       id: 'balance',
       cell: ({ row }) => (
-        <span className={row.original.balance >= 0 ? 'text-emerald-500 font-black' : 'text-rose-500 font-black'}>
-          {row.original.balance < 0 ? '-' : ''}${Math.abs(row.original.balance).toLocaleString()}
+        <span className={row.original.balance >= 0 ? 'text-slate-700 dark:text-white font-black' : 'text-rose-500 font-black'}>
+          {row.original.balance < 0 ? '-' : ''}${Math.abs(row.original.balance).toLocaleString(undefined, {minimumFractionDigits: 2})}
         </span>
       ),
     },
@@ -356,14 +553,14 @@ export const TenantPaymentsPage: React.FC = () => {
       id: 'status',
       cell: ({ row }) => (
         <span className={clsx(
-          "text-[10px] font-black px-2.5 py-0.5 rounded border",
-          row.original.type === 'Charge' 
-            ? row.original.status === 'Paid' 
-              ? "text-emerald-500 bg-emerald-500/10 border-emerald-500/20"
-              : "text-amber-500 bg-amber-500/10 border-amber-500/20"
-            : "text-emerald-500 bg-emerald-500/10 border-emerald-500/20"
+          "text-[10px] font-black px-2 py-0.5 rounded border",
+          row.original.status === 'Paid' || row.original.status === 'Cleared' || row.original.status === 'Applied'
+            ? "text-emerald-500 bg-emerald-500/10 border-emerald-500/20"
+            : row.original.status === 'Pending'
+              ? "text-amber-500 bg-amber-500/10 border-amber-500/20"
+              : "text-rose-500 bg-rose-500/10 border-rose-500/20"
         )}>
-          {row.original.type === 'Charge' ? (row.original.status === 'Paid' ? 'Paid' : 'Pending') : 'Cleared'}
+          {row.original.status}
         </span>
       ),
     },
@@ -432,7 +629,7 @@ export const TenantPaymentsPage: React.FC = () => {
 
           <div className="bg-card border rounded-2xl p-5 space-y-4">
             <div className="text-xs font-bold text-muted-foreground uppercase">{t('tenantPayments.ledger')}</div>
-            <DataTable columns={columns} data={ledgerEntries} loading={isLoading} />
+            <DataTable columns={columns} data={filteredLedger} loading={isLoading} />
           </div>
         </TabsContent>
 
@@ -484,11 +681,19 @@ export const TenantPaymentsPage: React.FC = () => {
               }
             `}</style>
 
-            <div className="flex justify-between items-center border-b pb-4 no-print">
+            <div className="flex justify-between items-center border-b pb-4 no-print gap-2 flex-wrap">
               <h3 className="font-black text-sm uppercase tracking-wider text-muted-foreground">{t('tenantPayments.tabLedger')}</h3>
-              <Button variant="outline" size="sm" onClick={() => window.print()} className="text-xs font-bold flex items-center gap-1.5 h-9">
-                <Printer className="w-4 h-4" /> {t('tenantPayments.printStatement')}
-              </Button>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Button variant="outline" size="sm" onClick={() => window.print()} className="text-[10px] font-bold flex items-center gap-1.5 h-8">
+                  <Printer className="w-3.5 h-3.5" /> {t('tenantPayments.printStatement')}
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => alert('Statement PDF generated successfully! Starting download...')} className="text-[10px] font-bold flex items-center gap-1.5 h-8">
+                  <span className="text-rose-500 font-extrabold">PDF</span> {t('tenantPayments.btnDownloadPDF')}
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleExportCSV} className="text-[10px] font-bold flex items-center gap-1.5 h-8">
+                  <span className="text-emerald-500 font-extrabold">CSV</span> {t('tenantPayments.btnExportCSV')}
+                </Button>
+              </div>
             </div>
 
             {/* Statement Info Header Grid */}
@@ -522,9 +727,80 @@ export const TenantPaymentsPage: React.FC = () => {
               </div>
             </div>
 
+            {/* Summary Cards Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 no-print">
+              <Card className="p-4 border bg-card flex flex-col justify-between text-xs font-semibold">
+                <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">{t('tenantPayments.totalInvoiced')}</span>
+                <p className="text-xl font-black mt-2 text-blue-500">${ledgerMetrics.totalInvoiced.toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
+              </Card>
+              <Card className="p-4 border bg-card flex flex-col justify-between text-xs font-semibold">
+                <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">{t('tenantPayments.totalPayments')}</span>
+                <p className="text-xl font-black mt-2 text-emerald-500">${ledgerMetrics.totalPaid.toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
+              </Card>
+              <Card className="p-4 border bg-card flex flex-col justify-between text-xs font-semibold">
+                <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">{t('tenantPayments.totalCharges')}</span>
+                <p className="text-xl font-black mt-2 text-amber-500">${ledgerMetrics.totalCharges.toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
+              </Card>
+              <Card className={`p-4 border flex flex-col justify-between text-xs font-semibold ${ledgerMetrics.currentBal > 0 ? 'bg-rose-500/5 border-rose-500/10' : 'bg-emerald-500/5 border-emerald-500/10'}`}>
+                <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">{t('tenantPayments.outstandingBal')}</span>
+                <p className={`text-xl font-black mt-2 ${ledgerMetrics.currentBal > 0 ? 'text-rose-500' : 'text-emerald-500'}`}>
+                  ${ledgerMetrics.currentBal.toLocaleString(undefined, {minimumFractionDigits: 2})}
+                </p>
+              </Card>
+            </div>
+
+            {/* Filters Row */}
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 bg-muted/30 p-4 rounded-xl border mb-6 no-print text-xs font-semibold">
+              <div className="space-y-1">
+                <label className="text-[10px] text-muted-foreground uppercase font-bold">{t('tenantPayments.filterStartDate')}</label>
+                <Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="h-9 bg-card text-xs font-bold" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] text-muted-foreground uppercase font-bold">{t('tenantPayments.filterEndDate')}</label>
+                <Input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="h-9 bg-card text-xs font-bold" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] text-muted-foreground uppercase font-bold">{t('tenantPayments.filterType')}</label>
+                <Select value={selectedType} onChange={e => setSelectedType(e.target.value)} className="h-9 bg-card text-xs font-bold">
+                  <option value="All">All Transactions</option>
+                  <option value="Invoice">Invoices</option>
+                  <option value="Payment">Payments</option>
+                  <option value="Charge">Additional Charges</option>
+                  <option value="Credit">Credits</option>
+                  <option value="Adjustment">Adjustments</option>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] text-muted-foreground uppercase font-bold">{t('tenantPayments.filterSearchRef')}</label>
+                <Input type="text" placeholder="E.g. INV-2026" value={searchRef} onChange={e => setSearchRef(e.target.value)} className="h-9 bg-card text-xs font-bold" />
+              </div>
+            </div>
+
             <div className="space-y-4 pt-4">
-              <h4 className="font-extrabold uppercase text-[10px] text-muted-foreground tracking-wider">{t('tenantPayments.ledger')}</h4>
-              <DataTable columns={columns} data={ledgerEntries} loading={isLoading} />
+              <h4 className="font-extrabold uppercase text-[10px] text-muted-foreground tracking-wider">{t('tenantPayments.tabLedger')}</h4>
+              <DataTable columns={columns} data={filteredLedger} loading={isLoading} />
+            </div>
+
+            {/* Statement Summary Section (Footer) */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-muted/20 p-4.5 rounded-xl border border-border/80 text-xs font-bold mt-6">
+              <div className="space-y-1">
+                <span className="text-[9px] text-muted-foreground uppercase block">{t('tenantPayments.summaryTotalInvoiced')}</span>
+                <p className="text-sm font-black text-blue-500">${ledgerMetrics.totalInvoiced.toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
+              </div>
+              <div className="space-y-1">
+                <span className="text-[9px] text-muted-foreground uppercase block">{t('tenantPayments.summaryTotalPaid')}</span>
+                <p className="text-sm font-black text-emerald-500">${ledgerMetrics.totalPaid.toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
+              </div>
+              <div className="space-y-1">
+                <span className="text-[9px] text-muted-foreground uppercase block">{t('tenantPayments.summaryTotalCharges')}</span>
+                <p className="text-sm font-black text-amber-500">${ledgerMetrics.totalCharges.toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
+              </div>
+              <div className="space-y-1">
+                <span className="text-[9px] text-muted-foreground uppercase block">{t('tenantPayments.summaryClosingBal')}</span>
+                <p className={`text-sm font-black ${ledgerMetrics.currentBal > 0 ? 'text-rose-500' : 'text-emerald-500'}`}>
+                  ${ledgerMetrics.currentBal.toLocaleString(undefined, {minimumFractionDigits: 2})}
+                </p>
+              </div>
             </div>
           </div>
         </TabsContent>
