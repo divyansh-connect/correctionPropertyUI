@@ -74,6 +74,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   login: async (email: string, password?: string) => {
     const resData = await apiClient.post<any>('/auth/login', { email, password: password || 'admin123' });
 
+
     const apiUser = resData.data.user;
     const token = resData.data.accessToken;
 
