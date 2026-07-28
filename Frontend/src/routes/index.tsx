@@ -2113,6 +2113,7 @@ const NewCompanyPage: React.FC = () => {
     const email = (target.elements.namedItem('email') as HTMLInputElement).value;
     const phone = (target.elements.namedItem('phone') as HTMLInputElement).value;
     const plan = (target.elements.namedItem('plan') as HTMLSelectElement).value;
+    const password = (target.elements.namedItem('password') as HTMLInputElement).value;
 
     try {
       const company = await api.companies.create({
@@ -2122,6 +2123,7 @@ const NewCompanyPage: React.FC = () => {
         email,
         phone,
         planName: plan,
+        password,
       });
 
       if (company && company.id) {
@@ -2183,6 +2185,10 @@ const NewCompanyPage: React.FC = () => {
           <div className="space-y-1">
             <label className="text-[10px] font-extrabold uppercase text-muted-foreground">{t('newCompanyPage.emailAddress')}</label>
             <input name="email" required type="email" placeholder="sarah@apexpm.com" className="w-full text-xs font-semibold p-2.5 rounded-lg border bg-secondary focus:ring-1 focus:ring-primary focus:outline-none" />
+          </div>
+          <div className="space-y-1">
+            <label className="text-[10px] font-extrabold uppercase text-muted-foreground">Password</label>
+            <input name="password" required type="password" placeholder="••••••••" className="w-full text-xs font-semibold p-2.5 rounded-lg border bg-secondary focus:ring-1 focus:ring-primary focus:outline-none" />
           </div>
           <div className="space-y-1">
             <label className="text-[10px] font-extrabold uppercase text-muted-foreground">{t('newCompanyPage.phoneNumber')}</label>
