@@ -48,7 +48,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       submenu: [
         { title: t('nav.companies'), path: '/companies' },
         { title: t('nav.createCompany'), path: '/companies/new' },
-        { title: t('nav.companyUsers'), path: '/companies/users' },
+        // { title: t('nav.companyUsers'), path: '/companies/users' },
       ],
     },
     {
