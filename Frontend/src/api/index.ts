@@ -289,11 +289,23 @@ export const api = {
       }
     },
     create: async (data: any) => {
-      const res: any = await apiClient.post('/tenants', data);
+      const formData = new FormData();
+      Object.keys(data).forEach((key) => {
+        if (data[key] !== undefined && data[key] !== null) {
+          formData.append(key, data[key]);
+        }
+      });
+      const res: any = await apiClient.post('/tenants', formData);
       return res.data;
     },
     update: async (id: string, data: any) => {
-      const res: any = await apiClient.put(`/tenants/${id}`, data);
+      const formData = new FormData();
+      Object.keys(data).forEach((key) => {
+        if (data[key] !== undefined && data[key] !== null) {
+          formData.append(key, data[key]);
+        }
+      });
+      const res: any = await apiClient.put(`/tenants/${id}`, formData);
       return res.data;
     },
     delete: async (id: string) => {
@@ -860,6 +872,18 @@ export const api = {
     },
     create: async (data: any) => {
       const res: any = await apiClient.post('/portal/screening/reports', data);
+      return res.data;
+    },
+    generateReport: async (id: string) => {
+      const res: any = await apiClient.put(`/portal/screening/reports/${id}`, { status: 'Completed' });
+      return res.data;
+    },
+    approve: async (id: string) => {
+      const res: any = await apiClient.put(`/portal/screening/reports/${id}`, { status: 'Approved' });
+      return res.data;
+    },
+    decline: async (id: string) => {
+      const res: any = await apiClient.put(`/portal/screening/reports/${id}`, { status: 'Declined' });
       return res.data;
     },
   },

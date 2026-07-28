@@ -10,7 +10,7 @@ import { FilterBar } from '../../components/FilterBar';
 import { FormDialog } from '../../components/FormDialog';
 import { Button } from '../../components/ui/Button';
 import { StatusBadge } from '../../components/StatusBadge';
-import { Eye, Check, X, ArrowRight, ShieldAlert, FileText } from 'lucide-react';
+import { Eye, Check, X, ArrowRight, ShieldAlert, FileText, Play, Loader2 } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
 
 export const ApplicationsPage: React.FC = () => {
@@ -27,19 +27,30 @@ export const ApplicationsPage: React.FC = () => {
     queryFn: () => api.leasing.getApplications(),
   });
 
-  const approveMutation = useMutation({
-    mutationFn: (id: string) => api.leasing.updateApplication(id, { status: 'Approved' }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['applications-list'] });
-      setSelectedApp(null);
-    },
-  });
+  const startScreeningMutation = useMutation({
+    mutationFn: async (app: Application) => {
+      const names = app.tenantName.split(' ');
+      const first = names[0] || 'Applicant';
+      const last = names.slice(1).join(' ') || 'User';
 
-  const rejectMutation = useMutation({
-    mutationFn: (id: string) => api.leasing.updateApplication(id, { status: 'Rejected' }),
+      // 1. Create screening check in the backend
+      await api.screening.create({
+        email: app.email,
+        firstName: first,
+        lastName: last,
+        propertyName: app.propertyName,
+        unitNumber: app.unitNumber,
+        status: 'Processing',
+      });
+
+      // 2. Set application status to Ready for Screening
+      return api.leasing.updateApplication(app.id, { status: 'Ready for Screening' });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['applications-list'] });
       setSelectedApp(null);
+      // Redirect to screening checks directory
+      navigate({ to: '/leasing/screening' });
     },
   });
 
@@ -99,24 +110,20 @@ export const ApplicationsPage: React.FC = () => {
             <Eye className="w-4 h-4" />
           </Button>
           {row.original.status === 'Pending' && (
-            <>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-emerald-500 hover:bg-emerald-500/10"
-                onClick={() => approveMutation.mutate(row.original.id)}
-              >
-                <Check className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-rose-500 hover:bg-rose-500/10"
-                onClick={() => rejectMutation.mutate(row.original.id)}
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-emerald-500 hover:bg-emerald-500/10 border-emerald-500/30 text-[10px] font-extrabold h-7 py-0 px-2 flex items-center"
+              onClick={() => startScreeningMutation.mutate(row.original)}
+              disabled={startScreeningMutation.isPending}
+            >
+              {startScreeningMutation.isPending ? (
+                <Loader2 className="w-3 h-3 animate-spin mr-1" />
+              ) : (
+                <Play className="w-3 h-3 mr-1" />
+              )}
+              Ready for Screening
+            </Button>
           )}
         </div>
       ),

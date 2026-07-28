@@ -59,21 +59,27 @@ export const LeadsPage: React.FC = () => {
 
   const convertMutation = useMutation({
     mutationFn: async (lead: Lead) => {
-      // create tenant from lead
-      await api.tenant.create({
-        firstName: lead.firstName,
-        lastName: lead.lastName,
+      const resolvedName = lead.name || `${lead.firstName || ''} ${lead.lastName || ''}`.trim() || 'Unnamed Lead';
+      const resolvedProperty = lead.property || lead.propertyName || 'Unknown Property';
+
+      // Create an Application in DB instead of direct Tenant
+      await api.leasing.createApplication({
+        tenantName: resolvedName,
         email: lead.email,
-        phone: lead.phone,
-        status: 'Active',
+        propertyName: resolvedProperty,
+        unitNumber: 'TBD',
+        rentProposed: lead.budget || 1500,
       });
-      // mark lead lost or lease signed
-      return api.leasing.createLead({ id: lead.id, status: 'Lease Signed' });
+
+      // Update lead status to 'Application Sent'
+      return api.leasing.createLead({ id: lead.id, status: 'Application Sent' });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] });
-      queryClient.invalidateQueries({ queryKey: ['tenants'] });
+      queryClient.invalidateQueries({ queryKey: ['applications-list'] });
       setConvertLead(null);
+      // Automatically redirect to the applications list page
+      navigate({ to: '/leasing/applications' });
     },
   });
 
@@ -97,36 +103,48 @@ export const LeadsPage: React.FC = () => {
 
   // Convert leads list to KanbanItem format
   const kanbanItems = filteredLeads.map((l) => {
-    // Generate simple mock values
-    const budgetVal = 1400 + (parseInt(l.id.split('-').pop() || '0') % 4) * 200;
+    const budgetVal = l.budget ?? (1400 + (parseInt(l.id.split('-').pop() || '0') % 4) * 200);
+    const resolvedName = l.name || `${l.firstName || ''} ${l.lastName || ''}`.trim() || 'Unnamed Lead';
+    const resolvedProperty = l.property || l.propertyName || 'Unknown Property';
+    const resolvedDate = l.moveInDate || l.createdAt;
+    const resolvedPriority = l.priority || (parseInt(l.id.split('-').pop() || '0') % 2 === 0 ? 'High' : 'Medium');
+
     return {
       id: l.id,
-      title: `${l.firstName} ${l.lastName}`,
-      subtitle: l.propertyName,
+      title: resolvedName,
+      subtitle: resolvedProperty,
       budget: budgetVal,
-      date: l.createdAt,
+      date: resolvedDate,
       status: l.status,
-      priority: parseInt(l.id.split('-').pop() || '0') % 2 === 0 ? 'High' : 'Medium',
+      priority: resolvedPriority,
     };
   });
 
   const tableColumns: ColumnDef<Lead>[] = [
     {
-      accessorKey: 'firstName',
+      accessorKey: 'name',
       header: t('pmApplications.applicant'),
       id: 'name',
-      cell: ({ row }) => (
-        <span
-          onClick={() => navigate({ to: `/leads/${row.original.id}` })}
-          className="font-bold text-foreground hover:text-primary transition-colors cursor-pointer"
-        >
-          {row.original.firstName} {row.original.lastName}
-        </span>
-      ),
+      cell: ({ row }) => {
+        const resolvedName = row.original.name || `${row.original.firstName || ''} ${row.original.lastName || ''}`.trim() || 'Unnamed Lead';
+        return (
+          <span
+            onClick={() => navigate({ to: `/leads/${row.original.id}` })}
+            className="font-bold text-foreground hover:text-primary transition-colors cursor-pointer"
+          >
+            {resolvedName}
+          </span>
+        );
+      },
     },
     { accessorKey: 'email', header: t('pmScreening.email'), id: 'email' },
     { accessorKey: 'phone', header: t('owners.phone'), id: 'phone' },
-    { accessorKey: 'propertyName', header: t('pmApplications.interestedProperty'), id: 'property' },
+    {
+      accessorKey: 'property',
+      header: t('pmApplications.interestedProperty'),
+      id: 'property',
+      cell: ({ row }) => row.original.property || row.original.propertyName || 'Unknown Property'
+    },
     {
       accessorKey: 'status',
       header: t('pmApplications.status'),

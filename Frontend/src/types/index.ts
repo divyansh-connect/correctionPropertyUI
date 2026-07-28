@@ -74,12 +74,19 @@ export interface Tenant {
 
 export interface Lead {
   id: string;
-  firstName: string;
-  lastName: string;
+  name?: string;
+  firstName?: string;
+  lastName?: string;
   email: string;
   phone: string;
   propertyOfInterestId?: string;
   propertyName?: string;
+  property?: string;
+  budget?: number;
+  moveInDate?: string;
+  priority?: string;
+  assignedAgent?: string;
+  notes?: string;
   status: 'New' | 'Contacted' | 'Tour Scheduled' | 'Application Sent' | 'Negotiating' | 'Lease Signed' | 'Lost' | 'Showing Scheduled' | 'Applied';
   createdAt: string;
 }
