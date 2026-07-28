@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { apiClient } from '../api/client';
 
 // --- Theme Store ---
 interface ThemeState {
@@ -71,18 +72,8 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: JSON.parse(localStorage.getItem('user') || 'null'),
   isAuthenticated: !!localStorage.getItem('user'),
   login: async (email: string, password?: string) => {
-    const response = await fetch('http://localhost:5000/api/v1/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password: password || 'admin123' }),
-    });
+    const resData = await apiClient.post<any>('/auth/login', { email, password: password || 'admin123' });
 
-    if (!response.ok) {
-      const err = await response.json().catch(() => ({}));
-      throw new Error(err.message || 'Login failed');
-    }
-
-    const resData = await response.json();
     const apiUser = resData.data.user;
     const token = resData.data.accessToken;
 
