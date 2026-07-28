@@ -2062,6 +2062,9 @@ const CompaniesPage: React.FC = () => {
                       <Button variant="ghost" size="icon" onClick={() => navigate({ to: '/companies/details', search: { id: c.id } as any })}>
                         <Eye className="w-4 h-4" />
                       </Button>
+                      <Button variant="ghost" size="icon" onClick={() => navigate({ to: '/companies/edit', search: { id: c.id } as any })} className="text-blue-500 hover:text-blue-600">
+                        <Edit className="w-4 h-4" />
+                      </Button>
                       {c.status === 'Active' ? (
                         <Button variant="ghost" size="icon" onClick={() => handleStatusChange(c.id, 'Suspended')} className="text-rose-500 hover:text-rose-600">
                           <Ban className="w-4 h-4" />
@@ -2205,6 +2208,155 @@ const NewCompanyPage: React.FC = () => {
         <div className="border-t pt-4 flex justify-end space-x-2">
           <Button type="button" variant="outline" onClick={() => navigate({ to: '/companies' })}>{t('newCompanyPage.cancel')}</Button>
           <Button type="submit" disabled={loading}>{loading ? 'Creating...' : t('newCompanyPage.createCompany')}</Button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
+// 2b. EDIT COMPANY FORM
+const EditCompanyPage: React.FC = () => {
+  const navigate = useNavigate();
+  const { t } = useTranslation();
+  const [success, setSuccess] = React.useState(false);
+  const [errorMsg, setErrorMsg] = React.useState('');
+  const [plans, setPlans] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const [fetching, setFetching] = React.useState(true);
+  const [company, setCompany] = React.useState<any>(null);
+
+  const [name, setName] = React.useState('');
+  const [businessName, setBusinessName] = React.useState('');
+  const [code, setCode] = React.useState('');
+  const [contact, setContact] = React.useState('');
+  const [email, setEmail] = React.useState('');
+  const [phone, setPhone] = React.useState('');
+  const [plan, setPlan] = React.useState('');
+
+  const searchParams = new URLSearchParams(window.location.search);
+  const companyId = searchParams.get('id') || '';
+
+  React.useEffect(() => {
+    api.plans.getAll().then(setPlans).catch(console.error);
+    if (companyId) {
+      api.companies.getById(companyId)
+        .then((data) => {
+          if (data) {
+            setCompany(data);
+            setName(data.name || '');
+            setBusinessName(data.businessName || '');
+            setCode(data.code || '');
+            setContact(data.contact || '');
+            setEmail(data.email || '');
+            setPhone(data.phone || '');
+            setPlan(data.plan || '');
+          }
+        })
+        .catch(console.error)
+        .finally(() => setFetching(false));
+    } else {
+      setFetching(false);
+    }
+  }, [companyId]);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setErrorMsg('');
+    setLoading(true);
+
+    try {
+      await api.companies.update(companyId, {
+        name,
+        code: code.toUpperCase(),
+        contactName: contact,
+        email,
+        phone,
+        planName: plan,
+      });
+
+      setSuccess(true);
+      setTimeout(() => {
+        navigate({ to: '/companies' });
+      }, 1200);
+    } catch (err: any) {
+      console.error(err);
+      setErrorMsg(err.message || 'Failed to update company. Please check code or email uniqueness.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (fetching) {
+    return <div className="p-6 text-xs text-muted-foreground font-semibold">Loading company details...</div>;
+  }
+
+  if (!company) {
+    return <div className="p-6 text-xs text-muted-foreground font-semibold">Company not found.</div>;
+  }
+
+  return (
+    <div className="space-y-6 max-w-4xl mx-auto">
+      <PageHeader
+        title="Edit Company"
+        description="Update company information, subscription plan, and settings."
+        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Companies', href: '/companies' }, { label: 'Edit' }]}
+      />
+      {success && (
+        <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 dark:text-emerald-400 p-4 rounded-xl text-xs font-semibold text-center animate-pulse">
+          Company updated successfully!
+        </div>
+      )}
+      {errorMsg && (
+        <div className="bg-rose-500/10 border border-rose-500/20 text-rose-500 p-4 rounded-xl text-xs font-semibold text-center">
+          {errorMsg}
+        </div>
+      )}
+      <form onSubmit={handleSubmit} className="bg-card border rounded-xl p-6 shadow-sm space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <label className="text-[10px] font-extrabold uppercase text-muted-foreground">{t('newCompanyPage.companyName')}</label>
+            <input value={name} onChange={(e) => setName(e.target.value)} required placeholder="Apex Property Management" className="w-full text-xs font-semibold p-2.5 rounded-lg border bg-secondary focus:ring-1 focus:ring-primary focus:outline-none" />
+          </div>
+          <div className="space-y-1">
+            <label className="text-[10px] font-extrabold uppercase text-muted-foreground">{t('newCompanyPage.businessName')}</label>
+            <input value={businessName} onChange={(e) => setBusinessName(e.target.value)} placeholder="Apex PM LLC" className="w-full text-xs font-semibold p-2.5 rounded-lg border bg-secondary focus:ring-1 focus:ring-primary focus:outline-none" />
+          </div>
+          <div className="space-y-1">
+            <label className="text-[10px] font-extrabold uppercase text-muted-foreground">{t('newCompanyPage.companyCode')}</label>
+            <input value={code} onChange={(e) => setCode(e.target.value)} required maxLength={5} placeholder="APEX" className="w-full text-xs font-semibold p-2.5 rounded-lg border bg-secondary uppercase focus:ring-1 focus:ring-primary focus:outline-none" />
+          </div>
+          <div className="space-y-1">
+            <label className="text-[10px] font-extrabold uppercase text-muted-foreground">{t('newCompanyPage.contactPerson')}</label>
+            <input value={contact} onChange={(e) => setContact(e.target.value)} required placeholder="Sarah Davis" className="w-full text-xs font-semibold p-2.5 rounded-lg border bg-secondary focus:ring-1 focus:ring-primary focus:outline-none" />
+          </div>
+          <div className="space-y-1">
+            <label className="text-[10px] font-extrabold uppercase text-muted-foreground">{t('newCompanyPage.emailAddress')}</label>
+            <input value={email} onChange={(e) => setEmail(e.target.value)} required type="email" placeholder="sarah@apexpm.com" className="w-full text-xs font-semibold p-2.5 rounded-lg border bg-secondary focus:ring-1 focus:ring-primary focus:outline-none" />
+          </div>
+          <div className="space-y-1">
+            <label className="text-[10px] font-extrabold uppercase text-muted-foreground">{t('newCompanyPage.phoneNumber')}</label>
+            <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="555-0199" className="w-full text-xs font-semibold p-2.5 rounded-lg border bg-secondary focus:ring-1 focus:ring-primary focus:outline-none" />
+          </div>
+          <div className="space-y-1">
+            <label className="text-[10px] font-extrabold uppercase text-muted-foreground">{t('newCompanyPage.subscriptionPlan')}</label>
+            <select value={plan} onChange={(e) => setPlan(e.target.value)} className="w-full text-xs font-semibold p-2.5 rounded-lg border bg-secondary focus:ring-1 focus:ring-primary focus:outline-none">
+              {plans.length > 0 ? (
+                plans.map((p: any) => (
+                  <option key={p.id} value={p.name}>{p.name} (${p.price}/mo)</option>
+                ))
+              ) : (
+                <>
+                  <option value="Pro Plan">Pro Plan</option>
+                  <option value="Starter Plan">Starter Plan</option>
+                  <option value="Enterprise SaaS">Enterprise SaaS</option>
+                </>
+              )}
+            </select>
+          </div>
+        </div>
+        <div className="border-t pt-4 flex justify-end space-x-2">
+          <Button type="button" variant="outline" onClick={() => navigate({ to: '/companies' })}>{t('newCompanyPage.cancel')}</Button>
+          <Button type="submit" disabled={loading}>{loading ? 'Saving...' : 'Save Changes'}</Button>
         </div>
       </form>
     </div>
@@ -4996,6 +5148,11 @@ const newCompanyRoute = createRoute({
   path: '/companies/new',
   component: () => (<ProtectedWrapper><NewCompanyPage /></ProtectedWrapper>),
 });
+const editCompanyRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/companies/edit',
+  component: () => (<ProtectedWrapper><EditCompanyPage /></ProtectedWrapper>),
+});
 const companyDetailsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/companies/details',
@@ -5193,6 +5350,7 @@ const routeTree = rootRoute.addChildren([
   // Super Admin Routes
   companiesRoute,
   newCompanyRoute,
+  editCompanyRoute,
   companyDetailsRoute,
   companyUsersRoute,
   companySubscriptionRoute,

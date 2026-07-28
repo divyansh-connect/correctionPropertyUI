@@ -50,7 +50,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ navigate }) => {
         navigate('/');
       }
     } catch (err: any) {
-      setApiError('Invalid credentials. Please try again.');
+      setApiError(err.message || 'Invalid credentials. Please try again.');
     }
   };
 
