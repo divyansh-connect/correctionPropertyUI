@@ -24,10 +24,15 @@ export const apiClient = {
   },
 
   post: async <T>(url: string, data: any): Promise<T> => {
+    const isFormData = data instanceof FormData;
+    const headers: any = apiClient.getHeaders();
+    if (isFormData) {
+      delete headers['Content-Type'];
+    }
     const response = await fetch(`${BASE_URL}${url}`, {
       method: 'POST',
-      headers: apiClient.getHeaders(),
-      body: JSON.stringify(data),
+      headers,
+      body: isFormData ? data : JSON.stringify(data),
     });
     if (!response.ok) {
       const errData = await response.json().catch(() => ({}));

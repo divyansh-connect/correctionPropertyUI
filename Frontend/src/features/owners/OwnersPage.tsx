@@ -16,8 +16,7 @@ import { Select } from '../../components/ui/Select';
 import { Button } from '../../components/ui/Button';
 
 const ownerFormSchema = zod.object({
-  firstName: zod.string().min(1, 'First Name is required'),
-  lastName: zod.string().min(1, 'Last Name is required'),
+  name: zod.string().min(1, 'Full Name is required'),
   email: zod.string().email('Invalid email address'),
   phone: zod.string().min(10, 'Phone number must be at least 10 digits'),
   payoutMethod: zod.enum(['ACH/Direct Deposit', 'Wire Transfer', 'Check']),
@@ -95,8 +94,7 @@ export const OwnersPage: React.FC = () => {
     setEditingOwner(owner);
     setSelectedProperties((owner as any).propertiesOwned || []);
     reset({
-      firstName: owner.firstName,
-      lastName: owner.lastName,
+      name: owner.name,
       email: owner.email,
       phone: owner.phone,
       payoutMethod: owner.payoutMethod as any,
@@ -130,12 +128,12 @@ export const OwnersPage: React.FC = () => {
 
   const columns: ColumnDef<Owner>[] = [
     {
-      accessorKey: 'firstName',
+      accessorKey: 'name',
       header: t('pmOwners.name'),
       id: 'name',
       cell: ({ row }) => (
         <span className="font-bold">
-          {row.original.firstName} {row.original.lastName}
+          {row.original.name}
         </span>
       ),
     },
@@ -231,23 +229,13 @@ export const OwnersPage: React.FC = () => {
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-muted-foreground uppercase">First Name</label>
-                  <Input
-                    placeholder="e.g. Jane"
-                    {...register('firstName')}
-                  />
-                  {errors.firstName && <p className="text-rose-500 text-xs">{errors.firstName.message}</p>}
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-muted-foreground uppercase">Last Name</label>
-                  <Input
-                    placeholder="e.g. Doe"
-                    {...register('lastName')}
-                  />
-                  {errors.lastName && <p className="text-rose-500 text-xs">{errors.lastName.message}</p>}
-                </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-muted-foreground uppercase">Full Name</label>
+                <Input
+                  placeholder="e.g. Jane Doe"
+                  {...register('name')}
+                />
+                {errors.name && <p className="text-rose-500 text-xs">{errors.name.message}</p>}
               </div>
 
               <div className="space-y-1">
@@ -352,15 +340,9 @@ export const OwnersPage: React.FC = () => {
             </div>
 
             <div className="space-y-4 text-sm">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <span className="text-xs font-bold text-muted-foreground uppercase block mb-1">First Name</span>
-                  <span className="font-semibold text-foreground bg-accent/40 px-3 py-2 rounded-lg block">{viewingOwner.firstName}</span>
-                </div>
-                <div>
-                  <span className="text-xs font-bold text-muted-foreground uppercase block mb-1">Last Name</span>
-                  <span className="font-semibold text-foreground bg-accent/40 px-3 py-2 rounded-lg block">{viewingOwner.lastName}</span>
-                </div>
+              <div>
+                <span className="text-xs font-bold text-muted-foreground uppercase block mb-1">Full Name</span>
+                <span className="font-semibold text-foreground bg-accent/40 px-3 py-2 rounded-lg block">{viewingOwner.name}</span>
               </div>
 
               <div>
@@ -381,12 +363,12 @@ export const OwnersPage: React.FC = () => {
               <div>
                 <span className="text-xs font-bold text-muted-foreground uppercase block mb-1">Owned Properties</span>
                 <div className="border border-border rounded-lg p-3 bg-accent/20 max-h-32 overflow-y-auto">
-                  {properties.filter(p => p.owner === `${viewingOwner.firstName} ${viewingOwner.lastName}`).length === 0 ? (
+                  {properties.filter(p => p.owner === viewingOwner.name).length === 0 ? (
                     <span className="text-xs text-muted-foreground italic">No properties assigned.</span>
                   ) : (
                     <div className="flex flex-wrap gap-2">
                       {properties
-                        .filter(p => p.owner === `${viewingOwner.firstName} ${viewingOwner.lastName}`)
+                        .filter(p => p.owner === viewingOwner.name)
                         .map(p => (
                           <span key={p.id} className="text-xs font-bold px-2.5 py-1 bg-primary/10 text-primary border border-primary/20 rounded-full">
                             {p.name}

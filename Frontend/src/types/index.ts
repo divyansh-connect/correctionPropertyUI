@@ -125,8 +125,7 @@ export interface Renewal {
 
 export interface Owner {
   id: string;
-  firstName: string;
-  lastName: string;
+  name: string;
   email: string;
   phone: string;
   propertiesOwnedCount: number;

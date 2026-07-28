@@ -20,6 +20,7 @@ export const api = {
           occupancyRate: p.units?.length ? Math.round((p.units.filter((u: any) => u.status === 'Occupied').length / p.units.length) * 100) : 0,
           monthlyRevenue: p.units?.reduce((sum: number, u: any) => sum + (u.rentAmount || 0), 0) || 0,
           status: p.status,
+          createdAt: p.createdAt ? p.createdAt.split('T')[0] : '',
         }));
       } catch (e) {
         console.error('Properties DB fetch failed:', e);
@@ -27,13 +28,16 @@ export const api = {
       }
     },
     create: async (data: any) => {
-      const res: any = await apiClient.post('/properties', {
-        name: data.name,
-        type: data.type,
-        address: data.address,
-        status: data.status,
-        ownerId: data.ownerId || 'own-1',
+      const formData = new FormData();
+      Object.keys(data).forEach((key) => {
+        if (data[key] !== undefined && data[key] !== null) {
+          formData.append(key, data[key]);
+        }
       });
+      if (!data.ownerId) {
+        formData.append('ownerId', 'own-1');
+      }
+      const res: any = await apiClient.post('/properties', formData);
       return {
         ...res.data,
         unitsCount: 0,
@@ -291,8 +295,7 @@ export const api = {
         const res: any = await apiClient.get('/owners');
         return (res.data || []).map((o: any) => ({
           id: o.id,
-          firstName: o.firstName,
-          lastName: o.lastName,
+          name: o.name,
           email: o.email,
           phone: o.phone,
           payoutMethod: o.payoutMethod,
@@ -306,6 +309,14 @@ export const api = {
     create: async (data: any) => {
       const res: any = await apiClient.post('/owners', data);
       return res.data;
+    },
+    update: async (id: string, data: any) => {
+      const res: any = await apiClient.put(`/owners/${id}`, data);
+      return res.data;
+    },
+    delete: async (id: string) => {
+      await apiClient.delete(`/owners/${id}`);
+      return true;
     },
   },
 

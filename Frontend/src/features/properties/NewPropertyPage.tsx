@@ -44,6 +44,7 @@ export const NewPropertyPage: React.FC = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [photos, setPhotos] = useState<string[]>([]);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [success, setSuccess] = useState(false);
 
   // Query owners to select one
@@ -53,27 +54,8 @@ export const NewPropertyPage: React.FC = () => {
   });
 
   const createMutation = useMutation({
-    mutationFn: (values: PropertyFormInputs) => {
-      return api.property.create({
-        name: values.name,
-        type: values.type,
-        status: values.status,
-        owner: values.owner,
-        ownershipPercentage: values.ownershipPercentage,
-        managementCompany: values.managementCompany,
-        address: `${values.streetAddress}, ${values.city}, ${values.state}, ${values.country}, ${values.zip}`,
-        streetAddress: values.streetAddress,
-        city: values.city,
-        state: values.state,
-        country: values.country,
-        zip: values.zip,
-        yearBuilt: values.yearBuilt,
-        totalBuildings: values.totalBuildings,
-        squareFootage: values.squareFootage,
-        purchasePrice: values.purchasePrice,
-        currentValue: values.currentValue,
-        monthlyExpenses: values.monthlyExpenses,
-      });
+    mutationFn: (values: any) => {
+      return api.property.create(values);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['properties'] });
@@ -104,7 +86,30 @@ export const NewPropertyPage: React.FC = () => {
   });
 
   const onSubmit = (values: PropertyFormInputs) => {
-    createMutation.mutate(values);
+    const selectedOwner = owners.find((o) => `${o.firstName} ${o.lastName}` === values.owner);
+    const ownerId = selectedOwner ? selectedOwner.id : '';
+
+    createMutation.mutate({
+      name: values.name,
+      type: values.type,
+      status: values.status,
+      ownerId,
+      ownershipPercentage: values.ownershipPercentage,
+      managementCompany: values.managementCompany,
+      address: `${values.streetAddress}, ${values.city}, ${values.state}, ${values.country}, ${values.zip}`,
+      streetAddress: values.streetAddress,
+      city: values.city,
+      state: values.state,
+      country: values.country,
+      zip: values.zip,
+      yearBuilt: values.yearBuilt,
+      totalBuildings: values.totalBuildings,
+      squareFootage: values.squareFootage,
+      purchasePrice: values.purchasePrice,
+      currentValue: values.currentValue,
+      monthlyExpenses: values.monthlyExpenses,
+      image: imageFile || undefined,
+    });
   };
 
   return (
@@ -246,8 +251,12 @@ export const NewPropertyPage: React.FC = () => {
           <h3 className="font-bold text-sm text-foreground uppercase border-b pb-2">Media & Attachments</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-xs font-bold text-muted-foreground uppercase">Property Photos</label>
-              <FileUploader onFileSelect={(file) => setPhotos((prev) => [...prev, file.name])} />
+              <label className="text-xs font-bold text-muted-foreground uppercase">Property Photo <span className="text-muted-foreground font-normal">(Optional - Max 1MB)</span></label>
+              <FileUploader
+                accept="image/*"
+                maxSizeMB={1}
+                onFileSelect={(file) => setImageFile(file)}
+              />
             </div>
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Property Documents</label>
