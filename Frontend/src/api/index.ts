@@ -46,6 +46,20 @@ export const api = {
         monthlyRevenue: 0,
       };
     },
+    getById: async (id: string) => {
+      const res: any = await apiClient.get(`/properties/${id}`);
+      return res.data;
+    },
+    update: async (id: string, data: any) => {
+      const formData = new FormData();
+      Object.keys(data).forEach((key) => {
+        if (data[key] !== undefined && data[key] !== null) {
+          formData.append(key, data[key]);
+        }
+      });
+      const res: any = await apiClient.put(`/properties/${id}`, formData);
+      return res.data;
+    },
   },
 
   building: {

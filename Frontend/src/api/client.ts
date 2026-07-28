@@ -42,10 +42,15 @@ export const apiClient = {
   },
 
   put: async <T>(url: string, data?: any): Promise<T> => {
+    const isFormData = data instanceof FormData;
+    const headers: any = apiClient.getHeaders();
+    if (isFormData) {
+      delete headers['Content-Type'];
+    }
     const response = await fetch(`${BASE_URL}${url}`, {
       method: 'PUT',
-      headers: apiClient.getHeaders(),
-      body: data ? JSON.stringify(data) : undefined,
+      headers,
+      body: isFormData ? data : data ? JSON.stringify(data) : undefined,
     });
     if (!response.ok) {
       const errData = await response.json().catch(() => ({}));

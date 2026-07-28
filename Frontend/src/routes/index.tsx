@@ -37,6 +37,7 @@ import { CollectionDashboardPage } from '../features/dashboard/CollectionDashboa
 // Properties & Buildings (Phase 2)
 import { PropertiesPage } from '../features/properties/PropertiesPage';
 import { NewPropertyPage } from '../features/properties/NewPropertyPage';
+import { EditPropertyPage } from '../features/properties/EditPropertyPage';
 import { PropertyDetailsPage } from '../features/properties/PropertyDetailsPage';
 import { BuildingsPage } from '../features/properties/BuildingsPage';
 import { UnitsPage } from '../features/units/UnitsPage';
@@ -481,6 +482,16 @@ const newPropertyRoute = createRoute({
   component: () => (
     <ProtectedWrapper>
       <NewPropertyPage />
+    </ProtectedWrapper>
+  ),
+});
+
+const editPropertyRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/properties/edit',
+  component: () => (
+    <ProtectedWrapper>
+      <EditPropertyPage />
     </ProtectedWrapper>
   ),
 });
@@ -5398,6 +5409,7 @@ const routeTree = rootRoute.addChildren([
   // Properties
   propertiesRoute,
   newPropertyRoute,
+  editPropertyRoute,
   propertyDetailsRoute,
   buildingsRoute,
   unitsRoute,

@@ -260,7 +260,7 @@ export const PropertyDetailsPage: React.FC = () => {
                   <p className="text-muted-foreground">Owner Account</p>
                   <p className="text-foreground mt-0.5 flex items-center gap-1">
                     <Landmark className="w-3.5 h-3.5 text-primary" />
-                    {property.owner}
+                    {property.owner ? (typeof property.owner === 'object' ? (property.owner.name || `${property.owner.firstName || ''} ${property.owner.lastName || ''}`.trim()) : property.owner) : 'N/A'}
                   </p>
                 </div>
                 <div>
