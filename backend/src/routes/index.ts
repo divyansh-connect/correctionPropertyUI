@@ -17,6 +17,7 @@ import applicationRoutes from './application.routes';
 import superAdminRoutes from './superadmin.routes';
 import invoiceRoutes from './invoice.routes';
 import serviceRequestRoutes from './serviceRequest.routes';
+import { authMiddleware } from '../middlewares/auth.middleware';
 
 const router = Router();
 
@@ -29,22 +30,22 @@ router.get('/health', (req, res) => {
 });
 
 router.use('/auth', authRoutes);
-router.use('/properties', propertyRoutes);
-router.use('/leases', leaseRoutes);
-router.use('/payments', paymentRoutes);
-router.use('/accounting', accountingRoutes);
-router.use('/tenants', tenantRoutes);
-router.use('/owners', ownerRoutes);
-router.use('/vendors', vendorRoutes);
-router.use('/work-orders', workOrderRoutes);
-router.use('/dashboard', dashboardRoutes);
-router.use('/portal', portalRoutes);
-router.use('/superadmin', superAdminRoutes);
-router.use('/invoices', invoiceRoutes);
-router.use('/service-requests', serviceRequestRoutes);
-router.use('/buildings', buildingRoutes);
-router.use('/units', unitRoutes);
-router.use('/applications', applicationRoutes);
-router.use('/', secondaryRoutes);
+router.use('/properties', authMiddleware, propertyRoutes);
+router.use('/leases', authMiddleware, leaseRoutes);
+router.use('/payments', authMiddleware, paymentRoutes);
+router.use('/accounting', authMiddleware, accountingRoutes);
+router.use('/tenants', authMiddleware, tenantRoutes);
+router.use('/owners', authMiddleware, ownerRoutes);
+router.use('/vendors', authMiddleware, vendorRoutes);
+router.use('/work-orders', authMiddleware, workOrderRoutes);
+router.use('/dashboard', authMiddleware, dashboardRoutes);
+router.use('/portal', authMiddleware, portalRoutes);
+router.use('/superadmin', authMiddleware, superAdminRoutes);
+router.use('/invoices', authMiddleware, invoiceRoutes);
+router.use('/service-requests', authMiddleware, serviceRequestRoutes);
+router.use('/buildings', authMiddleware, buildingRoutes);
+router.use('/units', authMiddleware, unitRoutes);
+router.use('/applications', authMiddleware, applicationRoutes);
+router.use('/', authMiddleware, secondaryRoutes);
 
 export default router;

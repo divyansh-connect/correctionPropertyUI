@@ -6,6 +6,7 @@ export interface TokenPayload {
   email: string;
   roleId: string;
   roleName?: string;
+  companyId?: string;
 }
 
 export function generateAccessToken(payload: TokenPayload): string {

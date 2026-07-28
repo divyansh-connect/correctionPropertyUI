@@ -14,7 +14,7 @@ export const OwnerFinancialsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Queries
-  const { data: income = [] } = useQuery({ queryKey: ['income-list'], queryFn: () => api.income.getAll() });
+  const { data: income = [] } = useQuery({ queryKey: ['owner-financials-list'], queryFn: () => api.ownerFinancials.getAll() });
 
   const filteredIncome = income.filter((item) =>
     item.tenantName.toLowerCase().includes(searchQuery.toLowerCase()) ||

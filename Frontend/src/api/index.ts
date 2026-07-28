@@ -387,8 +387,25 @@ export const api = {
         return [];
       }
     },
+    getById: async (id: string) => {
+      try {
+        const res: any = await apiClient.get(`/work-orders/${id}`);
+        return res.data;
+      } catch (e) {
+        console.error('WorkOrder getById failed:', e);
+        return null;
+      }
+    },
     create: async (data: any) => {
       const res: any = await apiClient.post('/work-orders', data);
+      return res.data;
+    },
+    update: async (id: string, data: any) => {
+      const res: any = await apiClient.put(`/work-orders/${id}`, data);
+      return res.data;
+    },
+    delete: async (id: string) => {
+      const res: any = await apiClient.delete(`/work-orders/${id}`);
       return res.data;
     },
   },
@@ -528,7 +545,7 @@ export const api = {
     ...mockApi.invoices,
     getAll: async () => {
       try {
-        const res: any = await apiClient.get('/portal/invoices');
+        const res: any = await apiClient.get('/invoices');
         return (res.data || []).map((i: any) => ({
           id: i.id,
           tenantId: i.tenantId,
@@ -544,11 +561,15 @@ export const api = {
       }
     },
     create: async (data: any) => {
-      const res: any = await apiClient.post('/portal/invoices', data);
+      const res: any = await apiClient.post('/invoices', data);
+      return res.data;
+    },
+    update: async (id: string, data: any) => {
+      const res: any = await apiClient.put(`/invoices/${id}`, data);
       return res.data;
     },
     delete: async (id: string) => {
-      await apiClient.delete(`/portal/invoices/${id}`);
+      await apiClient.delete(`/invoices/${id}`);
       return true;
     },
   },
@@ -797,12 +818,14 @@ export const api = {
         const res: any = await apiClient.get('/portal/screening/reports');
         return (res.data || []).map((s: any) => ({
           id: s.id,
-          applicantName: `${s.tenant?.firstName || ''} ${s.tenant?.lastName || ''}`,
+          applicantName: s.tenant ? `${s.tenant.firstName || ''} ${s.tenant.lastName || ''}`.trim() : 'Unknown Tenant',
           applicantEmail: s.tenant?.email || '',
           creditScore: s.creditScore,
           criminalBackground: s.criminalPass ? 'Passed' : 'Flagged',
           evictionHistory: s.evictionPass ? 'No Records' : 'Flagged',
           status: s.status,
+          screeningStatus: s.status || 'Processing',
+          screeningPackage: 'Basic',
           date: s.createdAt,
         }));
       } catch (e) {
@@ -813,6 +836,123 @@ export const api = {
     create: async (data: any) => {
       const res: any = await apiClient.post('/portal/screening/reports', data);
       return res.data;
+    },
+  },
+
+  payments: {
+    ...mockApi.payments,
+    getAll: async () => {
+      try {
+        const res: any = await apiClient.get('/payments');
+        return (res.data || []).map((p: any) => ({
+          id: p.id,
+          tenantName: p.tenant ? `${p.tenant.firstName} ${p.tenant.lastName}` : 'Unknown Tenant',
+          propertyName: p.property?.name || 'Property',
+          unitNumber: p.unit?.unitNumber || 'Unassigned',
+          amount: p.amount,
+          paidDate: p.paidDate ? p.paidDate.split('T')[0] : (p.createdAt ? p.createdAt.split('T')[0] : ''),
+          paymentMethod: p.paymentMethod || 'ACH',
+          status: p.status || 'Paid',
+          propertyId: p.propertyId,
+          referenceNumber: p.referenceNumber,
+        }));
+      } catch (e) {
+        console.error('Payments fetch failed:', e);
+        return [];
+      }
+    },
+    create: async (data: any) => {
+      const res: any = await apiClient.post('/payments', data);
+      return res.data;
+    },
+  },
+
+  rentLedger: {
+    getAll: async () => {
+      try {
+        const [invoicesRes, paymentsRes] = await Promise.all([
+          apiClient.get('/invoices'),
+          apiClient.get('/payments'),
+        ]);
+
+        const invoicesList = (invoicesRes as any).data || [];
+        const paymentsList = (paymentsRes as any).data || [];
+
+        let runningBalance = 0;
+        const ledgerItems: any[] = [];
+        const allTransactions: any[] = [];
+
+        invoicesList.forEach((inv: any) => {
+          allTransactions.push({
+            type: 'charge',
+            date: inv.dueDate || inv.createdAt,
+            amount: inv.amount,
+            tenantName: inv.tenant ? `${inv.tenant.firstName} ${inv.tenant.lastName}` : 'Resident',
+            propertyName: inv.propertyName || 'Property',
+            unitNumber: inv.unitNumber || 'Unassigned',
+            description: 'Rent Assessment Charge',
+            transactionType: 'Rent Charge',
+            id: `led-chg-${inv.id}`,
+          });
+        });
+
+        paymentsList.forEach((pay: any) => {
+          if (pay.status === 'Paid') {
+            allTransactions.push({
+              type: 'payment',
+              date: pay.paidDate || pay.dueDate || pay.createdAt,
+              amount: pay.amount,
+              tenantName: pay.tenant ? `${pay.tenant.firstName} ${pay.tenant.lastName}` : 'Resident',
+              propertyName: pay.property?.name || 'Property',
+              unitNumber: pay.unit?.unitNumber || 'Unassigned',
+              description: `Payment Received - Ref ${pay.referenceNumber || 'N/A'}`,
+              transactionType: 'Payment',
+              id: `led-pay-${pay.id}`,
+            });
+          }
+        });
+
+        // Sort by date ascending
+        allTransactions.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+        // Apply running balance
+        allTransactions.forEach((tx) => {
+          if (tx.type === 'charge') {
+            runningBalance += tx.amount;
+            ledgerItems.push({
+              id: tx.id,
+              date: tx.date ? tx.date.split('T')[0] : 'N/A',
+              tenantName: tx.tenantName,
+              propertyName: tx.propertyName,
+              unitNumber: tx.unitNumber,
+              description: tx.description,
+              debit: tx.amount,
+              credit: 0,
+              balance: runningBalance,
+              transactionType: tx.transactionType,
+            });
+          } else {
+            runningBalance -= tx.amount;
+            ledgerItems.push({
+              id: tx.id,
+              date: tx.date ? tx.date.split('T')[0] : 'N/A',
+              tenantName: tx.tenantName,
+              propertyName: tx.propertyName,
+              unitNumber: tx.unitNumber,
+              description: tx.description,
+              debit: 0,
+              credit: tx.amount,
+              balance: runningBalance,
+              transactionType: tx.transactionType,
+            });
+          }
+        });
+
+        return ledgerItems.reverse();
+      } catch (e) {
+        console.error('Rent ledger fetch failed:', e);
+        return [];
+      }
     },
   },
 
@@ -936,18 +1076,17 @@ export const api = {
     ...mockApi.ownerPortal,
     getMetrics: async () => {
       try {
-        const res: any = await apiClient.get('/portal/owner/financials');
-        const distributions = res.data || [];
-        const totalPayout = distributions.reduce((sum: number, d: any) => sum + (d.amount || 0), 0);
+        const res: any = await apiClient.get('/portal/owner/metrics');
+        const data = res.data || {};
         return {
-          totalProperties: distributions.length || 4,
-          totalUnits: distributions.length * 3 || 12,
-          occupancyRate: '91.7%',
-          monthlyIncome: totalPayout || 34000,
-          monthlyExpenses: 8400,
-          netIncome: totalPayout || 25600,
-          pendingMaintenance: 0,
-          upcomingRenewals: 2,
+          totalProperties: data.totalProperties || 5,
+          totalUnits: data.totalUnits || 18,
+          occupancyRate: `${data.occupancyRate || 94.5}%`,
+          monthlyIncome: data.monthlyIncome || 24500,
+          monthlyExpenses: data.monthlyExpenses || 3200,
+          netIncome: data.netIncome || 21300,
+          pendingMaintenance: data.pendingMaintenance || 0,
+          upcomingRenewals: data.upcomingRenewals || 0,
         };
       } catch (e) {
         return mockApi.ownerPortal.getMetrics();
@@ -1301,7 +1440,7 @@ export const api = {
     },
   },
 
-  income: {
+  ownerFinancials: {
     getAll: async () => {
       try {
         const res: any = await apiClient.get('/portal/owner/financials');
@@ -1309,32 +1448,6 @@ export const api = {
       } catch (e) {
         console.error('Owner financials fetch failed:', e);
         return [];
-      }
-    },
-  },
-
-  ownerPortal: {
-    getMetrics: async () => {
-      try {
-        const res: any = await apiClient.get('/portal/owner/metrics');
-        return res.data || {
-          monthlyIncome: 24500,
-          monthlyExpenses: 3200,
-          netDistribution: 21300,
-          totalProperties: 5,
-          occupancyRate: 94.5,
-          activeLeases: 18,
-        };
-      } catch (e) {
-        console.error('Owner metrics fetch failed:', e);
-        return {
-          monthlyIncome: 24500,
-          monthlyExpenses: 3200,
-          netDistribution: 21300,
-          totalProperties: 5,
-          occupancyRate: 94.5,
-          activeLeases: 18,
-        };
       }
     },
   },
@@ -1495,31 +1608,6 @@ export const api = {
     },
   },
 
-  tenantPortal: {
-    getMetrics: async () => {
-      try {
-        const res: any = await apiClient.get('/portal/tenant/metrics');
-        return res.data || {
-          currentRent: 2400,
-          nextDueDate: 'August 1, 2026',
-          outstandingBalance: 0,
-          activeVisitors: 2,
-          packagesWaiting: 1,
-          leaseExpiration: 'July 31, 2026',
-        };
-      } catch (e) {
-        console.error('Tenant metrics fetch failed:', e);
-        return {
-          currentRent: 2400,
-          nextDueDate: 'August 1, 2026',
-          outstandingBalance: 0,
-          activeVisitors: 2,
-          packagesWaiting: 1,
-          leaseExpiration: 'July 31, 2026',
-        };
-      }
-    },
-  },
 
   tenantProfile: {
     get: async () => {
@@ -1675,114 +1763,6 @@ export const api = {
     },
   },
 
-  workOrders: {
-    getAll: async () => {
-      try {
-        const res: any = await apiClient.get('/portal/staff/tasks');
-        return res.data || [];
-      } catch (e) {
-        console.error('Work orders fetch failed:', e);
-        return [];
-      }
-    },
-    update: async (id: string, data: any) => {
-      const res: any = await apiClient.post(`/portal/staff/tasks/${id}/status`, data);
-      return res.data;
-    },
-  },
-
-  // ── Invoices (real DB) ──────────────────────────────────────────────────
-  invoices: {
-    getAll: async () => {
-      try {
-        const res: any = await apiClient.get('/invoices');
-        return res.data || [];
-      } catch (e) {
-        console.error('Invoices fetch failed:', e);
-        return [];
-      }
-    },
-    create: async (data: any) => {
-      const res: any = await apiClient.post('/invoices', data);
-      return res.data;
-    },
-    update: async (id: string, data: any) => {
-      const res: any = await apiClient.put(`/invoices/${id}`, data);
-      return res.data;
-    },
-    delete: async (id: string) => {
-      const res: any = await apiClient.delete(`/invoices/${id}`);
-      return res.data;
-    },
-  },
-
-  // ── Work Orders (real DB via /work-orders) ──────────────────────────────
-  workOrders: {
-    getAll: async () => {
-      try {
-        const res: any = await apiClient.get('/work-orders');
-        return res.data || [];
-      } catch (e) {
-        console.error('WorkOrders fetch failed:', e);
-        return [];
-      }
-    },
-    getById: async (id: string) => {
-      try {
-        const res: any = await apiClient.get(`/work-orders/${id}`);
-        return res.data;
-      } catch (e) {
-        console.error('WorkOrder getById failed:', e);
-        return null;
-      }
-    },
-    create: async (data: any) => {
-      const res: any = await apiClient.post('/work-orders', data);
-      return res.data;
-    },
-    update: async (id: string, data: any) => {
-      const res: any = await apiClient.put(`/work-orders/${id}`, data);
-      return res.data;
-    },
-    delete: async (id: string) => {
-      const res: any = await apiClient.delete(`/work-orders/${id}`);
-      return res.data;
-    },
-  },
-
-  // ── Service Requests (real DB via /service-requests) ────────────────────
-  serviceRequests: {
-    getAll: async () => {
-      try {
-        const res: any = await apiClient.get('/service-requests');
-        return res.data || [];
-      } catch (e) {
-        console.error('ServiceRequests fetch failed:', e);
-        return [];
-      }
-    },
-    getById: async (id: string) => {
-      try {
-        const res: any = await apiClient.get(`/service-requests/${id}`);
-        return res.data;
-      } catch (e) {
-        console.error('ServiceRequest getById failed:', e);
-        return null;
-      }
-    },
-    create: async (data: any) => {
-      const res: any = await apiClient.post('/service-requests', data);
-      return res.data;
-    },
-    update: async (id: string, data: any) => {
-      const res: any = await apiClient.put(`/service-requests/${id}`, data);
-      return res.data;
-    },
-    delete: async (id: string) => {
-      const res: any = await apiClient.delete(`/service-requests/${id}`);
-      return res.data;
-    },
-  },
 };
 
 export default api;

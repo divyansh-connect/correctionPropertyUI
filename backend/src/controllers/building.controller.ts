@@ -1,11 +1,18 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import prisma from '../config/database';
 import { sendSuccess } from '../utils/apiResponse';
+import { AuthenticatedRequest } from '../middlewares/auth.middleware';
 
 export class BuildingController {
-  async getAll(req: Request, res: Response, next: NextFunction) {
+  async getAll(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
+      const companyId = req.user?.companyId;
       const buildings = await prisma.building.findMany({
+        where: companyId ? {
+          property: {
+            companyId: companyId
+          }
+        } : {},
         include: {
           property: true,
           units: true,
@@ -17,9 +24,18 @@ export class BuildingController {
     }
   }
 
-  async create(req: Request, res: Response, next: NextFunction) {
+  async create(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
       const { propertyId, name, floors, unitsCount, occupancyRate } = req.body;
+      const companyId = req.user?.companyId;
+
+      if (companyId) {
+        const check = await prisma.property.findFirst({
+          where: { id: propertyId, companyId },
+        });
+        if (!check) throw new Error('Unauthorized property reference.');
+      }
+
       const building = await prisma.building.create({
         data: {
           propertyId,
@@ -35,11 +51,24 @@ export class BuildingController {
     }
   }
 
-  async update(req: Request, res: Response, next: NextFunction) {
+  async update(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
       const { propertyId, name, floors, unitsCount, occupancyRate } = req.body;
+      const id = req.params.id as string;
+      const companyId = req.user?.companyId;
+
+      if (companyId) {
+        const check = await prisma.building.findFirst({
+          where: {
+            id,
+            property: { companyId },
+          },
+        });
+        if (!check) throw new Error('Building not found.');
+      }
+
       const building = await prisma.building.update({
-        where: { id: req.params.id as string },
+        where: { id },
         data: {
           propertyId,
           name,
@@ -54,10 +83,23 @@ export class BuildingController {
     }
   }
 
-  async delete(req: Request, res: Response, next: NextFunction) {
+  async delete(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
+      const id = req.params.id as string;
+      const companyId = req.user?.companyId;
+
+      if (companyId) {
+        const check = await prisma.building.findFirst({
+          where: {
+            id,
+            property: { companyId },
+          },
+        });
+        if (!check) throw new Error('Building not found.');
+      }
+
       await prisma.building.delete({
-        where: { id: req.params.id as string },
+        where: { id },
       });
       return sendSuccess({ res, data: { success: true } });
     } catch (error) {

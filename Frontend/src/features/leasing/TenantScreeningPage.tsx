@@ -37,8 +37,8 @@ export const TenantScreeningPage: React.FC = () => {
   });
 
   const filteredScreenings = screenings.filter((s) => {
-    const nameMatch = s.applicantName.toLowerCase().includes(searchQuery.toLowerCase());
-    const emailMatch = s.applicantEmail.toLowerCase().includes(searchQuery.toLowerCase());
+    const nameMatch = (s.applicantName || '').toLowerCase().includes(searchQuery.toLowerCase());
+    const emailMatch = (s.applicantEmail || '').toLowerCase().includes(searchQuery.toLowerCase());
     const matchesPackage = packageFilter === '' || s.screeningPackage === packageFilter;
     const matchesStatus = statusFilter === '' || s.screeningStatus === statusFilter;
 

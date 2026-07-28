@@ -35,11 +35,24 @@ export const apiClient = {
     return response.json();
   },
 
-  put: async <T>(url: string, data: any): Promise<T> => {
+  put: async <T>(url: string, data?: any): Promise<T> => {
     const response = await fetch(`${BASE_URL}${url}`, {
       method: 'PUT',
       headers: apiClient.getHeaders(),
-      body: JSON.stringify(data),
+      body: data ? JSON.stringify(data) : undefined,
+    });
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.message || 'API request failed');
+    }
+    return response.json();
+  },
+
+  patch: async <T>(url: string, data?: any): Promise<T> => {
+    const response = await fetch(`${BASE_URL}${url}`, {
+      method: 'PATCH',
+      headers: apiClient.getHeaders(),
+      body: data ? JSON.stringify(data) : undefined,
     });
     if (!response.ok) {
       const errData = await response.json().catch(() => ({}));

@@ -85,6 +85,9 @@ model User {
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
 
+  companyId    String?
+  company      Company?         @relation(fields: [companyId], references: [id])
+
   assignments  UserAssignment[]
   auditLogs    AuditLog[]
 
@@ -141,6 +144,9 @@ model Owner {
   propertiesOwnedCount Int                 @default(0)
   createdAt            DateTime            @default(now())
 
+  companyId            String?
+  company              Company?            @relation(fields: [companyId], references: [id])
+
   properties           Property[]
   distributions        OwnerDistribution[]
 
@@ -174,6 +180,9 @@ model Property {
   monthlyExpenses     Float        @default(0)
   createdAt           DateTime     @default(now())
   updatedAt           DateTime     @updatedAt
+
+  companyId           String?
+  company             Company?     @relation(fields: [companyId], references: [id])
 
   buildings           Building[]
   units               Unit[]
@@ -233,6 +242,9 @@ model Tenant {
   status    TenantStatus @default(Pending)
   createdAt DateTime     @default(now())
 
+  companyId String?
+  company   Company?     @relation(fields: [companyId], references: [id])
+
   leases            Lease[]
   payments          RentPayment[]
   insurancePolicies InsurancePolicy[]
@@ -259,6 +271,9 @@ model Lease {
   depositAmount Float
   status        LeaseStatus @default(Pending)
 
+  companyId     String?
+  company       Company?    @relation(fields: [companyId], references: [id])
+
   payments RentPayment[]
 
   @@map("leases")
@@ -283,6 +298,9 @@ model RentPayment {
   referenceNumber String?
   createdBy       String        @default("System")
 
+  companyId       String?
+  company         Company?      @relation(fields: [companyId], references: [id])
+
   @@map("rent_payments")
 }
 
@@ -294,6 +312,9 @@ model CoAAccount {
   subType     String?
   balance     Float    @default(0)
   isActive    Boolean  @default(true)
+
+  companyId   String?
+  company     Company? @relation(fields: [companyId], references: [id])
 
   journalLines JournalEntryLine[]
 
@@ -307,6 +328,9 @@ model JournalEntry {
   description String             @db.Text
   reference   String?
   lines       JournalEntryLine[]
+
+  companyId   String?
+  company     Company?           @relation(fields: [companyId], references: [id])
 
   @@map("journal_entries")
 }
@@ -333,6 +357,9 @@ model Vendor {
   serviceType String
   rating      Float       @default(5.0)
 
+  companyId   String?
+  company     Company?    @relation(fields: [companyId], references: [id])
+
   workOrders  WorkOrder[]
 
   @@map("vendors")
@@ -353,6 +380,9 @@ model WorkOrder {
   rejectReason    String?         @db.Text
   resolutionNotes String?         @db.Text
   createdAt       DateTime        @default(now())
+
+  companyId       String?
+  company         Company?        @relation(fields: [companyId], references: [id])
 
   @@map("work_orders")
 }
@@ -393,6 +423,9 @@ model Announcement {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
+
   @@map("announcements")
 }
 
@@ -408,6 +441,9 @@ model InsurancePolicy {
   status         String   @default("Active")
   createdAt      DateTime @default(now())
 
+  companyId      String?
+  company        Company? @relation(fields: [companyId], references: [id])
+
   @@map("insurance_policies")
 }
 
@@ -421,6 +457,9 @@ model Promotion {
   status    String   @default("Active")
   createdAt DateTime @default(now())
 
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
+
   @@map("promotions")
 }
 
@@ -432,6 +471,9 @@ model Notification {
   type      String   @default("info")
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
+
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
 
   @@map("notifications")
 }
@@ -445,6 +487,9 @@ model Document {
   uploadedBy String   @default("Property Manager")
   createdAt  DateTime @default(now())
 
+  companyId  String?
+  company    Company? @relation(fields: [companyId], references: [id])
+
   @@map("documents")
 }
 
@@ -454,6 +499,9 @@ model AiChatLog {
   prompt    String   @db.Text
   response  String   @db.Text
   createdAt DateTime @default(now())
+
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
 
   @@map("ai_chat_logs")
 }
@@ -467,6 +515,9 @@ model BankAccount {
   type          String
   status        String   @default("Active")
   createdAt     DateTime @default(now())
+
+  companyId     String?
+  company       Company? @relation(fields: [companyId], references: [id])
 
   @@map("bank_accounts")
 }
@@ -527,6 +578,9 @@ model ScreeningReport {
   status       String   @default("Approved")
   createdAt    DateTime @default(now())
 
+  companyId    String?
+  company      Company?         @relation(fields: [companyId], references: [id])
+
   @@map("screening_reports")
 }
 
@@ -539,6 +593,9 @@ model Violation {
   fineAmount  Float    @default(0.0)
   status      String   @default("Open")
   createdAt   DateTime @default(now())
+
+  companyId  String?
+  company    Company? @relation(fields: [companyId], references: [id])
 
   @@map("violations")
 }
@@ -553,6 +610,9 @@ model Application {
   submittedDate DateTime @default(now())
   rentProposed  Float
   createdAt     DateTime @default(now())
+
+  companyId     String?
+  company       Company? @relation(fields: [companyId], references: [id])
 
   @@map("applications")
 }
@@ -574,6 +634,9 @@ model Invoice {
   notes        String?  @db.Text
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
+  companyId    String?
+  company      Company?  @relation(fields: [companyId], references: [id])
 
   @@map("invoices")
 }
@@ -601,6 +664,9 @@ model ServiceRequest {
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
+  companyId          String?
+  company            Company?  @relation(fields: [companyId], references: [id])
+
   @@map("service_requests")
 }
 
@@ -617,8 +683,31 @@ model Company {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
-  users       CompanyUser[]
-  invoices    SaaSInvoice[]
+  users             CompanyUser[]
+  invoices          SaaSInvoice[]
+  portalUsers       User[]
+  properties        Property[]
+  owners            Owner[]
+  tenants           Tenant[]
+  leases            Lease[]
+  workOrders        WorkOrder[]
+  payments          RentPayment[]
+  reports           ScreeningReport[]
+  invoicesPm        Invoice[]
+  serviceReqs       ServiceRequest[]
+  violations        Violation[]
+  staff             StaffProfile[]
+  applications      Application[]
+  coaAccounts       CoAAccount[]
+  journalEntries    JournalEntry[]
+  vendors           Vendor[]
+  bankAccounts      BankAccount[]
+  announcements     Announcement[]
+  insurancePolicies InsurancePolicy[]
+  promotions        Promotion[]
+  notifications     Notification[]
+  documents         Document[]
+  aiChatLogs        AiChatLog[]
 
   @@map("companies")
 }
@@ -741,6 +830,9 @@ model StaffProfile {
   avgResponseTime    String   @default("38 Min")
   customerRating     String   @default("4.92 / 5.0")
   createdAt          DateTime @default(now())
+
+  companyId          String?
+  company            Company?     @relation(fields: [companyId], references: [id])
 
   @@map("staff_profiles")
 }

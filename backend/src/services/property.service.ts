@@ -2,8 +2,9 @@ import prisma from '../config/database';
 import { AppError } from '../utils/appError';
 
 export class PropertyService {
-  async getAllProperties() {
+  async getAllProperties(companyId?: string) {
     return prisma.property.findMany({
+      where: companyId ? { companyId } : {},
       include: {
         owner: true,
         buildings: true,
@@ -12,9 +13,9 @@ export class PropertyService {
     });
   }
 
-  async getPropertyById(id: string) {
-    const prop = await prisma.property.findUnique({
-      where: { id },
+  async getPropertyById(id: string, companyId?: string) {
+    const prop = await prisma.property.findFirst({
+      where: companyId ? { id, companyId } : { id },
       include: {
         owner: true,
         buildings: true,
@@ -44,7 +45,9 @@ export class PropertyService {
     }
 
     if (!ownerExists) {
-      const firstOwner = await prisma.owner.findFirst();
+      const firstOwner = await prisma.owner.findFirst({
+        where: data.companyId ? { companyId: data.companyId } : {},
+      });
       if (firstOwner) {
         ownerId = firstOwner.id;
       } else {
@@ -52,8 +55,9 @@ export class PropertyService {
           data: {
             firstName: 'Default',
             lastName: 'Owner',
-            email: 'default.owner@example.com',
+            email: `default.owner.${Date.now()}@example.com`,
             phone: '555-0100',
+            companyId: data.companyId,
           }
         });
         ownerId = defaultOwner.id;
@@ -82,11 +86,18 @@ export class PropertyService {
         squareFootage: data.squareFootage || 10000,
         purchasePrice: data.purchasePrice || 1000000,
         currentValue: data.currentValue || 1200000,
+        companyId: data.companyId,
       },
     });
   }
 
-  async deleteProperty(id: string) {
+  async deleteProperty(id: string, companyId?: string) {
+    if (companyId) {
+      const prop = await prisma.property.findFirst({
+        where: { id, companyId },
+      });
+      if (!prop) throw new AppError('Property not found.', 404, 'NOT_FOUND');
+    }
     return prisma.property.delete({
       where: { id },
     });

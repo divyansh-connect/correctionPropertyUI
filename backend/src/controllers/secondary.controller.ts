@@ -1,21 +1,24 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import { secondaryService } from '../services/secondary.service';
 import { sendSuccess } from '../utils/apiResponse';
+import { AuthenticatedRequest } from '../middlewares/auth.middleware';
 
 export class SecondaryController {
   // Announcements
-  async getAnnouncements(req: Request, res: Response, next: NextFunction) {
+  async getAnnouncements(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
-      const list = await secondaryService.getAnnouncements();
+      const companyId = req.user?.companyId;
+      const list = await secondaryService.getAnnouncements(companyId);
       return sendSuccess({ res, data: list });
     } catch (error) {
       next(error);
     }
   }
 
-  async createAnnouncement(req: Request, res: Response, next: NextFunction) {
+  async createAnnouncement(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
-      const item = await secondaryService.createAnnouncement(req.body);
+      const companyId = req.user?.companyId;
+      const item = await secondaryService.createAnnouncement(req.body, companyId);
       return sendSuccess({ res, statusCode: 201, data: item });
     } catch (error) {
       next(error);
@@ -23,18 +26,20 @@ export class SecondaryController {
   }
 
   // Insurance
-  async getInsurancePolicies(req: Request, res: Response, next: NextFunction) {
+  async getInsurancePolicies(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
-      const list = await secondaryService.getInsurancePolicies();
+      const companyId = req.user?.companyId;
+      const list = await secondaryService.getInsurancePolicies(companyId);
       return sendSuccess({ res, data: list });
     } catch (error) {
       next(error);
     }
   }
 
-  async createInsurancePolicy(req: Request, res: Response, next: NextFunction) {
+  async createInsurancePolicy(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
-      const item = await secondaryService.createInsurancePolicy(req.body);
+      const companyId = req.user?.companyId;
+      const item = await secondaryService.createInsurancePolicy(req.body, companyId);
       return sendSuccess({ res, statusCode: 201, data: item });
     } catch (error) {
       next(error);
@@ -42,18 +47,20 @@ export class SecondaryController {
   }
 
   // Promotions
-  async getPromotions(req: Request, res: Response, next: NextFunction) {
+  async getPromotions(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
-      const list = await secondaryService.getPromotions();
+      const companyId = req.user?.companyId;
+      const list = await secondaryService.getPromotions(companyId);
       return sendSuccess({ res, data: list });
     } catch (error) {
       next(error);
     }
   }
 
-  async createPromotion(req: Request, res: Response, next: NextFunction) {
+  async createPromotion(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
-      const item = await secondaryService.createPromotion(req.body);
+      const companyId = req.user?.companyId;
+      const item = await secondaryService.createPromotion(req.body, companyId);
       return sendSuccess({ res, statusCode: 201, data: item });
     } catch (error) {
       next(error);
@@ -61,19 +68,21 @@ export class SecondaryController {
   }
 
   // Notifications
-  async getNotifications(req: Request, res: Response, next: NextFunction) {
+  async getNotifications(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
-      const list = await secondaryService.getNotifications();
+      const companyId = req.user?.companyId;
+      const list = await secondaryService.getNotifications(companyId);
       return sendSuccess({ res, data: list });
     } catch (error) {
       next(error);
     }
   }
 
-  async markNotificationRead(req: Request, res: Response, next: NextFunction) {
+  async markNotificationRead(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
+      const companyId = req.user?.companyId;
       const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-      const item = await secondaryService.markNotificationRead(id);
+      const item = await secondaryService.markNotificationRead(id, companyId);
       return sendSuccess({ res, data: item });
     } catch (error) {
       next(error);
@@ -81,18 +90,20 @@ export class SecondaryController {
   }
 
   // Documents
-  async getDocuments(req: Request, res: Response, next: NextFunction) {
+  async getDocuments(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
-      const list = await secondaryService.getDocuments();
+      const companyId = req.user?.companyId;
+      const list = await secondaryService.getDocuments(companyId);
       return sendSuccess({ res, data: list });
     } catch (error) {
       next(error);
     }
   }
 
-  async createDocument(req: Request, res: Response, next: NextFunction) {
+  async createDocument(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
-      const item = await secondaryService.createDocument(req.body);
+      const companyId = req.user?.companyId;
+      const item = await secondaryService.createDocument(req.body, companyId);
       return sendSuccess({ res, statusCode: 201, data: item });
     } catch (error) {
       next(error);
@@ -100,10 +111,11 @@ export class SecondaryController {
   }
 
   // AI Chat
-  async processAiChat(req: Request, res: Response, next: NextFunction) {
+  async processAiChat(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
+      const companyId = req.user?.companyId;
       const { prompt } = req.body;
-      const result = await secondaryService.processAiChat(prompt || 'Show summary');
+      const result = await secondaryService.processAiChat(prompt || 'Show summary', companyId);
       return sendSuccess({ res, data: result });
     } catch (error) {
       next(error);

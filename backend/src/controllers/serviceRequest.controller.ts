@@ -1,18 +1,25 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import prisma from '../config/database';
 import { sendSuccess } from '../utils/apiResponse';
+import { AuthenticatedRequest } from '../middlewares/auth.middleware';
 
 class ServiceRequestController {
-  async getAll(req: Request, res: Response, next: NextFunction) {
+  async getAll(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
+      const companyId = req.user?.companyId;
       let requests = await prisma.serviceRequest.findMany({
+        where: companyId ? { companyId } : {},
         orderBy: { createdAt: 'desc' },
       });
 
-      // Seed sample service requests if DB is empty
+      // Seed sample service requests if DB is empty for this company
       if (requests.length === 0) {
-        const property = await prisma.property.findFirst();
-        const tenant = await prisma.tenant.findFirst();
+        const property = await prisma.property.findFirst({
+          where: companyId ? { companyId } : {},
+        });
+        const tenant = await prisma.tenant.findFirst({
+          where: companyId ? { companyId } : {},
+        });
         const vendor = await prisma.vendor.findFirst();
 
         const propertyId = property?.id || 'default-property';
@@ -35,6 +42,7 @@ class ServiceRequestController {
               { id: 'msg-1', senderName: tenantName, role: 'Tenant', text: 'AC stopped working last night. Very hot inside.', timestamp: '2026-07-24 09:12 AM' },
               { id: 'msg-2', senderName: 'Property Manager', role: 'Manager', text: 'Vendor dispatched. They will arrive by 2 PM.', timestamp: '2026-07-24 10:30 AM' },
             ]),
+            companyId,
           },
           {
             title: 'Water Leak Under Kitchen Sink',
@@ -43,6 +51,7 @@ class ServiceRequestController {
             priority: 'Emergency', status: 'New', category: 'Plumbing',
             estimatedCost: 180, cost: 0,
             messages: JSON.stringify([]),
+            companyId,
           },
           {
             title: 'Broken Window Latch – Unit 303',
@@ -54,6 +63,7 @@ class ServiceRequestController {
             messages: JSON.stringify([
               { id: 'msg-3', senderName: 'Property Manager', role: 'Manager', text: 'Repair completed. Window latch replaced.', timestamp: '2026-07-20 03:45 PM' },
             ]),
+            companyId,
           },
           {
             title: 'Dryer Not Heating – Unit 408',
@@ -63,6 +73,7 @@ class ServiceRequestController {
             assignedVendorId: vendorId, assignedVendorName: vendorName,
             estimatedCost: 200, cost: 200, scheduledDate: new Date().toISOString().split('T')[0],
             messages: JSON.stringify([]),
+            companyId,
           },
           {
             title: 'Hallway Light Flickering',
@@ -70,11 +81,15 @@ class ServiceRequestController {
             propertyId, propertyName, unitNumber: 'Common', tenantId, tenantName,
             priority: 'Low', status: 'New', category: 'Electrical',
             messages: JSON.stringify([]),
+            companyId,
           },
         ];
 
         await prisma.serviceRequest.createMany({ data: seeds });
-        requests = await prisma.serviceRequest.findMany({ orderBy: { createdAt: 'desc' } });
+        requests = await prisma.serviceRequest.findMany({
+          where: companyId ? { companyId } : {},
+          orderBy: { createdAt: 'desc' },
+        });
       }
 
       const formatted = requests.map((r: any, index: number) => ({
@@ -93,10 +108,13 @@ class ServiceRequestController {
     }
   }
 
-  async getById(req: Request, res: Response, next: NextFunction) {
+  async getById(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
       const id = req.params.id as string;
-      const request = await prisma.serviceRequest.findUnique({ where: { id } });
+      const companyId = req.user?.companyId;
+      const request = await prisma.serviceRequest.findFirst({
+        where: companyId ? { id, companyId } : { id },
+      });
       if (!request) {
         return res.status(404).json({ success: false, error: { message: 'Service request not found' } });
       }
@@ -111,7 +129,7 @@ class ServiceRequestController {
     }
   }
 
-  async create(req: Request, res: Response, next: NextFunction) {
+  async create(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
       const {
         title, description, propertyId, propertyName, unitNumber,
@@ -119,6 +137,7 @@ class ServiceRequestController {
         assignedVendorId, assignedVendorName, assignedTechnician,
         estimatedCost, cost, scheduledDate, notes,
       } = req.body;
+      const companyId = req.user?.companyId;
 
       const request = await prisma.serviceRequest.create({
         data: {
@@ -140,6 +159,7 @@ class ServiceRequestController {
           scheduledDate: scheduledDate || null,
           notes: notes || null,
           messages: '[]',
+          companyId,
         },
       });
 
@@ -149,10 +169,18 @@ class ServiceRequestController {
     }
   }
 
-  async update(req: Request, res: Response, next: NextFunction) {
+  async update(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
       const id = req.params.id as string;
       const { newMessage, status, priority, assignedVendorId, assignedVendorName, assignedTechnician, estimatedCost, cost, scheduledDate, notes } = req.body;
+      const companyId = req.user?.companyId;
+
+      if (companyId) {
+        const check = await prisma.serviceRequest.findFirst({
+          where: { id, companyId },
+        });
+        if (!check) throw new Error('ServiceRequest not found.');
+      }
 
       // Get current messages if adding a new one
       let messagesData: string | undefined;
@@ -197,9 +225,18 @@ class ServiceRequestController {
     }
   }
 
-  async remove(req: Request, res: Response, next: NextFunction) {
+  async remove(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
       const id = req.params.id as string;
+      const companyId = req.user?.companyId;
+
+      if (companyId) {
+        const check = await prisma.serviceRequest.findFirst({
+          where: { id, companyId },
+        });
+        if (!check) throw new Error('ServiceRequest not found.');
+      }
+
       await prisma.serviceRequest.delete({ where: { id } });
       return sendSuccess({ res, data: { deleted: true } });
     } catch (error) {

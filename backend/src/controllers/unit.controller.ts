@@ -1,11 +1,18 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import prisma from '../config/database';
 import { sendSuccess } from '../utils/apiResponse';
+import { AuthenticatedRequest } from '../middlewares/auth.middleware';
 
 export class UnitController {
-  async getAll(req: Request, res: Response, next: NextFunction) {
+  async getAll(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
+      const companyId = req.user?.companyId;
       const units = await prisma.unit.findMany({
+        where: companyId ? {
+          property: {
+            companyId: companyId
+          }
+        } : {},
         include: {
           property: true,
           building: true,
@@ -18,10 +25,15 @@ export class UnitController {
     }
   }
 
-  async getById(req: Request, res: Response, next: NextFunction) {
+  async getById(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
-      const unit = await prisma.unit.findUnique({
-        where: { id: req.params.id as string },
+      const id = req.params.id as string;
+      const companyId = req.user?.companyId;
+      const unit = await prisma.unit.findFirst({
+        where: companyId ? {
+          id,
+          property: { companyId },
+        } : { id },
         include: {
           property: true,
           building: true,
@@ -34,7 +46,7 @@ export class UnitController {
     }
   }
 
-  async create(req: Request, res: Response, next: NextFunction) {
+  async create(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
       const {
         propertyId,
@@ -49,6 +61,14 @@ export class UnitController {
         availabilityDate,
         status,
       } = req.body;
+      const companyId = req.user?.companyId;
+
+      if (companyId) {
+        const check = await prisma.property.findFirst({
+          where: { id: propertyId, companyId },
+        });
+        if (!check) throw new Error('Unauthorized property reference.');
+      }
 
       const unit = await prisma.unit.create({
         data: {
@@ -71,8 +91,10 @@ export class UnitController {
     }
   }
 
-  async update(req: Request, res: Response, next: NextFunction) {
+  async update(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
+      const id = req.params.id as string;
+      const companyId = req.user?.companyId;
       const {
         propertyId,
         buildingId,
@@ -87,8 +109,18 @@ export class UnitController {
         status,
       } = req.body;
 
+      if (companyId) {
+        const check = await prisma.unit.findFirst({
+          where: {
+            id,
+            property: { companyId },
+          },
+        });
+        if (!check) throw new Error('Unit not found.');
+      }
+
       const unit = await prisma.unit.update({
-        where: { id: req.params.id as string },
+        where: { id },
         data: {
           propertyId,
           buildingId,
@@ -109,10 +141,23 @@ export class UnitController {
     }
   }
 
-  async delete(req: Request, res: Response, next: NextFunction) {
+  async delete(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
+      const id = req.params.id as string;
+      const companyId = req.user?.companyId;
+
+      if (companyId) {
+        const check = await prisma.unit.findFirst({
+          where: {
+            id,
+            property: { companyId },
+          },
+        });
+        if (!check) throw new Error('Unit not found.');
+      }
+
       await prisma.unit.delete({
-        where: { id: req.params.id as string },
+        where: { id },
       });
       return sendSuccess({ res, data: { success: true } });
     } catch (error) {
@@ -120,11 +165,24 @@ export class UnitController {
     }
   }
 
-  async assignTenant(req: Request, res: Response, next: NextFunction) {
+  async assignTenant(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
+      const id = req.params.id as string;
+      const companyId = req.user?.companyId;
       const { tenantId } = req.body;
+
+      if (companyId) {
+        const check = await prisma.unit.findFirst({
+          where: {
+            id,
+            property: { companyId },
+          },
+        });
+        if (!check) throw new Error('Unit not found.');
+      }
+
       const unit = await prisma.unit.update({
-        where: { id: req.params.id as string },
+        where: { id },
         data: {
           status: 'Occupied',
           tenants: {

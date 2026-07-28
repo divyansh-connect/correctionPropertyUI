@@ -1,12 +1,15 @@
 import { Request, Response, NextFunction } from 'express';
 import prisma from '../config/database';
 import { sendSuccess } from '../utils/apiResponse';
+import { AuthenticatedRequest } from '../middlewares/auth.middleware';
 
 export class PortalController {
   // --- Tenant Portal Views ---
-  async getTenantLeases(req: Request, res: Response, next: NextFunction) {
+  async getTenantLeases(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
+      const companyId = req.user?.companyId;
       const leases = await prisma.lease.findMany({
+        where: companyId ? { companyId } : {},
         include: {
           property: true,
           unit: true,
@@ -19,9 +22,11 @@ export class PortalController {
     }
   }
 
-  async getTenantLease(req: Request, res: Response, next: NextFunction) {
+  async getTenantLease(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
+      const companyId = req.user?.companyId;
       const lease = await prisma.lease.findFirst({
+        where: companyId ? { companyId } : {},
         include: {
           property: true,
           unit: true,
@@ -30,7 +35,9 @@ export class PortalController {
       });
 
       if (!lease) {
-        const firstProperty = await prisma.property.findFirst();
+        const firstProperty = await prisma.property.findFirst({
+          where: companyId ? { companyId } : {},
+        });
         return sendSuccess({
           res,
           data: {
@@ -66,9 +73,11 @@ export class PortalController {
     }
   }
 
-  async getTenantMetrics(req: Request, res: Response, next: NextFunction) {
+  async getTenantMetrics(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
+      const companyId = req.user?.companyId;
       const firstLease = await prisma.lease.findFirst({
+        where: companyId ? { companyId } : {},
         include: { property: true, unit: true },
       });
 
@@ -90,16 +99,20 @@ export class PortalController {
     }
   }
 
-  async getTenantProfile(req: Request, res: Response, next: NextFunction) {
+  async getTenantProfile(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
-      let tenant = await prisma.tenant.findFirst();
+      const companyId = req.user?.companyId;
+      let tenant = await prisma.tenant.findFirst({
+        where: companyId ? { companyId } : {},
+      });
       if (!tenant) {
         tenant = await prisma.tenant.create({
           data: {
             firstName: 'Alex',
             lastName: 'Mercer',
-            email: 'alex.m@residence.com',
+            email: `alex.m.${Date.now()}@residence.com`,
             phone: '(555) 234-5678',
+            companyId,
           },
         });
       }
@@ -121,18 +134,22 @@ export class PortalController {
     }
   }
 
-  async updateTenantProfile(req: Request, res: Response, next: NextFunction) {
+  async updateTenantProfile(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
       const { firstName, lastName, email, phone } = req.body;
-      let tenant = await prisma.tenant.findFirst();
+      const companyId = req.user?.companyId;
+      let tenant = await prisma.tenant.findFirst({
+        where: companyId ? { companyId } : {},
+      });
 
       if (!tenant) {
         tenant = await prisma.tenant.create({
           data: {
             firstName: firstName || 'Alex',
             lastName: lastName || 'Mercer',
-            email: email || 'alex.m@residence.com',
+            email: email || `alex.m.${Date.now()}@residence.com`,
             phone: phone || '(555) 234-5678',
+            companyId,
           },
         });
       } else {
@@ -836,9 +853,16 @@ export class PortalController {
 
   async createCrmLead(req: Request, res: Response, next: NextFunction) {
     try {
-      const { name, email, phone, source } = req.body;
+      const { name, firstName, lastName, email, phone, source } = req.body;
+      const resolvedName = name || [firstName, lastName].filter(Boolean).join(' ') || 'Unnamed Lead';
+      const resolvedSource = source || 'Portal';
       const lead = await prisma.crmLead.create({
-        data: { name, email, phone, source },
+        data: { 
+          name: resolvedName, 
+          email, 
+          phone, 
+          source: resolvedSource 
+        },
       });
       return sendSuccess({ res, statusCode: 201, data: lead });
     } catch (error) {
@@ -846,9 +870,11 @@ export class PortalController {
     }
   }
 
-  async getScreeningReports(req: Request, res: Response, next: NextFunction) {
+  async getScreeningReports(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
+      const companyId = req.user?.companyId;
       const reports = await prisma.screeningReport.findMany({
+        where: companyId ? { companyId } : {},
         include: { tenant: true },
       });
       return sendSuccess({ res, data: reports });
@@ -857,16 +883,53 @@ export class PortalController {
     }
   }
 
-  async createScreeningReport(req: Request, res: Response, next: NextFunction) {
+  async createScreeningReport(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
-      const { tenantId, creditScore, criminalPass, evictionPass, status } = req.body;
+      let { tenantId, firstName, lastName, email, phoneNumber, phone, unitId, creditScore, criminalPass, evictionPass, status } = req.body;
+      const companyId = req.user?.companyId;
+
+      if (!tenantId && email) {
+        let tenant = await prisma.tenant.findUnique({
+          where: { email },
+        });
+
+        if (!tenant) {
+          tenant = await prisma.tenant.create({
+            data: {
+              firstName: firstName || 'Unnamed',
+              lastName: lastName || 'Tenant',
+              email,
+              phone: phoneNumber || phone || 'N/A',
+              unitId: unitId || null,
+              status: 'Pending',
+              companyId,
+            },
+          });
+        }
+        tenantId = tenant.id;
+      }
+
+      if (!tenantId) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'BAD_REQUEST',
+            message: 'tenantId or email is required to create a screening report',
+          },
+        });
+      }
+
+      const parsedCreditScore = parseInt(creditScore);
+      const finalCreditScore = isNaN(parsedCreditScore) ? Math.floor(Math.random() * (800 - 680 + 1)) + 680 : parsedCreditScore;
+
       const report = await prisma.screeningReport.create({
         data: {
           tenantId,
-          creditScore: parseInt(creditScore),
+          creditScore: finalCreditScore,
           criminalPass: criminalPass ?? true,
           evictionPass: evictionPass ?? true,
           status: status || 'Approved',
+          companyId,
         },
       });
       return sendSuccess({ res, statusCode: 201, data: report });
@@ -875,9 +938,11 @@ export class PortalController {
     }
   }
 
-  async getViolations(req: Request, res: Response, next: NextFunction) {
+  async getViolations(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
+      const companyId = req.user?.companyId;
       const violations = await prisma.violation.findMany({
+        where: companyId ? { companyId } : {},
         include: {
           unit: {
             include: { property: true },
@@ -890,15 +955,17 @@ export class PortalController {
     }
   }
 
-  async createViolation(req: Request, res: Response, next: NextFunction) {
+  async createViolation(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
       const { unitId, title, description, fineAmount } = req.body;
+      const companyId = req.user?.companyId;
       const violation = await prisma.violation.create({
         data: {
           unitId,
           title,
           description,
           fineAmount: parseFloat(fineAmount || '0'),
+          companyId,
         },
       });
       return sendSuccess({ res, statusCode: 201, data: violation });
@@ -1256,18 +1323,24 @@ export class PortalController {
     }
   }
 
-  async getStaffTasks(req: Request, res: Response, next: NextFunction) {
+  async getStaffTasks(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
+      const companyId = req.user?.companyId;
       let orders = await prisma.workOrder.findMany({
+        where: companyId ? { companyId } : {},
         include: { property: true },
         orderBy: { createdAt: 'desc' },
       });
 
-      const firstProperty = await prisma.property.findFirst();
+      const firstProperty = await prisma.property.findFirst({
+        where: companyId ? { companyId } : {},
+      });
       let propertyId = firstProperty?.id;
 
       if (!propertyId) {
-        const owner = await prisma.owner.findFirst();
+        const owner = await prisma.owner.findFirst({
+          where: companyId ? { companyId } : {},
+        });
         const newProp = await prisma.property.create({
           data: {
             name: 'Oakridge Heights',
@@ -1281,6 +1354,7 @@ export class PortalController {
             purchasePrice: 1500000,
             currentValue: 1800000,
             ownerId: owner?.id || 'default-owner',
+            companyId,
           },
         });
         propertyId = newProp.id;

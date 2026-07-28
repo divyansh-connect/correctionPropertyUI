@@ -45,6 +45,7 @@ export class AuthService {
       email: user.email,
       roleId: user.roleId,
       roleName: user.role?.name || 'Super Admin',
+      companyId: user.companyId || undefined,
     };
 
     const accessToken = generateAccessToken(payload);
@@ -58,6 +59,7 @@ export class AuthService {
         lastName: user.lastName,
         roleId: user.roleId,
         roleName: user.role?.name || 'Super Admin',
+        companyId: user.companyId,
       },
       accessToken,
       refreshToken,

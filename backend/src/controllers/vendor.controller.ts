@@ -1,11 +1,14 @@
-import { Request, Response, NextFunction } from 'express';
-import prisma from '../config/database.js';
-import { sendSuccess } from '../utils/apiResponse.js';
+import { Response, NextFunction } from 'express';
+import prisma from '../config/database';
+import { sendSuccess } from '../utils/apiResponse';
+import { AuthenticatedRequest } from '../middlewares/auth.middleware';
 
 export class VendorController {
-  async getAll(req: Request, res: Response, next: NextFunction) {
+  async getAll(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
+      const companyId = req.user?.companyId;
       const vendors = await prisma.vendor.findMany({
+        where: companyId ? { companyId } : {},
         include: {
           workOrders: true,
         },
@@ -16,9 +19,10 @@ export class VendorController {
     }
   }
 
-  async create(req: Request, res: Response, next: NextFunction) {
+  async create(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
       const { companyName, contactName, email, phone, serviceType, rating } = req.body;
+      const companyId = req.user?.companyId;
       const vendor = await prisma.vendor.create({
         data: {
           companyName,
@@ -27,6 +31,7 @@ export class VendorController {
           phone,
           serviceType,
           rating: rating || 5.0,
+          companyId,
         },
       });
       return sendSuccess({ res, statusCode: 201, data: vendor });
@@ -35,11 +40,21 @@ export class VendorController {
     }
   }
 
-  async update(req: Request, res: Response, next: NextFunction) {
+  async update(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
       const { companyName, contactName, email, phone, serviceType, rating } = req.body;
+      const id = req.params.id as string;
+      const companyId = req.user?.companyId;
+
+      if (companyId) {
+        const check = await prisma.vendor.findFirst({
+          where: { id, companyId },
+        });
+        if (!check) throw new Error('Vendor not found.');
+      }
+
       const vendor = await prisma.vendor.update({
-        where: { id: req.params.id as string },
+        where: { id },
         data: { companyName, contactName, email, phone, serviceType, rating },
       });
       return sendSuccess({ res, data: vendor });
@@ -48,10 +63,20 @@ export class VendorController {
     }
   }
 
-  async delete(req: Request, res: Response, next: NextFunction) {
+  async delete(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
+      const id = req.params.id as string;
+      const companyId = req.user?.companyId;
+
+      if (companyId) {
+        const check = await prisma.vendor.findFirst({
+          where: { id, companyId },
+        });
+        if (!check) throw new Error('Vendor not found.');
+      }
+
       await prisma.vendor.delete({
-        where: { id: req.params.id as string },
+        where: { id },
       });
       return sendSuccess({ res, data: { success: true } });
     } catch (error) {

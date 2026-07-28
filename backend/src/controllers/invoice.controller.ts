@@ -1,18 +1,25 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import prisma from '../config/database';
 import { sendSuccess } from '../utils/apiResponse';
+import { AuthenticatedRequest } from '../middlewares/auth.middleware';
 
 class InvoiceController {
-  async getAll(req: Request, res: Response, next: NextFunction) {
+  async getAll(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
+      const companyId = req.user?.companyId;
       let invoices = await prisma.invoice.findMany({
+        where: companyId ? { companyId } : {},
         orderBy: { createdAt: 'desc' },
       });
 
-      // Seed sample invoices if DB is empty
+      // Seed sample invoices if DB is empty for this company
       if (invoices.length === 0) {
-        const tenant = await prisma.tenant.findFirst();
-        const property = await prisma.property.findFirst();
+        const tenant = await prisma.tenant.findFirst({
+          where: companyId ? { companyId } : {},
+        });
+        const property = await prisma.property.findFirst({
+          where: companyId ? { companyId } : {},
+        });
 
         const tenantName = tenant
           ? `${tenant.firstName} ${tenant.lastName}`
@@ -38,6 +45,7 @@ class InvoiceController {
               { description: 'Water & Sewage Utility', amount: 150 },
             ]),
             notes: 'Paid in full on July 1st.',
+            companyId,
           },
           {
             tenantId,
@@ -55,6 +63,7 @@ class InvoiceController {
               { description: 'Parking Fee', amount: 200 },
             ]),
             notes: null,
+            companyId,
           },
           {
             tenantId,
@@ -72,6 +81,7 @@ class InvoiceController {
               { description: 'Late Fee', amount: 150 },
             ]),
             notes: 'Partial payment received July 10th.',
+            companyId,
           },
           {
             tenantId,
@@ -89,6 +99,7 @@ class InvoiceController {
               { description: 'Late Fee', amount: 150 },
             ]),
             notes: 'Tenant contacted 3 times. No response.',
+            companyId,
           },
           {
             tenantId,
@@ -106,11 +117,15 @@ class InvoiceController {
               { description: 'Water & Sewage Utility', amount: 200 },
             ]),
             notes: null,
+            companyId,
           },
         ];
 
         await prisma.invoice.createMany({ data: seeds });
-        invoices = await prisma.invoice.findMany({ orderBy: { createdAt: 'desc' } });
+        invoices = await prisma.invoice.findMany({
+          where: companyId ? { companyId } : {},
+          orderBy: { createdAt: 'desc' },
+        });
       }
 
       const formatted = invoices.map((inv) => ({
@@ -126,13 +141,14 @@ class InvoiceController {
     }
   }
 
-  async create(req: Request, res: Response, next: NextFunction) {
+  async create(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
       const {
         tenantId, tenantName, propertyId, propertyName,
         unitNumber, dueDate, amount, paidAmount, balance,
         status, lineItems, notes,
       } = req.body;
+      const companyId = req.user?.companyId;
 
       const invoice = await prisma.invoice.create({
         data: {
@@ -148,6 +164,7 @@ class InvoiceController {
           status: status || 'Draft',
           lineItems: JSON.stringify(lineItems || []),
           notes: notes || null,
+          companyId,
         },
       });
 
@@ -161,10 +178,18 @@ class InvoiceController {
     }
   }
 
-  async update(req: Request, res: Response, next: NextFunction) {
+  async update(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
       const id = req.params.id as string;
       const { status, paidAmount, balance, notes } = req.body;
+      const companyId = req.user?.companyId;
+
+      if (companyId) {
+        const check = await prisma.invoice.findFirst({
+          where: { id, companyId },
+        });
+        if (!check) throw new Error('Invoice not found.');
+      }
 
       const invoice = await prisma.invoice.update({
         where: { id },
@@ -190,9 +215,18 @@ class InvoiceController {
     }
   }
 
-  async remove(req: Request, res: Response, next: NextFunction) {
+  async remove(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
       const id = req.params.id as string;
+      const companyId = req.user?.companyId;
+
+      if (companyId) {
+        const check = await prisma.invoice.findFirst({
+          where: { id, companyId },
+        });
+        if (!check) throw new Error('Invoice not found.');
+      }
+
       await prisma.invoice.delete({ where: { id } });
       return sendSuccess({ res, data: { deleted: true } });
     } catch (error) {
