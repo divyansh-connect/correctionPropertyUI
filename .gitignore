@@ -19,6 +19,10 @@ dist
 *.db-journal
 *.log
 npm-debug.log*
+
+# Sub-repositories / Other folders
+Doorloop-backend/
+
 yarn-debug.log*
 yarn-error.log*
 
