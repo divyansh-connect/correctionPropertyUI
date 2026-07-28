@@ -2026,7 +2026,6 @@ const CompaniesPage: React.FC = () => {
                   <th className="p-4">{t('companiesPage.code')}</th>
                   <th className="p-4">{t('companiesPage.contact')}</th>
                   <th className="p-4">{t('companiesPage.planAndCycle')}</th>
-                  <th className="p-4">{t('companiesPage.storage')}</th>
                   <th className="p-4">{t('companiesPage.status')}</th>
                   <th className="p-4">{t('companiesPage.createdDate')}</th>
                   <th className="p-4 text-right">{t('companiesPage.actions')}</th>
@@ -2053,7 +2052,6 @@ const CompaniesPage: React.FC = () => {
                       <StatusBadge status={c.plan} />
                       <div className="text-[10px] text-muted-foreground font-semibold mt-1">{c.cycle} {t('companiesPage.billing')}</div>
                     </td>
-                    <td className="p-4 font-bold">{c.storage}</td>
                     <td className="p-4">
                       <StatusBadge status={c.status} />
                     </td>
