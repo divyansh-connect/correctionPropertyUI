@@ -2042,7 +2042,7 @@ const CompaniesPage: React.FC = () => {
                       >
                         {c.name}
                       </div>
-                      <div className="text-[10px] text-muted-foreground font-semibold">{c.businessName} • {c.website}</div>
+                      <div className="text-[10px] text-muted-foreground font-semibold">{c.businessName}</div>
                     </td>
                     <td className="p-4 font-mono font-bold text-foreground/80">{c.code}</td>
                     <td className="p-4">
@@ -2186,10 +2186,6 @@ const NewCompanyPage: React.FC = () => {
             <input name="phone" placeholder="555-0199" className="w-full text-xs font-semibold p-2.5 rounded-lg border bg-secondary focus:ring-1 focus:ring-primary focus:outline-none" />
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] font-extrabold uppercase text-muted-foreground">{t('newCompanyPage.website')}</label>
-            <input name="website" placeholder="www.apexpm.com" className="w-full text-xs font-semibold p-2.5 rounded-lg border bg-secondary focus:ring-1 focus:ring-primary focus:outline-none" />
-          </div>
-          <div className="space-y-1">
             <label className="text-[10px] font-extrabold uppercase text-muted-foreground">{t('newCompanyPage.subscriptionPlan')}</label>
             <select name="plan" className="w-full text-xs font-semibold p-2.5 rounded-lg border bg-secondary focus:ring-1 focus:ring-primary focus:outline-none">
               {plans.length > 0 ? (
@@ -2283,10 +2279,6 @@ const CompanyDetailsPage: React.FC = () => {
             <div>
               <span className="text-muted-foreground font-semibold">{t('companyViews.phone')}</span>
               <p className="font-bold text-sm">{c.phone}</p>
-            </div>
-            <div>
-              <span className="text-muted-foreground font-semibold">{t('companyViews.website')}</span>
-              <p className="font-bold text-sm">{c.website}</p>
             </div>
             <div>
               <span className="text-muted-foreground font-semibold">{t('companyViews.dateRegistered')}</span>
