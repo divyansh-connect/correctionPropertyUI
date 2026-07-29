@@ -14,7 +14,6 @@ import { useTranslation } from 'react-i18next';
 interface LedgerItem {
   id: string;
   date: string;
-  tenantId?: string;
   tenantName: string;
   propertyName: string;
   unitNumber: string;
@@ -65,28 +64,17 @@ export const RentLedgerPage: React.FC = () => {
 
   const selectedTenantLedger = React.useMemo(() => {
     if (!selectedTenant) return [];
-    const firstName = selectedTenant.firstName || '';
-    const lastName = selectedTenant.lastName || '';
-    const fullName = (selectedTenant.name || `${firstName} ${lastName}`).trim();
-
-    const items = ledger.filter((item: any) => {
-      if (item.tenantId && item.tenantId === selectedTenant.id) return true;
-      const rowName = (item.tenantName || '').trim();
-      if (!rowName) return false;
-      if (rowName.toLowerCase() === fullName.toLowerCase()) return true;
-      if (firstName && rowName.toLowerCase().includes(firstName.toLowerCase())) return true;
-      if (lastName && rowName.toLowerCase().includes(lastName.toLowerCase())) return true;
-      return false;
-    });
+    const tenantFullName = `${selectedTenant.firstName} ${selectedTenant.lastName}`;
+    const items = ledger.filter((item) => item.tenantName === tenantFullName);
     
     // Sort items by date ascending
-    const sorted = [...items].sort((a: any, b: any) => (a.date || '').localeCompare(b.date || ''));
+    const sorted = [...items].sort((a, b) => a.date.localeCompare(b.date));
     
     // Recalculate running balance
     let runningBalance = 0;
-    return sorted.map((item: any) => {
-      let debit = item.debit || 0;
-      let credit = item.credit || 0;
+    return sorted.map((item) => {
+      let debit = item.debit;
+      let credit = item.credit;
       if (item.transactionType === 'Rent Charge') {
         runningBalance += debit;
       } else if (item.transactionType === 'Payment') {
@@ -160,29 +148,21 @@ export const RentLedgerPage: React.FC = () => {
       id: 'actions',
       header: t('rentLedgerPage.actions'),
       cell: ({ row }) => {
-        const tenantObj = tenants.find((tItem: any) => {
-          if (row.original.tenantId && tItem.id === row.original.tenantId) return true;
-          const fullName = (tItem.name || `${tItem.firstName || ''} ${tItem.lastName || ''}`).trim();
-          const rowName = (row.original.tenantName || '').trim();
-          if (fullName.toLowerCase() === rowName.toLowerCase()) return true;
-          if (tItem.firstName && rowName.toLowerCase().includes(tItem.firstName.toLowerCase())) return true;
-          if (tItem.lastName && rowName.toLowerCase().includes(tItem.lastName.toLowerCase())) return true;
-          return false;
-        });
-
-        const targetTenantId = tenantObj?.id || row.original.tenantId || tenants[0]?.id;
-
-        return (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => targetTenantId && setSelectedTenantId(targetTenantId)}
-            className="h-8 w-8 text-muted-foreground hover:text-foreground cursor-pointer"
-            title={t('rentLedgerPage.viewStatement')}
-          >
-            <Eye className="w-4 h-4 text-primary hover:scale-110 transition-transform" />
-          </Button>
-        );
+        const tenantObj = tenants.find((tItem) => `${tItem.firstName} ${tItem.lastName}` === row.original.tenantName);
+        if (tenantObj) {
+          return (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSelectedTenantId(tenantObj.id)}
+              className="h-8 w-8 text-muted-foreground hover:text-foreground cursor-pointer"
+              title={t('rentLedgerPage.viewStatement')}
+            >
+              <Eye className="w-4 h-4" />
+            </Button>
+          );
+        }
+        return '-';
       },
     },
   ];
