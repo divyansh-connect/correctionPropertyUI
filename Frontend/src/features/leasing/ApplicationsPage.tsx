@@ -54,6 +54,22 @@ export const ApplicationsPage: React.FC = () => {
     },
   });
 
+  const approveMutation = useMutation({
+    mutationFn: (id: string) => api.leasing.updateApplication(id, { status: 'Approved' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['applications-list'] });
+      setSelectedApp(null);
+    },
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: (id: string) => api.leasing.updateApplication(id, { status: 'Rejected' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['applications-list'] });
+      setSelectedApp(null);
+    },
+  });
+
   const filteredApps = applications.filter((app) => {
     const nameMatch = app.tenantName.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === '' || app.status === statusFilter;

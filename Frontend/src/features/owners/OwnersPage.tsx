@@ -196,8 +196,7 @@ export const OwnersPage: React.FC = () => {
             setEditingOwner(null);
             setSelectedProperties([]);
             reset({
-              firstName: '',
-              lastName: '',
+              name: '',
               email: '',
               phone: '',
               payoutMethod: 'ACH/Direct Deposit',

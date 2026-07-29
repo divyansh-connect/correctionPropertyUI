@@ -6,7 +6,7 @@ import { Button } from '../../components/ui/Button';
 import { StatusBadge } from '../../components/StatusBadge';
 import { 
   Plus, Copy, PlusCircle, Trash, ToggleLeft, ToggleRight,
-  Eye, Edit, Save, ArrowLeft, Room, ListTodo, ClipboardList, CheckSquare
+  Eye, Edit, Save, ArrowLeft, ListTodo, ClipboardList, CheckSquare
 } from 'lucide-react';
 
 export const InspectionTemplatesPage: React.FC = () => {
@@ -286,8 +286,8 @@ export const InspectionTemplatesPage: React.FC = () => {
                   </div>
 
                   <div className="bg-muted/40 px-6 py-3 border-t flex justify-end space-x-1.5">
-                    <Button variant="ghost" size="xs" onClick={() => loadTemplateForEdit(tpl.id)}><Edit className="w-3.5 h-3.5 mr-1" /> Edit</Button>
-                    <Button variant="ghost" size="xs" onClick={() => duplicateTemplateMutation.mutate(tpl.id)}><Copy className="w-3.5 h-3.5 mr-1" /> Duplicate</Button>
+                    <Button variant="ghost" size="sm" onClick={() => loadTemplateForEdit(tpl.id)}><Edit className="w-3.5 h-3.5 mr-1" /> Edit</Button>
+                    <Button variant="ghost" size="sm" onClick={() => duplicateTemplateMutation.mutate(tpl.id)}><Copy className="w-3.5 h-3.5 mr-1" /> Duplicate</Button>
                   </div>
                 </div>
               ))
@@ -300,7 +300,7 @@ export const InspectionTemplatesPage: React.FC = () => {
             title={activeTab === 'edit' ? 'Modify Inspection Template' : 'Create Inspection Template'}
             description="Define property rooms and checklist items to create snapshot templates."
             breadcrumbs={[
-              { label: 'Templates', onClick: () => setActiveTab('list') },
+              { label: 'Templates', href: '#' },
               { label: activeTab === 'edit' ? 'Edit' : 'New' },
             ]}
           />
@@ -373,13 +373,13 @@ export const InspectionTemplatesPage: React.FC = () => {
                       </div>
 
                       <div className="flex items-center space-x-2">
-                        <Button type="button" variant="ghost" size="xs" onClick={() => handleAddItem(rIndex)}>
+                        <Button type="button" variant="ghost" size="sm" onClick={() => handleAddItem(rIndex)}>
                           <PlusCircle className="w-3.5 h-3.5 mr-1" /> Add Item
                         </Button>
-                        <Button type="button" variant="ghost" size="xs" onClick={() => handleDuplicateRoomLocal(rIndex)}>
+                        <Button type="button" variant="ghost" size="sm" onClick={() => handleDuplicateRoomLocal(rIndex)}>
                           <Copy className="w-3.5 h-3.5 mr-1" /> Duplicate Room
                         </Button>
-                        <Button type="button" variant="ghost" size="xs" className="text-rose-500 hover:text-rose-600" onClick={() => handleRemoveRoom(rIndex)}>
+                        <Button type="button" variant="ghost" size="sm" className="text-rose-500 hover:text-rose-600" onClick={() => handleRemoveRoom(rIndex)}>
                           <Trash className="w-3.5 h-3.5" />
                         </Button>
                       </div>

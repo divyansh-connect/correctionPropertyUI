@@ -1476,11 +1476,11 @@ export const api = {
       }
     },
     uploadOwnerDoc: async (formData: FormData) => {
-      const res: any = await apiClient.postFormData('/documents/owner/upload', formData);
+      const res: any = await apiClient.post('/documents/owner/upload', formData);
       return res.data;
     },
     uploadTenantDoc: async (formData: FormData) => {
-      const res: any = await apiClient.postFormData('/documents/tenant/upload', formData);
+      const res: any = await apiClient.post('/documents/tenant/upload', formData);
       return res.data;
     },
     getMetrics: async () => {

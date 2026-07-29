@@ -111,7 +111,7 @@ export const MoveInOutPage: React.FC = () => {
                       <td className="p-4 text-right space-x-1.5 whitespace-nowrap">
                         <Button 
                           variant="ghost" 
-                          size="xs" 
+                          size="sm" 
                           onClick={() => window.location.href = `/leasing/move-in/${m.id}`}
                         >
                           <Eye className="w-4 h-4 mr-1" /> View Workflow
