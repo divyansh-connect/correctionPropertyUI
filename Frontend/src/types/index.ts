@@ -3,7 +3,7 @@ export interface Property {
   name: string;
   type: 'Apartment' | 'Commercial' | 'Single Family' | 'Multi Family' | 'HOA';
   status: 'Active' | 'Inactive' | 'Under Review' | 'Archived';
-  owner: string;
+  owner: any;
   ownershipPercentage: number;
   managementCompany: string;
   address: string; // Combined format
