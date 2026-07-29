@@ -803,6 +803,24 @@ export const api = {
       const res: any = await apiClient.post(`/inspections/${id}/reopen`, {});
       return res.data;
     },
+    updateDraft: async (id: string, data: any) => {
+      const res: any = await apiClient.put(`/inspections/${id}`, data);
+      return res.data;
+    },
+    updateItemResponse: async (itemId: string, data: any) => {
+      const res: any = await apiClient.put(`/inspections/items/${itemId}`, data);
+      return res.data;
+    },
+    cancel: async (id: string, reason: string) => {
+      const res: any = await apiClient.post(`/inspections/${id}/cancel`, { reason });
+      return res.data;
+    },
+    uploadPhoto: async (itemId: string, file: File) => {
+      const formData = new FormData();
+      formData.append('photo', file);
+      const res: any = await apiClient.post(`/inspections/items/${itemId}/photos`, formData);
+      return res.data;
+    },
   },
 
   income: {
@@ -1957,47 +1975,6 @@ export const api = {
     },
     cancel: async (id: string, reason: string) => {
       const res: any = await apiClient.post(`/move-outs/${id}/cancel`, { reason });
-      return res.data;
-    },
-  },
-
-  inspections: {
-    getById: async (id: string) => {
-      const res: any = await apiClient.get(`/inspections/${id}`);
-      return res.data;
-    },
-    getInspectors: async () => {
-      const res: any = await apiClient.get('/inspections/inspectors');
-      return res.data || [];
-    },
-    update: async (id: string, data: any) => {
-      const res: any = await apiClient.put(`/inspections/${id}`, data);
-      return res.data;
-    },
-    reopen: async (id: string) => {
-      const res: any = await apiClient.post(`/inspections/${id}/reopen`, {});
-      return res.data;
-    },
-    updateDraft: async (id: string, data: any) => {
-      const res: any = await apiClient.put(`/inspections/${id}`, data);
-      return res.data;
-    },
-    updateItemResponse: async (itemId: string, data: any) => {
-      const res: any = await apiClient.put(`/inspections/items/${itemId}`, data);
-      return res.data;
-    },
-    complete: async (id: string) => {
-      const res: any = await apiClient.post(`/inspections/${id}/complete`, {});
-      return res.data;
-    },
-    cancel: async (id: string, reason: string) => {
-      const res: any = await apiClient.post(`/inspections/${id}/cancel`, { reason });
-      return res.data;
-    },
-    uploadPhoto: async (itemId: string, file: File) => {
-      const formData = new FormData();
-      formData.append('photo', file);
-      const res: any = await apiClient.post(`/inspections/items/${itemId}/photos`, formData);
       return res.data;
     },
   },
