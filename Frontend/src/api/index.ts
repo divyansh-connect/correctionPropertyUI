@@ -358,18 +358,23 @@ export const api = {
     ...mockApi.vendors,
     getAll: async () => {
       try {
-        const res: any = await apiClient.get('/vendors');
-        return (res.data || []).map((v: any) => ({
-          id: v.id,
-          name: v.companyName,
-          companyName: v.companyName,
-          contactName: v.contactName,
-          email: v.email,
-          phone: v.phone,
-          category: v.serviceType,
-          serviceType: v.serviceType,
-          rating: v.rating || 5.0,
-          activeJobs: v.workOrders?.filter((w: any) => w.status !== 'Completed').length || 0,
+        const res: any = await apiClient.get('/superadmin/company-users');
+        const maintenanceUsers = (res.data || []).filter(
+          (u: any) => u.role === 'Maintenance Staff' || u.role === 'Maintenance'
+        );
+        return maintenanceUsers.map((u: any) => ({
+          id: u.id,
+          name: u.name,
+          companyName: u.name,
+          contactName: u.name,
+          email: u.email,
+          phone: u.phone || '',
+          category: u.serviceType || 'General Maintenance',
+          serviceType: u.serviceType || 'General Maintenance',
+          rating: 5.0,
+          activeJobs: 0,
+          completedJobs: 0,
+          status: u.status || 'Active',
         }));
       } catch (e) {
         console.error('Vendors fetch failed:', e);
@@ -1384,6 +1389,7 @@ export const api = {
           phone: u.phone || '',
           role: u.role,
           status: u.status,
+          serviceType: u.serviceType || '',
           lastLogin: '-',
         }));
       } catch (e) {

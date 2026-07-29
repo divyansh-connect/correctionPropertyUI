@@ -110,7 +110,7 @@ export const VendorsPage: React.FC = () => {
       <FilterBar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        searchPlaceholder="Search vendors by company name..."
+        searchPlaceholder="Search maintenance staff..."
         filters={[
           {
             key: 'category',

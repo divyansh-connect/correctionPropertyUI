@@ -104,13 +104,13 @@ export const WorkOrderDetailsPage: React.FC = () => {
         <div className="flex space-x-2">
           {wo.status === 'Draft' && (
             <div className="flex items-center space-x-1">
-              <span className="text-xs text-muted-foreground mr-2">Assign Vendor:</span>
+              <span className="text-xs text-muted-foreground mr-2">Assign Maintenance Staff:</span>
               <select
                 className="text-xs p-1.5 rounded-lg border bg-card text-foreground"
                 onChange={(e) => assignMutation.mutate(e.target.value)}
                 defaultValue=""
               >
-                <option value="" disabled>Select Vendor...</option>
+                <option value="" disabled>Select Maintenance Staff...</option>
                 {vendorsList.slice(0, 15).map((v) => (
                   <option key={v.id} value={v.id}>{v.name} ({v.category})</option>
                 ))}
@@ -151,7 +151,7 @@ export const WorkOrderDetailsPage: React.FC = () => {
                   <p className="text-muted-foreground">Unit: {wo.unitNumber}</p>
                 </div>
                 <div className="p-3.5 bg-secondary/10 rounded-xl border">
-                  <p className="text-muted-foreground text-[10px] uppercase">Assigned Vendor</p>
+                  <p className="text-muted-foreground text-[10px] uppercase">Assigned Maintenance Staff</p>
                   <p className="font-bold text-sm mt-1">{wo.vendorName}</p>
                   <p className="text-muted-foreground">Technician: {wo.assignedTechnician}</p>
                 </div>

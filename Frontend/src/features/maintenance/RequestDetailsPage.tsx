@@ -107,7 +107,7 @@ export const RequestDetailsPage: React.FC = () => {
                 onChange={(e) => setSelectedVendorId(e.target.value)}
                 value={selectedVendorId}
               >
-                <option value="">Select Vendor...</option>
+                <option value="">Select Maintenance Staff...</option>
                 {vendorsList.slice(0, 15).map((v) => (
                   <option key={v.id} value={v.id}>{v.name} ({v.category})</option>
                 ))}
@@ -236,7 +236,7 @@ export const RequestDetailsPage: React.FC = () => {
             </div>
 
             <div className="border-t pt-3.5 mt-2">
-              <p className="text-[10px] text-muted-foreground uppercase">Assigned Vendor</p>
+              <p className="text-[10px] text-muted-foreground uppercase">Assigned Maintenance Staff</p>
               <p className="font-bold mt-0.5">{request.assignedVendorName || 'Not Assigned Yet'}</p>
             </div>
 

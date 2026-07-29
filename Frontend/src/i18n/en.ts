@@ -36,7 +36,7 @@ export const en = {
     workOrders: "Work Orders",
     violationsAndCode: "Violations & Code",
     inspections: "Inspections",
-    vendors: "Vendors",
+    vendors: "Maintenance Staff",
     reports: "Reports",
     communication: "Communication",
     aiAssistant: "AI Assistant",
@@ -661,15 +661,15 @@ export const en = {
     results: "Check Results"
   },
   maintenanceVendors: {
-    title: "Vendors & Contractors",
-    desc: "Verify licensed contractor partners, insurance compliance status, and performance history.",
-    vendorFirm: "Vendor / Firm",
+    title: "Maintenance Staff",
+    desc: "Verify active maintenance staff profiles, trade specialties, and workloads.",
+    vendorFirm: "Maintenance Staff / Firm",
     tradeSpecialty: "Trade Specialty",
     rating: "Rating",
     activeJobs: "Active Jobs",
     completedJobs: "Completed Jobs",
     responseTime: "Response Time",
-    registerVendor: "Register Vendor Partner"
+    registerVendor: "Register Maintenance Staff"
   },
   properties: {
     title: "Properties List",
