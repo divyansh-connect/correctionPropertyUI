@@ -26,11 +26,15 @@ export const IncomePage: React.FC = () => {
   const [tenantName, setTenantName] = useState('');
   const [category, setCategory] = useState('Rent');
   const [amount, setAmount] = useState(150);
+  const [propertyId, setPropertyId] = useState('');
+  const [buildingId, setBuildingId] = useState('');
+  const [unitId, setUnitId] = useState('');
 
   // Queries
   const { data: income = [], isLoading } = useQuery({ queryKey: ['income-list'], queryFn: () => api.income.getAll() });
   const { data: properties = [] } = useQuery({ queryKey: ['properties'], queryFn: () => api.property.getAll() });
-  const [propertyId, setPropertyId] = useState('');
+  const { data: buildings = [] } = useQuery({ queryKey: ['buildings'], queryFn: () => api.building.getAll() });
+  const { data: units = [] } = useQuery({ queryKey: ['units'], queryFn: () => api.unit.getAll() });
 
   const createMutation = useMutation({
     mutationFn: () => {
@@ -39,6 +43,8 @@ export const IncomePage: React.FC = () => {
         date: new Date().toISOString().split('T')[0],
         propertyId,
         propertyName: prop ? prop.name : 'Property',
+        buildingId,
+        unitId,
         tenantName,
         category,
         amount,
@@ -49,6 +55,9 @@ export const IncomePage: React.FC = () => {
       setIsOpen(false);
       setTenantName('');
       setAmount(150);
+      setPropertyId('');
+      setBuildingId('');
+      setUnitId('');
     },
   });
 
@@ -138,10 +147,37 @@ export const IncomePage: React.FC = () => {
           
           <div className="space-y-1">
             <label className="text-xs font-bold text-muted-foreground uppercase">Property Portfolio</label>
-            <Select value={propertyId} onChange={(e) => setPropertyId(e.target.value)}>
+            <Select value={propertyId} onChange={(e) => {
+              setPropertyId(e.target.value);
+              setBuildingId('');
+              setUnitId('');
+            }}>
               <option value="">Select Property...</option>
               {properties.map((p) => (
                 <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </Select>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-bold text-muted-foreground uppercase">Building Portfolio</label>
+            <Select value={buildingId} onChange={(e) => {
+              setBuildingId(e.target.value);
+              setUnitId('');
+            }} disabled={!propertyId}>
+              <option value="">Select Building...</option>
+              {buildings.filter((b) => b.propertyId === propertyId).map((b) => (
+                <option key={b.id} value={b.id}>{b.name}</option>
+              ))}
+            </Select>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-bold text-muted-foreground uppercase">Rentable Unit</label>
+            <Select value={unitId} onChange={(e) => setUnitId(e.target.value)} disabled={!buildingId}>
+              <option value="">Select Unit...</option>
+              {units.filter((u) => u.buildingId === buildingId).map((u) => (
+                <option key={u.id} value={u.id}>Unit {u.unitNumber} - {u.status}</option>
               ))}
             </Select>
           </div>

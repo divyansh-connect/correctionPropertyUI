@@ -686,19 +686,45 @@ export const api = {
     getAll: async () => {
       try {
         const res: any = await apiClient.get('/portal/expenses');
-        return (res.data || []).map((e: any) => ({
-          id: e.id,
-          category: e.category,
-          amount: e.amount,
-          date: e.date ? e.date.split('T')[0] : 'N/A',
-          description: e.description,
-        }));
+        return (res.data || []).map((e: any) => {
+          let parsed = { vendorName: 'Vendor', propertyName: 'Property', propertyId: '', buildingId: '', unitId: '' };
+          try {
+            parsed = JSON.parse(e.description);
+          } catch {
+            parsed.vendorName = e.description || 'Vendor';
+          }
+          return {
+            id: e.id,
+            category: e.category,
+            amount: e.amount,
+            date: e.date ? e.date.split('T')[0] : 'N/A',
+            propertyId: parsed.propertyId || '',
+            buildingId: parsed.buildingId || '',
+            unitId: parsed.unitId || '',
+            propertyName: parsed.propertyName || 'Property',
+            vendorName: parsed.vendorName || 'Vendor',
+            description: e.description,
+            status: 'Cleared',
+          };
+        });
       } catch (e) {
         return [];
       }
     },
     create: async (data: any) => {
-      const res: any = await apiClient.post('/portal/expenses', data);
+      const description = JSON.stringify({
+        vendorName: data.vendorName,
+        propertyName: data.propertyName,
+        propertyId: data.propertyId,
+        buildingId: data.buildingId,
+        unitId: data.unitId,
+      });
+      const res: any = await apiClient.post('/portal/expenses', {
+        category: data.category,
+        amount: data.amount,
+        date: data.date,
+        description,
+      });
       return res.data;
     },
     delete: async (id: string) => {
@@ -834,20 +860,45 @@ export const api = {
     getAll: async () => {
       try {
         const res: any = await apiClient.get('/portal/income');
-        return (res.data || []).map((i: any) => ({
-          id: i.id,
-          category: i.category,
-          amount: i.amount,
-          date: i.date ? i.date.split('T')[0] : 'N/A',
-          description: i.description,
-          status: i.status,
-        }));
+        return (res.data || []).map((i: any) => {
+          let parsed = { propertyName: 'Property', tenantName: 'Resident', propertyId: '', buildingId: '', unitId: '' };
+          try {
+            parsed = JSON.parse(i.description);
+          } catch {
+            parsed.propertyName = i.description || 'Property';
+          }
+          return {
+            id: i.id,
+            category: i.category,
+            amount: i.amount,
+            date: i.date ? i.date.split('T')[0] : 'N/A',
+            propertyId: parsed.propertyId || '',
+            buildingId: parsed.buildingId || '',
+            unitId: parsed.unitId || '',
+            propertyName: parsed.propertyName || 'Property',
+            tenantName: parsed.tenantName || 'Resident',
+            description: i.description,
+            status: i.status,
+          };
+        });
       } catch (e) {
         return [];
       }
     },
     create: async (data: any) => {
-      const res: any = await apiClient.post('/portal/income', data);
+      const description = JSON.stringify({
+        propertyName: data.propertyName,
+        tenantName: data.tenantName,
+        propertyId: data.propertyId,
+        buildingId: data.buildingId,
+        unitId: data.unitId,
+      });
+      const res: any = await apiClient.post('/portal/income', {
+        category: data.category,
+        amount: data.amount,
+        date: data.date,
+        description,
+      });
       return res.data;
     },
     delete: async (id: string) => {

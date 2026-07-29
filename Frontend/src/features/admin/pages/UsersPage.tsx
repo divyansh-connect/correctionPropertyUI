@@ -33,7 +33,6 @@ export const UsersPage: React.FC = () => {
   const [assignedUnit, setAssignedUnit] = useState('');
   const [assignedBuildings, setAssignedBuildings] = useState<string[]>([]);
   const [assignedDepartments, setAssignedDepartments] = useState<string[]>([]);
-
   // Notifications
   const [notification, setNotification] = useState<{ type: 'success' | 'info' | 'destructive'; message: string } | null>(null);
 
@@ -53,6 +52,16 @@ export const UsersPage: React.FC = () => {
     queryFn: () => api.roles.getAll(),
   });
 
+  const { data: properties = [] } = useQuery({
+    queryKey: ['properties-list'],
+    queryFn: () => api.property.getAll(),
+  });
+
+  const { data: units = [] } = useQuery({
+    queryKey: ['units-list'],
+    queryFn: () => api.unit.getAll(),
+  });
+
   // Reactively select the correct default role based on database roles availability
   React.useEffect(() => {
     if (roles.length > 0 && !editingUser) {
@@ -67,16 +76,6 @@ export const UsersPage: React.FC = () => {
       }
     }
   }, [roles, editingUser, user]);
-
-  const { data: properties = [] } = useQuery({
-    queryKey: ['properties-list'],
-    queryFn: () => api.property.getAll(),
-  });
-
-  const { data: units = [] } = useQuery({
-    queryKey: ['units-list'],
-    queryFn: () => api.unit.getAll(),
-  });
 
   const { data: buildings = [] } = useQuery({
     queryKey: ['buildings-list'],
