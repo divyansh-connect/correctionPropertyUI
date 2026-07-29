@@ -149,20 +149,26 @@ export const RentLedgerPage: React.FC = () => {
       header: t('rentLedgerPage.actions'),
       cell: ({ row }) => {
         const tenantObj = tenants.find((tItem) => `${tItem.firstName} ${tItem.lastName}` === row.original.tenantName);
-        if (tenantObj) {
-          return (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setSelectedTenantId(tenantObj.id)}
-              className="h-8 w-8 text-muted-foreground hover:text-foreground cursor-pointer"
-              title={t('rentLedgerPage.viewStatement')}
-            >
-              <Eye className="w-4 h-4" />
-            </Button>
-          );
-        }
-        return '-';
+        return (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => {
+              if (tenantObj) {
+                setSelectedTenantId(tenantObj.id);
+              } else {
+                const firstTenant = tenants[0];
+                if (firstTenant) {
+                  setSelectedTenantId(firstTenant.id);
+                }
+              }
+            }}
+            className="h-8 w-8 text-muted-foreground hover:text-foreground cursor-pointer"
+            title={t('rentLedgerPage.viewStatement')}
+          >
+            <Eye className="w-4 h-4" />
+          </Button>
+        );
       },
     },
   ];

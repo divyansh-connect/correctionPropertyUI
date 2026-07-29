@@ -34,6 +34,21 @@ export const UsersPage: React.FC = () => {
   const [assignedBuildings, setAssignedBuildings] = useState<string[]>([]);
   const [assignedDepartments, setAssignedDepartments] = useState<string[]>([]);
 
+  // Reactively select the correct default role based on database roles availability
+  React.useEffect(() => {
+    if (roles.length > 0 && !editingUser) {
+      const hasStaff = roles.some((r: any) => r.name === 'Maintenance Staff');
+      const hasMaint = roles.some((r: any) => r.name === 'Maintenance');
+      if (user?.role === 'Super Admin') {
+        setFormRole('Property Manager');
+      } else if (hasStaff) {
+        setFormRole('Maintenance Staff');
+      } else if (hasMaint) {
+        setFormRole('Maintenance');
+      }
+    }
+  }, [roles, editingUser, user]);
+
   // Notifications
   const [notification, setNotification] = useState<{ type: 'success' | 'info' | 'destructive'; message: string } | null>(null);
 
@@ -158,7 +173,12 @@ export const UsersPage: React.FC = () => {
     setFormPhone('');
     setFormPassword('');
     setFormStatus('Active');
-    setFormRole(defaultRole);
+    const hasStaff = roles.some((r: any) => r.name === 'Maintenance Staff');
+    const hasMaint = roles.some((r: any) => r.name === 'Maintenance');
+    const resolvedDefaultRole = user?.role === 'Super Admin' 
+      ? 'Property Manager' 
+      : (hasStaff ? 'Maintenance Staff' : (hasMaint ? 'Maintenance' : 'Collection Manager'));
+    setFormRole(resolvedDefaultRole);
     setAssignedProperties([]);
     setAssignedUnit('');
     setAssignedBuildings([]);
@@ -534,7 +554,7 @@ export const UsersPage: React.FC = () => {
                       .filter((r: any) => 
                         user?.role === 'Super Admin' 
                           ? r.name === 'Property Manager' 
-                          : ['Maintenance', 'Collection Manager'].includes(r.name)
+                          : ['Maintenance', 'Maintenance Staff', 'Collection Manager'].includes(r.name)
                       )
                       .map((r: any) => (
                         <option key={r.id} value={r.name}>{r.name}</option>
