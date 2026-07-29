@@ -33,6 +33,7 @@ export const UsersPage: React.FC = () => {
   const [assignedUnit, setAssignedUnit] = useState('');
   const [assignedBuildings, setAssignedBuildings] = useState<string[]>([]);
   const [assignedDepartments, setAssignedDepartments] = useState<string[]>([]);
+
   // Notifications
   const [notification, setNotification] = useState<{ type: 'success' | 'info' | 'destructive'; message: string } | null>(null);
 

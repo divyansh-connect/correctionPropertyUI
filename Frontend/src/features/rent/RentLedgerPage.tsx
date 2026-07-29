@@ -154,7 +154,9 @@ export const RentLedgerPage: React.FC = () => {
             variant="ghost"
             size="icon"
             onClick={() => {
-              if (tenantObj) {
+              if (row.original.tenantId) {
+                setSelectedTenantId(row.original.tenantId);
+              } else if (tenantObj) {
                 setSelectedTenantId(tenantObj.id);
               } else {
                 const firstTenant = tenants[0];
@@ -163,8 +165,8 @@ export const RentLedgerPage: React.FC = () => {
                 }
               }
             }}
-            className="h-8 w-8 text-muted-foreground hover:text-foreground cursor-pointer"
-            title={t('rentLedgerPage.viewStatement')}
+            className="h-8 w-8 text-muted-foreground hover:text-primary cursor-pointer"
+            title="View Tenant Statement"
           >
             <Eye className="w-4 h-4" />
           </Button>
