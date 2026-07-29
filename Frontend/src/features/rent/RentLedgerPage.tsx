@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 interface LedgerItem {
   id: string;
   date: string;
+  tenantId?: string;
   tenantName: string;
   propertyName: string;
   unitNumber: string;
@@ -65,7 +66,10 @@ export const RentLedgerPage: React.FC = () => {
   const selectedTenantLedger = React.useMemo(() => {
     if (!selectedTenant) return [];
     const tenantFullName = `${selectedTenant.firstName} ${selectedTenant.lastName}`;
-    const items = ledger.filter((item) => item.tenantName === tenantFullName);
+    const items = ledger.filter((item: LedgerItem) => {
+      if (item.tenantId && item.tenantId === selectedTenantId) return true;
+      return item.tenantName === tenantFullName;
+    });
     
     // Sort items by date ascending
     const sorted = [...items].sort((a, b) => a.date.localeCompare(b.date));
@@ -85,7 +89,7 @@ export const RentLedgerPage: React.FC = () => {
         balance: runningBalance
       };
     });
-  }, [ledger, selectedTenant]);
+  }, [ledger, selectedTenant, selectedTenantId]);
 
   const filteredLedger = ledger.filter((item) => {
     const nameMatch = item.tenantName.toLowerCase().includes(searchQuery.toLowerCase());

@@ -59,7 +59,9 @@ export const NewPaymentPage: React.FC = () => {
 
   const selectedTenantId = watch('tenantId');
   const selectedTenant = tenants.find((t) => t.id === selectedTenantId);
-  const selectedUnit = selectedTenant ? units.find((u) => u.id === selectedTenant.unitId) : null;
+  const selectedUnit = selectedTenant
+    ? (units.find((u) => u.id === selectedTenant.unitId) || units.find((u) => u.propertyId === selectedTenant.propertyId))
+    : units[0];
   const paymentMethod = watch('paymentMethod');
 
   const recordMutation = useMutation({
@@ -67,10 +69,10 @@ export const NewPaymentPage: React.FC = () => {
       return api.payments.create({
         tenantId: values.tenantId,
         tenantName: selectedTenant ? `${selectedTenant.firstName} ${selectedTenant.lastName}` : 'Tenant',
-        propertyId: selectedUnit ? selectedUnit.propertyId : 'prop-1',
-        propertyName: selectedUnit ? selectedUnit.propertyName : 'Property',
-        unitId: selectedUnit ? selectedUnit.id : 'unit-1',
-        unitNumber: selectedUnit ? selectedUnit.unitNumber : '101',
+        propertyId: selectedUnit?.propertyId || selectedTenant?.propertyId || '',
+        propertyName: selectedUnit?.propertyName || selectedTenant?.propertyName || 'Property',
+        unitId: selectedUnit?.id || selectedTenant?.unitId || '',
+        unitNumber: selectedUnit?.unitNumber || '101',
         amount: values.amount,
         dueDate: values.dueDate,
         paidDate: values.paidDate,
