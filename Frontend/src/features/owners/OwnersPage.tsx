@@ -142,7 +142,20 @@ export const OwnersPage: React.FC = () => {
     },
     { accessorKey: 'email', header: t('pmOwners.email'), id: 'email' },
     { accessorKey: 'phone', header: t('pmOwners.phone'), id: 'phone' },
-    { accessorKey: 'propertiesOwnedCount', header: t('pmOwners.propertiesOwned'), id: 'propertiesOwnedCount' },
+    {
+      accessorKey: 'propertiesOwnedCount',
+      header: t('pmOwners.propertiesOwned'),
+      id: 'propertiesOwnedCount',
+      cell: ({ row }) => {
+        const count = properties.filter(
+          (p) =>
+            p.ownerId === row.original.id ||
+            p.owner === row.original.name ||
+            ((row.original as any).propertiesOwned || []).includes(p.id)
+        ).length;
+        return <span className="font-bold">{count || row.original.propertiesOwnedCount || 0}</span>;
+      },
+    },
     { accessorKey: 'payoutMethod', header: t('pmOwners.payoutMethod'), id: 'payoutMethod' },
     {
       id: 'actions',
@@ -377,13 +390,23 @@ export const OwnersPage: React.FC = () => {
               <div>
                 <span className="text-xs font-bold text-muted-foreground uppercase block mb-1">Owned Properties</span>
                 <div className="border border-border rounded-lg p-3 bg-accent/20 max-h-32 overflow-y-auto">
-                  {properties.filter(p => p.owner === viewingOwner.name).length === 0 ? (
+                  {properties.filter(
+                    (p) =>
+                      p.ownerId === viewingOwner.id ||
+                      p.owner === viewingOwner.name ||
+                      ((viewingOwner as any).propertiesOwned || []).includes(p.id)
+                  ).length === 0 ? (
                     <span className="text-xs text-muted-foreground italic">No properties assigned.</span>
                   ) : (
                     <div className="flex flex-wrap gap-2">
                       {properties
-                        .filter(p => p.owner === viewingOwner.name)
-                        .map(p => (
+                        .filter(
+                          (p) =>
+                            p.ownerId === viewingOwner.id ||
+                            p.owner === viewingOwner.name ||
+                            ((viewingOwner as any).propertiesOwned || []).includes(p.id)
+                        )
+                        .map((p) => (
                           <span key={p.id} className="text-xs font-bold px-2.5 py-1 bg-primary/10 text-primary border border-primary/20 rounded-full">
                             {p.name}
                           </span>
