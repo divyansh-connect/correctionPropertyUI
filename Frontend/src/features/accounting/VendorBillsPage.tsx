@@ -52,10 +52,7 @@ export const VendorBillsPage: React.FC = () => {
   });
 
   const filteredBills = bills.filter((b) => {
-    const vName = (b.vendorName || '').toLowerCase();
-    const bNum = (b.billNumber || '').toLowerCase();
-    const query = searchQuery.toLowerCase();
-    const searchMatch = vName.includes(query) || bNum.includes(query);
+    const searchMatch = b.vendorName.toLowerCase().includes(searchQuery.toLowerCase()) || b.billNumber.includes(searchQuery);
     const statusMatch = statusFilter === '' || b.status === statusFilter;
     return searchMatch && statusMatch;
   });
