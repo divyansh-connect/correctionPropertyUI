@@ -71,6 +71,24 @@ export const DocsAllPage: React.FC = () => {
 
   const isLoading = loadingGeneral || loadingOwner || loadingTenant;
 
+  const normalizeCategory = (cat: string) => {
+    if (!cat) return 'Other';
+    const c = cat.toLowerCase().trim();
+    if (c === 'statements' || c === 'statement') return 'Statement';
+    if (c === 'tax documents' || c === 'tax') return 'Tax';
+    if (c === 'contracts' || c === 'contract') return 'Contract';
+    if (c === 'receipts' || c === 'receipt') return 'Receipt';
+    if (c === 'invoices' || c === 'invoice') return 'Invoice';
+    if (c === 'leases' || c === 'lease') return 'Lease';
+    if (c === 'inspections' || c === 'inspection' || c === 'inspection reports') return 'Inspection';
+    if (c === 'maintenance' || c === 'maintenance records' || c === 'maintenance reports') return 'Maintenance';
+    if (c === 'insurance' || c === 'insurance policies') return 'Insurance';
+    if (c === 'legal' || c === 'legal documents') return 'Legal';
+    
+    // Capitalize first letter
+    return cat.charAt(0).toUpperCase() + cat.slice(1);
+  };
+
   // Map owner documents
   const mappedOwnerDocs = ownerDocs.map((d: any) => {
     const prop = properties.find((p: any) => p.id === d.propertyId);
@@ -78,7 +96,7 @@ export const DocsAllPage: React.FC = () => {
     return {
       id: d.id,
       name: d.name,
-      category: d.category || 'Statements',
+      category: normalizeCategory(d.category || 'Statement'),
       folderName: 'Owners',
       owner: own ? `${own.firstName} ${own.lastName}` : 'N/A',
       property: prop ? prop.name : 'N/A',
@@ -97,7 +115,7 @@ export const DocsAllPage: React.FC = () => {
     return {
       id: d.id,
       name: d.name,
-      category: d.category || 'Leasing',
+      category: normalizeCategory(d.category || 'Lease'),
       folderName: 'Tenants',
       owner: ten ? `${ten.firstName} ${ten.lastName}` : 'N/A',
       property: prop ? prop.name : 'N/A',
@@ -112,6 +130,7 @@ export const DocsAllPage: React.FC = () => {
   // Map general documents
   const mappedGeneralDocs = generalDocs.map((d: any) => ({
     ...d,
+    category: normalizeCategory(d.category || 'Other'),
     role: 'general',
   }));
 

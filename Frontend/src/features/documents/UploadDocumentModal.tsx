@@ -30,7 +30,7 @@ export const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
   const [unitId, setUnitId] = useState('');
   const [tenantId, setTenantId] = useState('');
   const [ownerId, setOwnerId] = useState('');
-  const [category, setCategory] = useState(type === 'owner' ? 'Statements' : 'Leasing');
+  const [category, setCategory] = useState(type === 'owner' ? 'Statement' : 'Lease');
   const [docName, setDocName] = useState('');
   
   const [isUploading, setIsUploading] = useState(false);
@@ -38,8 +38,8 @@ export const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
   const [success, setSuccess] = useState(false);
 
   // Categories lists
-  const ownerCategories = ['Statements', 'Tax Documents', 'Contracts', 'Insurance', 'Property Photos', 'Maintenance Reports', 'Inspection Reports', 'Other'];
-  const tenantCategories = ['Lease', 'Receipts', 'Notices', 'Community Documents', 'Insurance', 'Inspection Reports', 'Other'];
+  const ownerCategories = ['Statement', 'Tax', 'Contract', 'Insurance', 'Inspection', 'Maintenance', 'Other'];
+  const tenantCategories = ['Lease', 'Receipt', 'Invoice', 'Inspection', 'Maintenance', 'Legal', 'Other'];
 
   // Queries
   const { data: properties = [] } = useQuery({
