@@ -7,6 +7,7 @@ import { Button } from './ui/Button';
 interface FilterOption {
   label: string;
   value: string;
+  id?: string;
 }
 
 interface FilterDropdown {
@@ -55,7 +56,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           >
             <option value="">{filter.placeholder}</option>
             {filter.options.map((opt) => (
-              <option key={opt.value} value={opt.value}>
+              <option key={opt.id || opt.value} value={opt.value}>
                 {opt.label}
               </option>
             ))}

@@ -123,7 +123,11 @@ export const PropertiesPage: React.FC = () => {
       accessorKey: 'owner',
       header: t('properties.columns.owner'),
       id: 'owner',
-      cell: ({ row }) => <span className="text-muted-foreground text-xs font-semibold">{row.original.owner}</span>,
+      cell: ({ row }) => {
+        const owner = row.original.owner;
+        const ownerName = owner && typeof owner === 'object' ? owner.name : (owner || 'No Owner');
+        return <span className="text-muted-foreground text-xs font-semibold">{ownerName}</span>;
+      },
     },
     {
       accessorKey: 'address',
@@ -263,6 +267,7 @@ export const PropertiesPage: React.FC = () => {
             value: ownerFilter,
             placeholder: t('properties.ownerPlaceholder'),
             options: owners.map((o) => ({
+              id: o.id,
               label: `${o.firstName} ${o.lastName}`,
               value: `${o.firstName} ${o.lastName}`,
             })),
