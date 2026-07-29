@@ -482,7 +482,14 @@ export const api = {
     getAll: async () => {
       try {
         const res: any = await apiClient.get('/accounting/accounts');
-        return res.data || [];
+        return (res.data || []).map((a: any) => ({
+          id: a.id,
+          accountNumber: a.accountCode || '',
+          accountName: a.accountName || '',
+          accountType: a.type === 'Asset' ? 'Assets' : a.type === 'Revenue' ? 'Income' : a.type === 'Expense' ? 'Expenses' : a.type,
+          balance: a.balance || 0,
+          status: a.isActive !== false ? 'Active' : 'Inactive',
+        }));
       } catch (e) {
         console.error('Accounts fetch failed:', e);
         return [];

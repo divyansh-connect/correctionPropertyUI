@@ -117,6 +117,7 @@ export const OwnersPage: React.FC = () => {
   const onSubmit = (data: OwnerFormInputs) => {
     const payload = {
       ...data,
+      role: 'Owner',
       propertiesOwned: selectedProperties,
     };
     if (editingOwner) {

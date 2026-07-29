@@ -14,7 +14,6 @@ import { useTranslation } from 'react-i18next';
 interface LedgerItem {
   id: string;
   date: string;
-  tenantId: string;
   tenantName: string;
   propertyName: string;
   unitNumber: string;
@@ -60,17 +59,13 @@ export const RentLedgerPage: React.FC = () => {
 
   const selectedTenant = tenants.find((t) => t.id === selectedTenantId);
   const tenantProperty = selectedTenant ? properties.find((p) => p.id === selectedTenant.propertyId) : null;
-  const propertyAddress = tenantProperty?.address || (selectedTenant?.propertyName ? `${selectedTenant.propertyName}, Austin, TX` : 'N/A');
+  const propertyAddress = tenantProperty ? tenantProperty.address : (selectedTenant?.propertyName ? `${selectedTenant.propertyName}, Austin, TX` : 'N/A');
   const managementCompany = tenantProperty?.managementCompany || 'Apex Property Management';
 
   const selectedTenantLedger = React.useMemo(() => {
     if (!selectedTenant) return [];
-    // Filter by tenantId first (most reliable), fallback to name match
-    const items = ledger.filter((item) => {
-      if (item.tenantId && item.tenantId === selectedTenantId) return true;
-      const tenantFullName = `${selectedTenant.firstName} ${selectedTenant.lastName}`;
-      return item.tenantName === tenantFullName;
-    });
+    const tenantFullName = `${selectedTenant.firstName} ${selectedTenant.lastName}`;
+    const items = ledger.filter((item) => item.tenantName === tenantFullName);
     
     // Sort items by date ascending
     const sorted = [...items].sort((a, b) => a.date.localeCompare(b.date));
@@ -78,17 +73,19 @@ export const RentLedgerPage: React.FC = () => {
     // Recalculate running balance
     let runningBalance = 0;
     return sorted.map((item) => {
+      let debit = item.debit;
+      let credit = item.credit;
       if (item.transactionType === 'Rent Charge') {
-        runningBalance += item.debit;
+        runningBalance += debit;
       } else if (item.transactionType === 'Payment') {
-        runningBalance -= item.credit;
+        runningBalance -= credit;
       }
       return {
         ...item,
         balance: runningBalance
       };
     });
-  }, [ledger, selectedTenant, selectedTenantId]);
+  }, [ledger, selectedTenant]);
 
   const filteredLedger = ledger.filter((item) => {
     const nameMatch = item.tenantName.toLowerCase().includes(searchQuery.toLowerCase());
@@ -150,21 +147,29 @@ export const RentLedgerPage: React.FC = () => {
     {
       id: 'actions',
       header: t('rentLedgerPage.actions'),
-      cell: ({ row }) => (
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => {
-            if (row.original.tenantId) {
-              setSelectedTenantId(row.original.tenantId);
-            }
-          }}
-          className="h-8 w-8 text-muted-foreground hover:text-primary cursor-pointer"
-          title="View Tenant Statement"
-        >
-          <Eye className="w-4 h-4" />
-        </Button>
-      ),
+      cell: ({ row }) => {
+        const tenantObj = tenants.find((tItem) => `${tItem.firstName} ${tItem.lastName}` === row.original.tenantName);
+        return (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => {
+              if (tenantObj) {
+                setSelectedTenantId(tenantObj.id);
+              } else {
+                const firstTenant = tenants[0];
+                if (firstTenant) {
+                  setSelectedTenantId(firstTenant.id);
+                }
+              }
+            }}
+            className="h-8 w-8 text-muted-foreground hover:text-foreground cursor-pointer"
+            title={t('rentLedgerPage.viewStatement')}
+          >
+            <Eye className="w-4 h-4" />
+          </Button>
+        );
+      },
     },
   ];
 
@@ -378,4 +383,3 @@ export const RentLedgerPage: React.FC = () => {
   );
 };
 export default RentLedgerPage;
-

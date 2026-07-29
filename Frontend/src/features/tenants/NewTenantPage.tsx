@@ -102,6 +102,7 @@ export const NewTenantPage: React.FC = () => {
   const onSubmit = (values: TenantFormInputs) => {
     createMutation.mutate({
       ...values,
+      role: 'Tenant',
       image: imageFile || undefined,
     });
   };
