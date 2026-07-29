@@ -978,6 +978,7 @@ export const api = {
             type: 'charge',
             date: inv.dueDate || inv.createdAt,
             amount: inv.amount,
+            tenantId: inv.tenant?.id || inv.tenantId || '',
             tenantName: inv.tenant ? `${inv.tenant.firstName} ${inv.tenant.lastName}` : 'Resident',
             propertyName: inv.propertyName || 'Property',
             unitNumber: inv.unitNumber || 'Unassigned',
@@ -993,6 +994,7 @@ export const api = {
               type: 'payment',
               date: pay.paidDate || pay.dueDate || pay.createdAt,
               amount: pay.amount,
+              tenantId: pay.tenant?.id || pay.tenantId || '',
               tenantName: pay.tenant ? `${pay.tenant.firstName} ${pay.tenant.lastName}` : 'Resident',
               propertyName: pay.property?.name || 'Property',
               unitNumber: pay.unit?.unitNumber || 'Unassigned',
@@ -1013,6 +1015,7 @@ export const api = {
             ledgerItems.push({
               id: tx.id,
               date: tx.date ? tx.date.split('T')[0] : 'N/A',
+              tenantId: tx.tenantId || '',
               tenantName: tx.tenantName,
               propertyName: tx.propertyName,
               unitNumber: tx.unitNumber,
@@ -1027,6 +1030,7 @@ export const api = {
             ledgerItems.push({
               id: tx.id,
               date: tx.date ? tx.date.split('T')[0] : 'N/A',
+              tenantId: tx.tenantId || '',
               tenantName: tx.tenantName,
               propertyName: tx.propertyName,
               unitNumber: tx.unitNumber,
