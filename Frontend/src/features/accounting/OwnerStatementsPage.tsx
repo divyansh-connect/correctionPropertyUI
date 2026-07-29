@@ -49,10 +49,12 @@ export const OwnerStatementsPage: React.FC = () => {
     },
   });
 
-  const filteredStatements = statements.filter((s) =>
-    s.ownerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    s.propertyName.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredStatements = statements.filter((s) => {
+    const oName = (s.ownerName || '').toLowerCase();
+    const pName = (s.propertyName || '').toLowerCase();
+    const query = searchQuery.toLowerCase();
+    return oName.includes(query) || pName.includes(query);
+  });
 
   const columns: ColumnDef<OwnerStatement>[] = [
     {

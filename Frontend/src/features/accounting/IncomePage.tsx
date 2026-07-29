@@ -53,7 +53,10 @@ export const IncomePage: React.FC = () => {
   });
 
   const filteredIncome = income.filter((item) => {
-    const searchMatch = item.tenantName.toLowerCase().includes(searchQuery.toLowerCase()) || item.propertyName.toLowerCase().includes(searchQuery.toLowerCase());
+    const tenantNameStr = (item.tenantName || '').toLowerCase();
+    const propertyNameStr = (item.propertyName || '').toLowerCase();
+    const query = searchQuery.toLowerCase();
+    const searchMatch = tenantNameStr.includes(query) || propertyNameStr.includes(query);
     const catMatch = categoryFilter === '' || item.category === categoryFilter;
     return searchMatch && catMatch;
   });
