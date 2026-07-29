@@ -70,7 +70,9 @@ export const ExpensesPage: React.FC = () => {
   });
 
   const filteredExpenses = expenses.filter((exp) => {
-    const searchMatch = exp.vendorName.toLowerCase().includes(searchQuery.toLowerCase()) || exp.propertyName.toLowerCase().includes(searchQuery.toLowerCase());
+    const vendor = exp.vendorName || '';
+    const propName = exp.propertyName || '';
+    const searchMatch = vendor.toLowerCase().includes(searchQuery.toLowerCase()) || propName.toLowerCase().includes(searchQuery.toLowerCase());
     const catMatch = categoryFilter === '' || exp.category === categoryFilter;
     return searchMatch && catMatch;
   });

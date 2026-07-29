@@ -11,7 +11,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className }) =
   const { t } = useTranslation();
 
   const getColors = (val: string) => {
-    const s = val.toLowerCase();
+    const s = (val || '').toLowerCase();
     switch (s) {
       case 'active':
       case 'activo':
@@ -73,7 +73,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className }) =
     }
   };
 
-  const displayStatus = t(`status.${status}`, status);
+  const displayStatus = status ? t(`status.${status}`, status) : '';
 
   return (
     <span

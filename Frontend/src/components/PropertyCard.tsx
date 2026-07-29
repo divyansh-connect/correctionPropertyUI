@@ -67,7 +67,7 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ property, onClick })
           </span>
           <span className="flex items-center gap-1 truncate max-w-[120px]">
             <Landmark className="w-3.5 h-3.5 text-muted-foreground/60" />
-            {property.owner}
+            {property.owner && typeof property.owner === 'object' ? property.owner.name : (property.owner || 'No Owner')}
           </span>
         </div>
       </div>
