@@ -45,29 +45,9 @@ export const apiClient = {
     return token ? { 'Authorization': `Bearer ${token}` } : {};
   },
 
-  postFormData: async <T>(url: string, formData: FormData): Promise<T> => {
-    let response = await fetch(`${BASE_URL}${url}`, {
-      method: 'POST',
-      headers: apiClient.getAuthHeaders(),
-      body: formData,
-    });
-
-    if (response.status === 401) {
-      const refreshed = await handleUnauthorized();
-      if (refreshed) {
-        response = await fetch(`${BASE_URL}${url}`, {
-          method: 'POST',
-          headers: apiClient.getAuthHeaders(),
-          body: formData,
-        });
-      }
-    }
-
-    if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      throw new Error(errData.message || 'API request failed');
-    }
-    return response.json();
+  handleResponseError: async (response: Response) => {
+    const errData = await response.json().catch(() => ({}));
+    throw new Error(errData.message || 'API request failed');
   },
 
   get: async <T>(url: string): Promise<T> => {
@@ -87,17 +67,19 @@ export const apiClient = {
     }
 
     if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      throw new Error(errData.message || 'API request failed');
+      await apiClient.handleResponseError(response);
     }
     return response.json();
   },
 
   post: async <T>(url: string, data: any): Promise<T> => {
+    const isFormData = data instanceof FormData;
+    const headers: any = isFormData ? apiClient.getAuthHeaders() : apiClient.getHeaders();
+    
     let response = await fetch(`${BASE_URL}${url}`, {
       method: 'POST',
-      headers: apiClient.getHeaders(),
-      body: JSON.stringify(data),
+      headers,
+      body: isFormData ? data : JSON.stringify(data),
     });
 
     if (response.status === 401) {
@@ -105,24 +87,26 @@ export const apiClient = {
       if (refreshed) {
         response = await fetch(`${BASE_URL}${url}`, {
           method: 'POST',
-          headers: apiClient.getHeaders(),
-          body: JSON.stringify(data),
+          headers,
+          body: isFormData ? data : JSON.stringify(data),
         });
       }
     }
 
     if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      throw new Error(errData.message || 'API request failed');
+      await apiClient.handleResponseError(response);
     }
     return response.json();
   },
 
   put: async <T>(url: string, data?: any): Promise<T> => {
+    const isFormData = data instanceof FormData;
+    const headers: any = isFormData ? apiClient.getAuthHeaders() : apiClient.getHeaders();
+
     let response = await fetch(`${BASE_URL}${url}`, {
       method: 'PUT',
-      headers: apiClient.getHeaders(),
-      body: data ? JSON.stringify(data) : undefined,
+      headers,
+      body: isFormData ? data : data ? JSON.stringify(data) : undefined,
     });
 
     if (response.status === 401) {
@@ -130,24 +114,26 @@ export const apiClient = {
       if (refreshed) {
         response = await fetch(`${BASE_URL}${url}`, {
           method: 'PUT',
-          headers: apiClient.getHeaders(),
-          body: data ? JSON.stringify(data) : undefined,
+          headers,
+          body: isFormData ? data : data ? JSON.stringify(data) : undefined,
         });
       }
     }
 
     if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      throw new Error(errData.message || 'API request failed');
+      await apiClient.handleResponseError(response);
     }
     return response.json();
   },
 
   patch: async <T>(url: string, data?: any): Promise<T> => {
+    const isFormData = data instanceof FormData;
+    const headers: any = isFormData ? apiClient.getAuthHeaders() : apiClient.getHeaders();
+
     let response = await fetch(`${BASE_URL}${url}`, {
       method: 'PATCH',
-      headers: apiClient.getHeaders(),
-      body: data ? JSON.stringify(data) : undefined,
+      headers,
+      body: isFormData ? data : data ? JSON.stringify(data) : undefined,
     });
 
     if (response.status === 401) {
@@ -155,15 +141,14 @@ export const apiClient = {
       if (refreshed) {
         response = await fetch(`${BASE_URL}${url}`, {
           method: 'PATCH',
-          headers: apiClient.getHeaders(),
-          body: data ? JSON.stringify(data) : undefined,
+          headers,
+          body: isFormData ? data : data ? JSON.stringify(data) : undefined,
         });
       }
     }
 
     if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      throw new Error(errData.message || 'API request failed');
+      await apiClient.handleResponseError(response);
     }
     return response.json();
   },
@@ -185,8 +170,7 @@ export const apiClient = {
     }
 
     if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      throw new Error(errData.message || 'API request failed');
+      await apiClient.handleResponseError(response);
     }
     return response.json();
   },

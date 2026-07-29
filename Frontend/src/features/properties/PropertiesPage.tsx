@@ -184,10 +184,11 @@ export const PropertiesPage: React.FC = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => duplicateMutation.mutate(row.original)}
-            title={t('properties.actions.duplicate')}
+            onClick={() => navigate({ to: `/properties/edit`, search: { id: row.original.id } as any })}
+            title={t('properties.actions.edit', 'Edit')}
+            className="text-blue-500 hover:text-blue-600 hover:bg-blue-500/10"
           >
-            <Copy className="w-4 h-4" />
+            <Edit className="w-4 h-4" />
           </Button>
           <Button
             variant="ghost"

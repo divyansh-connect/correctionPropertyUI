@@ -264,7 +264,7 @@ export const RequestDetailsPage: React.FC = () => {
                   <span className="text-[10px] font-mono text-muted-foreground">555-0199</span>
                 </a>
                 <a 
-                  href={`mailto:${request.tenantName.toLowerCase().replace(' ', '')}@rentals.com`} 
+                  href={`mailto:${(request.tenantName || 'tenant').toLowerCase().replace(' ', '')}@rentals.com`} 
                   className="flex items-center justify-between p-2.5 bg-secondary/20 hover:bg-secondary/40 border border-border/40 rounded-xl transition text-foreground"
                 >
                   <div className="flex items-center gap-2">
@@ -272,7 +272,7 @@ export const RequestDetailsPage: React.FC = () => {
                     <span>Email Tenant</span>
                   </div>
                   <span className="text-[10px] font-mono text-muted-foreground truncate max-w-[100px]">
-                    {request.tenantName.toLowerCase().replace(' ', '')}@rentals.com
+                    {(request.tenantName || 'tenant').toLowerCase().replace(' ', '')}@rentals.com
                   </span>
                 </a>
                 <a 

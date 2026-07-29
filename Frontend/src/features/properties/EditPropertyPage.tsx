@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as zod from 'zod';
@@ -40,12 +40,15 @@ const propertyFormSchema = zod.object({
 
 type PropertyFormInputs = zod.infer<typeof propertyFormSchema>;
 
-export const NewPropertyPage: React.FC = () => {
+export const EditPropertyPage: React.FC = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const [photos, setPhotos] = useState<string[]>([]);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [success, setSuccess] = useState(false);
+  const [loadingProperty, setLoadingProperty] = useState(true);
+
+  const searchParams = new URLSearchParams(window.location.search);
+  const propertyId = searchParams.get('id') || '';
 
   // Query owners to select one
   const { data: owners = [] } = useQuery({
@@ -53,9 +56,56 @@ export const NewPropertyPage: React.FC = () => {
     queryFn: () => api.owner.getAll(),
   });
 
-  const createMutation = useMutation({
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<PropertyFormInputs>({
+    resolver: zodResolver(propertyFormSchema),
+  });
+
+  useEffect(() => {
+    if (propertyId) {
+      setLoadingProperty(true);
+      api.property.getById(propertyId)
+        .then((data) => {
+          if (data) {
+            const ownerName = data.owner
+              ? typeof data.owner === 'object'
+                ? data.owner.name || `${data.owner.firstName || ''} ${data.owner.lastName || ''}`.trim()
+                : data.owner
+              : '';
+            reset({
+              name: data.name || '',
+              type: data.type === 'SingleFamily' ? 'Single Family' : data.type === 'MultiFamily' ? 'Multi Family' : data.type || 'Apartment',
+              status: data.status || 'Active',
+              streetAddress: data.streetAddress || '',
+              city: data.city || '',
+              state: data.state || '',
+              country: data.country || 'USA',
+              zip: data.zip || '',
+              owner: ownerName,
+              ownershipPercentage: data.ownershipPercentage || 100,
+              managementCompany: data.managementCompany || 'Apex Property Management',
+              yearBuilt: data.yearBuilt || 2020,
+              totalBuildings: data.totalBuildings || 1,
+              totalUnits: data.units?.length || 0,
+              squareFootage: data.squareFootage || 10000,
+              purchasePrice: data.purchasePrice || 1000000,
+              currentValue: data.currentValue || 1200000,
+              monthlyExpenses: data.monthlyExpenses || 0,
+            });
+          }
+        })
+        .catch(console.error)
+        .finally(() => setLoadingProperty(false));
+    }
+  }, [propertyId, reset]);
+
+  const updateMutation = useMutation({
     mutationFn: (values: any) => {
-      return api.property.create(values);
+      return api.property.update(propertyId, values);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['properties'] });
@@ -64,32 +114,11 @@ export const NewPropertyPage: React.FC = () => {
     },
   });
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<PropertyFormInputs>({
-    resolver: zodResolver(propertyFormSchema),
-    defaultValues: {
-      type: 'Apartment',
-      status: 'Active',
-      ownershipPercentage: 100,
-      managementCompany: 'Apex Property Management',
-      yearBuilt: 2010,
-      totalBuildings: 1,
-      totalUnits: 10,
-      squareFootage: 8500,
-      purchasePrice: 2000000,
-      currentValue: 2200000,
-      monthlyExpenses: 4500,
-    },
-  });
-
   const onSubmit = (values: PropertyFormInputs) => {
-    const selectedOwner = owners.find((o) => o.name === values.owner);
+    const selectedOwner = owners.find((o) => `${o.firstName} ${o.lastName}` === values.owner);
     const ownerId = selectedOwner ? selectedOwner.id : '';
 
-    createMutation.mutate({
+    updateMutation.mutate({
       name: values.name,
       type: values.type,
       status: values.status,
@@ -112,21 +141,25 @@ export const NewPropertyPage: React.FC = () => {
     });
   };
 
+  if (loadingProperty) {
+    return <div className="p-6 text-xs text-muted-foreground font-semibold">Loading property asset ledger details...</div>;
+  }
+
   return (
     <div className="max-w-4xl space-y-6">
       <PageHeader
-        title="Add Property"
-        description="Register a new property asset in your management ledger."
+        title="Edit Property"
+        description="Modify registered property assets in your management ledger."
         breadcrumbs={[
           { label: 'Home', href: '/' },
           { label: 'Properties', href: '/properties' },
-          { label: 'Add Property' },
+          { label: 'Edit Property' },
         ]}
       />
 
       {success && (
         <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 p-4 rounded-xl text-sm font-semibold mb-6 animate-fade-in">
-          Property created successfully! Redirecting back to portfolio...
+          Property updated successfully! Redirecting back to portfolio...
         </div>
       )}
 
@@ -154,7 +187,7 @@ export const NewPropertyPage: React.FC = () => {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-bold text-muted-foreground uppercase">Initial Status</label>
+              <label className="text-xs font-bold text-muted-foreground uppercase">Status</label>
               <Select {...register('status')}>
                 <option value="Active">Active</option>
                 <option value="Inactive">Inactive</option>
@@ -177,8 +210,8 @@ export const NewPropertyPage: React.FC = () => {
               <Select {...register('owner')}>
                 <option value="">Select Owner...</option>
                 {owners.map((o) => (
-                  <option key={o.id} value={o.name}>
-                    {o.name}
+                  <option key={o.id} value={`${o.firstName} ${o.lastName}`}>
+                    {o.firstName} {o.lastName}
                   </option>
                 ))}
               </Select>
@@ -215,7 +248,7 @@ export const NewPropertyPage: React.FC = () => {
 
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Total Units</label>
-              <Input type="number" {...register('totalUnits', { valueAsNumber: true })} />
+              <Input type="number" disabled {...register('totalUnits', { valueAsNumber: true })} />
             </div>
 
             <div className="space-y-1">
@@ -278,12 +311,9 @@ export const NewPropertyPage: React.FC = () => {
           </Button>
 
           <div className="flex space-x-2">
-            <Button type="button" variant="outline" onClick={() => navigate({ to: '/properties' })}>
-              Save Draft
-            </Button>
-            <Button type="submit" disabled={createMutation.isPending}>
-              {createMutation.isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-              Create Property
+            <Button type="submit" disabled={updateMutation.isPending}>
+              {updateMutation.isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+              Save Changes
             </Button>
           </div>
         </div>
@@ -292,4 +322,4 @@ export const NewPropertyPage: React.FC = () => {
     </div>
   );
 };
-export default NewPropertyPage;
+export default EditPropertyPage;

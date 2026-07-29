@@ -102,6 +102,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         { title: t('nav.renewals'), path: '/leasing/renewals' },
         { title: t('nav.moveIn'), path: '/leasing/move-in' },
         { title: t('nav.moveOut'), path: '/leasing/move-out' },
+        { title: 'Inspection Templates', path: '/leasing/inspection-templates' },
       ],
     },
     {

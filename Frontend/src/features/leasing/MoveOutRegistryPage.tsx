@@ -1,21 +1,21 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../api';
 import { PageHeader } from '../../components/PageHeader';
 import { Button } from '../../components/ui/Button';
 import { StatusBadge } from '../../components/StatusBadge';
-import { Eye, Edit, Trash2, Calendar, ClipboardList, AlertCircle, RefreshCw } from 'lucide-react';
+import { Eye, ClipboardList, RefreshCw } from 'lucide-react';
 
-export const MoveInOutPage: React.FC = () => {
+export const MoveOutRegistryPage: React.FC = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<string>(''); // empty means all
 
-  // Load Move Ins from backend database
-  const { data: moveIns = [], isLoading, refetch } = useQuery({
-    queryKey: ['moveIns', statusFilter],
-    queryFn: () => api.moveIns.getAll(statusFilter),
+  // Load Move Outs from backend database
+  const { data: moveOuts = [], isLoading, refetch } = useQuery({
+    queryKey: ['moveOuts', statusFilter],
+    queryFn: () => api.moveOuts.getAll(statusFilter),
   });
 
   const handleRefresh = () => {
@@ -27,6 +27,8 @@ export const MoveInOutPage: React.FC = () => {
     { label: 'Scheduled', value: 'SCHEDULED' },
     { label: 'Inspection In Progress', value: 'INSPECTION_IN_PROGRESS' },
     { label: 'Inspection Completed', value: 'INSPECTION_COMPLETED' },
+    { label: 'Damage Review', value: 'DAMAGE_REVIEW' },
+    { label: 'Ready for Completion', value: 'READY_FOR_COMPLETION' },
     { label: 'Completed', value: 'COMPLETED' },
     { label: 'Cancelled', value: 'CANCELLED' }
   ];
@@ -34,12 +36,12 @@ export const MoveInOutPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Move In Workflow Registry"
-        description="Monitor upcoming tenant move-in schedules, checklist templates, and condition review signoffs."
+        title="Move Out Workflow Registry"
+        description="Monitor upcoming tenant move-out schedules, inspect damages, and signoff final security deposit refunds."
         breadcrumbs={[
           { label: 'Home', href: '/' },
-          { label: 'Leasing', href: '/leasing/move-in' },
-          { label: 'Move In Registry' },
+          { label: 'Leasing', href: '/leasing/move-out' },
+          { label: 'Move Out Registry' },
         ]}
         action={{
           label: 'Refresh Registry',
@@ -69,11 +71,11 @@ export const MoveInOutPage: React.FC = () => {
       <div className="bg-card border rounded-2xl overflow-hidden shadow-sm text-foreground">
         {isLoading ? (
           <div className="py-12 text-center text-xs font-semibold text-muted-foreground">Loading registry entries...</div>
-        ) : moveIns.length === 0 ? (
+        ) : moveOuts.length === 0 ? (
           <div className="py-12 text-center text-xs font-semibold text-muted-foreground space-y-3">
             <ClipboardList className="w-12 h-12 text-muted-foreground mx-auto" />
-            <h3 className="font-extrabold text-sm text-foreground">No Moves Found</h3>
-            <p className="text-[10px] text-muted-foreground max-w-sm mx-auto">Create a lease agreement to schedule and generate a move-in checklist record automatically.</p>
+            <h3 className="font-extrabold text-sm text-foreground">No Move Outs Found</h3>
+            <p className="text-[10px] text-muted-foreground max-w-sm mx-auto">Create a move-out record from the active leases page to schedule a checklist.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -89,7 +91,7 @@ export const MoveInOutPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y font-semibold text-foreground">
-                {moveIns.map((m: any) => {
+                {moveOuts.map((m: any) => {
                   const lease = m.lease || {};
                   const tenant = lease.tenant || {};
                   const unit = m.unit || {};
@@ -112,7 +114,7 @@ export const MoveInOutPage: React.FC = () => {
                         <Button 
                           variant="ghost" 
                           size="xs" 
-                          onClick={() => window.location.href = `/leasing/move-in/${m.id}`}
+                          onClick={() => window.location.href = `/leasing/move-out/${m.id}`}
                         >
                           <Eye className="w-4 h-4 mr-1" /> View Workflow
                         </Button>
@@ -129,4 +131,4 @@ export const MoveInOutPage: React.FC = () => {
   );
 };
 
-export default MoveInOutPage;
+export default MoveOutRegistryPage;

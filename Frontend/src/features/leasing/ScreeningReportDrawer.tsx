@@ -7,7 +7,7 @@ import { Button } from '../../components/ui/Button';
 import { StatusBadge } from '../../components/StatusBadge';
 import { 
   User, Shield, ShieldAlert, CheckCircle, AlertTriangle, XCircle, 
-  Download, FileText, Loader2, ArrowRight, X, Calendar 
+  Download, FileText, Loader2, ArrowRight, X, Calendar, Play 
 } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
 
@@ -19,6 +19,13 @@ interface ScreeningReportDrawerProps {
 export const ScreeningReportDrawer: React.FC<ScreeningReportDrawerProps> = ({ screening, onClose }) => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+
+  const generateReportMutation = useMutation({
+    mutationFn: () => api.screening.generateReport(screening?.id || ''),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['screening-checks-list'] });
+    },
+  });
 
   const approveMutation = useMutation({
     mutationFn: () => api.screening.approve(screening?.id || ''),
@@ -252,7 +259,21 @@ export const ScreeningReportDrawer: React.FC<ScreeningReportDrawerProps> = ({ sc
 
       {/* DRAWER FOOTER ACTIONS */}
       <div className="p-4 border-t bg-secondary/15 flex justify-end gap-2 shrink-0">
-        <Button variant="outline" onClick={onClose} disabled={approveMutation.isPending || declineMutation.isPending}>Close</Button>
+        <Button variant="outline" onClick={onClose} disabled={approveMutation.isPending || declineMutation.isPending || generateReportMutation.isPending}>Close</Button>
+        {screening.screeningStatus === 'Processing' && (
+          <Button
+            onClick={() => generateReportMutation.mutate()}
+            className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold flex items-center gap-1"
+            disabled={generateReportMutation.isPending}
+          >
+            {generateReportMutation.isPending ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Play className="w-3.5 h-3.5" />
+            )}
+            Run Check & Generate Report
+          </Button>
+        )}
         {screening.screeningStatus === 'Completed' && (
           <>
             <Button

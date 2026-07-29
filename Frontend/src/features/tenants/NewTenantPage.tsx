@@ -50,6 +50,7 @@ const tenantFormSchema = zod.object({
     model: zod.string().min(1, 'Model is required'),
     plate: zod.string().min(1, 'License Plate is required'),
   })),
+  password: zod.string().optional().or(zod.literal('')),
 });
 
 type TenantFormInputs = zod.infer<typeof tenantFormSchema>;
@@ -57,17 +58,12 @@ type TenantFormInputs = zod.infer<typeof tenantFormSchema>;
 export const NewTenantPage: React.FC = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [success, setSuccess] = useState(false);
 
   const createMutation = useMutation({
-    mutationFn: (values: TenantFormInputs) => {
-      return api.tenant.create({
-        firstName: values.firstName,
-        lastName: values.lastName,
-        email: values.email,
-        phone: values.phone,
-        status: 'Pending',
-      });
+    mutationFn: (values: any) => {
+      return api.tenant.create(values);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tenants'] });
@@ -104,7 +100,10 @@ export const NewTenantPage: React.FC = () => {
   });
 
   const onSubmit = (values: TenantFormInputs) => {
-    createMutation.mutate(values);
+    createMutation.mutate({
+      ...values,
+      image: imageFile || undefined,
+    });
   };
 
   return (
@@ -186,6 +185,11 @@ export const NewTenantPage: React.FC = () => {
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Alternate Phone</label>
               <Input placeholder="(512) 555-4321" {...register('altPhone')} />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-muted-foreground uppercase">Password</label>
+              <Input type="password" placeholder="••••••••" {...register('password')} />
+              {errors.password && <p className="text-rose-500 text-xs">{errors.password.message}</p>}
             </div>
           </div>
         </div>
@@ -337,6 +341,21 @@ export const NewTenantPage: React.FC = () => {
               </Button>
             </div>
           ))}
+        </div>
+
+        {/* MEDIA */}
+        <div className="space-y-4">
+          <h3 className="font-bold text-sm text-foreground uppercase border-b pb-2">Media & Attachments</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-muted-foreground uppercase">Tenant Photo <span className="text-muted-foreground font-normal">(Optional - Max 1MB)</span></label>
+              <FileUploader
+                accept="image/*"
+                maxSizeMB={1}
+                onFileSelect={(file) => setImageFile(file)}
+              />
+            </div>
+          </div>
         </div>
 
         {/* DOCUMENTS */}

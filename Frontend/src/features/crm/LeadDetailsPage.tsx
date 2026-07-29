@@ -48,8 +48,14 @@ export const LeadDetailsPage: React.FC = () => {
     );
   }
 
+  const resolvedName = lead.name || `${lead.firstName || ''} ${lead.lastName || ''}`.trim() || 'Unnamed Lead';
+  const resolvedProperty = lead.property || lead.propertyName || 'Unknown Property';
+  const resolvedBudget = lead.budget !== undefined && lead.budget !== null ? `$${lead.budget.toLocaleString()} / mo` : 'N/A';
+  const resolvedSource = lead.source || 'Portal';
+  const resolvedAgent = lead.assignedAgent || 'Unassigned';
+
   const timelineEvents: TimelineEvent[] = [
-    { id: '1', title: 'Inquiry Received', description: `Lead registered via Zillow looking for properties in ${lead.propertyName}.`, time: '2026-07-10', by: 'System Integration' },
+    { id: '1', title: 'Inquiry Received', description: `Lead registered looking for properties in ${resolvedProperty}.`, time: lead.createdAt.split('T')[0], by: 'System Integration' },
   ];
 
   return (
@@ -71,11 +77,11 @@ export const LeadDetailsPage: React.FC = () => {
       <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0 pb-6 border-b">
         <div className="space-y-2">
           <div className="flex items-center space-x-3">
-            <h1 className="text-3xl font-extrabold tracking-tight">{lead.firstName} {lead.lastName}</h1>
+            <h1 className="text-3xl font-extrabold tracking-tight">{resolvedName}</h1>
             <StatusBadge status={lead.status} />
           </div>
           <p className="text-sm text-muted-foreground font-semibold">
-            Interested Asset: {lead.propertyName} • Contact: {lead.phone} • {lead.email}
+            Interested Asset: {resolvedProperty} • Contact: {lead.phone} • {lead.email}
           </p>
         </div>
 
@@ -98,27 +104,37 @@ export const LeadDetailsPage: React.FC = () => {
             <div className="grid grid-cols-2 gap-4 text-xs font-semibold">
               <div>
                 <p className="text-muted-foreground">Target Budget Range</p>
-                <p className="text-foreground mt-0.5">$1,600 / mo</p>
+                <p className="text-foreground mt-0.5">{resolvedBudget}</p>
               </div>
               <div>
                 <p className="text-muted-foreground">Lead Source Channel</p>
-                <p className="text-foreground mt-0.5">Zillow Listings</p>
+                <p className="text-foreground mt-0.5">{resolvedSource}</p>
               </div>
               <div>
                 <p className="text-muted-foreground">Assigned Leasing Agent</p>
-                <p className="text-foreground mt-0.5">Agent Smith</p>
+                <p className="text-foreground mt-0.5">{resolvedAgent}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Expected Move-in Date</p>
+                <p className="text-foreground mt-0.5">{lead.moveInDate || 'N/A'}</p>
               </div>
               <div>
                 <p className="text-muted-foreground">Created Date</p>
                 <p className="text-foreground mt-0.5">{lead.createdAt}</p>
               </div>
+              {lead.notes && (
+                <div className="col-span-2">
+                  <p className="text-muted-foreground">Internal Notes</p>
+                  <p className="text-foreground mt-0.5 whitespace-pre-wrap font-normal">{lead.notes}</p>
+                </div>
+              )}
             </div>
           </Card>
 
           <CommunicationPanel
-            entityName={`${lead.firstName} ${lead.lastName}`}
+            entityName={resolvedName}
             initialLogs={[
-              { id: '1', type: 'Email', message: 'Hi Alice, let us know what day is best for a viewing.', recipientOrAuthor: 'To: Lead', timestamp: '2 days ago' },
+              { id: '1', type: 'Email', message: `Hi ${resolvedName.split(' ')[0]}, let us know what day is best for a viewing.`, recipientOrAuthor: 'To: Lead', timestamp: 'Just now' },
             ]}
           />
         </div>

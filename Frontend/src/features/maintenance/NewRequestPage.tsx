@@ -9,9 +9,9 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { Loader2 } from 'lucide-react';
-
 interface RequestFormValues {
   propertyId: string;
+  buildingId: string;
   unitId: string;
   tenantName: string;
   category: string;
@@ -28,15 +28,43 @@ export const NewRequestPage: React.FC = () => {
   
   // Queries
   const { data: properties = [] } = useQuery({ queryKey: ['properties'], queryFn: () => api.property.getAll() });
+  const { data: buildings = [] } = useQuery({ queryKey: ['buildings'], queryFn: () => api.building.getAll() });
   const { data: units = [] } = useQuery({ queryKey: ['units'], queryFn: () => api.unit.getAll() });
 
-  const { register, handleSubmit, formState: { errors } } = useForm<RequestFormValues>({
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<RequestFormValues>({
     defaultValues: {
       priority: 'Medium',
       permissionToEnter: true,
       category: 'General',
+      propertyId: '',
+      buildingId: '',
+      unitId: '',
     }
   });
+
+  const selectedPropertyId = watch('propertyId');
+  const selectedBuildingId = watch('buildingId');
+
+  // Reset fields on change
+  React.useEffect(() => {
+    setValue('buildingId', '');
+    setValue('unitId', '');
+  }, [selectedPropertyId, setValue]);
+
+  React.useEffect(() => {
+    setValue('unitId', '');
+  }, [selectedBuildingId, setValue]);
+
+  // Filter lists flow-wise
+  const filteredBuildings = selectedPropertyId
+    ? buildings.filter((b) => b.propertyId === selectedPropertyId)
+    : [];
+
+  const filteredUnits = selectedBuildingId
+    ? units.filter((u) => u.buildingId === selectedBuildingId)
+    : selectedPropertyId
+      ? units.filter((u) => u.propertyId === selectedPropertyId)
+      : [];
 
   const createMutation = useMutation({
     mutationFn: (values: RequestFormValues) => {
@@ -78,7 +106,7 @@ export const NewRequestPage: React.FC = () => {
       <Card className="p-6 border bg-card mt-4">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 text-xs font-semibold">
           
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Property Portfolio</label>
               <Select {...register('propertyId', { required: 'Property required' })}>
@@ -87,18 +115,29 @@ export const NewRequestPage: React.FC = () => {
                   <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
               </Select>
-              {errors.propertyId && <p className="text-rose-500">{errors.propertyId.message}</p>}
+              {errors.propertyId && <p className="text-rose-500 text-[10px]">{errors.propertyId.message}</p>}
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-muted-foreground uppercase">Building</label>
+              <Select {...register('buildingId', { required: 'Building required' })} disabled={!selectedPropertyId}>
+                <option value="">Select Building...</option>
+                {filteredBuildings.map((b) => (
+                  <option key={b.id} value={b.id}>{b.name}</option>
+                ))}
+              </Select>
+              {errors.buildingId && <p className="text-rose-500 text-[10px]">{errors.buildingId.message}</p>}
             </div>
 
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Unit</label>
-              <Select {...register('unitId', { required: 'Unit required' })}>
+              <Select {...register('unitId', { required: 'Unit required' })} disabled={!selectedBuildingId && filteredBuildings.length > 0}>
                 <option value="">Select Unit...</option>
-                {units.map((u) => (
+                {filteredUnits.map((u) => (
                   <option key={u.id} value={u.id}>Unit {u.unitNumber}</option>
                 ))}
               </Select>
-              {errors.unitId && <p className="text-rose-500">{errors.unitId.message}</p>}
+              {errors.unitId && <p className="text-rose-500 text-[10px]">{errors.unitId.message}</p>}
             </div>
           </div>
 
