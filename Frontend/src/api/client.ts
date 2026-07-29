@@ -1,6 +1,5 @@
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
 
-
 export const apiClient = {
   getHeaders: () => {
     const userStr = localStorage.getItem('user');
@@ -11,16 +10,25 @@ export const apiClient = {
     };
   },
 
-  get: async <T>(url: string): Promise<T> => {
-    const response = await fetch(`${BASE_URL}${url}`, {
-      method: 'GET',
-      headers: apiClient.getHeaders(),
-    });
+  handleResponse: async (response: Response) => {
+    if (response.status === 401) {
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+      throw new Error('Session expired. Please log in again.');
+    }
     if (!response.ok) {
       const errData = await response.json().catch(() => ({}));
       throw new Error(errData.message || 'API request failed');
     }
     return response.json();
+  },
+
+  get: async <T>(url: string): Promise<T> => {
+    const response = await fetch(`${BASE_URL}${url}`, {
+      method: 'GET',
+      headers: apiClient.getHeaders(),
+    });
+    return apiClient.handleResponse(response);
   },
 
   post: async <T>(url: string, data: any): Promise<T> => {
@@ -34,11 +42,7 @@ export const apiClient = {
       headers,
       body: isFormData ? data : JSON.stringify(data),
     });
-    if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      throw new Error(errData.message || 'API request failed');
-    }
-    return response.json();
+    return apiClient.handleResponse(response);
   },
 
   put: async <T>(url: string, data?: any): Promise<T> => {
@@ -52,11 +56,7 @@ export const apiClient = {
       headers,
       body: isFormData ? data : data ? JSON.stringify(data) : undefined,
     });
-    if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      throw new Error(errData.message || 'API request failed');
-    }
-    return response.json();
+    return apiClient.handleResponse(response);
   },
 
   patch: async <T>(url: string, data?: any): Promise<T> => {
@@ -65,11 +65,7 @@ export const apiClient = {
       headers: apiClient.getHeaders(),
       body: data ? JSON.stringify(data) : undefined,
     });
-    if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      throw new Error(errData.message || 'API request failed');
-    }
-    return response.json();
+    return apiClient.handleResponse(response);
   },
 
   delete: async <T>(url: string): Promise<T> => {
@@ -77,11 +73,7 @@ export const apiClient = {
       method: 'DELETE',
       headers: apiClient.getHeaders(),
     });
-    if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      throw new Error(errData.message || 'API request failed');
-    }
-    return response.json();
+    return apiClient.handleResponse(response);
   },
 };
 export default apiClient;

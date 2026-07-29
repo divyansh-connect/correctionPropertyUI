@@ -741,30 +741,47 @@ export const api = {
     ...mockApi.inspections,
     getAll: async () => {
       try {
-        const res: any = await apiClient.get('/portal/inspections');
+        const res: any = await apiClient.get('/inspections');
         return (res.data || []).map((ins: any) => ({
           id: ins.id,
-          propertyName: ins.propertyName,
-          unitNumber: ins.unitNumber,
-          inspector: ins.inspector,
+          propertyName: ins.moveIn?.unit?.property?.name || 'N/A',
+          unitNumber: ins.moveIn?.unit?.unitNumber || 'N/A',
+          inspector: ins.assignedInspector ? `${ins.assignedInspector.firstName} ${ins.assignedInspector.lastName}` : 'Unassigned',
           status: ins.status,
-          date: ins.date ? ins.date.split('T')[0] : 'N/A',
+          date: ins.startedAt ? ins.startedAt.split('T')[0] : 'N/A',
+          type: ins.type,
         }));
       } catch (e) {
         return [];
       }
     },
+    getById: async (id: string) => {
+      const res: any = await apiClient.get(`/inspections/${id}`);
+      return res.data;
+    },
+    getInspectors: async () => {
+      const res: any = await apiClient.get('/inspections/inspectors');
+      return res.data || [];
+    },
     create: async (data: any) => {
-      const res: any = await apiClient.post('/portal/inspections', data);
+      const res: any = await apiClient.post('/inspections', data);
       return res.data;
     },
     update: async (id: string, data: any) => {
-      const res: any = await apiClient.put(`/portal/inspections/${id}`, data);
+      const res: any = await apiClient.put(`/inspections/${id}`, data);
       return res.data;
     },
     delete: async (id: string) => {
-      await apiClient.delete(`/portal/inspections/${id}`);
+      await apiClient.delete(`/inspections/${id}`);
       return true;
+    },
+    complete: async (id: string) => {
+      const res: any = await apiClient.post(`/inspections/${id}/complete`, {});
+      return res.data;
+    },
+    reopen: async (id: string) => {
+      const res: any = await apiClient.post(`/inspections/${id}/reopen`, {});
+      return res.data;
     },
   },
 
@@ -1788,6 +1805,145 @@ export const api = {
     },
   },
 
+  inspectionTemplates: {
+    getAll: async () => {
+      const res: any = await apiClient.get('/inspection-templates');
+      return res.data || [];
+    },
+    getById: async (id: string) => {
+      const res: any = await apiClient.get(`/inspection-templates/${id}`);
+      return res.data;
+    },
+    create: async (data: any) => {
+      const res: any = await apiClient.post('/inspection-templates', data);
+      return res.data;
+    },
+    update: async (id: string, data: any) => {
+      const res: any = await apiClient.put(`/inspection-templates/${id}`, data);
+      return res.data;
+    },
+    toggleActive: async (id: string, active: boolean) => {
+      const res: any = await apiClient.put(`/inspection-templates/${id}/active`, { active });
+      return res.data;
+    },
+    duplicate: async (id: string) => {
+      const res: any = await apiClient.post(`/inspection-templates/${id}/duplicate`, {});
+      return res.data;
+    },
+    duplicateRoom: async (roomId: string) => {
+      const res: any = await apiClient.post(`/inspection-templates/rooms/${roomId}/duplicate`, {});
+      return res.data;
+    },
+  },
+
+  moveIns: {
+    getAll: async (status?: string) => {
+      const url = status ? `/move-ins?status=${status}` : '/move-ins';
+      const res: any = await apiClient.get(url);
+      return res.data || [];
+    },
+    getById: async (id: string) => {
+      const res: any = await apiClient.get(`/move-ins/${id}`);
+      return res.data;
+    },
+    create: async (data: any) => {
+      const res: any = await apiClient.post('/move-ins', data);
+      return res.data;
+    },
+    update: async (id: string, data: any) => {
+      const res: any = await apiClient.put(`/move-ins/${id}`, data);
+      return res.data;
+    },
+    startInspection: async (id: string, templateId: string) => {
+      const res: any = await apiClient.post(`/move-ins/${id}/start-inspection`, { templateId });
+      return res.data;
+    },
+    complete: async (id: string) => {
+      const res: any = await apiClient.post(`/move-ins/${id}/complete`, {});
+      return res.data;
+    },
+  },
+
+  moveOuts: {
+    getAll: async (status?: string) => {
+      const url = status ? `/move-outs?status=${status}` : '/move-outs';
+      const res: any = await apiClient.get(url);
+      return res.data || [];
+    },
+    getById: async (id: string) => {
+      const res: any = await apiClient.get(`/move-outs/${id}`);
+      return res.data;
+    },
+    create: async (data: any) => {
+      const res: any = await apiClient.post('/move-outs', data);
+      return res.data;
+    },
+    update: async (id: string, data: any) => {
+      const res: any = await apiClient.put(`/move-outs/${id}`, data);
+      return res.data;
+    },
+    startInspection: async (id: string, templateId: string) => {
+      const res: any = await apiClient.post(`/move-outs/${id}/start-inspection`, { templateId });
+      return res.data;
+    },
+    reviewDamage: async (id: string, items: any[]) => {
+      const res: any = await apiClient.post(`/move-outs/${id}/review-damage`, { items });
+      return res.data;
+    },
+    saveDepositSummary: async (id: string, data: any) => {
+      const res: any = await apiClient.post(`/move-outs/${id}/deposit-summary`, data);
+      return res.data;
+    },
+    complete: async (id: string) => {
+      const res: any = await apiClient.post(`/move-outs/${id}/complete`, {});
+      return res.data;
+    },
+    cancel: async (id: string, reason: string) => {
+      const res: any = await apiClient.post(`/move-outs/${id}/cancel`, { reason });
+      return res.data;
+    },
+  },
+
+  inspections: {
+    getById: async (id: string) => {
+      const res: any = await apiClient.get(`/inspections/${id}`);
+      return res.data;
+    },
+    getInspectors: async () => {
+      const res: any = await apiClient.get('/inspections/inspectors');
+      return res.data || [];
+    },
+    update: async (id: string, data: any) => {
+      const res: any = await apiClient.put(`/inspections/${id}`, data);
+      return res.data;
+    },
+    reopen: async (id: string) => {
+      const res: any = await apiClient.post(`/inspections/${id}/reopen`, {});
+      return res.data;
+    },
+    updateDraft: async (id: string, data: any) => {
+      const res: any = await apiClient.put(`/inspections/${id}`, data);
+      return res.data;
+    },
+    updateItemResponse: async (itemId: string, data: any) => {
+      const res: any = await apiClient.put(`/inspections/items/${itemId}`, data);
+      return res.data;
+    },
+    complete: async (id: string) => {
+      const res: any = await apiClient.post(`/inspections/${id}/complete`, {});
+      return res.data;
+    },
+    cancel: async (id: string, reason: string) => {
+      const res: any = await apiClient.post(`/inspections/${id}/cancel`, { reason });
+      return res.data;
+    },
+    uploadPhoto: async (itemId: string, file: File) => {
+      const formData = new FormData();
+      formData.append('photo', file);
+      const res: any = await apiClient.post(`/inspections/items/${itemId}/photos`, formData);
+      return res.data;
+    },
+  },
 };
 
 export default api;

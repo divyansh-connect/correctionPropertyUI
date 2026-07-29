@@ -57,6 +57,12 @@ import { NewLeasePage } from '../features/leasing/NewLeasePage';
 import { LeaseDetailsPage } from '../features/leasing/LeaseDetailsPage';
 import { RenewalsPage } from '../features/leasing/RenewalsPage';
 import { MoveInOutPage } from '../features/leasing/MoveInOutPage';
+import { InspectionTemplatesPage } from '../features/leasing/InspectionTemplatesPage';
+import { MoveInDetailPage } from '../features/leasing/MoveInDetailPage';
+import { MoveOutRegistryPage } from '../features/leasing/MoveOutRegistryPage';
+import { MoveOutDetailPage } from '../features/leasing/MoveOutDetailPage';
+import { DamageReviewPage } from '../features/leasing/DamageReviewPage';
+import { InspectionScreen } from '../features/leasing/InspectionScreen';
 import { ApplicationsPage } from '../features/leasing/ApplicationsPage';
 import { NewApplicationPage } from '../features/leasing/NewApplicationPage';
 import { TenantScreeningPage } from '../features/leasing/TenantScreeningPage';
@@ -658,15 +664,7 @@ const renewalsRoute = createRoute({
   ),
 });
 
-const moveInOutRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/leasing/move-in-out',
-  component: () => (
-    <ProtectedWrapper>
-      <MoveInOutPage />
-    </ProtectedWrapper>
-  ),
-});
+// Removed legacy moveInOutRoute to prevent routing overrides
 
 const applicationsRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -5311,12 +5309,49 @@ const screeningRoute = createRoute({
 const moveInRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/leasing/move-in',
-  component: () => (<ProtectedWrapper><MoveInOutPage type="Move In" /></ProtectedWrapper>),
+  component: () => (<ProtectedWrapper><MoveInOutPage /></ProtectedWrapper>),
+});
+const inspectionTemplatesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/leasing/inspection-templates',
+  component: () => (<ProtectedWrapper><InspectionTemplatesPage /></ProtectedWrapper>),
+});
+const moveInDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/leasing/move-in/$id',
+  component: () => {
+    const { id } = moveInDetailRoute.useParams();
+    return (<ProtectedWrapper><MoveInDetailPage id={id} /></ProtectedWrapper>);
+  },
+});
+const inspectionScreenRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/leasing/inspections/$id',
+  component: () => {
+    const { id } = inspectionScreenRoute.useParams();
+    return (<ProtectedWrapper><InspectionScreen id={id} /></ProtectedWrapper>);
+  },
 });
 const moveOutRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/leasing/move-out',
-  component: () => (<ProtectedWrapper><MoveInOutPage type="Move Out" /></ProtectedWrapper>),
+  component: () => (<ProtectedWrapper><MoveOutRegistryPage /></ProtectedWrapper>),
+});
+const moveOutDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/leasing/move-out/$id',
+  component: () => {
+    const { id } = moveOutDetailRoute.useParams();
+    return (<ProtectedWrapper><MoveOutDetailPage id={id} /></ProtectedWrapper>);
+  },
+});
+const damageReviewRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/leasing/damage-review/$id',
+  component: () => {
+    const { id } = damageReviewRoute.useParams();
+    return (<ProtectedWrapper><DamageReviewPage id={id} /></ProtectedWrapper>);
+  },
 });
 const managerTenantDocumentsRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -5397,7 +5432,12 @@ const routeTree = rootRoute.addChildren([
   floorPlansRoute,
   screeningRoute,
   moveInRoute,
+  moveInDetailRoute,
+  inspectionTemplatesRoute,
+  inspectionScreenRoute,
   moveOutRoute,
+  moveOutDetailRoute,
+  damageReviewRoute,
   managerTenantDocumentsRoute,
   ownersStatementsRoute,
   lateFeesRoute,
@@ -5430,7 +5470,6 @@ const routeTree = rootRoute.addChildren([
   newLeaseRoute,
   leaseDetailsRoute,
   renewalsRoute,
-  moveInOutRoute,
   applicationsRoute,
   newApplicationRoute,
   applicantScreeningWizardRoute,
