@@ -720,7 +720,7 @@ export const api = {
     ...mockApi.serviceRequests,
     getAll: async () => {
       try {
-        const res: any = await apiClient.get('/portal/maintenance/requests');
+        const res: any = await apiClient.get('/service-requests');
         return res.data || [];
       } catch (e) {
         return [];
@@ -728,23 +728,22 @@ export const api = {
     },
     getById: async (id: string) => {
       try {
-        const res: any = await apiClient.get(`/portal/maintenance/requests`);
-        const list = res.data || [];
-        return list.find((r: any) => r.id === id) || mockApi.serviceRequests.getById(id);
+        const res: any = await apiClient.get(`/service-requests/${id}`);
+        return res.data || mockApi.serviceRequests.getById(id);
       } catch (e) {
         return mockApi.serviceRequests.getById(id);
       }
     },
     create: async (data: any) => {
-      const res: any = await apiClient.post('/portal/maintenance/requests', data);
+      const res: any = await apiClient.post('/service-requests', data);
       return res.data;
     },
     update: async (id: string, data: any) => {
-      const res: any = await apiClient.put(`/portal/maintenance/requests/${id}`, data);
+      const res: any = await apiClient.put(`/service-requests/${id}`, data);
       return res.data;
     },
     delete: async (id: string) => {
-      await apiClient.delete(`/portal/maintenance/requests/${id}`);
+      await apiClient.delete(`/service-requests/${id}`);
       return true;
     },
   },
