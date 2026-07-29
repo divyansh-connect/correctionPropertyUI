@@ -1347,6 +1347,47 @@ export const api = {
     },
   },
 
+  users: {
+    getAll: async () => {
+      try {
+        const res: any = await apiClient.get('/superadmin/company-users');
+        return (res.data || []).map((u: any) => ({
+          id: u.id,
+          name: u.name,
+          email: u.email,
+          phone: u.phone || '',
+          role: u.role,
+          status: u.status,
+          lastLogin: '-',
+        }));
+      } catch (e) {
+        console.error('Fetch company users failed:', e);
+        return [];
+      }
+    },
+    invite: async (data: any) => {
+      const res: any = await apiClient.post('/superadmin/company-users', {
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        password: data.password,
+        role: data.role,
+        status: data.status || 'Active',
+      });
+      return res.data;
+    },
+    update: async (id: string, data: any) => {
+      const res: any = await apiClient.put(`/superadmin/company-users/${id}/status`, {
+        status: data.status,
+      });
+      return res.data;
+    },
+    delete: async (id: string) => {
+      const res: any = await apiClient.delete(`/superadmin/company-users/${id}`);
+      return res.data;
+    },
+  },
+
   plans: {
     getAll: async () => {
       try {
