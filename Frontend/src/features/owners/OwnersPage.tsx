@@ -20,6 +20,7 @@ const ownerFormSchema = zod.object({
   email: zod.string().email('Invalid email address'),
   phone: zod.string().min(10, 'Phone number must be at least 10 digits'),
   payoutMethod: zod.enum(['ACH/Direct Deposit', 'Wire Transfer', 'Check']),
+  password: zod.string().optional().or(zod.literal('')),
 });
 
 type OwnerFormInputs = zod.infer<typeof ownerFormSchema>;
@@ -98,6 +99,7 @@ export const OwnersPage: React.FC = () => {
       email: owner.email,
       phone: owner.phone,
       payoutMethod: owner.payoutMethod as any,
+      password: '',
     });
     setIsModalOpen(true);
   };
@@ -238,7 +240,7 @@ export const OwnersPage: React.FC = () => {
                 {errors.name && <p className="text-rose-500 text-xs">{errors.name.message}</p>}
               </div>
 
-              <div className="space-y-1">
+               <div className="space-y-1">
                 <label className="text-xs font-bold text-muted-foreground uppercase">Email</label>
                 <Input
                   type="email"
@@ -246,6 +248,18 @@ export const OwnersPage: React.FC = () => {
                   {...register('email')}
                 />
                 {errors.email && <p className="text-rose-500 text-xs">{errors.email.message}</p>}
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-muted-foreground uppercase">
+                  Password {editingOwner && <span className="text-[10px] text-muted-foreground lowercase normal-case">(leave blank to keep current)</span>}
+                </label>
+                <Input
+                  type="password"
+                  placeholder="••••••••"
+                  {...register('password')}
+                />
+                {errors.password && <p className="text-rose-500 text-xs">{errors.password.message}</p>}
               </div>
 
               <div className="space-y-1">

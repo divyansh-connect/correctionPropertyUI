@@ -86,7 +86,7 @@ export const NewPropertyPage: React.FC = () => {
   });
 
   const onSubmit = (values: PropertyFormInputs) => {
-    const selectedOwner = owners.find((o) => `${o.firstName} ${o.lastName}` === values.owner);
+    const selectedOwner = owners.find((o) => o.name === values.owner);
     const ownerId = selectedOwner ? selectedOwner.id : '';
 
     createMutation.mutate({
@@ -177,8 +177,8 @@ export const NewPropertyPage: React.FC = () => {
               <Select {...register('owner')}>
                 <option value="">Select Owner...</option>
                 {owners.map((o) => (
-                  <option key={o.id} value={`${o.firstName} ${o.lastName}`}>
-                    {o.firstName} {o.lastName}
+                  <option key={o.id} value={o.name}>
+                    {o.name}
                   </option>
                 ))}
               </Select>
