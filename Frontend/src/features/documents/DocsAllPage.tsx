@@ -2,45 +2,131 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
-import { PageHeader } from '../../components/PageHeader';
 import { FilterBar } from '../../components/FilterBar';
 import { DocumentCard } from '../../components/DocumentComponents';
 import { DataTable } from '../../components/DataTable';
 import { Button } from '../../components/ui/Button';
 import { LoadingSkeleton } from '../../components/LoadingSkeleton';
-import { LayoutGrid, List, Upload } from 'lucide-react';
+import { LayoutGrid, List, Upload, ChevronRight } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
 import { StatusBadge } from '../../components/StatusBadge';
 import { FileTypeIcon } from '../../components/DocumentComponents';
 import { useNavigate } from '@tanstack/react-router';
+import { UploadDocumentModal } from './UploadDocumentModal';
 
 export const DocsAllPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  
+  // Dropdown & Modal states
+  const [uploadDropdownOpen, setUploadDropdownOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalType, setModalType] = useState<'owner' | 'tenant'>('owner');
+
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [roleFilter, setRoleFilter] = useState<'all' | 'owner' | 'tenant'>('all');
 
-  const { data: docs = [], isLoading } = useQuery({ queryKey: ['docs-all'], queryFn: () => api.documents.getAll() });
+  // Queries for real DB data
+  const { data: generalDocs = [], isLoading: loadingGeneral } = useQuery({
+    queryKey: ['docs-general'],
+    queryFn: () => api.documents.getAll()
+  });
+
+  const { data: ownerDocs = [], isLoading: loadingOwner } = useQuery({
+    queryKey: ['docs-owner'],
+    queryFn: () => api.documents.getOwnerDocs()
+  });
+
+  const { data: tenantDocs = [], isLoading: loadingTenant } = useQuery({
+    queryKey: ['docs-tenant'],
+    queryFn: () => api.documents.getTenantDocs()
+  });
+
+  const { data: properties = [] } = useQuery({
+    queryKey: ['properties'],
+    queryFn: () => api.property.getAll()
+  });
+
+  const { data: owners = [] } = useQuery({
+    queryKey: ['owners'],
+    queryFn: () => api.owner.getAll()
+  });
+
+  const { data: tenants = [] } = useQuery({
+    queryKey: ['tenants'],
+    queryFn: () => api.tenant.getAll()
+  });
 
   const archiveMutation = useMutation({
     mutationFn: (id: string) => api.documents.archive(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['docs-all'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['docs-general'] });
+      queryClient.invalidateQueries({ queryKey: ['docs-owner'] });
+      queryClient.invalidateQueries({ queryKey: ['docs-tenant'] });
+    },
   });
 
-  const filtered = docs.filter((d) => {
+  const isLoading = loadingGeneral || loadingOwner || loadingTenant;
+
+  // Map owner documents
+  const mappedOwnerDocs = ownerDocs.map((d: any) => {
+    const prop = properties.find((p: any) => p.id === d.propertyId);
+    const own = owners.find((o: any) => o.id === d.ownerId);
+    return {
+      id: d.id,
+      name: d.name,
+      category: d.category || 'Statements',
+      folderName: 'Owners',
+      owner: own ? `${own.firstName} ${own.lastName}` : 'N/A',
+      property: prop ? prop.name : 'N/A',
+      size: d.size || '1.2 MB',
+      version: 1,
+      status: 'Active',
+      updatedAt: d.uploadedAt ? d.uploadedAt.split('T')[0] : 'N/A',
+      role: 'owner',
+    };
+  });
+
+  // Map tenant documents
+  const mappedTenantDocs = tenantDocs.map((d: any) => {
+    const prop = properties.find((p: any) => p.id === d.propertyId);
+    const ten = tenants.find((t: any) => t.id === d.tenantId);
+    return {
+      id: d.id,
+      name: d.name,
+      category: d.category || 'Leasing',
+      folderName: 'Tenants',
+      owner: ten ? `${ten.firstName} ${ten.lastName}` : 'N/A',
+      property: prop ? prop.name : 'N/A',
+      size: d.size || '1.5 MB',
+      version: 1,
+      status: 'Active',
+      updatedAt: d.uploadedAt ? d.uploadedAt.split('T')[0] : 'N/A',
+      role: 'tenant',
+    };
+  });
+
+  // Map general documents
+  const mappedGeneralDocs = generalDocs.map((d: any) => ({
+    ...d,
+    role: 'general',
+  }));
+
+  // Combine and filter
+  const allDocs = [...mappedGeneralDocs, ...mappedOwnerDocs, ...mappedTenantDocs];
+
+  const filtered = allDocs.filter((d) => {
     const nameMatch = d.name.toLowerCase().includes(searchQuery.toLowerCase());
     const catMatch = categoryFilter === '' || d.category === categoryFilter;
     
     let roleMatch = true;
     if (roleFilter === 'owner') {
-      const ownerCats = ['Statement', 'Tax', 'Insurance', 'Contract', 'Financial', 'Inspection'];
-      roleMatch = ownerCats.includes(d.category) || d.name.toLowerCase().includes('owner') || d.name.toLowerCase().includes('statement') || d.name.toLowerCase().includes('tax');
+      roleMatch = d.role === 'owner';
     } else if (roleFilter === 'tenant') {
-      const tenantCats = ['Lease', 'Invoice', 'Receipt', 'Identification', 'Maintenance', 'Legal'];
-      roleMatch = tenantCats.includes(d.category) || d.name.toLowerCase().includes('tenant') || d.name.toLowerCase().includes('lease') || d.name.toLowerCase().includes('invoice') || d.name.toLowerCase().includes('receipt');
+      roleMatch = d.role === 'tenant';
     }
 
     return nameMatch && catMatch && roleMatch;
@@ -73,12 +159,73 @@ export const DocsAllPage: React.FC = () => {
 
   return (
     <div>
-      <PageHeader
-        title={t('pmDocuments.allTitle')}
-        description={t('pmDocuments.allDesc')}
-        breadcrumbs={[{ label: t('header.home'), href: '/' }, { label: t('nav.documents'), href: '/documents' }, { label: t('pmDocuments.allTitle') }]}
-        action={{ label: t('pmDocuments.uploadDocument'), onClick: () => navigate({ to: '/documents/upload' }), icon: <Upload className="w-4 h-4" /> }}
-      />
+      {/* Premium Header Layout */}
+      <div className="flex flex-col space-y-2 md:flex-row md:items-center md:justify-between md:space-y-0 pb-6 border-b border-border/60 mb-6">
+        <div className="space-y-1.5">
+          <nav className="flex items-center space-x-1.5 text-xs font-semibold text-muted-foreground mb-1">
+            <span className="hover:text-primary transition-colors cursor-pointer" onClick={() => navigate({ to: '/' })}>
+              {t('header.home')}
+            </span>
+            <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/50" />
+            <span className="hover:text-primary transition-colors cursor-pointer" onClick={() => navigate({ to: '/documents' })}>
+              {t('nav.documents')}
+            </span>
+            <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/50" />
+            <span className="text-foreground/80 font-bold">{t('pmDocuments.allTitle')}</span>
+          </nav>
+          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">
+            {t('pmDocuments.allTitle')}
+          </h1>
+          <p className="text-sm text-muted-foreground font-medium max-w-2xl leading-relaxed">
+            {t('pmDocuments.allDesc')}
+          </p>
+        </div>
+
+        {/* Dropdown Action Button */}
+        <div className="relative pt-2 md:pt-0">
+          <Button
+            onClick={() => setUploadDropdownOpen(!uploadDropdownOpen)}
+            className="shadow-sm font-semibold flex items-center gap-1.5"
+          >
+            <Upload className="w-4 h-4" />
+            {t('pmDocuments.uploadDocument')}
+            <span className="text-[8px] ml-0.5">▼</span>
+          </Button>
+
+          {uploadDropdownOpen && (
+            <>
+              {/* Backdrop */}
+              <div
+                className="fixed inset-0 z-30"
+                onClick={() => setUploadDropdownOpen(false)}
+              />
+              {/* Dropdown Menu */}
+              <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-xl shadow-lg py-1 z-40 animate-in fade-in slide-in-from-top-2 duration-150 text-foreground">
+                <button
+                  onClick={() => {
+                    setUploadDropdownOpen(false);
+                    setModalType('owner');
+                    setIsModalOpen(true);
+                  }}
+                  className="w-full text-left px-4 py-2.5 text-xs font-bold text-foreground hover:bg-secondary/40 transition-colors flex items-center gap-2"
+                >
+                  📂 Upload for Owner
+                </button>
+                <button
+                  onClick={() => {
+                    setUploadDropdownOpen(false);
+                    setModalType('tenant');
+                    setIsModalOpen(true);
+                  }}
+                  className="w-full text-left px-4 py-2.5 text-xs font-bold text-foreground hover:bg-secondary/40 transition-colors flex items-center gap-2"
+                >
+                  👤 Upload for Tenant
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
 
       {/* Role Filters */}
       <div className="flex gap-2 p-1 bg-secondary/15 border rounded-2xl w-fit mb-4">
@@ -128,7 +275,6 @@ export const DocsAllPage: React.FC = () => {
         </div>
       </div>
 
-
       {viewMode === 'table' ? (
         <DataTable columns={columns} data={filtered} />
       ) : (
@@ -144,6 +290,13 @@ export const DocsAllPage: React.FC = () => {
           ))}
         </div>
       )}
+
+      {/* Floating Dialog Modal */}
+      <UploadDocumentModal
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        type={modalType}
+      />
     </div>
   );
 };

@@ -58,6 +58,7 @@ interface User {
   role: string;
   avatarUrl?: string;
   token?: string;
+  refreshToken?: string;
 }
 
 interface AuthState {
@@ -65,6 +66,7 @@ interface AuthState {
   isAuthenticated: boolean;
   login: (email: string, password?: string) => Promise<boolean>;
   logout: () => void;
+  refreshAccessToken: () => Promise<boolean>;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -86,6 +88,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     const resData = await response.json();
     const apiUser = resData.data.user;
     const token = resData.data.accessToken;
+    const refreshToken = resData.data.refreshToken;
 
     const loggedInUser: User = {
       id: apiUser.id,
@@ -93,6 +96,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       email: apiUser.email,
       role: apiUser.roleName,
       token: token,
+      refreshToken: refreshToken,
     };
 
     localStorage.setItem('user', JSON.stringify(loggedInUser));
@@ -102,6 +106,33 @@ export const useAuthStore = create<AuthState>((set) => ({
   logout: () => {
     localStorage.removeItem('user');
     set({ user: null, isAuthenticated: false });
+  },
+  refreshAccessToken: async () => {
+    try {
+      const userStr = localStorage.getItem('user');
+      if (!userStr) return false;
+      const userData = JSON.parse(userStr);
+      if (!userData.refreshToken) return false;
+
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
+      const response = await fetch(`${baseUrl}/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken: userData.refreshToken }),
+      });
+
+      if (!response.ok) return false;
+
+      const resData = await response.json();
+      const newToken = resData.data.accessToken;
+
+      const updatedUser = { ...userData, token: newToken };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      set({ user: updatedUser });
+      return true;
+    } catch {
+      return false;
+    }
   },
 }));
 

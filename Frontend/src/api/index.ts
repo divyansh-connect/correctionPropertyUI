@@ -20,6 +20,8 @@ export const api = {
           occupancyRate: p.units?.length ? Math.round((p.units.filter((u: any) => u.status === 'Occupied').length / p.units.length) * 100) : 0,
           monthlyRevenue: p.units?.reduce((sum: number, u: any) => sum + (u.rentAmount || 0), 0) || 0,
           status: p.status,
+          ownerId: p.ownerId,
+          owner: p.owner,
         }));
       } catch (e) {
         console.error('Properties DB fetch failed:', e);
@@ -289,15 +291,19 @@ export const api = {
     getAll: async () => {
       try {
         const res: any = await apiClient.get('/owners');
-        return (res.data || []).map((o: any) => ({
-          id: o.id,
-          firstName: o.firstName,
-          lastName: o.lastName,
-          email: o.email,
-          phone: o.phone,
-          payoutMethod: o.payoutMethod,
-          propertiesOwnedCount: o.properties?.length || 0,
-        }));
+        return (res.data || []).map((o: any) => {
+          const [first = '', ...lastParts] = (o.name || '').split(' ');
+          const last = lastParts.join(' ');
+          return {
+            id: o.id,
+            firstName: o.firstName || first,
+            lastName: o.lastName || last,
+            email: o.email,
+            phone: o.phone,
+            payoutMethod: o.payoutMethod,
+            propertiesOwnedCount: o.properties?.length || 0,
+          };
+        });
       } catch (e) {
         console.error('Owners fetch failed:', e);
         return [];
@@ -1367,6 +1373,30 @@ export const api = {
     archive: async (id: string) => {
       return true;
     },
+    getOwnerDocs: async () => {
+      try {
+        const res: any = await apiClient.get('/documents/owner');
+        return res.data || [];
+      } catch (e) {
+        return [];
+      }
+    },
+    getTenantDocs: async () => {
+      try {
+        const res: any = await apiClient.get('/documents/tenant');
+        return res.data || [];
+      } catch (e) {
+        return [];
+      }
+    },
+    uploadOwnerDoc: async (formData: FormData) => {
+      const res: any = await apiClient.postFormData('/documents/owner/upload', formData);
+      return res.data;
+    },
+    uploadTenantDoc: async (formData: FormData) => {
+      const res: any = await apiClient.postFormData('/documents/tenant/upload', formData);
+      return res.data;
+    },
     getMetrics: async () => {
       try {
         const docs: any[] = await apiClient.get('/documents').then((r: any) => r.data || []).catch(() => []);
@@ -1465,6 +1495,7 @@ export const api = {
   },
 
   ownerStatements: {
+    ...mockApi.ownerStatements,
     getAll: async () => {
       try {
         const res: any = await apiClient.get('/portal/owner/statements');

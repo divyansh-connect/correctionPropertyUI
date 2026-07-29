@@ -26,7 +26,7 @@ export const OwnerDashboardPage: React.FC = () => {
 
   const monthlyIncome = metrics?.monthlyIncome || 24500;
   const monthlyExpenses = metrics?.monthlyExpenses || 3200;
-  const netIncome = metrics?.netIncome ?? metrics?.netDistribution ?? (monthlyIncome - monthlyExpenses);
+  const netIncome = metrics?.netIncome ?? (metrics as any)?.netDistribution ?? (monthlyIncome - monthlyExpenses);
   const totalProperties = metrics?.totalProperties || 0;
   const occupancyRate = metrics?.occupancyRate || 94.5;
   const totalUnits = metrics?.totalUnits || totalProperties * 4;
