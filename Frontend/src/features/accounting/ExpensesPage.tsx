@@ -23,29 +23,60 @@ export const ExpensesPage: React.FC = () => {
 
   // Dialog state
   const [isOpen, setIsOpen] = useState(false);
-  const [vendorName, setVendorName] = useState('');
-  const [category, setCategory] = useState('Maintenance');
-  const [amount, setAmount] = useState(250);
+  const [payeeType, setPayeeType] = useState<'Vendor' | 'Maintenance' | 'Tenant' | 'Owner'>('Vendor');
   const [propertyId, setPropertyId] = useState('');
   const [buildingId, setBuildingId] = useState('');
   const [unitId, setUnitId] = useState('');
+  const [selectedVendorId, setSelectedVendorId] = useState('');
+  const [selectedMaintenanceId, setSelectedMaintenanceId] = useState('');
+  const [selectedTenantId, setSelectedTenantId] = useState('');
+  const [selectedOwnerId, setSelectedOwnerId] = useState('');
+  const [category, setCategory] = useState('Maintenance');
+  const [amount, setAmount] = useState(250);
 
   // Queries
   const { data: expenses = [], isLoading } = useQuery({ queryKey: ['expenses-list'], queryFn: () => api.expenses.getAll() });
   const { data: properties = [] } = useQuery({ queryKey: ['properties'], queryFn: () => api.property.getAll() });
   const { data: buildings = [] } = useQuery({ queryKey: ['buildings'], queryFn: () => api.building.getAll() });
   const { data: units = [] } = useQuery({ queryKey: ['units'], queryFn: () => api.unit.getAll() });
+  const { data: vendors = [] } = useQuery({ queryKey: ['vendors'], queryFn: () => api.vendors.getAll() });
+  const { data: tenants = [] } = useQuery({ queryKey: ['tenants'], queryFn: () => api.tenant.getAll() });
+  const { data: owners = [] } = useQuery({ queryKey: ['owners'], queryFn: () => api.owner.getAll() });
+  const { data: users = [] } = useQuery({ queryKey: ['users-list'], queryFn: () => api.users.getAll() });
 
   // Mutations
   const createMutation = useMutation({
     mutationFn: () => {
       const prop = properties.find((p) => p.id === propertyId);
+      
+      let resolvedPayeeName = '';
+      let payeeId = '';
+      if (payeeType === 'Vendor') {
+        const vendor = vendors.find((v) => v.id === selectedVendorId);
+        resolvedPayeeName = vendor ? vendor.name : 'Vendor';
+        payeeId = selectedVendorId;
+      } else if (payeeType === 'Maintenance') {
+        const staff = users.find((u) => u.id === selectedMaintenanceId);
+        resolvedPayeeName = staff ? staff.name : 'Maintenance Staff';
+        payeeId = selectedMaintenanceId;
+      } else if (payeeType === 'Tenant') {
+        const tenant = tenants.find((t) => t.id === selectedTenantId);
+        resolvedPayeeName = tenant ? `${tenant.firstName} ${tenant.lastName} (Tenant)` : 'Tenant';
+        payeeId = selectedTenantId;
+      } else if (payeeType === 'Owner') {
+        const owner = owners.find((o) => o.id === selectedOwnerId);
+        resolvedPayeeName = owner ? `${owner.firstName} ${owner.lastName} (Owner)` : 'Owner';
+        payeeId = selectedOwnerId;
+      }
+
       return api.expenses.create({
-        vendorName,
+        vendorName: resolvedPayeeName,
         propertyId,
         propertyName: prop ? prop.name : 'Property',
         buildingId,
         unitId,
+        payeeType,
+        payeeId,
         category,
         amount,
         tax: amount * 0.05,
@@ -56,11 +87,15 @@ export const ExpensesPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expenses-list'] });
       setIsOpen(false);
-      setVendorName('');
       setAmount(250);
       setPropertyId('');
       setBuildingId('');
       setUnitId('');
+      setSelectedVendorId('');
+      setSelectedMaintenanceId('');
+      setSelectedTenantId('');
+      setSelectedOwnerId('');
+      setPayeeType('Vendor');
     },
   });
 
@@ -193,11 +228,29 @@ export const ExpensesPage: React.FC = () => {
         <div className="space-y-4 pt-2">
           
           <div className="space-y-1">
+            <label className="text-xs font-bold text-muted-foreground uppercase">Payee Type</label>
+            <Select value={payeeType} onChange={(e) => {
+              setPayeeType(e.target.value as any);
+              setSelectedVendorId('');
+              setSelectedMaintenanceId('');
+              setSelectedTenantId('');
+              setSelectedOwnerId('');
+            }}>
+              <option value="Vendor">Vendor / Service Partner</option>
+              <option value="Maintenance">Maintenance Staff (Internal)</option>
+              <option value="Tenant">Tenant (Refund / Return)</option>
+              <option value="Owner">Property Owner (Distribution)</option>
+            </Select>
+          </div>
+
+          <div className="space-y-1">
             <label className="text-xs font-bold text-muted-foreground uppercase">Property Portfolio</label>
             <Select value={propertyId} onChange={(e) => {
               setPropertyId(e.target.value);
               setBuildingId('');
               setUnitId('');
+              setSelectedTenantId('');
+              setSelectedOwnerId('');
             }}>
               <option value="">Select Property...</option>
               {properties.map((p) => (
@@ -211,6 +264,7 @@ export const ExpensesPage: React.FC = () => {
             <Select value={buildingId} onChange={(e) => {
               setBuildingId(e.target.value);
               setUnitId('');
+              setSelectedTenantId('');
             }} disabled={!propertyId}>
               <option value="">Select Building...</option>
               {buildings.filter((b) => b.propertyId === propertyId).map((b) => (
@@ -221,7 +275,10 @@ export const ExpensesPage: React.FC = () => {
 
           <div className="space-y-1">
             <label className="text-xs font-bold text-muted-foreground uppercase">Rentable Unit</label>
-            <Select value={unitId} onChange={(e) => setUnitId(e.target.value)} disabled={!buildingId}>
+            <Select value={unitId} onChange={(e) => {
+              setUnitId(e.target.value);
+              setSelectedTenantId('');
+            }} disabled={!buildingId}>
               <option value="">Select Unit...</option>
               {units.filter((u) => u.buildingId === buildingId).map((u) => (
                 <option key={u.id} value={u.id}>Unit {u.unitNumber} - {u.status}</option>
@@ -229,10 +286,59 @@ export const ExpensesPage: React.FC = () => {
             </Select>
           </div>
 
-          <div className="space-y-1">
-            <label className="text-xs font-bold text-muted-foreground uppercase">Vendor / Payee</label>
-            <Input placeholder="E.g., Local Plumbing Inc" value={vendorName} onChange={(e) => setVendorName(e.target.value)} />
-          </div>
+          {payeeType === 'Vendor' && (
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-muted-foreground uppercase">Vendor Payee</label>
+              <Select value={selectedVendorId} onChange={(e) => setSelectedVendorId(e.target.value)}>
+                <option value="">Select Vendor...</option>
+                {vendors.map((v) => (
+                  <option key={v.id} value={v.id}>{v.name}</option>
+                ))}
+              </Select>
+            </div>
+          )}
+
+          {payeeType === 'Maintenance' && (
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-muted-foreground uppercase">Maintenance Staff Payee</label>
+              <Select value={selectedMaintenanceId} onChange={(e) => setSelectedMaintenanceId(e.target.value)}>
+                <option value="">Select Maintainer...</option>
+                {users
+                  .filter((u) => u.role === 'Maintenance Staff' || u.role === 'Maintenance')
+                  .map((u) => (
+                    <option key={u.id} value={u.id}>{u.name}</option>
+                  ))
+                }
+              </Select>
+            </div>
+          )}
+
+          {payeeType === 'Tenant' && (
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-muted-foreground uppercase">Resident / Tenant Payee</label>
+              <Select value={selectedTenantId} onChange={(e) => setSelectedTenantId(e.target.value)}>
+                <option value="">Select Tenant...</option>
+                {tenants
+                  .filter((t) => !unitId || t.unitId === unitId || t.propertyId === propertyId)
+                  .map((t) => (
+                    <option key={t.id} value={t.id}>{t.firstName} {t.lastName} {t.unitNumber ? `(Unit ${t.unitNumber})` : ''}</option>
+                  ))
+                }
+              </Select>
+            </div>
+          )}
+
+          {payeeType === 'Owner' && (
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-muted-foreground uppercase">Property Owner Payee</label>
+              <Select value={selectedOwnerId} onChange={(e) => setSelectedOwnerId(e.target.value)}>
+                <option value="">Select Owner...</option>
+                {owners.map((o) => (
+                  <option key={o.id} value={o.id}>{o.firstName} {o.lastName}</option>
+                ))}
+              </Select>
+            </div>
+          )}
 
           <div className="space-y-1">
             <label className="text-xs font-bold text-muted-foreground uppercase">Expense Category</label>
@@ -256,7 +362,17 @@ export const ExpensesPage: React.FC = () => {
 
           <div className="flex justify-end space-x-2 pt-4">
             <Button variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
-            <Button onClick={() => createMutation.mutate()} disabled={!propertyId || !vendorName || createMutation.isPending}>
+            <Button
+              onClick={() => createMutation.mutate()}
+              disabled={
+                !propertyId ||
+                (payeeType === 'Vendor' && !selectedVendorId) ||
+                (payeeType === 'Maintenance' && !selectedMaintenanceId) ||
+                (payeeType === 'Tenant' && !selectedTenantId) ||
+                (payeeType === 'Owner' && !selectedOwnerId) ||
+                createMutation.isPending
+              }
+            >
               {createMutation.isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
               Save Expense
             </Button>

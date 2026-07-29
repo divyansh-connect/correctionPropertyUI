@@ -687,7 +687,7 @@ export const api = {
       try {
         const res: any = await apiClient.get('/portal/expenses');
         return (res.data || []).map((e: any) => {
-          let parsed = { vendorName: 'Vendor', propertyName: 'Property', propertyId: '', buildingId: '', unitId: '' };
+          let parsed = { vendorName: 'Vendor', propertyName: 'Property', propertyId: '', buildingId: '', unitId: '', payeeType: 'Vendor', payeeId: '' };
           try {
             parsed = JSON.parse(e.description);
           } catch {
@@ -701,6 +701,8 @@ export const api = {
             propertyId: parsed.propertyId || '',
             buildingId: parsed.buildingId || '',
             unitId: parsed.unitId || '',
+            payeeType: parsed.payeeType || 'Vendor',
+            payeeId: parsed.payeeId || '',
             propertyName: parsed.propertyName || 'Property',
             vendorName: parsed.vendorName || 'Vendor',
             description: e.description,
@@ -718,6 +720,8 @@ export const api = {
         propertyId: data.propertyId,
         buildingId: data.buildingId,
         unitId: data.unitId,
+        payeeType: data.payeeType || 'Vendor',
+        payeeId: data.payeeId || '',
       });
       const res: any = await apiClient.post('/portal/expenses', {
         category: data.category,
@@ -861,7 +865,7 @@ export const api = {
       try {
         const res: any = await apiClient.get('/portal/income');
         return (res.data || []).map((i: any) => {
-          let parsed = { propertyName: 'Property', tenantName: 'Resident', propertyId: '', buildingId: '', unitId: '' };
+          let parsed = { propertyName: 'Property', tenantName: 'Resident', propertyId: '', buildingId: '', unitId: '', sourceType: 'Tenant', sourceId: '' };
           try {
             parsed = JSON.parse(i.description);
           } catch {
@@ -875,6 +879,8 @@ export const api = {
             propertyId: parsed.propertyId || '',
             buildingId: parsed.buildingId || '',
             unitId: parsed.unitId || '',
+            sourceType: parsed.sourceType || 'Tenant',
+            sourceId: parsed.sourceId || '',
             propertyName: parsed.propertyName || 'Property',
             tenantName: parsed.tenantName || 'Resident',
             description: i.description,
@@ -892,6 +898,8 @@ export const api = {
         propertyId: data.propertyId,
         buildingId: data.buildingId,
         unitId: data.unitId,
+        sourceType: data.sourceType || 'Tenant',
+        sourceId: data.sourceId || '',
       });
       const res: any = await apiClient.post('/portal/income', {
         category: data.category,

@@ -23,23 +23,51 @@ export const IncomePage: React.FC = () => {
   
   // Dialog state
   const [isOpen, setIsOpen] = useState(false);
-  const [tenantName, setTenantName] = useState('');
+  const [sourceType, setSourceType] = useState<'Tenant' | 'Owner' | 'Miscellaneous'>('Tenant');
+  const [propertyId, setPropertyId] = useState('');
+  const [buildingId, setBuildingId] = useState('');
+  const [unitId, setUnitId] = useState('');
+  const [selectedTenantId, setSelectedTenantId] = useState('');
+  const [selectedOwnerId, setSelectedOwnerId] = useState('');
+  const [miscSourceName, setMiscSourceName] = useState('');
   const [category, setCategory] = useState('Rent');
   const [amount, setAmount] = useState(150);
 
   // Queries
   const { data: income = [], isLoading } = useQuery({ queryKey: ['income-list'], queryFn: () => api.income.getAll() });
   const { data: properties = [] } = useQuery({ queryKey: ['properties'], queryFn: () => api.property.getAll() });
-  const [propertyId, setPropertyId] = useState('');
+  const { data: buildings = [] } = useQuery({ queryKey: ['buildings'], queryFn: () => api.building.getAll() });
+  const { data: units = [] } = useQuery({ queryKey: ['units'], queryFn: () => api.unit.getAll() });
+  const { data: tenants = [] } = useQuery({ queryKey: ['tenants'], queryFn: () => api.tenant.getAll() });
+  const { data: owners = [] } = useQuery({ queryKey: ['owners'], queryFn: () => api.owner.getAll() });
 
   const createMutation = useMutation({
     mutationFn: () => {
       const prop = properties.find((p) => p.id === propertyId);
+      
+      let resolvedName = '';
+      let sourceId = '';
+      if (sourceType === 'Tenant') {
+        const tenant = tenants.find((t) => t.id === selectedTenantId);
+        resolvedName = tenant ? `${tenant.firstName} ${tenant.lastName}` : 'Tenant';
+        sourceId = selectedTenantId;
+      } else if (sourceType === 'Owner') {
+        const owner = owners.find((o) => o.id === selectedOwnerId);
+        resolvedName = owner ? `${owner.firstName} ${owner.lastName}` : 'Owner';
+        sourceId = selectedOwnerId;
+      } else {
+        resolvedName = miscSourceName || 'Miscellaneous Source';
+      }
+
       return api.income.create({
         date: new Date().toISOString().split('T')[0],
         propertyId,
         propertyName: prop ? prop.name : 'Property',
-        tenantName,
+        buildingId,
+        unitId,
+        sourceType,
+        sourceId,
+        tenantName: resolvedName,
         category,
         amount,
       });
@@ -47,8 +75,14 @@ export const IncomePage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['income-list'] });
       setIsOpen(false);
-      setTenantName('');
       setAmount(150);
+      setPropertyId('');
+      setBuildingId('');
+      setUnitId('');
+      setSelectedTenantId('');
+      setSelectedOwnerId('');
+      setMiscSourceName('');
+      setSourceType('Tenant');
     },
   });
 
@@ -134,8 +168,28 @@ export const IncomePage: React.FC = () => {
         <div className="space-y-4 pt-2">
           
           <div className="space-y-1">
+            <label className="text-xs font-bold text-muted-foreground uppercase">Source Type</label>
+            <Select value={sourceType} onChange={(e) => {
+              setSourceType(e.target.value as any);
+              setSelectedTenantId('');
+              setSelectedOwnerId('');
+              setMiscSourceName('');
+            }}>
+              <option value="Tenant">Tenant / Resident</option>
+              <option value="Owner">Property Owner (Contribution)</option>
+              <option value="Miscellaneous">Miscellaneous / Vending / Other</option>
+            </Select>
+          </div>
+
+          <div className="space-y-1">
             <label className="text-xs font-bold text-muted-foreground uppercase">Property Portfolio</label>
-            <Select value={propertyId} onChange={(e) => setPropertyId(e.target.value)}>
+            <Select value={propertyId} onChange={(e) => {
+              setPropertyId(e.target.value);
+              setBuildingId('');
+              setUnitId('');
+              setSelectedTenantId('');
+              setSelectedOwnerId('');
+            }}>
               <option value="">Select Property...</option>
               {properties.map((p) => (
                 <option key={p.id} value={p.id}>{p.name}</option>
@@ -144,9 +198,65 @@ export const IncomePage: React.FC = () => {
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-bold text-muted-foreground uppercase">Resident / Source Name</label>
-            <Input placeholder="Resident name or payee..." value={tenantName} onChange={(e) => setTenantName(e.target.value)} />
+            <label className="text-xs font-bold text-muted-foreground uppercase">Building Portfolio</label>
+            <Select value={buildingId} onChange={(e) => {
+              setBuildingId(e.target.value);
+              setUnitId('');
+              setSelectedTenantId('');
+            }} disabled={!propertyId}>
+              <option value="">Select Building...</option>
+              {buildings.filter((b) => b.propertyId === propertyId).map((b) => (
+                <option key={b.id} value={b.id}>{b.name}</option>
+              ))}
+            </Select>
           </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-bold text-muted-foreground uppercase">Rentable Unit</label>
+            <Select value={unitId} onChange={(e) => {
+              setUnitId(e.target.value);
+              setSelectedTenantId('');
+            }} disabled={!buildingId}>
+              <option value="">Select Unit...</option>
+              {units.filter((u) => u.buildingId === buildingId).map((u) => (
+                <option key={u.id} value={u.id}>Unit {u.unitNumber} - {u.status}</option>
+              ))}
+            </Select>
+          </div>
+
+          {sourceType === 'Tenant' && (
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-muted-foreground uppercase">Resident / Tenant Payee</label>
+              <Select value={selectedTenantId} onChange={(e) => setSelectedTenantId(e.target.value)}>
+                <option value="">Select Tenant...</option>
+                {tenants
+                  .filter((t) => !unitId || t.unitId === unitId || t.propertyId === propertyId)
+                  .map((t) => (
+                    <option key={t.id} value={t.id}>{t.firstName} {t.lastName} {t.unitNumber ? `(Unit ${t.unitNumber})` : ''}</option>
+                  ))
+                }
+              </Select>
+            </div>
+          )}
+
+          {sourceType === 'Owner' && (
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-muted-foreground uppercase">Property Owner Payee</label>
+              <Select value={selectedOwnerId} onChange={(e) => setSelectedOwnerId(e.target.value)}>
+                <option value="">Select Owner...</option>
+                {owners.map((o) => (
+                  <option key={o.id} value={o.id}>{o.firstName} {o.lastName}</option>
+                ))}
+              </Select>
+            </div>
+          )}
+
+          {sourceType === 'Miscellaneous' && (
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-muted-foreground uppercase">Source / Payee Name</label>
+              <Input placeholder="E.g., Laundry machine collection" value={miscSourceName} onChange={(e) => setMiscSourceName(e.target.value)} />
+            </div>
+          )}
 
           <div className="space-y-1">
             <label className="text-xs font-bold text-muted-foreground uppercase">Income Category</label>
@@ -168,7 +278,16 @@ export const IncomePage: React.FC = () => {
 
           <div className="flex justify-end space-x-2 pt-4">
             <Button variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
-            <Button onClick={() => createMutation.mutate()} disabled={!propertyId || !tenantName || createMutation.isPending}>
+            <Button
+              onClick={() => createMutation.mutate()}
+              disabled={
+                !propertyId ||
+                (sourceType === 'Tenant' && !selectedTenantId) ||
+                (sourceType === 'Owner' && !selectedOwnerId) ||
+                (sourceType === 'Miscellaneous' && !miscSourceName) ||
+                createMutation.isPending
+              }
+            >
               {createMutation.isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
               Save Income
             </Button>
