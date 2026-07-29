@@ -105,11 +105,11 @@ export const ChartOfAccountsPage: React.FC = () => {
           { label: t('nav.accounting'), href: '/accounting' },
           { label: t('pmCoa.title') },
         ]}
-        action={{
+        /* action={{
           label: t('pmCoa.addAccount'),
           onClick: () => setIsOpen(true),
           icon: <Plus className="w-4.5 h-4.5" />,
-        }}
+        }} */
       />
 
       <FilterBar
