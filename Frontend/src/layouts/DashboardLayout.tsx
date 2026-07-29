@@ -159,7 +159,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         { title: t('nav.serviceRequests'), path: '/maintenance/requests' },
         { title: t('nav.workOrders'), path: '/maintenance/work-orders' },
         { title: t('nav.violationsAndCode'), path: '/maintenance/violations' },
-        { title: t('nav.inspections'), path: '/inspections' },
+        // { title: t('nav.inspections'), path: '/inspections' },
         { title: t('nav.vendors'), path: '/vendors' },
       ],
     },
