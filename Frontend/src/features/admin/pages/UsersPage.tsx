@@ -29,6 +29,7 @@ export const UsersPage: React.FC = () => {
   const [formPassword, setFormPassword] = useState('');
   const [formStatus, setFormStatus] = useState('Active');
   const [formRole, setFormRole] = useState(defaultRole);
+  const [formServiceType, setFormServiceType] = useState('Plumber');
   const [assignedProperties, setAssignedProperties] = useState<string[]>([]);
   const [assignedUnit, setAssignedUnit] = useState('');
   const [assignedBuildings, setAssignedBuildings] = useState<string[]>([]);
@@ -98,9 +99,11 @@ export const UsersPage: React.FC = () => {
         name: payload.name,
         email: payload.email,
         phone: payload.phone,
+        password: payload.password,
         role: payload.role,
         status: payload.status,
         team: payload.role,
+        serviceType: payload.serviceType,
       });
       await api.assignments.update(newUser.id, {
         properties: payload.properties,
@@ -174,6 +177,7 @@ export const UsersPage: React.FC = () => {
     setFormPhone('');
     setFormPassword('');
     setFormStatus('Active');
+    setFormServiceType('Plumber');
     const hasStaff = roles.some((r: any) => r.name === 'Maintenance Staff');
     const hasMaint = roles.some((r: any) => r.name === 'Maintenance');
     const resolvedDefaultRole = user?.role === 'Super Admin' 
@@ -216,6 +220,7 @@ export const UsersPage: React.FC = () => {
       password: formPassword,
       status: formStatus,
       role: formRole,
+      serviceType: formServiceType,
       properties: assignedProperties,
       units: assignedUnit ? [assignedUnit] : [],
       buildings: assignedBuildings,
@@ -564,6 +569,23 @@ export const UsersPage: React.FC = () => {
                   </Select>
                 </div>
               </div>
+
+              {(formRole === 'Maintenance' || formRole === 'Maintenance Staff') && (
+                <div className="space-y-1.5 pt-1">
+                  <label className="text-[10px] uppercase font-bold text-muted-foreground">Specialty Trade</label>
+                  <Select value={formServiceType} onChange={(e) => setFormServiceType(e.target.value)}>
+                    <option value="Plumber">Plumber Specialty</option>
+                    <option value="Electrician">Electrician Specialty</option>
+                    <option value="HVAC">HVAC Maintenance</option>
+                    <option value="General Contractor">General Contractor</option>
+                    <option value="Cleaning">Cleaning & Turnovers</option>
+                    <option value="Landscaping">Landscaping & Pools</option>
+                    <option value="Pest Control">Pest Control</option>
+                    <option value="Security">Security & Fire</option>
+                    <option value="Roofing">Roofing & Guttering</option>
+                  </Select>
+                </div>
+              )}
 
               {/* DYNAMIC RELATIONSHIPS ASSIGNMENT ZONE */}
               <div className="border-t border-border pt-4 space-y-3">

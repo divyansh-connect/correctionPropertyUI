@@ -384,6 +384,7 @@ export const api = {
         phone: data.phone || '',
         serviceType: data.category || data.serviceType || '',
         rating: data.rating || 5.0,
+        password: data.password || '',
       });
       return res.data;
     },
@@ -1398,6 +1399,7 @@ export const api = {
         password: data.password,
         role: data.role,
         status: data.status || 'Active',
+        serviceType: data.serviceType || 'General Maintenance',
       });
       return res.data;
     },

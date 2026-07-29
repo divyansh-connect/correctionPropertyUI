@@ -32,12 +32,13 @@ export const VendorsPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [contact, setContact] = useState('');
   const [license, setLicense] = useState('');
+  const [password, setPassword] = useState('');
 
   // Queries
   const { data: vendorsList = [], isLoading } = useQuery({ queryKey: ['vendors-list'], queryFn: () => api.vendors.getAll() });
 
   const createMutation = useMutation({
-    mutationFn: (newV: Partial<Vendor>) => api.vendors.create(newV),
+    mutationFn: (newV: any) => api.vendors.create(newV),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vendors-list'] });
       setIsCreateOpen(false);
@@ -46,6 +47,7 @@ export const VendorsPage: React.FC = () => {
       setEmail('');
       setContact('');
       setLicense('');
+      setPassword('');
     },
   });
 
@@ -103,11 +105,6 @@ export const VendorsPage: React.FC = () => {
           { label: t('nav.maintenance'), href: '/maintenance' },
           { label: t('maintenanceVendors.title') },
         ]}
-        action={{
-          label: t('maintenanceVendors.registerVendor'),
-          onClick: () => setIsCreateOpen(true),
-          icon: <Plus className="w-4.5 h-4.5" />,
-        }}
       />
 
       <FilterBar
@@ -190,6 +187,11 @@ export const VendorsPage: React.FC = () => {
             <Input placeholder="E.g., LIC-TEX-8822" value={license} onChange={(e) => setLicense(e.target.value)} />
           </div>
 
+          <div className="space-y-1">
+            <label className="text-xs font-bold text-muted-foreground uppercase">User Password</label>
+            <Input type="password" placeholder="Define login password..." value={password} onChange={(e) => setPassword(e.target.value)} />
+          </div>
+
           <div className="flex justify-end space-x-2 pt-4">
             <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
             <Button
@@ -202,9 +204,10 @@ export const VendorsPage: React.FC = () => {
                   primaryContact: contact,
                   licenseNumber: license,
                   insuranceExpiration: '2027-12-31',
+                  password,
                 })
               }
-              disabled={!name || !phone || createMutation.isPending}
+              disabled={!name || !phone || !email || !password || createMutation.isPending}
             >
               {createMutation.isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
               Register Vendor
