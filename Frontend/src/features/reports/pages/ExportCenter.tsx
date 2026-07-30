@@ -1,30 +1,39 @@
 import React from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import api from '../../../api';
+import { useQuery } from '@tanstack/react-query';
+import { reportApi } from '../services/reportApi';
 import { PageHeader } from '../../../components/PageHeader';
 import { DataTable } from '../../../components/DataTable';
 import { Button } from '../../../components/ui/Button';
-import { Download, Trash2, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Download, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
+import { apiClient } from '../../../api/client';
 
 export const ExportCenter: React.FC = () => {
-  const queryClient = useQueryClient();
-
-  const { data: exports = [], isLoading } = useQuery({
+  const { data: exportsData, isLoading } = useQuery({
     queryKey: ['export-center-list'],
-    queryFn: () => api.exports.getAll(),
+    queryFn: () => reportApi.getExports({ page: 1, limit: 100 }),
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => api.exports.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['export-center-list'] }),
-  });
+  const exports = exportsData?.data || [];
+
+  const handleDownload = (fileUrl: string | null) => {
+    if (!fileUrl) return;
+    // Resolve absolute path from backend base URL
+    const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
+    const serverHost = baseURL.replace('/api/v1', '');
+    const downloadUrl = `${serverHost}${fileUrl}`;
+    window.open(downloadUrl, '_blank');
+  };
 
   const columns: ColumnDef<any>[] = [
-    { accessorKey: 'name', header: 'Export Filename', id: 'name' },
-    { accessorKey: 'type', header: 'File Format', id: 'type' },
-    { accessorKey: 'createdAt', header: 'Created Date', id: 'createdAt' },
-    { accessorKey: 'createdBy', header: 'User', id: 'createdBy' },
+    { accessorKey: 'fileName', header: 'Export Filename', id: 'name' },
+    { accessorKey: 'fileType', header: 'File Format', id: 'type' },
+    {
+      accessorKey: 'createdAt',
+      header: 'Created Date',
+      id: 'createdAt',
+      cell: ({ row }) => new Date(row.original.createdAt).toLocaleString(),
+    },
     {
       accessorKey: 'status',
       header: 'Job Status',
@@ -54,20 +63,17 @@ export const ExportCenter: React.FC = () => {
     },
     {
       id: 'actions',
-      header: 'Download / Delete',
+      header: 'Download',
       cell: ({ row }) => (
         <div className="flex space-x-2">
           <Button
             variant="outline"
             size="sm"
-            disabled={row.original.status !== 'Completed'}
-            onClick={() => alert(`Downloading ${row.original.name}.${row.original.type.toLowerCase()}`)}
+            disabled={row.original.status !== 'Completed' || !row.original.fileUrl}
+            onClick={() => handleDownload(row.original.fileUrl)}
             className="text-xs font-semibold flex items-center gap-1"
           >
             <Download className="w-3.5 h-3.5" /> Download
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => deleteMutation.mutate(row.original.id)} className="text-xs font-semibold text-rose-500 flex items-center gap-1">
-            <Trash2 className="w-3.5 h-3.5" /> Delete
           </Button>
         </div>
       ),
