@@ -2138,7 +2138,7 @@ const NewCompanyPage: React.FC = () => {
           companyId: company.id,
           name: contact,
           email,
-          role: 'Admin',
+          role: 'Property Manager',
         });
       }
 
