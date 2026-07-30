@@ -11,7 +11,7 @@ import { Select } from '../../components/ui/Select';
 import { Button } from '../../components/ui/Button';
 import { Loader2, Check } from 'lucide-react';
 
-const leaseFormSchema = zod.object({
+const leaseFormSchemaBase = zod.object({
   propertyId: zod.string().min(1, 'Property is required'),
   unitId: zod.string().min(1, 'Unit is required'),
   tenantId: zod.string().min(1, 'Tenant selection is required'),
@@ -21,7 +21,7 @@ const leaseFormSchema = zod.object({
   depositAmount: zod.number().min(0, 'Deposit must be non-negative'),
 });
 
-type LeaseFormInputs = zod.infer<typeof leaseFormSchema>;
+type LeaseFormInputs = zod.infer<typeof leaseFormSchemaBase>;
 
 export const NewLeasePage: React.FC = () => {
   const queryClient = useQueryClient();
@@ -32,6 +32,19 @@ export const NewLeasePage: React.FC = () => {
   const { data: properties = [] } = useQuery({ queryKey: ['properties'], queryFn: () => api.property.getAll() });
   const { data: units = [] } = useQuery({ queryKey: ['units'], queryFn: () => api.unit.getAll() });
   const { data: tenants = [] } = useQuery({ queryKey: ['tenants'], queryFn: () => api.tenant.getAll() });
+
+  const leaseFormSchema = React.useMemo(() => {
+    return leaseFormSchemaBase.superRefine((data, ctx) => {
+      const selectedUnit = units.find((u) => u.id === data.unitId);
+      if (selectedUnit && selectedUnit.status?.toLowerCase() === 'occupied') {
+        ctx.addIssue({
+          code: zod.ZodIssueCode.custom,
+          message: 'Already occupied cannot create lease again',
+          path: ['unitId'],
+        });
+      }
+    });
+  }, [units]);
 
   const {
     register,
@@ -124,11 +137,14 @@ export const NewLeasePage: React.FC = () => {
               <label className="text-[10px] font-bold text-muted-foreground uppercase">Rentable Unit</label>
               <Select {...register('unitId')} disabled={!selectedPropertyId}>
                 <option value="">Select Unit...</option>
-                {availableUnits.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    Unit {u.unitNumber} - {u.status} ({u.bedrooms}B / {u.bathrooms}Ba)
-                  </option>
-                ))}
+                {availableUnits.map((u) => {
+                  const isOccupied = u.status?.toLowerCase() === 'occupied';
+                  return (
+                    <option key={u.id} value={u.id} disabled={isOccupied}>
+                      Unit {u.unitNumber} - {u.status} ({u.bedrooms}B / {u.bathrooms}Ba){isOccupied ? ' - Already occupied cannot create lease again' : ''}
+                    </option>
+                  );
+                })}
               </Select>
               {errors.unitId && <p className="text-rose-500 text-xs font-semibold">{errors.unitId.message}</p>}
             </div>

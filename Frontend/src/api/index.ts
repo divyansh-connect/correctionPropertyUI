@@ -157,7 +157,12 @@ export const api = {
     getLeases: async () => {
       try {
         const res: any = await apiClient.get('/leases');
-        return res.data || [];
+        return (res.data || []).map((l: any) => ({
+          ...l,
+          tenantName: l.tenantName || (l.tenant ? `${l.tenant.firstName} ${l.tenant.lastName}` : 'Resident'),
+          propertyName: l.propertyName || (l.property ? l.property.name : 'Property'),
+          unitNumber: l.unitNumber || (l.unit ? l.unit.unitNumber : 'Unit'),
+        }));
       } catch (e) {
         console.error('Leases DB fetch failed:', e);
         return [];

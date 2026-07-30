@@ -68,7 +68,7 @@ export const LeasesPage: React.FC = () => {
           onClick={() => navigate({ to: `/leases/${row.original.id}` })}
           className="font-bold text-primary hover:underline cursor-pointer"
         >
-          {row.original.id}
+          {row.index + 1}
         </span>
       ),
     },
