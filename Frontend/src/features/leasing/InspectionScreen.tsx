@@ -38,18 +38,12 @@ export const InspectionScreen: React.FC<InspectionScreenProps> = ({ id }) => {
     queryFn: () => api.inspections.getById(id),
   });
 
-  // Fetch inspectors
-  const { data: inspectors = [] } = useQuery({
-    queryKey: ['inspectors'],
-    queryFn: () => api.inspections.getInspectors(),
-  });
-
   // Fetch Templates
   const { data: templates = [] } = useQuery({
     queryKey: ['activeInspectionTemplates'],
     queryFn: async () => {
       const all = await api.inspectionTemplates.getAll();
-      return all.filter((tpl: any) => tpl.active);
+      return all.filter((tpl: any) => tpl.active && tpl.type === 'INSPECTION_ASSIGN');
     },
   });
 
@@ -524,7 +518,7 @@ export const InspectionScreen: React.FC<InspectionScreenProps> = ({ id }) => {
           <h2 className="text-sm font-extrabold uppercase tracking-wider text-primary">Digital Signoff</h2>
           <div className="flex flex-wrap items-center gap-4 text-xs">
             <div className="flex items-center space-x-2">
-              <span className="font-bold text-muted-foreground uppercase">Assign Template:</span>
+              <span className="font-bold text-muted-foreground uppercase">Assign Inspector:</span>
               <select
                 disabled={isCompleted}
                 value={inspection.templateId || ''}
@@ -534,23 +528,7 @@ export const InspectionScreen: React.FC<InspectionScreenProps> = ({ id }) => {
                 <option value="">Select Template...</option>
                 {templates.map((tpl: any) => (
                   <option key={tpl.id} value={tpl.id}>
-                    {tpl.name} ({tpl.category})
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex items-center space-x-2">
-              <span className="font-bold text-muted-foreground uppercase">Assign Inspector:</span>
-              <select
-                disabled={isCompleted}
-                value={assignedInspectorId}
-                onChange={(e) => setAssignedInspectorId(e.target.value)}
-                className="p-1.5 rounded border bg-secondary/35 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-primary min-w-[200px]"
-              >
-                <option value="">Unassigned</option>
-                {inspectors.map((inspector: any) => (
-                  <option key={inspector.id} value={inspector.id}>
-                    {inspector.firstName} {inspector.lastName} ({inspector.email})
+                    {tpl.name}
                   </option>
                 ))}
               </select>

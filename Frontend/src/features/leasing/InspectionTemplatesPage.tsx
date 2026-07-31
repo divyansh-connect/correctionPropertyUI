@@ -17,7 +17,7 @@ export const InspectionTemplatesPage: React.FC = () => {
   // Form states for template creation/editing
   const [templateForm, setTemplateForm] = useState({
     name: '',
-    type: 'MOVE_IN' as 'MOVE_IN' | 'MOVE_OUT' | 'ROUTINE',
+    type: 'MOVE_IN' as 'MOVE_IN' | 'MOVE_OUT' | 'ROUTINE' | 'INSPECTION_ASSIGN',
     description: '',
     active: true,
   });
@@ -329,6 +329,7 @@ export const InspectionTemplatesPage: React.FC = () => {
                   <option value="MOVE_IN">Move In Checklist</option>
                   <option value="MOVE_OUT">Move Out Checklist</option>
                   <option value="ROUTINE">Routine Inspection</option>
+                  <option value="INSPECTION_ASSIGN">Inspection Assign</option>
                 </select>
               </div>
 
