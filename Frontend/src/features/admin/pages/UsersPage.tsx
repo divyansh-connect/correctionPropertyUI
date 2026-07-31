@@ -560,7 +560,7 @@ export const UsersPage: React.FC = () => {
                       .filter((r: any) => 
                         user?.role === 'Super Admin' 
                           ? r.name === 'Property Manager' 
-                          : ['Maintenance Staff', 'Collection Manager'].includes(r.name)
+                          : ['Maintenance Staff', 'Maintenance', 'Collection Manager'].includes(r.name)
                       )
                       .map((r: any) => (
                         <option key={r.id} value={r.name}>{r.name}</option>

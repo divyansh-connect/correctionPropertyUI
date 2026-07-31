@@ -44,6 +44,15 @@ export const InspectionScreen: React.FC<InspectionScreenProps> = ({ id }) => {
     queryFn: () => api.inspections.getInspectors(),
   });
 
+  // Fetch Templates
+  const { data: templates = [] } = useQuery({
+    queryKey: ['activeInspectionTemplates'],
+    queryFn: async () => {
+      const all = await api.inspectionTemplates.getAll();
+      return all.filter((tpl: any) => tpl.active);
+    },
+  });
+
   useEffect(() => {
     if (inspection) {
       setRooms(inspection.rooms || []);
@@ -64,6 +73,13 @@ export const InspectionScreen: React.FC<InspectionScreenProps> = ({ id }) => {
       refetch();
     },
   });
+
+  const handleTemplateChange = (newTemplateId: string) => {
+    if (isCompleted) return;
+    if (window.confirm('Are you sure you want to change the template? This will replace all current checklist items with the new template.')) {
+      updateDraftMutation.mutate({ templateId: newTemplateId });
+    }
+  };
 
   const completeMutation = useMutation({
     mutationFn: () => api.inspections.complete(id),
@@ -504,23 +520,41 @@ export const InspectionScreen: React.FC<InspectionScreenProps> = ({ id }) => {
 
       {/* SIGNATURE PANELS */}
       <div className="bg-card border rounded-2xl p-6 shadow-sm space-y-6 text-foreground">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b pb-4 gap-2">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between border-b pb-4 gap-4">
           <h2 className="text-sm font-extrabold uppercase tracking-wider text-primary">Digital Signoff</h2>
-          <div className="flex items-center space-x-2 text-xs">
-            <span className="font-bold text-muted-foreground uppercase">Assign Inspector:</span>
-            <select
-              disabled={isCompleted}
-              value={assignedInspectorId}
-              onChange={(e) => setAssignedInspectorId(e.target.value)}
-              className="p-1.5 rounded border bg-secondary/35 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-primary min-w-[200px]"
-            >
-              <option value="">Unassigned</option>
-              {inspectors.map((inspector: any) => (
-                <option key={inspector.id} value={inspector.id}>
-                  {inspector.firstName} {inspector.lastName} ({inspector.email})
-                </option>
-              ))}
-            </select>
+          <div className="flex flex-wrap items-center gap-4 text-xs">
+            <div className="flex items-center space-x-2">
+              <span className="font-bold text-muted-foreground uppercase">Assign Template:</span>
+              <select
+                disabled={isCompleted}
+                value={inspection.templateId || ''}
+                onChange={(e) => handleTemplateChange(e.target.value)}
+                className="p-1.5 rounded border bg-secondary/35 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-primary min-w-[200px]"
+              >
+                <option value="">Select Template...</option>
+                {templates.map((tpl: any) => (
+                  <option key={tpl.id} value={tpl.id}>
+                    {tpl.name} ({tpl.category})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="font-bold text-muted-foreground uppercase">Assign Inspector:</span>
+              <select
+                disabled={isCompleted}
+                value={assignedInspectorId}
+                onChange={(e) => setAssignedInspectorId(e.target.value)}
+                className="p-1.5 rounded border bg-secondary/35 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-primary min-w-[200px]"
+              >
+                <option value="">Unassigned</option>
+                {inspectors.map((inspector: any) => (
+                  <option key={inspector.id} value={inspector.id}>
+                    {inspector.firstName} {inspector.lastName} ({inspector.email})
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
 

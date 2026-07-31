@@ -50,6 +50,7 @@ export const NewLeasePage: React.FC = () => {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<LeaseFormInputs>({
     resolver: zodResolver(leaseFormSchema),
@@ -62,6 +63,21 @@ export const NewLeasePage: React.FC = () => {
   });
 
   const selectedPropertyId = watch('propertyId');
+  const selectedUnitId = watch('unitId');
+
+  React.useEffect(() => {
+    if (selectedUnitId) {
+      const selectedUnit = units.find((u) => u.id === selectedUnitId);
+      if (selectedUnit) {
+        if (selectedUnit.rentAmount !== undefined && selectedUnit.rentAmount !== null) {
+          setValue('rentAmount', selectedUnit.rentAmount);
+        }
+        if (selectedUnit.securityDeposit !== undefined && selectedUnit.securityDeposit !== null) {
+          setValue('depositAmount', selectedUnit.securityDeposit);
+        }
+      }
+    }
+  }, [selectedUnitId, units, setValue]);
 
   // Filter units of selected property (allow any status to make testing easy)
   const availableUnits = units.filter((u) => u.propertyId === selectedPropertyId);
