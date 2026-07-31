@@ -993,6 +993,8 @@ export const api = {
           id: s.id,
           applicantName: s.tenant ? `${s.tenant.firstName || ''} ${s.tenant.lastName || ''}`.trim() : 'Unknown Tenant',
           applicantEmail: s.tenant?.email || '',
+          propertyName: s.tenant?.unit?.property?.name || 'N/A',
+          unitNumber: s.tenant?.unit?.unitNumber ? `Unit ${s.tenant.unit.unitNumber}` : 'N/A',
           creditScore: s.creditScore,
           criminalBackground: s.criminalPass ? 'Passed' : 'Flagged',
           evictionHistory: s.evictionPass ? 'No Records' : 'Flagged',

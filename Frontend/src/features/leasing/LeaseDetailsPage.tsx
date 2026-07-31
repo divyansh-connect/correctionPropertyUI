@@ -97,7 +97,7 @@ export const LeaseDetailsPage: React.FC = () => {
       <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0 pb-6 border-b">
         <div className="space-y-2">
           <div className="flex items-center space-x-3">
-            <h1 className="text-3xl font-extrabold tracking-tight">Lease Contract {lease.id}</h1>
+            <h1 className="text-3xl font-extrabold tracking-tight">Lease Contract</h1>
             <StatusBadge status={lease.status} />
           </div>
           <p className="text-sm text-muted-foreground font-semibold flex items-center gap-1">

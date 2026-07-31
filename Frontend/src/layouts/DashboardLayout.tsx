@@ -340,7 +340,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         'keys': t('platformIntegrations.apiKeys.breadcrumb', 'API Keys'),
         'webhooks': t('platformIntegrations.webhooks.breadcrumb', 'Webhooks')
       };
-      const label = translationKeyMap[part] || t(`nav.${part}`, part.charAt(0).toUpperCase() + part.slice(1).replace('-', ' '));
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(part);
+      const label = isUuid 
+        ? t('breadcrumbs.details', 'Details') 
+        : (translationKeyMap[part] || t(`nav.${part}`, part.charAt(0).toUpperCase() + part.slice(1).replace('-', ' ')));
       crumbs.push({
         label,
         href: currentLink,
