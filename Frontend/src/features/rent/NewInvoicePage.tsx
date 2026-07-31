@@ -38,13 +38,14 @@ export const NewInvoicePage: React.FC = () => {
     control,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<InvoiceFormInputs>({
     resolver: zodResolver(invoiceSchema),
     defaultValues: {
       dueDate: new Date().toISOString().split('T')[0],
       lineItems: [
-        { description: 'Rent Charge', amount: 1400 },
+        { description: 'Rent Charge', amount: 0 },
         { description: 'Utility Reimbursement', amount: 100 },
       ],
     },
@@ -58,9 +59,19 @@ export const NewInvoicePage: React.FC = () => {
   const selectedTenantId = watch('tenantId');
   const selectedTenant = tenants.find((t) => t.id === selectedTenantId);
   const selectedUnit = selectedTenant ? units.find((u) => u.id === selectedTenant.unitId) : null;
+  const lineItemsWatch = watch('lineItems') || [];
+
+  React.useEffect(() => {
+    if (selectedUnit) {
+      const rentIndex = lineItemsWatch.findIndex(item => 
+        item.description.toLowerCase().includes('rent')
+      );
+      const targetIndex = rentIndex !== -1 ? rentIndex : 0;
+      setValue(`lineItems.${targetIndex}.amount`, selectedUnit.rentAmount);
+    }
+  }, [selectedUnit, setValue]);
 
   // Calculate totals dynamically
-  const lineItemsWatch = watch('lineItems') || [];
   const subtotal = lineItemsWatch.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
   const total = subtotal;
 

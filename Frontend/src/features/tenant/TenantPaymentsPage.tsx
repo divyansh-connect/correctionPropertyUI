@@ -50,150 +50,39 @@ export const TenantPaymentsPage: React.FC = () => {
     return allPayments.filter((pay) => pay.tenantName === tenantName);
   }, [allPayments, tenantName]);
 
-  const mockTransactions = React.useMemo(() => {
-    return [
-      {
-        date: '2026-05-01',
+  const transactions = React.useMemo(() => {
+    const list: any[] = [];
+    
+    // Map real invoices
+    tenantInvoices.forEach((inv: any) => {
+      list.push({
+        date: inv.dueDate,
         type: 'Invoice',
-        desc: 'Monthly Rent Assessment - May 2026',
-        ref: 'INV-2026-0501',
-        invoiceAmt: 1250.00,
+        desc: `Monthly Rent Assessment`,
+        ref: `INV-${inv.id.substring(0, 8).toUpperCase()}`,
+        invoiceAmt: inv.amount,
         paymentAmt: 0,
         additionalChg: 0,
-        status: 'Paid'
-      },
-      {
-        date: '2026-05-02',
+        status: inv.status === 'PAID' ? 'Paid' : inv.status === 'PENDING' ? 'Pending' : 'Unpaid'
+      });
+    });
+
+    // Map real payments
+    tenantPayments.forEach((pay: any) => {
+      list.push({
+        date: pay.paidDate ? pay.paidDate.split('T')[0] : pay.dueDate ? pay.dueDate.split('T')[0] : '',
         type: 'Payment',
-        desc: 'Rent AutoPay - Chase Bank ending in 9822',
-        ref: 'PAY-2026-0502',
+        desc: `Rent Payment - ${pay.paymentMethod}`,
+        ref: `PAY-${pay.id.substring(0, 8).toUpperCase()}`,
         invoiceAmt: 0,
-        paymentAmt: 1250.00,
+        paymentAmt: pay.amount,
         additionalChg: 0,
-        status: 'Cleared'
-      },
-      {
-        date: '2026-05-15',
-        type: 'Charge',
-        desc: 'Maintenance Charge - AC Filter Replacement',
-        ref: 'CHG-2026-0515',
-        invoiceAmt: 0,
-        paymentAmt: 0,
-        additionalChg: 45.00,
-        status: 'Paid'
-      },
-      {
-        date: '2026-05-16',
-        type: 'Payment',
-        desc: 'ACH One-time Payment - AC Filter Fee',
-        ref: 'PAY-2026-0516',
-        invoiceAmt: 0,
-        paymentAmt: 45.00,
-        additionalChg: 0,
-        status: 'Cleared'
-      },
-      {
-        date: '2026-06-01',
-        type: 'Invoice',
-        desc: 'Monthly Rent Assessment - June 2026',
-        ref: 'INV-2026-0601',
-        invoiceAmt: 1250.00,
-        paymentAmt: 0,
-        additionalChg: 0,
-        status: 'Paid'
-      },
-      {
-        date: '2026-06-02',
-        type: 'Payment',
-        desc: 'Rent AutoPay - Chase Bank ending in 9822',
-        ref: 'PAY-2026-0602',
-        invoiceAmt: 0,
-        paymentAmt: 1250.00,
-        additionalChg: 0,
-        status: 'Cleared'
-      },
-      {
-        date: '2026-06-10',
-        type: 'Charge',
-        desc: 'Maintenance Charge - Plumber Visit (Toilet Repair)',
-        ref: 'CHG-2026-0610',
-        invoiceAmt: 0,
-        paymentAmt: 0,
-        additionalChg: 120.00,
-        status: 'Paid'
-      },
-      {
-        date: '2026-06-12',
-        type: 'Payment',
-        desc: 'ACH One-time Payment - Plumbing Invoice',
-        ref: 'PAY-2026-0612',
-        invoiceAmt: 0,
-        paymentAmt: 120.00,
-        additionalChg: 0,
-        status: 'Cleared'
-      },
-      {
-        date: '2026-06-20',
-        type: 'Credit',
-        desc: 'Account Credit - Amenity Downtime compensation',
-        ref: 'CRE-2026-0620',
-        invoiceAmt: 0,
-        paymentAmt: 50.00,
-        additionalChg: 0,
-        status: 'Applied'
-      },
-      {
-        date: '2026-07-01',
-        type: 'Invoice',
-        desc: 'Monthly Rent Assessment - July 2026',
-        ref: 'INV-2026-0701',
-        invoiceAmt: 1250.00,
-        paymentAmt: 0,
-        additionalChg: 0,
-        status: 'Paid'
-      },
-      {
-        date: '2026-07-02',
-        type: 'Payment',
-        desc: 'Rent AutoPay - Chase Bank ending in 9822',
-        ref: 'PAY-2026-0702',
-        invoiceAmt: 0,
-        paymentAmt: 1200.00,
-        additionalChg: 0,
-        status: 'Cleared'
-      },
-      {
-        date: '2026-07-15',
-        type: 'Charge',
-        desc: 'Late Fee - Outstanding Balance Charge',
-        ref: 'CHG-2026-0715',
-        invoiceAmt: 0,
-        paymentAmt: 0,
-        additionalChg: 25.00,
-        status: 'Unpaid'
-      },
-      {
-        date: '2026-07-27',
-        type: 'Adjustment',
-        desc: 'Balance Adjustment - Utilities Overcharge Credit',
-        ref: 'ADJ-2026-0727',
-        invoiceAmt: 0,
-        paymentAmt: 10.00,
-        additionalChg: 0,
-        status: 'Applied'
-      },
-      {
-        date: '2026-08-01',
-        type: 'Invoice',
-        desc: 'Monthly Rent Assessment - August 2026',
-        ref: 'INV-2026-0801',
-        invoiceAmt: 1250.00,
-        paymentAmt: 0,
-        additionalChg: 0,
-        status: 'Pending'
-      }
-    ];
-  }, []);
+        status: pay.status === 'Cleared' || pay.status === 'PAID' ? 'Cleared' : 'Pending'
+      });
+    });
+
+    return list;
+  }, [tenantInvoices, tenantPayments]);
 
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -202,7 +91,7 @@ export const TenantPaymentsPage: React.FC = () => {
 
   const calculatedLedger = React.useMemo(() => {
     let runningBalance = 0;
-    const sorted = [...mockTransactions].sort((a, b) => a.date.localeCompare(b.date));
+    const sorted = [...transactions].sort((a, b) => a.date.localeCompare(b.date));
     
     return sorted.map((tx) => {
       if (tx.type === 'Invoice') {
@@ -217,7 +106,7 @@ export const TenantPaymentsPage: React.FC = () => {
         balance: runningBalance
       };
     });
-  }, [mockTransactions]);
+  }, [transactions]);
 
   const filteredLedger = React.useMemo(() => {
     return calculatedLedger.filter((entry) => {
