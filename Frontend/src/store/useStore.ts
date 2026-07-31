@@ -105,7 +105,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       const userData = JSON.parse(userStr);
       if (!userData.refreshToken) return false;
 
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
+      const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+      const baseUrl = import.meta.env.VITE_API_URL || `http://${host}:5000/api/v1`;
       const response = await fetch(`${baseUrl}/auth/refresh`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

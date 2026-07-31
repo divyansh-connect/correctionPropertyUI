@@ -1865,6 +1865,15 @@ export const api = {
         };
       }
     },
+    getAll: async () => {
+      try {
+        const res: any = await apiClient.get('/portal/tenant/leases');
+        return res.data || [];
+      } catch (e) {
+        console.error('Tenant leases fetch failed:', e);
+        return [];
+      }
+    },
   },
 
 

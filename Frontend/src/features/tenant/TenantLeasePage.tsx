@@ -25,15 +25,38 @@ import { useTranslation } from 'react-i18next';
 
 export const TenantLeasePage: React.FC = () => {
   // Queries
-  const { data: lease = null, isLoading } = useQuery({ 
-    queryKey: ['tenant-lease-details'], 
-    queryFn: () => api.tenantLeases.get() 
+  const { data: leases = [], isLoading } = useQuery({ 
+    queryKey: ['tenant-leases-details'], 
+    queryFn: () => api.tenantLeases.getAll() 
   });
   const { t } = useTranslation();
 
-  if (isLoading || !lease) {
+  if (isLoading) {
     return <LoadingSkeleton type="card" />;
   }
+
+  const rawLease = leases && leases.length > 0 ? leases[0] : null;
+
+  if (!rawLease) {
+    return (
+      <div className="p-6 text-center border rounded-xl bg-card text-muted-foreground">
+        No active lease found.
+      </div>
+    );
+  }
+
+  // Normalize lease fields for backward compatibility and format compatibility
+  const lease = {
+    ...rawLease,
+    leaseStart: rawLease.startDate ? new Date(rawLease.startDate).toISOString().split('T')[0] : rawLease.leaseStart || '',
+    leaseEnd: rawLease.endDate ? new Date(rawLease.endDate).toISOString().split('T')[0] : rawLease.leaseEnd || '',
+    rentAmount: rawLease.rentAmount || 0,
+    securityDeposit: rawLease.depositAmount !== undefined ? rawLease.depositAmount : rawLease.securityDeposit || 0,
+    status: rawLease.status || 'Active',
+    tenantName: rawLease.tenant ? `${rawLease.tenant.firstName || ''} ${rawLease.tenant.lastName || ''}`.trim() : rawLease.tenantName || '',
+    propertyName: rawLease.property?.name || rawLease.propertyName || 'Property',
+    unitNumber: rawLease.unit ? `Unit ${rawLease.unit.unitNumber}` : rawLease.unitNumber || 'Unassigned Unit',
+  };
 
   const property = lease.property || {};
   const unit = lease.unit || {};

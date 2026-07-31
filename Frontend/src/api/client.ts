@@ -1,6 +1,15 @@
 import { useAuthStore } from '../store/useStore';
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
+const getBaseUrl = () => {
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  // Dynamically resolve local host name to support other devices on the same Wi-Fi
+  const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+  return `http://${host}:5000/api/v1`;
+};
+
+const BASE_URL = getBaseUrl();
 
 // Track if a token refresh is already in progress to avoid duplicate refreshes
 let isRefreshing = false;
