@@ -631,12 +631,19 @@ export const api = {
         return (res.data || []).map((i: any) => ({
           id: i.id,
           tenantId: i.tenantId,
-          tenantName: i.tenant ? `${i.tenant.firstName} ${i.tenant.lastName}` : 'Resident',
-          amount: i.amount,
+          tenantName: i.tenantName || (i.tenant ? `${i.tenant.firstName} ${i.tenant.lastName}` : 'Resident'),
+          propertyName: i.propertyName || (i.property ? i.property.name : 'Property'),
+          unitNumber: i.unitNumber || (i.unit ? i.unit.unitNumber : '101'),
+          amount: i.amount || 0,
           paidAmount: i.paidAmount || 0,
-          balance: i.balance || 0,
+          balance: i.balance !== undefined && i.balance !== null ? i.balance : ((i.amount || 0) - (i.paidAmount || 0)),
           dueDate: i.dueDate ? i.dueDate.split('T')[0] : 'N/A',
-          status: i.status,
+          status: i.status || 'Sent',
+          lineItems: Array.isArray(i.lineItems)
+            ? i.lineItems
+            : typeof i.lineItems === 'string'
+            ? JSON.parse(i.lineItems)
+            : [{ description: 'Rent Charge', amount: i.amount || 0 }],
         }));
       } catch (e) {
         return [];
@@ -1674,17 +1681,62 @@ export const api = {
       try {
         const res: any = await apiClient.get('/properties');
         const list = res.data || [];
-        return list.map((p: any) => ({
-          id: p.id,
-          name: p.name,
-          address: p.address || p.streetAddress || `${p.city || 'Austin'}, ${p.state || 'TX'}`,
-          type: p.type || 'Apartment',
-          units: (p.units || []).length || 10,
-          occupancy: '95%',
-          monthlyRent: p.currentValue ? Math.round(p.currentValue / 500) : 2400,
-          status: p.status || 'Active',
-          ownerName: p.owner?.name || 'Owner User',
-        }));
+        return list.map((p: any) => {
+          const rawUnits = p.units || [];
+          const totalUnitsCount = rawUnits.length > 0 ? rawUnits.length : (p.unitsCount || 0);
+          const occupiedCount = rawUnits.filter((u: any) => 
+            (u.status || '').toLowerCase() === 'occupied'
+          ).length;
+          const vacantCount = Math.max(0, totalUnitsCount - occupiedCount);
+          const computedOccupancyRate = totalUnitsCount > 0 
+            ? Math.round((occupiedCount / totalUnitsCount) * 100) 
+            : (p.occupancyRate || 0);
+
+          const calculatedRent = rawUnits.reduce((sum: number, u: any) => sum + Number(u.rentAmount || 0), 0);
+          const monthlyRent = calculatedRent > 0 
+            ? calculatedRent 
+            : Number(p.monthlyRevenue || 0);
+
+          return {
+            id: p.id,
+            name: p.name,
+            address: p.address || (p.streetAddress ? `${p.streetAddress}, ${p.city || ''}, ${p.state || ''} ${p.zip || ''}`.trim() : `${p.city || 'Austin'}, ${p.state || 'TX'}`),
+            streetAddress: p.streetAddress || '',
+            city: p.city || '',
+            state: p.state || '',
+            zip: p.zip || '',
+            country: p.country || 'USA',
+            type: p.type || 'Commercial',
+            status: p.status || 'Active',
+            squareFootage: p.squareFootage || 0,
+            yearBuilt: p.yearBuilt || null,
+            purchasePrice: p.purchasePrice || 0,
+            currentValue: p.currentValue || 0,
+            ownershipPercentage: p.ownershipPercentage || 100,
+            managementCompany: p.managementCompany || 'Apex Property Management',
+            totalBuildings: p.buildings?.length || p.totalBuildings || 1,
+            buildings: p.buildings || [],
+            unitsCount: totalUnitsCount,
+            occupiedUnits: occupiedCount,
+            vacantUnits: vacantCount,
+            occupancyRate: computedOccupancyRate,
+            monthlyRent: monthlyRent,
+            units: rawUnits.map((u: any) => ({
+              id: u.id,
+              unitNumber: u.unitNumber || u.name || `Unit ${u.id?.slice(0, 4)}`,
+              floor: u.floor || 1,
+              bedrooms: u.bedrooms || 1,
+              bathrooms: u.bathrooms || 1,
+              squareFootage: u.squareFootage || 0,
+              rentAmount: Number(u.rentAmount || 0),
+              securityDeposit: Number(u.securityDeposit || 0),
+              status: u.status || 'Vacant',
+              tenantName: u.tenants?.length ? `${u.tenants[0].firstName} ${u.tenants[0].lastName}` : (u.tenantName || 'Vacant'),
+            })),
+            owner: p.owner || null,
+            createdAt: p.createdAt ? p.createdAt.split('T')[0] : '',
+          };
+        });
       } catch (e) {
         console.error('Owner properties fetch failed:', e);
         return [];

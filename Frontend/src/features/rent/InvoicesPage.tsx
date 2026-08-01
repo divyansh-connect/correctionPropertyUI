@@ -39,7 +39,7 @@ export const InvoicesPage: React.FC = () => {
   });
 
   const filteredInvoices = invoices.filter((inv) => {
-    const nameMatch = inv.tenantName.toLowerCase().includes(searchQuery.toLowerCase());
+    const nameMatch = (inv.tenantName || '').toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === '' || inv.status === statusFilter;
     return nameMatch && matchesStatus;
   });
@@ -65,15 +65,15 @@ export const InvoicesPage: React.FC = () => {
       accessorKey: 'amount',
       header: t('invoicesPage.amountDue'),
       id: 'amount',
-      cell: ({ row }) => <span className="font-semibold">${row.original.amount.toLocaleString()}</span>,
+      cell: ({ row }) => <span className="font-semibold">${(row.original.amount || 0).toLocaleString()}</span>,
     },
     {
       accessorKey: 'balance',
       header: t('invoicesPage.outstandingBalance'),
       id: 'balance',
       cell: ({ row }) => (
-        <span className={row.original.balance > 0 ? 'text-rose-500 font-bold' : 'text-emerald-500 font-bold'}>
-          ${row.original.balance.toLocaleString()}
+        <span className={(row.original.balance || 0) > 0 ? 'text-rose-500 font-bold' : 'text-emerald-500 font-bold'}>
+          ${(row.original.balance || 0).toLocaleString()}
         </span>
       ),
     },
@@ -177,10 +177,10 @@ export const InvoicesPage: React.FC = () => {
             <div className="space-y-2 border-t pt-4">
               <p className="text-[10px] uppercase text-muted-foreground tracking-wide">{t('invoicesPage.lineItemsBreakdown')}</p>
               <div className="divide-y border rounded-xl overflow-hidden bg-secondary/15">
-                {selectedInvoice.lineItems.map((item, idx) => (
+                {(selectedInvoice.lineItems || []).map((item, idx) => (
                   <div key={idx} className="flex justify-between p-3">
                     <span>{item.description}</span>
-                    <span className="font-extrabold">${item.amount.toLocaleString()}</span>
+                    <span className="font-extrabold">${(item.amount || 0).toLocaleString()}</span>
                   </div>
                 ))}
               </div>
@@ -188,7 +188,7 @@ export const InvoicesPage: React.FC = () => {
 
             <div className="border-t border-dashed pt-4 flex justify-between items-center text-sm font-black">
               <span>{t('invoicesPage.totalBalanceDue')}</span>
-              <span className="text-lg text-rose-500">${selectedInvoice.balance.toLocaleString()}</span>
+              <span className="text-lg text-rose-500">${(selectedInvoice.balance || 0).toLocaleString()}</span>
             </div>
 
             {/* Share / Send Invoice options */}

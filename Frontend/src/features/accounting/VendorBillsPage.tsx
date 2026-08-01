@@ -205,10 +205,10 @@ export const VendorBillsPage: React.FC = () => {
             <div className="space-y-2 border-t pt-4">
               <p className="text-[10px] uppercase text-muted-foreground">Line Items</p>
               <div className="divide-y border rounded-xl overflow-hidden bg-secondary/10">
-                {selectedBill.lineItems.map((item, idx) => (
+                {(selectedBill.lineItems || []).map((item, idx) => (
                   <div key={idx} className="flex justify-between p-3">
                     <span>{item.description}</span>
-                    <span className="font-bold">${item.amount.toLocaleString()}</span>
+                    <span className="font-bold">${(item.amount || 0).toLocaleString()}</span>
                   </div>
                 ))}
               </div>
