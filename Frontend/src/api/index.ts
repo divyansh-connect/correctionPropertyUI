@@ -423,50 +423,7 @@ export const api = {
     delete: async (id: string) => api.vendors.delete(id),
   },
 
-  workOrders: {
-    ...mockApi.workOrders,
-    getAll: async () => {
-      try {
-        const res: any = await apiClient.get('/work-orders');
-        return (res.data || []).map((w: any) => ({
-          id: w.id,
-          title: w.title,
-          description: w.description,
-          propertyName: w.property?.name || 'Property',
-          vendorName: w.vendor?.companyName || 'Unassigned',
-          priority: w.priority,
-          status: w.status === 'InProgress' ? 'In Progress' : w.status,
-          estimatedCost: w.estimatedCost || 0,
-          actualCost: w.actualCost || 0,
-          createdAt: w.createdAt,
-        }));
-      } catch (e) {
-        console.error('Work orders fetch failed:', e);
-        return [];
-      }
-    },
-    getById: async (id: string) => {
-      try {
-        const res: any = await apiClient.get(`/work-orders/${id}`);
-        return res.data;
-      } catch (e) {
-        console.error('WorkOrder getById failed:', e);
-        return null;
-      }
-    },
-    create: async (data: any) => {
-      const res: any = await apiClient.post('/work-orders', data);
-      return res.data;
-    },
-    update: async (id: string, data: any) => {
-      const res: any = await apiClient.put(`/work-orders/${id}`, data);
-      return res.data;
-    },
-    delete: async (id: string) => {
-      const res: any = await apiClient.delete(`/work-orders/${id}`);
-      return res.data;
-    },
-  },
+
 
   dashboard: {
     ...mockApi.dashboard,
