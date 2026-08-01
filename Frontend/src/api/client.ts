@@ -40,7 +40,7 @@ async function handleUnauthorized(): Promise<boolean> {
 
 export const apiClient = {
   getHeaders: () => {
-    const userStr = localStorage.getItem('user');
+    const userStr = sessionStorage.getItem('user');
     const token = userStr ? JSON.parse(userStr).token : null;
     return {
       'Content-Type': 'application/json',
@@ -49,7 +49,7 @@ export const apiClient = {
   },
 
   getAuthHeaders: (): Record<string, string> => {
-    const userStr = localStorage.getItem('user');
+    const userStr = sessionStorage.getItem('user');
     const token = userStr ? JSON.parse(userStr).token : null;
     return token ? { 'Authorization': `Bearer ${token}` } : {};
   },

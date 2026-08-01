@@ -225,7 +225,7 @@ export const OwnersPage: React.FC = () => {
       {/* Add / Edit Owner Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="relative w-full max-w-md bg-card border border-border rounded-2xl p-6 shadow-2xl space-y-4 text-foreground">
+          <div className="relative w-full max-w-md bg-card border border-border rounded-2xl p-6 shadow-2xl space-y-4 text-foreground max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-border/80 pb-3">
               <h3 className="font-extrabold text-base">
                 {editingOwner ? 'Edit Property Owner' : 'Add Property Owner'}
@@ -355,7 +355,7 @@ export const OwnersPage: React.FC = () => {
       {/* View Owner Details Modal */}
       {viewingOwner && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="relative w-full max-w-md bg-card border border-border rounded-2xl p-6 shadow-2xl space-y-4 text-foreground animate-in fade-in zoom-in-95 duration-150">
+          <div className="relative w-full max-w-md bg-card border border-border rounded-2xl p-6 shadow-2xl space-y-4 text-foreground animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-border/80 pb-3">
               <h3 className="font-extrabold text-base">Owner Details</h3>
               <button

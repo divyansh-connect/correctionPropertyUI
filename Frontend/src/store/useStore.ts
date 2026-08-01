@@ -71,8 +71,8 @@ interface AuthState {
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
-  user: JSON.parse(localStorage.getItem('user') || 'null'),
-  isAuthenticated: !!localStorage.getItem('user'),
+  user: JSON.parse(sessionStorage.getItem('user') || 'null'),
+  isAuthenticated: !!sessionStorage.getItem('user'),
   login: async (email: string, password?: string) => {
     const resData = await apiClient.post<any>('/auth/login', { email, password: password || 'admin123' });
 
@@ -90,17 +90,17 @@ export const useAuthStore = create<AuthState>((set) => ({
       refreshToken: refreshToken,
     };
 
-    localStorage.setItem('user', JSON.stringify(loggedInUser));
+    sessionStorage.setItem('user', JSON.stringify(loggedInUser));
     set({ user: loggedInUser, isAuthenticated: true });
     return true;
   },
   logout: () => {
-    localStorage.removeItem('user');
+    sessionStorage.removeItem('user');
     set({ user: null, isAuthenticated: false });
   },
   refreshAccessToken: async () => {
     try {
-      const userStr = localStorage.getItem('user');
+      const userStr = sessionStorage.getItem('user');
       if (!userStr) return false;
       const userData = JSON.parse(userStr);
       if (!userData.refreshToken) return false;
@@ -119,7 +119,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const newToken = resData.data.accessToken;
 
       const updatedUser = { ...userData, token: newToken };
-      localStorage.setItem('user', JSON.stringify(updatedUser));
+      sessionStorage.setItem('user', JSON.stringify(updatedUser));
       set({ user: updatedUser });
       return true;
     } catch {

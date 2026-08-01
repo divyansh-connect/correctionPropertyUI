@@ -265,6 +265,7 @@ export const api = {
           propertyName: t.unit?.property?.name || 'Unassigned',
           status: t.status,
           createdAt: t.createdAt,
+          screeningReports: t.screeningReports || [],
         }));
       } catch (e) {
         console.error('Tenants fetch failed:', e);
@@ -289,6 +290,7 @@ export const api = {
           propertyName: t.unit?.property?.name || 'Unassigned',
           status: t.status,
           createdAt: t.createdAt,
+          screeningReports: t.screeningReports || [],
         };
       } catch (e) {
         console.error(`Tenant fetch by id failed for ${id}:`, e);
