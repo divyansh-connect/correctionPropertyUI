@@ -38,8 +38,6 @@ export const TenantPaymentsPage: React.FC = () => {
     queryFn: () => api.invoices.getAll(),
   });
 
-  const outstandingBalance = metrics?.outstandingBalance ?? 0;
-
   const tenantName = profile ? `${profile.firstName} ${profile.lastName}` : 'Sarah Connor';
 
   const tenantInvoices = React.useMemo(() => {
@@ -145,6 +143,8 @@ export const TenantPaymentsPage: React.FC = () => {
       currentBal
     };
   }, [calculatedLedger]);
+
+  const outstandingBalance = ledgerMetrics.currentBal;
 
   const handleExportCSV = () => {
     const headers = ['Date', 'Transaction Type', 'Description', 'Reference Number', 'Invoice Amount', 'Payment Amount', 'Additional Charge', 'Running Balance', 'Status'];
