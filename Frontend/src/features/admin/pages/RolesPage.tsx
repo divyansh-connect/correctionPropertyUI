@@ -27,14 +27,8 @@ export const RolesPage: React.FC = () => {
     queryFn: () => api.roles.getAll(),
   });
 
-  const filteredRoles = React.useMemo(() => {
-    return roles.filter((r: any) => 
-      r.name === 'Property Manager' || r.name === 'Team Manager' || r.isCustom
-    );
-  }, [roles]);
-
   // Active Selected Role
-  const activeRole = filteredRoles.find((r: any) => r.id === (selectedRoleId || filteredRoles[0]?.id));
+  const activeRole = roles.find((r: any) => r.id === (selectedRoleId || roles[0]?.id));
 
   // Mutations
   const createRoleMutation = useMutation({
@@ -145,7 +139,7 @@ export const RolesPage: React.FC = () => {
               <div className="py-6 text-center text-xs text-muted-foreground">Loading system roles...</div>
             ) : (
               <div className="space-y-2">
-                {filteredRoles.map((r: any) => {
+                {roles.map((r: any) => {
                   const isSelected = activeRole?.id === r.id;
                   return (
                     <div

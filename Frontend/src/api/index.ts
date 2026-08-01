@@ -4,29 +4,6 @@ import { apiClient } from './client';
 export const api = {
   ...mockApi,
 
-  roles: {
-    getAll: async () => {
-      const res: any = await apiClient.get('/roles');
-      return res.data || [];
-    },
-    create: async (data: any) => {
-      const res: any = await apiClient.post('/roles', data);
-      return res.data;
-    },
-    update: async (id: string, data: any) => {
-      const res: any = await apiClient.put(`/roles/${id}`, data);
-      return res.data;
-    },
-    delete: async (id: string) => {
-      const res: any = await apiClient.delete(`/roles/${id}`);
-      return res.data;
-    },
-    clone: async (id: string, name: string) => {
-      const res: any = await apiClient.post(`/roles/${id}/clone`, { name });
-      return res.data;
-    },
-  },
-
   // Real Database connections (strictly reflects DB state, even if empty)
   property: {
     ...mockApi.property,
