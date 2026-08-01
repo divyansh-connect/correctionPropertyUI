@@ -97,8 +97,9 @@ export const PermissionMatrix: React.FC<PermissionMatrixProps> = ({ role, onTogg
                       <input
                         type="checkbox"
                         checked={val}
+                        disabled={role.name === 'Property Manager'}
                         onChange={(e) => onToggle(p.module, act, e.target.checked)}
-                        className="rounded border-border text-primary focus:ring-primary h-4 w-4 cursor-pointer"
+                        className="rounded border-border text-primary focus:ring-primary h-4 w-4 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                       />
                     </td>
                   );
