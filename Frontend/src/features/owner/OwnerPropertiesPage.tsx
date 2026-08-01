@@ -85,24 +85,24 @@ export const OwnerPropertiesPage: React.FC = () => {
         }}
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="flex flex-col gap-4 w-full">
         {properties.map((p: any) => (
-          <Card key={p.id} className="p-5 border bg-card flex flex-col justify-between space-y-4 hover:border-primary/40 transition-all shadow-sm">
-            <div className="space-y-3">
-              {/* Header Badge */}
-              <div className="flex justify-between items-start">
-                <div className="flex items-center space-x-2">
-                  <div className="p-2 rounded-xl bg-primary/10 text-primary">
-                    <Building className="w-5 h-5 shrink-0" />
-                  </div>
-                  <div>
-                    <h4 className="font-black text-base uppercase tracking-tight">{p.name}</h4>
-                    <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-secondary text-muted-foreground inline-block mt-0.5">
-                      {p.type}
-                    </span>
-                  </div>
+          <Card key={p.id} className="p-6 border bg-card w-full flex flex-col md:flex-row items-start md:items-center justify-between gap-6 hover:border-primary/40 transition-all shadow-sm">
+            {/* Left Info Section */}
+            <div className="space-y-3 flex-1 min-w-[280px]">
+              <div className="flex items-center space-x-3">
+                <div className="p-3 rounded-2xl bg-primary/10 text-primary shrink-0">
+                  <Building className="w-6 h-6" />
                 </div>
-                <StatusBadge status={p.status || 'Active'} />
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <h4 className="font-black text-lg uppercase tracking-tight">{p.name}</h4>
+                    <StatusBadge status={p.status || 'Active'} />
+                  </div>
+                  <span className="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-secondary text-muted-foreground inline-block mt-1">
+                    {p.type}
+                  </span>
+                </div>
               </div>
 
               {/* Address */}
@@ -112,59 +112,62 @@ export const OwnerPropertiesPage: React.FC = () => {
               </div>
 
               {/* Specs Pills */}
-              <div className="flex flex-wrap gap-1.5 text-[10px] font-bold text-muted-foreground pt-1">
+              <div className="flex flex-wrap gap-1.5 text-[10px] font-bold text-muted-foreground">
                 {p.squareFootage > 0 && (
-                  <span className="bg-secondary/40 px-2 py-0.5 rounded-md border border-border">
+                  <span className="bg-secondary/40 px-2.5 py-1 rounded-md border border-border">
                     {p.squareFootage.toLocaleString()} sq ft
                   </span>
                 )}
                 {p.yearBuilt && (
-                  <span className="bg-secondary/40 px-2 py-0.5 rounded-md border border-border">
+                  <span className="bg-secondary/40 px-2.5 py-1 rounded-md border border-border">
                     Built {p.yearBuilt}
                   </span>
                 )}
-                <span className="bg-secondary/40 px-2 py-0.5 rounded-md border border-border">
+                <span className="bg-secondary/40 px-2.5 py-1 rounded-md border border-border">
                   {p.ownershipPercentage || 100}% Share
                 </span>
               </div>
             </div>
 
-            {/* Key Metrics Grid */}
-            <div className="grid grid-cols-2 gap-2 bg-secondary/15 rounded-xl p-3 text-xs font-semibold border border-border/50">
-              <div>
-                <p className="text-[9px] text-muted-foreground uppercase font-black">Total Units</p>
-                <p className="font-extrabold text-sm text-foreground">{p.unitsCount || 0} Units</p>
-                <p className="text-[9.5px] text-muted-foreground font-medium">
+            {/* Center Key Metrics */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 bg-secondary/15 rounded-2xl p-4 text-xs font-semibold border border-border/50 w-full md:w-auto min-w-[320px]">
+              <div className="space-y-0.5">
+                <p className="text-[9px] text-muted-foreground uppercase font-black tracking-wider">Total Units</p>
+                <p className="font-black text-base text-foreground">{p.unitsCount || 0} Units</p>
+                <p className="text-[10px] text-muted-foreground font-medium">
                   {p.occupiedUnits || 0} Occ / {p.vacantUnits || 0} Vac
                 </p>
               </div>
 
-              <div>
-                <p className="text-[9px] text-muted-foreground uppercase font-black">Est. Monthly Rent</p>
-                <p className="font-black text-sm text-emerald-400">
+              <div className="space-y-0.5">
+                <p className="text-[9px] text-muted-foreground uppercase font-black tracking-wider">Est. Monthly Rent</p>
+                <p className="font-black text-base text-emerald-400">
                   ${(p.monthlyRent || p.totalRent || 0).toLocaleString()}
                 </p>
-                <p className="text-[9.5px] text-muted-foreground font-medium">
+                <p className="text-[10px] text-muted-foreground font-medium">
                   Occ. Rate: {p.occupancyRate || 0}%
                 </p>
               </div>
+
+              {p.currentValue > 0 && (
+                <div className="space-y-0.5 col-span-2 sm:col-span-1">
+                  <p className="text-[9px] text-muted-foreground uppercase font-black tracking-wider">Asset Valuation</p>
+                  <p className="font-black text-base text-primary">
+                    ${p.currentValue.toLocaleString()}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground font-medium">Market Value</p>
+                </div>
+              )}
             </div>
 
-            {/* Valuation Footer */}
-            {p.currentValue > 0 && (
-              <div className="flex justify-between items-center text-xs font-bold pt-1 border-t border-dashed border-border/60">
-                <span className="text-[10px] text-muted-foreground uppercase">Current Asset Value</span>
-                <span className="text-primary font-black">${p.currentValue.toLocaleString()}</span>
-              </div>
-            )}
-
-            {/* Actions */}
-            <div className="flex gap-2 pt-1">
-              <Button size="sm" variant="outline" onClick={() => setSelectedProperty(p)} className="flex-1 text-xs font-bold uppercase h-9">
+            {/* Right Action Buttons */}
+            <div className="flex md:flex-col gap-2.5 w-full md:w-auto shrink-0 pt-2 md:pt-0">
+              <Button size="sm" variant="outline" onClick={() => setSelectedProperty(p)} className="flex-1 md:flex-none text-xs font-bold uppercase h-10 px-5">
                 {t('owner.ownerProperties.viewDetails')}
               </Button>
-              <Button size="sm" variant="ghost" onClick={() => setDeleteId(p.id)} className="text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 p-2 rounded-xl h-9 w-9 flex items-center justify-center shrink-0" title={t('owner.ownerProperties.deleteProperty')}>
-                <Trash2 className="w-4 h-4" />
+              <Button size="sm" variant="ghost" onClick={() => setDeleteId(p.id)} className="text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 h-10 px-3 rounded-xl flex items-center justify-center" title={t('owner.ownerProperties.deleteProperty')}>
+                <Trash2 className="w-4 h-4 mr-1 md:mr-0" />
+                <span className="md:hidden text-xs font-bold">Delete</span>
               </Button>
             </div>
           </Card>
