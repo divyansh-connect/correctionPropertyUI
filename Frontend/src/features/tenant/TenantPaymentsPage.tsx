@@ -217,6 +217,7 @@ export const TenantPaymentsPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tenant-payments-list'] });
       queryClient.invalidateQueries({ queryKey: ['tenant-dashboard-metrics'] });
+      queryClient.invalidateQueries({ queryKey: ['invoices-list'] });
       setReceiptNumber(`RCP-${Math.floor(100000 + Math.random() * 900000)}-ZTR`);
       setStep('receipt');
     },
