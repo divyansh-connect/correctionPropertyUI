@@ -22,6 +22,7 @@ export const InspectionScreen: React.FC<InspectionScreenProps> = ({ id }) => {
   const [inspectorSignature, setInspectorSignature] = useState('');
   const [tenantSignature, setTenantSignature] = useState('');
   const [assignedInspectorId, setAssignedInspectorId] = useState('');
+  const [selectedTemplateId, setSelectedTemplateId] = useState('');
   
   // Canvas refs for drawing signatures
   const inspectorCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -55,6 +56,7 @@ export const InspectionScreen: React.FC<InspectionScreenProps> = ({ id }) => {
       setInspectorSignature(inspection.inspectorSignature || '');
       setTenantSignature(inspection.tenantSignature || '');
       setAssignedInspectorId(inspection.assignedInspectorId || '');
+      setSelectedTemplateId(inspection.templateId || '');
     }
   }, [inspection]);
 
@@ -67,13 +69,6 @@ export const InspectionScreen: React.FC<InspectionScreenProps> = ({ id }) => {
       refetch();
     },
   });
-
-  const handleTemplateChange = (newTemplateId: string) => {
-    if (isCompleted) return;
-    if (window.confirm('Are you sure you want to change the template? This will replace all current checklist items with the new template.')) {
-      updateDraftMutation.mutate({ templateId: newTemplateId });
-    }
-  };
 
   const completeMutation = useMutation({
     mutationFn: () => api.inspections.complete(id),
@@ -256,7 +251,8 @@ export const InspectionScreen: React.FC<InspectionScreenProps> = ({ id }) => {
     sigSetter('');
   };
 
-  const handleSaveDraft = () => {
+  const handleSaveDraft = (e?: React.MouseEvent) => {
+    if (e) e.preventDefault();
     // Pack room items payload
     const flatItemsPayload = rooms.reduce((acc, room) => {
       const items = room.items.map((i: any) => ({
@@ -275,11 +271,13 @@ export const InspectionScreen: React.FC<InspectionScreenProps> = ({ id }) => {
       inspectorSignature,
       tenantSignature,
       assignedInspectorId,
+      templateId: selectedTemplateId,
       items: flatItemsPayload,
     });
   };
 
-  const handleComplete = () => {
+  const handleComplete = (e?: React.MouseEvent) => {
+    if (e) e.preventDefault();
     setValidationError(null);
     
     // Check if required items are rated
@@ -320,6 +318,7 @@ export const InspectionScreen: React.FC<InspectionScreenProps> = ({ id }) => {
       inspectorSignature,
       tenantSignature,
       assignedInspectorId,
+      templateId: selectedTemplateId,
       items: flatItemsPayload,
       status: 'COMPLETED'
     }, {
@@ -521,8 +520,11 @@ export const InspectionScreen: React.FC<InspectionScreenProps> = ({ id }) => {
               <span className="font-bold text-muted-foreground uppercase">Assign Inspector:</span>
               <select
                 disabled={isCompleted}
-                value={inspection.templateId || ''}
-                onChange={(e) => handleTemplateChange(e.target.value)}
+                value={selectedTemplateId}
+                onChange={(e) => {
+                  e.preventDefault();
+                  setSelectedTemplateId(e.target.value);
+                }}
                 className="p-1.5 rounded border bg-secondary/35 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-primary min-w-[200px]"
               >
                 <option value="">Select Template...</option>
