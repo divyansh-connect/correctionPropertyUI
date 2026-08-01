@@ -44,6 +44,11 @@ export const InvoicesPage: React.FC = () => {
     return nameMatch && matchesStatus;
   });
 
+  const getInvoiceNumber = (invId: string) => {
+    const index = invoices.findIndex((inv) => inv.id === invId);
+    return `INV-${String(index !== -1 ? index + 1 : 1).padStart(4, '0')}`;
+  };
+
   const columns: ColumnDef<Invoice>[] = [
     {
       accessorKey: 'id',
@@ -54,7 +59,7 @@ export const InvoicesPage: React.FC = () => {
           onClick={() => setSelectedInvoice(row.original)}
           className="font-bold text-primary hover:underline cursor-pointer"
         >
-          {row.original.id}
+          {getInvoiceNumber(row.original.id)}
         </span>
       ),
     },
@@ -162,7 +167,7 @@ export const InvoicesPage: React.FC = () => {
             <div className="flex justify-between items-start border-b pb-3">
               <div>
                 <h4 className="font-extrabold text-sm uppercase">{t('invoicesPage.invoiceStatement')}</h4>
-                <p className="text-[10px] text-muted-foreground font-bold mt-1">NO: {selectedInvoice.id} • DUE: {selectedInvoice.dueDate}</p>
+                <p className="text-[10px] text-muted-foreground font-bold mt-1">NO: {getInvoiceNumber(selectedInvoice.id)} • DUE: {selectedInvoice.dueDate}</p>
               </div>
               <StatusBadge status={selectedInvoice.status} />
             </div>
@@ -198,7 +203,7 @@ export const InvoicesPage: React.FC = () => {
                 <Button 
                   size="sm" 
                   variant="outline" 
-                  onClick={() => alert(`Invoice ${selectedInvoice.id} sent to ${selectedInvoice.tenantName}'s registered email!`)}
+                  onClick={() => alert(`Invoice ${getInvoiceNumber(selectedInvoice.id)} sent to ${selectedInvoice.tenantName}'s registered email!`)}
                   className="flex-1 flex items-center justify-center gap-1.5 h-9"
                 >
                   <Mail className="w-3.5 h-3.5 text-primary" />
@@ -207,14 +212,14 @@ export const InvoicesPage: React.FC = () => {
                 <Button 
                   size="sm" 
                   variant="outline" 
-                  onClick={() => alert(`Invoice alert text message dispatched to ${selectedInvoice.tenantName}'s phone number!`)}
+                  onClick={() => alert(`Invoice alert text message dispatched for ${getInvoiceNumber(selectedInvoice.id)} to ${selectedInvoice.tenantName}'s phone number!`)}
                   className="flex-1 flex items-center justify-center gap-1.5 h-9"
                 >
                   <MessageSquare className="w-3.5 h-3.5 text-primary" />
                   <span>{t('invoicesPage.sendSms')}</span>
                 </Button>
                 <a 
-                  href={`https://wa.me/5550199?text=${encodeURIComponent(`Hi ${selectedInvoice.tenantName}, here is your outstanding statement balance details for ${selectedInvoice.propertyName} Unit ${selectedInvoice.unitNumber}. Total amount due: $${selectedInvoice.balance.toLocaleString()}. Please view details and complete payment: http://localhost:5173/tenant/payments`)}`} 
+                  href={`https://wa.me/5550199?text=${encodeURIComponent(`Hi ${selectedInvoice.tenantName}, here is your outstanding statement balance details for invoice ${getInvoiceNumber(selectedInvoice.id)} (${selectedInvoice.propertyName} Unit ${selectedInvoice.unitNumber}). Total amount due: $${selectedInvoice.balance.toLocaleString()}. Please view details and complete payment: http://localhost:5173/tenant/payments`)}`} 
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/10 rounded-xl transition text-foreground"
