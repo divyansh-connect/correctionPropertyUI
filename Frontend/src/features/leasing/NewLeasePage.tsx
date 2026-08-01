@@ -170,13 +170,14 @@ export const NewLeasePage: React.FC = () => {
               <label className="text-[10px] font-bold text-muted-foreground uppercase">Resident / Tenant</label>
               <Select {...register('tenantId')}>
                 <option value="">Select Tenant...</option>
-                {tenants
-                  .filter((t: any) => 
-                    t.screeningReports?.some((r: any) => r.status === 'Completed' || r.status === 'Approved')
-                  )
-                  .map((t) => (
-                    <option key={t.id} value={t.id}>{t.firstName} {t.lastName} ({t.email})</option>
-                  ))}
+                {tenants.map((t: any) => {
+                  const isApproved = t.screeningReports?.some((r: any) => r.status === 'Completed' || r.status === 'Approved');
+                  return (
+                    <option key={t.id} value={t.id}>
+                      {t.firstName} {t.lastName} ({t.email || 'No email'}){isApproved ? ' - Screening Approved' : ''}
+                    </option>
+                  );
+                })}
               </Select>
               {errors.tenantId && <p className="text-rose-500 text-xs font-semibold">{errors.tenantId.message}</p>}
             </div>

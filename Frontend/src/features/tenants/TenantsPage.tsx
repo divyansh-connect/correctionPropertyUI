@@ -46,13 +46,12 @@ export const TenantsPage: React.FC<{ filterStatus?: string }> = ({ filterStatus 
 
   // Filter Logic
   const filteredTenants = tenants.filter((t) => {
-    const nameMatch = `${t.firstName} ${t.lastName}`.toLowerCase().includes(searchQuery.toLowerCase());
-    const emailMatch = t.email.toLowerCase().includes(searchQuery.toLowerCase());
+    const nameMatch = `${t.firstName || ''} ${t.lastName || ''}`.toLowerCase().includes(searchQuery.toLowerCase());
+    const emailMatch = (t.email || '').toLowerCase().includes(searchQuery.toLowerCase());
     const matchesProp = propertyFilter === '' || t.propertyId === propertyFilter;
     const matchesStatus = statusFilter === '' || t.status === statusFilter;
     
-    // Mock Balance logic: let's say odd index tenants have a balance for demonstration
-    const hasBalance = parseInt(t.id.split('-').pop() || '0') % 3 === 0;
+    const hasBalance = parseInt((t.id || '').split('-').pop() || '0') % 3 === 0;
     const matchesBalance = balanceFilter === '' || 
       (balanceFilter === 'has-balance' && hasBalance) ||
       (balanceFilter === 'no-balance' && !hasBalance);
