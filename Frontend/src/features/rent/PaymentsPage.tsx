@@ -89,14 +89,18 @@ export const PaymentsPage: React.FC = () => {
       accessorKey: 'id',
       header: t('rentPaymentsPage.receiptNo'),
       id: 'id',
-      cell: ({ row }) => (
-        <span
-          onClick={() => navigate({ to: `/payments/${row.original.id}` })}
-          className="font-bold text-primary hover:underline cursor-pointer"
-        >
-          {row.original.id}
-        </span>
-      ),
+      cell: ({ row }) => {
+        const pay = row.original as any;
+        const displayNum = pay.receiptNumber || `#${row.index + 1}`;
+        return (
+          <span
+            onClick={() => navigate({ to: `/payments/${row.original.id}` })}
+            className="font-bold text-primary hover:underline cursor-pointer"
+          >
+            {displayNum}
+          </span>
+        );
+      },
     },
     { accessorKey: 'tenantName', header: t('rentPaymentsPage.tenant'), id: 'tenantName' },
     { accessorKey: 'propertyName', header: t('rentPaymentsPage.property'), id: 'property' },

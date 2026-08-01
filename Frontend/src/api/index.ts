@@ -1090,11 +1090,13 @@ export const api = {
     getAll: async () => {
       try {
         const res: any = await apiClient.get('/payments');
-        return (res.data || []).map((p: any) => ({
+        return (res.data || []).map((p: any, idx: number) => ({
+          ...p,
           id: p.id,
-          tenantName: p.tenant ? `${p.tenant.firstName} ${p.tenant.lastName}` : 'Unknown Tenant',
-          propertyName: p.property?.name || 'Property',
-          unitNumber: p.unit?.unitNumber || 'Unassigned',
+          receiptNumber: p.receiptNumber || `#${idx + 1}`,
+          tenantName: p.tenant ? `${p.tenant.firstName} ${p.tenant.lastName}` : (p.tenantName || 'Unknown Tenant'),
+          propertyName: p.property?.name || p.propertyName || 'Property',
+          unitNumber: p.unit?.unitNumber || p.unitNumber || 'Unassigned',
           amount: p.amount,
           paidDate: p.paidDate ? p.paidDate.split('T')[0] : (p.createdAt ? p.createdAt.split('T')[0] : ''),
           paymentMethod: p.paymentMethod || 'ACH',
