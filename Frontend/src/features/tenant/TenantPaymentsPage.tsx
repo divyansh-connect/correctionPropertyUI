@@ -41,12 +41,12 @@ export const TenantPaymentsPage: React.FC = () => {
   const tenantName = profile ? `${profile.firstName} ${profile.lastName}` : 'Sarah Connor';
 
   const tenantInvoices = React.useMemo(() => {
-    return allInvoices.filter((inv) => inv.tenantName === tenantName);
-  }, [allInvoices, tenantName]);
+    return allInvoices;
+  }, [allInvoices]);
 
   const tenantPayments = React.useMemo(() => {
-    return allPayments.filter((pay) => pay.tenantName === tenantName);
-  }, [allPayments, tenantName]);
+    return allPayments;
+  }, [allPayments]);
 
   const transactions = React.useMemo(() => {
     const list: any[] = [];
@@ -75,7 +75,7 @@ export const TenantPaymentsPage: React.FC = () => {
         invoiceAmt: 0,
         paymentAmt: pay.amount,
         additionalChg: 0,
-        status: pay.status === 'Cleared' || pay.status === 'PAID' ? 'Cleared' : 'Pending'
+        status: pay.status === 'Cleared' || pay.status === 'PAID' || pay.status === 'Paid' ? 'Cleared' : 'Pending'
       });
     });
 
