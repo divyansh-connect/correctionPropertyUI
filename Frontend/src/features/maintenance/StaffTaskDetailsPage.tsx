@@ -103,16 +103,28 @@ export const StaffTaskDetailsPage: React.FC = () => {
   };
 
   // Completion Submit Handler
-  const handleCompleteSubmit = (e: React.FormEvent) => {
+  const handleCompleteSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const actual = actualCostVal ? Number(actualCostVal) : 0;
     const extra = extraExpensesVal ? Number(extraExpensesVal) : 0;
+    const totalActual = actual + extra;
 
     setLocalStatus('Completed');
     setActualCost(actual);
     setExtraExpenses(extra);
     setResolutionNotes(resolutionNotesVal || 'Repairs completed.');
     setIsCompleteModalOpen(false);
+
+    try {
+      await api.workOrders.update(id, {
+        status: 'Completed',
+        actualCost: totalActual > 0 ? totalActual : actual,
+        extraCost: extra,
+        resolutionNotes: resolutionNotesVal || 'Repairs completed.',
+      });
+    } catch (err) {
+      console.error('Failed to update task completion in backend:', err);
+    }
   };
 
   return (

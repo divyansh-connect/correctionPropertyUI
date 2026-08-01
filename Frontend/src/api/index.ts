@@ -834,6 +834,52 @@ export const api = {
     },
   },
 
+  workOrders: {
+    ...mockApi.workOrders,
+    getAll: async () => {
+      try {
+        const res: any = await apiClient.get('/work-orders');
+        return (res.data || []).map((w: any, idx: number) => ({
+          ...w,
+          workOrderNumber: w.workOrderNumber && !w.workOrderNumber.includes('-') && w.workOrderNumber.startsWith('#')
+            ? `#WO-${1001 + idx}`
+            : (w.workOrderNumber ? (w.workOrderNumber.startsWith('#') ? w.workOrderNumber : `#${w.workOrderNumber}`) : `#WO-${1001 + idx}`),
+          propertyName: w.propertyName || 'Property',
+          unitNumber: w.unitNumber || 'Unit 101',
+          vendorName: w.vendorName || w.assignedTechnician || 'Unassigned',
+          assignedTechnician: w.assignedTechnician || w.vendorName || 'Unassigned',
+          scheduledDate: w.scheduledDate || (w.createdAt ? w.createdAt.split('T')[0] : 'N/A'),
+          estimatedCost: Number(w.estimatedCost || 0),
+          actualCost: Number(w.actualCost || w.cost || 0),
+          status: w.status || 'Open',
+        }));
+      } catch (e) {
+        console.error('WorkOrders fetch error:', e);
+        return [];
+      }
+    },
+    getById: async (id: string) => {
+      try {
+        const res: any = await apiClient.get(`/work-orders/${id}`);
+        return res.data;
+      } catch (e) {
+        return mockApi.workOrders.getById(id);
+      }
+    },
+    create: async (data: any) => {
+      const res: any = await apiClient.post('/work-orders', data);
+      return res.data;
+    },
+    update: async (id: string, data: any) => {
+      const res: any = await apiClient.put(`/work-orders/${id}`, data);
+      return res.data;
+    },
+    delete: async (id: string) => {
+      await apiClient.delete(`/work-orders/${id}`);
+      return true;
+    },
+  },
+
   inspections: {
     ...mockApi.inspections,
     getAll: async () => {

@@ -51,30 +51,59 @@ export const WorkOrdersPage: React.FC = () => {
       accessorKey: 'workOrderNumber',
       header: t('maintenanceRequests.requestNo'),
       id: 'workOrderNumber',
-      cell: ({ row }) => (
-        <span onClick={() => navigate({ to: `/maintenance/work-orders/${row.original.id}` })} className="font-bold text-primary hover:underline cursor-pointer">
-          {row.original.workOrderNumber}
-        </span>
-      ),
+      cell: ({ row }) => {
+        const num = row.original.workOrderNumber;
+        const displayNum = num && !num.includes('-') && num.length < 15 ? (num.startsWith('#') ? num : `#${num}`) : `#WO-${1001 + row.index}`;
+        return (
+          <span onClick={() => navigate({ to: `/maintenance/work-orders/${row.original.id}` })} className="font-bold text-primary hover:underline cursor-pointer">
+            {displayNum}
+          </span>
+        );
+      },
     },
-    { accessorKey: 'propertyName', header: t('maintenanceRequests.propertyLocation'), id: 'property' },
-    { accessorKey: 'unitNumber', header: t('maintenanceRequests.unit'), id: 'unit' },
-    { accessorKey: 'vendorName', header: t('maintenanceWorkOrders.contractorVendor'), id: 'vendor' },
-    { accessorKey: 'assignedTechnician', header: t('maintenanceWorkOrders.assignedTech'), id: 'tech' },
-    { accessorKey: 'scheduledDate', header: t('maintenanceWorkOrders.scheduledDate'), id: 'date' },
+    { 
+      accessorKey: 'propertyName', 
+      header: t('maintenanceRequests.propertyLocation'), 
+      id: 'property',
+      cell: ({ row }) => <span className="font-semibold text-foreground">{row.original.propertyName || 'Property'}</span>
+    },
+    { 
+      accessorKey: 'unitNumber', 
+      header: t('maintenanceRequests.unit'), 
+      id: 'unit',
+      cell: ({ row }) => <span>{row.original.unitNumber || 'Unit 101'}</span>
+    },
+    { 
+      accessorKey: 'vendorName', 
+      header: t('maintenanceWorkOrders.contractorVendor'), 
+      id: 'vendor',
+      cell: ({ row }) => <span className="font-medium text-foreground">{row.original.vendorName || 'Unassigned'}</span>
+    },
+    { 
+      accessorKey: 'assignedTechnician', 
+      header: t('maintenanceWorkOrders.assignedTech'), 
+      id: 'tech',
+      cell: ({ row }) => <span className="font-medium text-muted-foreground">{row.original.assignedTechnician || 'Unassigned'}</span>
+    },
+    { 
+      accessorKey: 'scheduledDate', 
+      header: t('maintenanceWorkOrders.scheduledDate'), 
+      id: 'date',
+      cell: ({ row }) => <span>{row.original.scheduledDate || 'N/A'}</span>
+    },
     {
       accessorKey: 'estimatedCost',
       header: t('maintenanceWorkOrders.estCost'),
       id: 'estCost',
-      cell: ({ row }) => <span>${row.original.estimatedCost.toLocaleString()}</span>,
+      cell: ({ row }) => <span className="font-semibold text-foreground">${(row.original.estimatedCost || 0).toLocaleString()}</span>,
     },
     {
       accessorKey: 'actualCost',
       header: t('maintenanceWorkOrders.actualCost'),
       id: 'actCost',
       cell: ({ row }) => (
-        <span className="font-bold text-rose-500">
-          {row.original.actualCost > 0 ? `$${row.original.actualCost.toLocaleString()}` : '-'}
+        <span className="font-extrabold text-rose-500">
+          ${(row.original.actualCost || 0).toLocaleString()}
         </span>
       ),
     },

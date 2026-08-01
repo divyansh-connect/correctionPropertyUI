@@ -18,26 +18,53 @@ import { getFormattedRequestNumber } from '../../utils/format';
 export const OwnerMaintenancePage: React.FC = () => {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedRequest, setSelectedRequest] = useState<MaintenanceRequest | null>(null);
+  const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
 
   // Queries
   const { data: maintenance = [], isLoading } = useQuery({ queryKey: ['owner-maintenance-list'], queryFn: () => api.ownerMaintenance.getAll() });
 
-  const filteredMaint = maintenance.filter((m) =>
-    m.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    m.propertyName.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredMaint = maintenance.filter((m: any) =>
+    (m.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (m.propertyName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (m.tenantName || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const columns: ColumnDef<MaintenanceRequest>[] = [
+  const columns: ColumnDef<any>[] = [
     { accessorKey: 'id', header: t('owner.maintenance.requestNo'), id: 'id', cell: ({ row }) => <span className="font-bold">{getFormattedRequestNumber(row.original, row.index)}</span> },
-    { accessorKey: 'title', header: t('owner.maintenance.subjectIssue'), id: 'title', cell: ({ row }) => <span className="font-bold">{row.original.title}</span> },
-    { accessorKey: 'propertyName', header: t('owner.maintenance.locationProperty'), id: 'property' },
-    { accessorKey: 'unitNumber', header: t('owner.maintenance.unit'), id: 'unit' },
+    { accessorKey: 'title', header: t('owner.maintenance.subjectIssue'), id: 'title', cell: ({ row }) => <span className="font-bold text-foreground">{row.original.title}</span> },
+    { 
+      accessorKey: 'propertyName', 
+      header: t('owner.maintenance.locationProperty'), 
+      id: 'property',
+      cell: ({ row }) => <span>{row.original.propertyName} • Unit {row.original.unitNumber || 'Unassigned'}</span>
+    },
+    { accessorKey: 'tenantName', header: 'Resident', id: 'tenant', cell: ({ row }) => <span className="font-semibold text-muted-foreground">{row.original.tenantName || 'Resident'}</span> },
     {
-      accessorKey: 'priority',
-      header: t('owner.maintenance.priority'),
-      id: 'priority',
-      cell: ({ row }) => <RequestPriorityBadge priority={row.original.priority as any} />,
+      accessorKey: 'estimatedCost',
+      header: 'Manager Quote',
+      id: 'estimatedCost',
+      cell: ({ row }) => <span className="font-bold text-muted-foreground">${(row.original.estimatedCost || 0).toLocaleString()}</span>,
+    },
+    {
+      accessorKey: 'actualCost',
+      header: 'Actual / Final Cost',
+      id: 'actualCost',
+      cell: ({ row }) => {
+        const est = Number(row.original.estimatedCost || 0);
+        const act = Number(row.original.actualCost || row.original.cost || 0);
+        const extra = Number(row.original.extraCost > 0 ? row.original.extraCost : (act > est ? act - est : 0));
+        const displayActual = act > 0 ? act : est + extra;
+        return (
+          <div>
+            <span className="font-extrabold text-foreground">${displayActual.toLocaleString()}</span>
+            {extra > 0 && (
+              <span className="ml-1.5 text-[10px] font-black uppercase text-rose-500 bg-rose-500/10 px-1.5 py-0.5 rounded">
+                +${extra.toLocaleString()} Extra
+              </span>
+            )}
+          </div>
+        );
+      },
     },
     {
       accessorKey: 'status',
@@ -76,36 +103,70 @@ export const OwnerMaintenancePage: React.FC = () => {
 
       <DataTable columns={columns} data={filteredMaint.slice(0, 100)} loading={isLoading} />
 
-      {/* DETAIL DIALOG */}
+      {/* COMPREHENSIVE DETAIL DIALOG */}
       <FormDialog open={!!selectedRequest} onOpenChange={(open) => !open && setSelectedRequest(null)} title={t('owner.maintenance.dialogTitle')}>
         {selectedRequest && (
           <div className="space-y-4 pt-2 text-xs font-semibold text-foreground">
-            <div className="flex justify-between items-center border-b pb-2">
+            <div className="flex justify-between items-center border-b pb-3">
               <div>
-                <p className="font-extrabold text-sm uppercase">Ticket #{selectedRequest.id.replace('sr-', '')}</p>
-                <p className="text-muted-foreground">{selectedRequest.title}</p>
+                <p className="font-extrabold text-sm uppercase">Ticket {getFormattedRequestNumber(selectedRequest)}</p>
+                <p className="text-muted-foreground font-bold mt-0.5">{selectedRequest.title}</p>
               </div>
               <StatusBadge status={selectedRequest.status} />
             </div>
 
-            <div className="space-y-2">
-              <p className="text-muted-foreground text-[10px] uppercase">Issue Description</p>
-              <p className="leading-relaxed bg-secondary/15 p-3 rounded-lg border font-medium">{selectedRequest.description}</p>
+            <div className="space-y-1.5">
+              <p className="text-muted-foreground text-[10px] uppercase font-black">Issue Diagnostics & Description</p>
+              <p className="leading-relaxed bg-secondary/15 p-3 rounded-xl border font-medium">{selectedRequest.description || 'No detailed diagnostics description provided.'}</p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4 bg-secondary/10 p-3 rounded-xl border">
               <div>
-                <p className="text-muted-foreground text-[10px] uppercase">Property Location</p>
-                <p className="font-bold">{selectedRequest.propertyName} • Unit {selectedRequest.unitNumber}</p>
+                <p className="text-muted-foreground text-[10px] uppercase font-black">Property & Unit Location</p>
+                <p className="font-extrabold">{selectedRequest.propertyName} • Unit {selectedRequest.unitNumber}</p>
               </div>
               <div>
-                <p className="text-muted-foreground text-[10px] uppercase">Resident Name</p>
-                <p className="font-bold">{selectedRequest.tenantName}</p>
+                <p className="text-muted-foreground text-[10px] uppercase font-black">Resident / Tenant</p>
+                <p className="font-extrabold">{selectedRequest.tenantName || 'Resident'}</p>
+              </div>
+            </div>
+
+            {/* Financial Breakdown */}
+            <div className="border-t pt-3 space-y-2">
+              <p className="text-muted-foreground text-[10px] uppercase font-black tracking-wider">Financial Breakdown & Budget Variance</p>
+              <div className="grid grid-cols-3 gap-3 bg-secondary/20 p-3 rounded-xl border text-center">
+                <div>
+                  <p className="text-[9.5px] text-muted-foreground uppercase font-black">Manager Quote</p>
+                  <p className="font-black text-sm text-foreground">${(selectedRequest.estimatedCost || 0).toLocaleString()}</p>
+                </div>
+                <div>
+                  <p className="text-[9.5px] text-muted-foreground uppercase font-black">Actual Final Cost</p>
+                  <p className="font-black text-sm text-emerald-400">
+                    ${(selectedRequest.actualCost > 0 ? selectedRequest.actualCost : (selectedRequest.estimatedCost || 0) + (selectedRequest.extraCost || 0)).toLocaleString()}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[9.5px] text-muted-foreground uppercase font-black">Extra Variance</p>
+                  <p className={`font-black text-sm ${(selectedRequest.extraCost || 0) > 0 || (selectedRequest.actualCost > selectedRequest.estimatedCost) ? 'text-rose-500' : 'text-emerald-500'}`}>
+                    +${(selectedRequest.extraCost > 0 ? selectedRequest.extraCost : Math.max(0, (selectedRequest.actualCost || 0) - (selectedRequest.estimatedCost || 0))).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 border-t pt-3">
+              <div>
+                <p className="text-muted-foreground text-[10px] uppercase">Assigned Vendor / Staff</p>
+                <p className="font-bold">{selectedRequest.assignedVendorName || 'Maintenance Contractor'}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground text-[10px] uppercase">Submission Date</p>
+                <p className="font-bold">{selectedRequest.date}</p>
               </div>
             </div>
 
             <div className="flex justify-end pt-4 border-t">
-              <Button variant="outline" onClick={() => setSelectedRequest(null)}>Close</Button>
+              <Button variant="outline" onClick={() => setSelectedRequest(null)} className="font-bold">Close</Button>
             </div>
           </div>
         )}
