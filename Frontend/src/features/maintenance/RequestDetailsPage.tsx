@@ -10,6 +10,8 @@ import { RequestPriorityBadge } from '../../components/MaintenanceComponents';
 import { StatusBadge } from '../../components/StatusBadge';
 import { CheckCircle, AlertTriangle, User, Calendar, Clock, Lock, MessageSquare, Phone, Mail, Send } from 'lucide-react';
 
+import { getFormattedRequestNumber } from '../../utils/format';
+
 export const RequestDetailsPage: React.FC = () => {
   const { id } = useParams({ from: '/maintenance/requests/$id' });
   const navigate = useNavigate();
@@ -79,7 +81,7 @@ export const RequestDetailsPage: React.FC = () => {
   return (
     <div className="space-y-6 text-foreground max-w-4xl">
       <PageHeader
-        title={`Service Ticket Details - #${request.id.replace('sr-', '')}`}
+        title={`Service Ticket Details - ${getFormattedRequestNumber(request)}`}
         description="Verify service diagnostics, update statuses, or assign service contractors."
         breadcrumbs={[
           { label: 'Home', href: '/' },

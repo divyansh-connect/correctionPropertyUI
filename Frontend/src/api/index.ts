@@ -803,7 +803,11 @@ export const api = {
     getAll: async () => {
       try {
         const res: any = await apiClient.get('/service-requests');
-        return res.data || [];
+        const list = res.data || [];
+        return list.map((r: any, idx: number) => ({
+          ...r,
+          requestNumber: `#${idx + 1}`,
+        }));
       } catch (e) {
         return [];
       }

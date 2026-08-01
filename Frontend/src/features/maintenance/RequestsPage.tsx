@@ -13,6 +13,8 @@ import { StatusBadge } from '../../components/StatusBadge';
 import { Plus, Eye, Trash2, Download } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
 
+import { getFormattedRequestNumber } from '../../utils/format';
+
 export const RequestsPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -64,7 +66,7 @@ export const RequestsPage: React.FC = () => {
       id: 'id',
       cell: ({ row }) => (
         <span onClick={() => navigate({ to: `/maintenance/requests/${row.original.id}` })} className="font-bold text-primary hover:underline cursor-pointer">
-          #{row.original.id.replace('sr-', '')}
+          {getFormattedRequestNumber(row.original, row.index)}
         </span>
       ),
     },

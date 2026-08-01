@@ -13,6 +13,8 @@ import { RequestPriorityBadge } from '../../components/MaintenanceComponents';
 import { Eye } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
 
+import { getFormattedRequestNumber } from '../../utils/format';
+
 export const OwnerMaintenancePage: React.FC = () => {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
@@ -27,7 +29,7 @@ export const OwnerMaintenancePage: React.FC = () => {
   );
 
   const columns: ColumnDef<MaintenanceRequest>[] = [
-    { accessorKey: 'id', header: t('owner.maintenance.requestNo'), id: 'id', cell: ({ row }) => <span className="font-bold">#{row.original.id.replace('sr-', '')}</span> },
+    { accessorKey: 'id', header: t('owner.maintenance.requestNo'), id: 'id', cell: ({ row }) => <span className="font-bold">{getFormattedRequestNumber(row.original, row.index)}</span> },
     { accessorKey: 'title', header: t('owner.maintenance.subjectIssue'), id: 'title', cell: ({ row }) => <span className="font-bold">{row.original.title}</span> },
     { accessorKey: 'propertyName', header: t('owner.maintenance.locationProperty'), id: 'property' },
     { accessorKey: 'unitNumber', header: t('owner.maintenance.unit'), id: 'unit' },
