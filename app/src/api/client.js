@@ -1,10 +1,36 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
+import * as Linking from 'expo-linking';
 
 const getBaseUrl = () => {
-  const debuggerHost = Constants.expoConfig?.hostUri;
-  const ip = debuggerHost ? debuggerHost.split(':')[0] : (Platform.OS === 'android' ? '10.0.2.2' : 'localhost');
+  let ip = '';
+  
+  const debuggerHost = Constants.expoConfig?.hostUri || 
+                       Constants.manifest?.debuggerHost || 
+                       Constants.manifest2?.extra?.expoGo?.debuggerHost;
+                       
+  if (debuggerHost) {
+    ip = debuggerHost.split(':')[0];
+  }
+  
+  if (!ip || ip === 'localhost') {
+    try {
+      const url = Linking.createURL('/');
+      const match = url.match(/\/\/([^:/]+)/);
+      if (match && match[1]) {
+        ip = match[1];
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  if (!ip || ip === 'localhost') {
+    ip = Platform.OS === 'android' ? '10.0.2.2' : 'localhost';
+  }
+  
+  console.log('Resolved Backend IP:', ip);
   return `http://${ip}:5000/api/v1`;
 };
 
