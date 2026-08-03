@@ -6,7 +6,6 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
-  SafeAreaView,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -37,14 +36,14 @@ export const LoginScreen = () => {
   };
 
   const mockUsers = [
-    { label: 'Super Admin', email: 'admin@zentrol.com' },
-    { label: 'Property Manager', email: 'manager@zentrol.com' },
-    { label: 'Owner', email: 'owner@zentrol.com' },
-    { label: 'Tenant', email: 'tenant@zentrol.com' },
+    { label: 'Super Admin', email: 'admin@apexpm.com' },
+    { label: 'Property Manager', email: 'manager@apexpm.com' },
+    { label: 'Owner', email: 'owner@apexpm.com' },
+    { label: 'Tenant', email: 'tenant@apexpm.com' },
   ];
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
@@ -116,7 +115,7 @@ export const LoginScreen = () => {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -124,6 +123,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#0f172a',
+    paddingTop: Platform.OS === 'ios' ? 48 : 24, // Clear notch on all screens
   },
   scrollContent: {
     flexGrow: 1,

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, ActivityIndicator, SafeAreaView } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useAuthStore } from './store/useStore';
 import { LoginScreen } from './screens/LoginScreen';
@@ -48,7 +48,7 @@ export default function App() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <StatusBar style="light" />
       
       <View style={styles.content}>
@@ -74,7 +74,7 @@ export default function App() {
           </Text>
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -91,10 +91,12 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    paddingTop: Platform.OS === 'ios' ? 48 : 24, // Responsive top padding to avoid notch
   },
   tabBar: {
     flexDirection: 'row',
-    height: 60,
+    height: Platform.OS === 'ios' ? 84 : 60, // Extra height on iOS to avoid home indicator overlap
+    paddingBottom: Platform.OS === 'ios' ? 24 : 0, // Padding for iOS bottom safe area
     backgroundColor: '#1e293b',
     borderTopWidth: 1,
     borderTopColor: '#334155',
