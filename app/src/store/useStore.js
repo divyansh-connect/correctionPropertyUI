@@ -3,22 +3,58 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import { apiClient } from '../api/client';
 
+// Safe storage wrapper to prevent native module crashes in Expo Go
+let localCache = {};
+const safeStorage = {
+  getItem: async (key) => {
+    try {
+      if (AsyncStorage && typeof AsyncStorage.getItem === 'function') {
+        const val = await AsyncStorage.getItem(key);
+        if (val !== null) return val;
+      }
+    } catch (e) {
+      console.log('AsyncStorage.getItem fallback:', e.message);
+    }
+    return localCache[key] || null;
+  },
+  setItem: async (key, value) => {
+    localCache[key] = value;
+    try {
+      if (AsyncStorage && typeof AsyncStorage.setItem === 'function') {
+        await AsyncStorage.setItem(key, value);
+      }
+    } catch (e) {
+      console.log('AsyncStorage.setItem fallback:', e.message);
+    }
+  },
+  removeItem: async (key) => {
+    delete localCache[key];
+    try {
+      if (AsyncStorage && typeof AsyncStorage.removeItem === 'function') {
+        await AsyncStorage.removeItem(key);
+      }
+    } catch (e) {
+      console.log('AsyncStorage.removeItem fallback:', e.message);
+    }
+  }
+};
+
 // --- Theme Store ---
 export const useThemeStore = create((set) => ({
   theme: 'light',
   toggleTheme: async () => {
     set((state) => {
       const newTheme = state.theme === 'light' ? 'dark' : 'light';
-      AsyncStorage.setItem('theme', newTheme);
+      safeStorage.setItem('theme', newTheme);
       return { theme: newTheme };
     });
   },
   setTheme: async (theme) => {
-    await AsyncStorage.setItem('theme', theme);
+    await safeStorage.setItem('theme', theme);
     set({ theme });
   },
   loadTheme: async () => {
-    const saved = await AsyncStorage.getItem('theme');
+    const saved = await safeStorage.getItem('theme');
     if (saved === 'light' || saved === 'dark') {
       set({ theme: saved });
     }
@@ -31,7 +67,7 @@ export const useAuthStore = create((set, get) => ({
   isAuthenticated: false,
   isLoaded: false,
   initializeAuth: async () => {
-    const userStr = await AsyncStorage.getItem('user');
+    const userStr = await safeStorage.getItem('user');
     if (userStr) {
       set({ user: JSON.parse(userStr), isAuthenticated: true, isLoaded: true });
     } else {
@@ -60,7 +96,7 @@ export const useAuthStore = create((set, get) => ({
         refreshToken: refreshToken,
       };
 
-      await AsyncStorage.setItem('user', JSON.stringify(loggedInUser));
+      await safeStorage.setItem('user', JSON.stringify(loggedInUser));
       set({ user: loggedInUser, isAuthenticated: true });
       return true;
     } catch (e) {
@@ -69,12 +105,12 @@ export const useAuthStore = create((set, get) => ({
     }
   },
   logout: async () => {
-    await AsyncStorage.removeItem('user');
+    await safeStorage.removeItem('user');
     set({ user: null, isAuthenticated: false });
   },
   refreshAccessToken: async () => {
     try {
-      const userStr = await AsyncStorage.getItem('user');
+      const userStr = await safeStorage.getItem('user');
       if (!userStr) return false;
       const userData = JSON.parse(userStr);
       if (!userData.refreshToken) return false;
@@ -94,7 +130,7 @@ export const useAuthStore = create((set, get) => ({
       const newToken = resData.data.accessToken;
 
       const updatedUser = { ...userData, token: newToken };
-      await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+      await safeStorage.setItem('user', JSON.stringify(updatedUser));
       set({ user: updatedUser });
       return true;
     } catch {

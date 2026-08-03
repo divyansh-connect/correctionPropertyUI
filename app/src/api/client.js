@@ -3,7 +3,49 @@ import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import * as Linking from 'expo-linking';
 
+// Safe storage wrapper to prevent native module crashes in Expo Go
+let localCache = {};
+const safeStorage = {
+  getItem: async (key) => {
+    try {
+      if (AsyncStorage && typeof AsyncStorage.getItem === 'function') {
+        const val = await AsyncStorage.getItem(key);
+        if (val !== null) return val;
+      }
+    } catch (e) {
+      console.log('AsyncStorage.getItem fallback:', e.message);
+    }
+    return localCache[key] || null;
+  },
+  setItem: async (key, value) => {
+    localCache[key] = value;
+    try {
+      if (AsyncStorage && typeof AsyncStorage.setItem === 'function') {
+        await AsyncStorage.setItem(key, value);
+      }
+    } catch (e) {
+      console.log('AsyncStorage.setItem fallback:', e.message);
+    }
+  },
+  removeItem: async (key) => {
+    delete localCache[key];
+    try {
+      if (AsyncStorage && typeof AsyncStorage.removeItem === 'function') {
+        await AsyncStorage.removeItem(key);
+      }
+    } catch (e) {
+      console.log('AsyncStorage.removeItem fallback:', e.message);
+    }
+  }
+};
+
 const getBaseUrl = () => {
+  // If EXPO_PUBLIC_API_URL env is set (e.g. live railway url), use it directly
+  if (process.env.EXPO_PUBLIC_API_URL) {
+    console.log('Using Environment API URL:', process.env.EXPO_PUBLIC_API_URL);
+    return process.env.EXPO_PUBLIC_API_URL;
+  }
+
   let ip = '';
   
   const debuggerHost = Constants.expoConfig?.hostUri || 
@@ -62,7 +104,7 @@ async function handleUnauthorized(logoutFn, refreshFn) {
 
 export const apiClient = {
   getHeaders: async () => {
-    const userStr = await AsyncStorage.getItem('user');
+    const userStr = await safeStorage.getItem('user');
     const token = userStr ? JSON.parse(userStr).token : null;
     return {
       'Content-Type': 'application/json',
@@ -71,7 +113,7 @@ export const apiClient = {
   },
 
   getAuthHeaders: async () => {
-    const userStr = await AsyncStorage.getItem('user');
+    const userStr = await safeStorage.getItem('user');
     const token = userStr ? JSON.parse(userStr).token : null;
     return token ? { 'Authorization': `Bearer ${token}` } : {};
   },
