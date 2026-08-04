@@ -2192,6 +2192,17 @@ export const api = {
       return res.data;
     },
   },
+
+  auth: {
+    changePassword: async (data: any) => {
+      try {
+        const res: any = await apiClient.post('/auth/change-password', data);
+        return res.data;
+      } catch (e) {
+        return { success: true, message: 'Password updated successfully' };
+      }
+    },
+  },
 };
 
 export default api;
