@@ -187,6 +187,8 @@ export interface MaintenanceRequest {
   preferredTime?: string;
   cost?: number;
   messages?: { id: string; senderName: string; role: 'Tenant' | 'Manager'; text: string; timestamp: string }[];
+  notes?: string;
+  resolutionNotes?: string;
 }
 
 export interface Vendor {
