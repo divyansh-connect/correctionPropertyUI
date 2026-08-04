@@ -9,6 +9,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  ImageBackground,
+  Image,
 } from 'react-native';
 import { useAuthStore } from '../store/useStore';
 
@@ -28,212 +30,260 @@ export const LoginScreen = () => {
     }
     setError('');
     setLoading(true);
-    const success = await login(targetEmail, password || 'admin123');
+    const success = await login(targetEmail, password || '123456');
     setLoading(false);
     if (!success) {
-      setError('Invalid credentials or network issue. Please check backend connection.');
+      setError('Login failed. Please check your credentials.');
     }
   };
 
   const mockUsers = [
-    { label: 'Super Admin', email: 'admin@apexpm.com' },
-    { label: 'Property Manager', email: 'manager@apexpm.com' },
-    { label: 'Owner', email: 'owner@apexpm.com' },
-    { label: 'Tenant', email: 'tenant@apexpm.com' },
+    { label: 'Super Admin', email: 'admin@apexpm.com', icon: '👑' },
+    { label: 'Manager', email: 'companyB@gmail.com', icon: '🏢' },
+    { label: 'Tenant', email: 'person1b@gmail.com', icon: '🔑' },
+    { label: 'Owner', email: 'owner1b@gmail.com', icon: '💼' },
+    { label: 'Staff', email: 'vendor1b@gmail.com', icon: '🛠️' },
+    { label: 'Collection', email: 'collection@apexpm.com', icon: '📊' },
   ];
 
   return (
-    <View style={styles.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1 }}
-      >
-        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-          <View style={styles.header}>
-            <Text style={styles.brandTitle}>Zentrol Property</Text>
-            <Text style={styles.subtitle}>Enter details to log in to your portal</Text>
-          </View>
+    <ImageBackground
+      source={require('../../assets/luxury_apartment_login_bg.png')}
+      style={styles.bgImage}
+      resizeMode="cover"
+    >
+      {/* Translucent Dark Overlay */}
+      <View style={styles.overlay}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.centerContainer}
+        >
+          <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
 
-          <View style={styles.card}>
-            {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Email Address</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="email@example.com"
-                value={email}
-                onChangeText={setEmail}
-                autoCapitalize="none"
-                keyboardType="email-address"
-                placeholderTextColor="#94a3b8"
-              />
+            {/* Centered App Header */}
+            <View style={styles.header}>
+              <View style={styles.logoBadge}>
+                <Image
+                  source={require('../../assets/luxury_apartment_login_bg.png')}
+                  style={styles.logoBadgeImage}
+                  resizeMode="cover"
+                />
+              </View>
+              <Text style={styles.brandTitle} allowFontScaling={false}>Zentrol Property</Text>
+              <Text style={styles.subtitle} allowFontScaling={false}>Management & Leasing Portal</Text>
             </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Password</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="••••••••"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                placeholderTextColor="#94a3b8"
-              />
+            {/* Centered Glassmorphism Login Card */}
+            <View style={styles.card}>
+              {error ? <Text style={styles.errorText} allowFontScaling={false}>{error}</Text> : null}
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label} allowFontScaling={false}>Email Address</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="admin@apexpm.com"
+                  value={email}
+                  onChangeText={setEmail}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  placeholderTextColor="#94a3b8"
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label} allowFontScaling={false}>Password</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="123456"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry
+                  placeholderTextColor="#94a3b8"
+                />
+              </View>
+
+              <TouchableOpacity
+                style={styles.button}
+                onPress={() => handleLogin()}
+                disabled={loading}
+                activeOpacity={0.8}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#ffffff" />
+                ) : (
+                  <Text style={styles.buttonText} allowFontScaling={false}>Log In</Text>
+                )}
+              </TouchableOpacity>
             </View>
 
-            <TouchableOpacity
-              style={styles.button}
-              onPress={() => handleLogin()}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#ffffff" />
-              ) : (
-                <Text style={styles.buttonText}>Log In</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.mockSection}>
-            <Text style={styles.mockSectionTitle}>Quick Demo Logins</Text>
-            <View style={styles.grid}>
-              {mockUsers.map((user) => (
-                <TouchableOpacity
-                  key={user.email}
-                  style={styles.mockButton}
-                  onPress={() => {
-                    setEmail(user.email);
-                    handleLogin(user.email);
-                  }}
-                >
-                  <Text style={styles.mockLabel}>{user.label}</Text>
-                  <Text style={styles.mockEmail}>{user.email}</Text>
-                </TouchableOpacity>
-              ))}
+            {/* Compact Side-by-Side Quick Demo Login Chips */}
+            <View style={styles.mockSection}>
+              <Text style={styles.mockSectionTitle} allowFontScaling={false}>⚡ QUICK DEMO LOGINS</Text>
+              <View style={styles.sideBySideGrid}>
+                {mockUsers.map((u) => (
+                  <TouchableOpacity
+                    key={u.email}
+                    style={styles.compactChip}
+                    onPress={() => {
+                      setEmail(u.email);
+                      setPassword('123456');
+                      handleLogin(u.email);
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.chipIcon}>{u.icon}</Text>
+                    <Text style={styles.chipLabel} allowFontScaling={false}>{u.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </View>
+
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </View>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  bgImage: {
     flex: 1,
-    backgroundColor: '#0f172a',
-    paddingTop: Platform.OS === 'ios' ? 48 : 24, // Clear notch on all screens
+    width: '100%',
+    height: '100%',
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.72)',
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
   },
   scrollContent: {
     flexGrow: 1,
-    padding: 24,
     justifyContent: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: Platform.OS === 'ios' ? 40 : 20,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 16,
+  },
+  logoBadge: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    borderWidth: 2,
+    borderColor: '#38bdf8',
+    overflow: 'hidden',
+    marginBottom: 8,
+    shadowColor: '#38bdf8',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  logoBadgeImage: {
+    width: '100%',
+    height: '100%',
   },
   brandTitle: {
-    fontSize: 32,
+    fontSize: 22,
     fontWeight: '800',
-    color: '#38bdf8',
+    color: '#f8fafc',
     letterSpacing: 0.5,
   },
   subtitle: {
-    fontSize: 14,
-    color: '#94a3b8',
-    marginTop: 8,
-    textAlign: 'center',
+    fontSize: 12,
+    color: '#38bdf8',
+    marginTop: 2,
+    fontWeight: '600',
   },
   card: {
-    backgroundColor: '#1e293b',
-    borderRadius: 16,
-    padding: 24,
+    backgroundColor: 'rgba(30, 41, 59, 0.82)',
+    borderRadius: 14,
+    padding: 16,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: 'rgba(255, 255, 255, 0.15)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
     elevation: 8,
   },
   errorText: {
     color: '#f43f5e',
-    fontSize: 13,
-    marginBottom: 16,
+    fontSize: 12,
+    marginBottom: 10,
     textAlign: 'center',
     fontWeight: '600',
   },
   inputGroup: {
-    marginBottom: 18,
+    marginBottom: 12,
   },
   label: {
     color: '#cbd5e1',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
-    marginBottom: 8,
+    marginBottom: 4,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
   input: {
-    backgroundColor: '#0f172a',
+    backgroundColor: 'rgba(15, 23, 42, 0.85)',
     borderWidth: 1,
     borderColor: '#334155',
     borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
     color: '#f8fafc',
-    fontSize: 15,
+    fontSize: 13.5,
   },
   button: {
     backgroundColor: '#0284c7',
     borderRadius: 8,
-    paddingVertical: 14,
+    paddingVertical: 11,
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: 4,
   },
   buttonText: {
     color: '#ffffff',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '700',
   },
   mockSection: {
-    marginTop: 36,
+    marginTop: 16,
+    alignItems: 'center',
   },
   mockSectionTitle: {
     color: '#94a3b8',
-    fontSize: 13,
+    fontSize: 10.5,
     fontWeight: '700',
-    textTransform: 'uppercase',
-    textAlign: 'center',
-    marginBottom: 16,
     letterSpacing: 1,
+    marginBottom: 8,
   },
-  grid: {
+  sideBySideGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+    gap: 6,
   },
-  mockButton: {
-    width: '48%',
-    backgroundColor: '#1e293b',
+  compactChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(30, 41, 59, 0.85)',
     borderWidth: 1,
     borderColor: '#334155',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
-    alignItems: 'center',
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    gap: 4,
   },
-  mockLabel: {
-    color: '#38bdf8',
-    fontWeight: '700',
+  chipIcon: {
     fontSize: 13,
   },
-  mockEmail: {
-    color: '#64748b',
-    fontSize: 10,
-    marginTop: 4,
-    textAlign: 'center',
+  chipLabel: {
+    color: '#38bdf8',
+    fontSize: 11.5,
+    fontWeight: '700',
   },
 });

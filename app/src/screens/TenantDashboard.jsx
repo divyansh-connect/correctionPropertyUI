@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -6,40 +6,72 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
+  ActivityIndicator,
   Alert,
   Modal,
 } from 'react-native';
+import apiClient from '../api/client';
 import { useAuthStore } from '../store/useStore';
 
 export const TenantDashboard = () => {
-  const { user } = useAuthStore();
-  const [balance, setBalance] = useState(1850.00);
-  const [tickets, setTickets] = useState([
-    { id: 'wo-1', title: 'AC Filter Replacement', status: 'In Progress', date: 'Jul 28, 2026' }
-  ]);
-  const [docs, setDocs] = useState([
-    { name: 'Lease_Agreement_Signed.pdf', category: 'Rental Agreement', size: '3.2 MB' }
-  ]);
+  const { user, logout, refreshAccessToken } = useAuthStore();
+  const [loading, setLoading] = useState(true);
+  const [tenantData, setTenantData] = useState({
+    name: 'person 1',
+    unitName: 'property 1 — Unit room 1b',
+    balance: 1000,
+    outstandingBalance: 0,
+    activeVisitors: 0,
+    packagesWaiting: 0,
+    dueDate: '2027-08-01',
+    leaseExpiration: '2027-08-01',
+  });
 
   // Modals visibility
   const [payModalVisible, setPayModalVisible] = useState(false);
   const [ticketModalVisible, setTicketModalVisible] = useState(false);
-  const [uploadModalVisible, setUploadModalVisible] = useState(false);
+  const [contactModalVisible, setContactModalVisible] = useState(false);
+  const [leaseModalVisible, setLeaseModalVisible] = useState(false);
 
-  // Ticket Form
+  // Forms
   const [ticketTitle, setTicketTitle] = useState('');
   const [ticketDesc, setTicketDesc] = useState('');
+  const [messageText, setMessageText] = useState('');
 
-  // Upload Form
-  const [fileName, setFileName] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('Rental Agreement');
-  const [customCategory, setCustomCategory] = useState('');
+  const fetchLiveTenantDashboard = async () => {
+    try {
+      setLoading(true);
+      const res = await apiClient.get('/tenants', logout, refreshAccessToken);
+      if (res && res.data && Array.isArray(res.data) && res.data.length > 0) {
+        const item = res.data[0];
+        setTenantData({
+          name: item.name || `${item.firstName || ''} ${item.lastName || ''}`.trim() || 'person 1',
+          unitName: `${item.property?.name || 'property 1'} — Unit ${item.unit?.unitNumber || 'room 1b'}`,
+          balance: item.unit?.rentAmount || item.lease?.rentAmount || 1000,
+          outstandingBalance: 0,
+          activeVisitors: 0,
+          packagesWaiting: 0,
+          dueDate: '2027-08-01',
+          leaseExpiration: item.lease?.endDate ? item.lease.endDate.split('T')[0] : '2027-08-01',
+        });
+        return;
+      }
+    } catch (e) {
+      console.log('Error fetching live tenant dashboard:', e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLiveTenantDashboard();
+  }, []);
 
   const handlePayRent = () => {
-    if (balance <= 0) return;
-    setBalance(0);
+    if (tenantData.balance <= 0) return;
+    setTenantData((prev) => ({ ...prev, balance: 0 }));
     setPayModalVisible(false);
-    Alert.alert('Payment Successful', 'Thank you! Your rent payment has been processed.');
+    Alert.alert('Payment Successful', `Thank you! Your rent payment of $${tenantData.balance.toLocaleString()} has been processed.`);
   };
 
   const handleCreateTicket = () => {
@@ -47,232 +79,205 @@ export const TenantDashboard = () => {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
-    const newTicket = {
-      id: `wo-${Date.now()}`,
-      title: ticketTitle,
-      status: 'Open',
-      date: 'Just now'
-    };
-    setTickets([newTicket, ...tickets]);
     setTicketModalVisible(false);
     setTicketTitle('');
     setTicketDesc('');
-    Alert.alert('Success', 'Maintenance ticket submitted successfully.');
+    Alert.alert('Success', 'Repair request submitted to management.');
   };
 
-  const handleSimulatedUpload = () => {
-    const fileSizes = [1.5, 2.7, 4.9, 5.8, 0.9];
-    const chosenSize = fileSizes[Math.floor(Math.random() * fileSizes.length)];
-
-    if (chosenSize > 5) {
-      Alert.alert('Upload Failed', `File size is ${chosenSize}MB. Maximum limit is 5MB.`);
-      return;
-    }
-
-    const categoryText = selectedCategory === 'Other' ? customCategory : selectedCategory;
-    if (!categoryText) {
-      Alert.alert('Error', 'Please specify custom category name');
-      return;
-    }
-
-    const newDoc = {
-      name: fileName || `Tenant_Doc_${Date.now().toString().slice(-4)}.pdf`,
-      category: categoryText,
-      size: `${chosenSize} MB`
-    };
-
-    setDocs([newDoc, ...docs]);
-    setUploadModalVisible(false);
-    setFileName('');
-    setCustomCategory('');
-    Alert.alert('Success', `Uploaded document under category "${categoryText}"`);
+  const handleSendMessage = () => {
+    if (!messageText) return;
+    setContactModalVisible(false);
+    setMessageText('');
+    Alert.alert('Message Sent', 'Your message has been sent to Property Management.');
   };
 
-  const categories = [
-    'Rental Agreement',
-    'Identity Proof (Govt ID)',
-    'Proof of Income',
-    'Utility Bills',
-    'Renter\'s Insurance',
-    'Other'
-  ];
+  if (loading) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="#38bdf8" />
+        <Text style={styles.loadingText} allowFontScaling={false}>Loading Live Tenant Portal...</Text>
+      </View>
+    );
+  }
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+      {/* Header matching screenshot */}
       <View style={styles.header}>
-        <Text style={styles.title}>Tenant Portal</Text>
-        <Text style={styles.welcome}>Welcome home, {user?.name}</Text>
+        <Text style={styles.title} allowFontScaling={false}>Resident Dashboard</Text>
+        <Text style={styles.subtitle} allowFontScaling={false}>
+          Verify monthly rent balances, lease expiration milestones, packages arrivals, and maintenance dispatches.
+        </Text>
       </View>
 
-      {/* Balance Card */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Outstanding Rent</Text>
-        {balance === 0 ? (
-          <View style={styles.zeroBalanceRow}>
-            <View style={styles.successBadge}>
-              <Text style={styles.successBadgeText}>✓ No Balance Due</Text>
-            </View>
-            <Text style={styles.balanceVal}>$0.00</Text>
-          </View>
-        ) : (
-          <View style={styles.dueBalanceRow}>
-            <Text style={styles.balanceVal}>${balance.toFixed(2)}</Text>
-            <Text style={styles.dueLabel}>Due: August 1, 2026</Text>
-          </View>
-        )}
-
-        {balance === 0 ? (
-          <TouchableOpacity style={[styles.payButton, styles.payButtonDisabled]} disabled>
-            <Text style={styles.payButtonDisabledText}>No Balance Due</Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity style={styles.payButton} onPress={() => setPayModalVisible(true)}>
-            <Text style={styles.payButtonText}>Pay Rent Online</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {/* Maintenance Tickets */}
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Maintenance Tickets</Text>
-        <TouchableOpacity style={styles.addButton} onPress={() => setTicketModalVisible(true)}>
-          <Text style={styles.addButtonText}>+ New Request</Text>
+      {/* Quick Action Buttons matching screenshot */}
+      <View style={styles.quickActionsBar}>
+        <TouchableOpacity style={styles.actionBtnPrimary} onPress={() => setPayModalVisible(true)}>
+          <Text style={styles.actionBtnPrimaryText} allowFontScaling={false}>💳 Pay Rent</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.actionBtnOutline} onPress={() => setTicketModalVisible(true)}>
+          <Text style={styles.actionBtnOutlineText} allowFontScaling={false}>🔧 Submit Repair Request</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.actionBtnOutline} onPress={() => setContactModalVisible(true)}>
+          <Text style={styles.actionBtnOutlineText} allowFontScaling={false}>💬 Contact Management</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.actionBtnOutline} onPress={() => setLeaseModalVisible(true)}>
+          <Text style={styles.actionBtnOutlineText} allowFontScaling={false}>📖 View Lease Terms</Text>
         </TouchableOpacity>
       </View>
 
-      {tickets.map((t) => (
-        <View key={t.id} style={styles.ticketCard}>
-          <View style={styles.ticketInfo}>
-            <Text style={styles.ticketTitleText}>{t.title}</Text>
-            <Text style={styles.ticketDate}>{t.date}</Text>
-          </View>
-          <View style={[styles.statusBadge, t.status === 'Open' ? styles.badgeOpen : styles.badgeProgress]}>
-            <Text style={styles.statusText}>{t.status}</Text>
-          </View>
+      {/* Metric Cards Grid matching screenshot */}
+      <View style={styles.metricGrid}>
+        <View style={styles.metricCard}>
+          <Text style={styles.metricLabel} allowFontScaling={false}>CURRENT RENT DUE</Text>
+          <Text style={[styles.metricVal, { color: '#38bdf8' }]} allowFontScaling={false}>
+            ${tenantData.balance.toLocaleString()}
+          </Text>
+          <Text style={styles.metricSub} allowFontScaling={false}>Due Date: {tenantData.dueDate}</Text>
         </View>
-      ))}
 
-      {/* Tenant Documents */}
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>My Documents</Text>
-        <TouchableOpacity style={styles.addButton} onPress={() => setUploadModalVisible(true)}>
-          <Text style={styles.addButtonText}>Upload</Text>
-        </TouchableOpacity>
+        <View style={styles.metricCard}>
+          <Text style={styles.metricLabel} allowFontScaling={false}>OUTSTANDING BALANCE</Text>
+          <Text style={[styles.metricVal, { color: '#10b981' }]} allowFontScaling={false}>
+            ${tenantData.outstandingBalance}
+          </Text>
+          <Text style={styles.metricSub} allowFontScaling={false}>Account status: Paid in Full</Text>
+        </View>
       </View>
 
-      {docs.map((d, index) => (
-        <View key={index} style={styles.docCard}>
-          <View>
-            <Text style={styles.docName}>{d.name}</Text>
-            <Text style={styles.docCategory}>{d.category}</Text>
-          </View>
-          <Text style={styles.docSize}>{d.size}</Text>
+      <View style={styles.metricGrid}>
+        <View style={styles.metricCard}>
+          <Text style={styles.metricLabel} allowFontScaling={false}>ACTIVE VISITOR PASSES</Text>
+          <Text style={[styles.metricVal, { color: '#818cf8' }]} allowFontScaling={false}>
+            {tenantData.activeVisitors}
+          </Text>
+          <Text style={styles.metricSub} allowFontScaling={false}>Registered guests logs</Text>
         </View>
-      ))}
 
-      <View style={{ height: 40 }} />
+        <View style={styles.metricCard}>
+          <Text style={styles.metricLabel} allowFontScaling={false}>WAITING PACKAGES</Text>
+          <Text style={[styles.metricVal, { color: '#f59e0b' }]} allowFontScaling={false}>
+            {tenantData.packagesWaiting}
+          </Text>
+          <Text style={styles.metricSub} allowFontScaling={false}>Awaiting pickup in parcel locker</Text>
+        </View>
+      </View>
+
+      {/* Lease Renewal Banner matching screenshot */}
+      <View style={styles.leaseRenewalBanner}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.leaseBannerTitle} allowFontScaling={false}>ACTIVE LEASE RENEWAL OPTION</Text>
+          <Text style={styles.leaseBannerSub} allowFontScaling={false}>
+            Your lease expires on {tenantData.leaseExpiration}. Lock in your rate for next year.
+          </Text>
+        </View>
+        <TouchableOpacity style={styles.reviewBtn} onPress={() => setLeaseModalVisible(true)}>
+          <Text style={styles.reviewBtnText} allowFontScaling={false}>REVIEW RENEWAL</Text>
+        </TouchableOpacity>
+      </View>
 
       {/* Pay Rent Modal */}
       <Modal visible={payModalVisible} animationType="slide" transparent>
         <View style={styles.modalBg}>
           <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Confirm Rent Payment</Text>
-            <Text style={styles.confirmText}>
-              Are you sure you want to pay the outstanding balance of ${balance.toFixed(2)} using your saved payment method?
+            <Text style={styles.modalTitle} allowFontScaling={false}>Confirm Rent Payment</Text>
+            <Text style={styles.confirmText} allowFontScaling={false}>
+              Are you sure you want to pay the outstanding balance of ${tenantData.balance.toLocaleString()} online?
             </Text>
             <View style={styles.modalButtons}>
               <TouchableOpacity style={[styles.modalButton, styles.cancelBtn]} onPress={() => setPayModalVisible(false)}>
-                <Text style={styles.cancelBtnText}>Cancel</Text>
+                <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.modalButton, styles.submitBtn]} onPress={handlePayRent}>
-                <Text style={styles.submitBtnText}>Confirm Pay</Text>
+                <Text style={styles.submitBtnText} allowFontScaling={false}>Confirm Pay</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
 
-      {/* Maintenance Request Modal */}
+      {/* Submit Repair Request Modal */}
       <Modal visible={ticketModalVisible} animationType="slide" transparent>
         <View style={styles.modalBg}>
           <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>New Maintenance Ticket</Text>
-
+            <Text style={styles.modalTitle} allowFontScaling={false}>Submit Repair Request</Text>
             <TextInput
               style={styles.input}
-              placeholder="Issue Subject (e.g. AC leaky)"
+              placeholder="Issue Subject"
               placeholderTextColor="#94a3b8"
               value={ticketTitle}
               onChangeText={setTicketTitle}
             />
             <TextInput
-              style={[styles.input, { height: 100, textAlignVertical: 'top' }]}
-              placeholder="Detailed description of the issue..."
+              style={[styles.input, { height: 90, textAlignVertical: 'top' }]}
+              placeholder="Detailed description of repair issue..."
               placeholderTextColor="#94a3b8"
               multiline
               value={ticketDesc}
               onChangeText={setTicketDesc}
             />
-
             <View style={styles.modalButtons}>
               <TouchableOpacity style={[styles.modalButton, styles.cancelBtn]} onPress={() => setTicketModalVisible(false)}>
-                <Text style={styles.cancelBtnText}>Cancel</Text>
+                <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.modalButton, styles.submitBtn]} onPress={handleCreateTicket}>
-                <Text style={styles.submitBtnText}>Submit</Text>
+                <Text style={styles.submitBtnText} allowFontScaling={false}>Submit Repair</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
 
-      {/* Upload Document Modal */}
-      <Modal visible={uploadModalVisible} animationType="slide" transparent>
+      {/* Contact Management Modal */}
+      <Modal visible={contactModalVisible} animationType="slide" transparent>
         <View style={styles.modalBg}>
           <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Upload Tenant Document</Text>
-
+            <Text style={styles.modalTitle} allowFontScaling={false}>Contact Management</Text>
             <TextInput
-              style={styles.input}
-              placeholder="Filename"
+              style={[styles.input, { height: 100, textAlignVertical: 'top' }]}
+              placeholder="Type message to Property Manager..."
               placeholderTextColor="#94a3b8"
-              value={fileName}
-              onChangeText={setFileName}
+              multiline
+              value={messageText}
+              onChangeText={setMessageText}
             />
-
-            <Text style={styles.selectLabel}>Select Category:</Text>
-            <View style={styles.catGrid}>
-              {categories.map((c) => (
-                <TouchableOpacity
-                  key={c}
-                  style={[styles.catOption, selectedCategory === c && styles.catOptionActive]}
-                  onPress={() => setSelectedCategory(c)}
-                >
-                  <Text style={[styles.catLabel, selectedCategory === c && styles.catLabelActive]}>
-                    {c}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            {selectedCategory === 'Other' && (
-              <TextInput
-                style={styles.input}
-                placeholder="Enter custom category name"
-                placeholderTextColor="#94a3b8"
-                value={customCategory}
-                onChangeText={setCustomCategory}
-              />
-            )}
-
             <View style={styles.modalButtons}>
-              <TouchableOpacity style={[styles.modalButton, styles.cancelBtn]} onPress={() => setUploadModalVisible(false)}>
-                <Text style={styles.cancelBtnText}>Cancel</Text>
+              <TouchableOpacity style={[styles.modalButton, styles.cancelBtn]} onPress={() => setContactModalVisible(false)}>
+                <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.modalButton, styles.submitBtn]} onPress={handleSimulatedUpload}>
-                <Text style={styles.submitBtnText}>Upload</Text>
+              <TouchableOpacity style={[styles.modalButton, styles.submitBtn]} onPress={handleSendMessage}>
+                <Text style={styles.submitBtnText} allowFontScaling={false}>Send Message</Text>
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* View Lease Terms Modal */}
+      <Modal visible={leaseModalVisible} animationType="slide" transparent>
+        <View style={styles.modalBg}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle} allowFontScaling={false}>Active Lease Terms</Text>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel} allowFontScaling={false}>Unit:</Text>
+              <Text style={styles.detailVal} allowFontScaling={false}>{tenantData.unitName}</Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel} allowFontScaling={false}>Monthly Rent:</Text>
+              <Text style={styles.detailVal} allowFontScaling={false}>${tenantData.balance.toLocaleString()} / month</Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel} allowFontScaling={false}>Lease Start:</Text>
+              <Text style={styles.detailVal} allowFontScaling={false}>2026-08-01</Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel} allowFontScaling={false}>Lease Expiration:</Text>
+              <Text style={styles.detailVal} allowFontScaling={false}>{tenantData.leaseExpiration}</Text>
+            </View>
+            <TouchableOpacity style={styles.closeBtn} onPress={() => setLeaseModalVisible(false)}>
+              <Text style={styles.closeBtnText} allowFontScaling={false}>Close</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -281,277 +286,86 @@ export const TenantDashboard = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0f172a',
-    padding: 16,
-  },
-  header: {
-    marginBottom: 20,
-    marginTop: 10,
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: '800',
-    color: '#10b981',
-  },
-  welcome: {
-    fontSize: 14,
-    color: '#94a3b8',
-    marginTop: 4,
-  },
-  card: {
-    backgroundColor: '#1e293b',
-    borderWidth: 1,
-    borderColor: '#334155',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 24,
-  },
-  cardTitle: {
-    fontSize: 13,
-    color: '#94a3b8',
-    fontWeight: '600',
-    textTransform: 'uppercase',
-  },
-  zeroBalanceRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginVertical: 12,
-  },
-  dueBalanceRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'baseline',
-    marginVertical: 12,
-  },
-  successBadge: {
-    backgroundColor: '#10b98120',
-    borderColor: '#10b98140',
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  successBadgeText: {
-    color: '#10b981',
-    fontWeight: '700',
-    fontSize: 12,
-  },
-  balanceVal: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#f8fafc',
-  },
-  dueLabel: {
-    color: '#f43f5e',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  payButton: {
-    backgroundColor: '#10b981',
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  payButtonText: {
-    color: '#ffffff',
-    fontWeight: '700',
-    fontSize: 14,
-  },
-  payButtonDisabled: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: '#334155',
-  },
-  payButtonDisabledText: {
-    color: '#475569',
-    fontWeight: '600',
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-    marginTop: 12,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#cbd5e1',
-  },
-  addButton: {
-    backgroundColor: '#0284c7',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-  },
-  addButtonText: {
-    color: '#ffffff',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  ticketCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#1e293b',
-    borderWidth: 1,
-    borderColor: '#334155',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-  },
-  ticketInfo: {
-    flex: 1,
-  },
-  ticketTitleText: {
-    color: '#f8fafc',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  ticketDate: {
-    color: '#64748b',
-    fontSize: 11,
-    marginTop: 4,
-  },
-  statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  badgeOpen: {
-    backgroundColor: '#3b82f620',
-  },
-  badgeProgress: {
-    backgroundColor: '#f59e0b20',
-  },
-  statusText: {
-    color: '#cbd5e1',
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  docCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#1e293b',
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 8,
-    borderLeftWidth: 3,
-    borderLeftColor: '#10b981',
-  },
-  docName: {
-    color: '#f8fafc',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  docCategory: {
-    color: '#94a3b8',
-    fontSize: 11,
-    marginTop: 2,
-  },
-  docSize: {
-    color: '#64748b',
-    fontSize: 11,
-  },
-  modalBg: {
-    flex: 1,
-    backgroundColor: '#000000aa',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  modalCard: {
-    backgroundColor: '#1e293b',
-    borderRadius: 16,
-    padding: 24,
-    borderWidth: 1,
-    borderColor: '#334155',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#10b981',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  confirmText: {
-    color: '#cbd5e1',
-    fontSize: 14,
-    textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 20,
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 10,
-  },
-  modalButton: {
-    width: '47%',
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  cancelBtn: {
-    backgroundColor: '#334155',
-  },
-  cancelBtnText: {
-    color: '#cbd5e1',
-    fontWeight: '600',
-  },
-  submitBtn: {
-    backgroundColor: '#10b981',
-  },
-  submitBtnText: {
-    color: '#ffffff',
-    fontWeight: '700',
-  },
-  input: {
-    backgroundColor: '#0f172a',
-    borderWidth: 1,
-    borderColor: '#334155',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    color: '#f8fafc',
-    marginBottom: 12,
-  },
-  selectLabel: {
-    color: '#cbd5e1',
-    fontSize: 13,
-    fontWeight: '600',
-    marginBottom: 10,
-  },
-  catGrid: {
+  container: { flex: 1, backgroundColor: '#0f172a' },
+  scrollContent: { padding: 16 },
+  center: { flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center' },
+  loadingText: { color: '#94a3b8', marginTop: 8 },
+  header: { marginBottom: 14 },
+  title: { fontSize: 24, fontWeight: '800', color: '#f8fafc' },
+  subtitle: { fontSize: 12, color: '#94a3b8', marginTop: 4, lineHeight: 16 },
+
+  quickActionsBar: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginBottom: 14,
-  },
-  catOption: {
-    width: '48%',
-    backgroundColor: '#0f172a',
-    borderRadius: 6,
-    padding: 8,
-    marginBottom: 8,
+    gap: 8,
+    marginBottom: 16,
+    backgroundColor: '#1e293b',
+    padding: 10,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: '#334155',
+  },
+  actionBtnPrimary: {
+    backgroundColor: '#0284c7',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
     alignItems: 'center',
   },
-  catOptionActive: {
-    borderColor: '#10b981',
-    backgroundColor: '#10b98115',
+  actionBtnPrimaryText: { color: '#ffffff', fontSize: 12, fontWeight: '700' },
+  actionBtnOutline: {
+    backgroundColor: '#0f172a',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#334155',
   },
-  catLabel: {
-    color: '#94a3b8',
-    fontSize: 11,
+  actionBtnOutlineText: { color: '#cbd5e1', fontSize: 12, fontWeight: '600' },
+
+  metricGrid: { flexDirection: 'row', gap: 10, marginBottom: 10 },
+  metricCard: {
+    flex: 1,
+    backgroundColor: '#1e293b',
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#334155',
   },
-  catLabelActive: {
-    color: '#10b981',
-    fontWeight: '600',
+  metricLabel: { fontSize: 9.5, color: '#94a3b8', fontWeight: '700', letterSpacing: 0.5 },
+  metricVal: { fontSize: 22, fontWeight: '800', marginVertical: 4 },
+  metricSub: { fontSize: 10.5, color: '#94a3b8' },
+
+  leaseRenewalBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1e293b',
+    borderRadius: 12,
+    padding: 14,
+    marginVertical: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.3)',
   },
+  leaseBannerTitle: { fontSize: 11, color: '#38bdf8', fontWeight: '800', letterSpacing: 0.5 },
+  leaseBannerSub: { fontSize: 11, color: '#94a3b8', marginTop: 2 },
+  reviewBtn: { backgroundColor: '#38bdf8', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 6 },
+  reviewBtnText: { color: '#0f172a', fontSize: 10.5, fontWeight: '800' },
+
+  modalBg: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', padding: 20 },
+  modalCard: { backgroundColor: '#1e293b', borderRadius: 16, padding: 20, borderWidth: 1, borderColor: '#334155' },
+  modalTitle: { fontSize: 17, fontWeight: '800', color: '#38bdf8', marginBottom: 14, textAlign: 'center' },
+  confirmText: { color: '#cbd5e1', fontSize: 13, textAlign: 'center', lineHeight: 18, marginBottom: 16 },
+  modalButtons: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 },
+  modalButton: { width: '48%', paddingVertical: 10, borderRadius: 8, alignItems: 'center' },
+  cancelBtn: { backgroundColor: '#334155' },
+  cancelBtnText: { color: '#cbd5e1', fontWeight: '600' },
+  submitBtn: { backgroundColor: '#0284c7' },
+  submitBtnText: { color: '#ffffff', fontWeight: '700' },
+  input: { backgroundColor: '#0f172a', borderWidth: 1, borderColor: '#334155', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, color: '#f8fafc', marginBottom: 12 },
+  detailRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#334155' },
+  detailLabel: { color: '#94a3b8', fontSize: 13 },
+  detailVal: { color: '#f8fafc', fontSize: 13, fontWeight: '600' },
+  closeBtn: { backgroundColor: '#0284c7', borderRadius: 8, paddingVertical: 10, alignItems: 'center', marginTop: 16 },
+  closeBtnText: { color: '#ffffff', fontSize: 13, fontWeight: '700' },
 });

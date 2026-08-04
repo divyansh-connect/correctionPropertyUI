@@ -40,40 +40,8 @@ const safeStorage = {
 };
 
 const getBaseUrl = () => {
-  // If EXPO_PUBLIC_API_URL env is set (e.g. live railway url), use it directly
-  if (process.env.EXPO_PUBLIC_API_URL) {
-    console.log('Using Environment API URL:', process.env.EXPO_PUBLIC_API_URL);
-    return process.env.EXPO_PUBLIC_API_URL;
-  }
-
-  let ip = '';
-  
-  const debuggerHost = Constants.expoConfig?.hostUri || 
-                       Constants.manifest?.debuggerHost || 
-                       Constants.manifest2?.extra?.expoGo?.debuggerHost;
-                       
-  if (debuggerHost) {
-    ip = debuggerHost.split(':')[0];
-  }
-  
-  if (!ip || ip === 'localhost') {
-    try {
-      const url = Linking.createURL('/');
-      const match = url.match(/\/\/([^:/]+)/);
-      if (match && match[1]) {
-        ip = match[1];
-      }
-    } catch (e) {
-      // ignore
-    }
-  }
-
-  if (!ip || ip === 'localhost') {
-    ip = Platform.OS === 'android' ? '10.0.2.2' : 'localhost';
-  }
-  
-  console.log('Resolved Backend IP:', ip);
-  return `http://${ip}:5000/api/v1`;
+  // Use live production Railway backend URL matching Web App
+  return process.env.EXPO_PUBLIC_API_URL || 'https://doorloop-backend-production.up.railway.app/api/v1';
 };
 
 const BASE_URL = getBaseUrl();
@@ -87,11 +55,15 @@ async function handleUnauthorized(logoutFn, refreshFn) {
   }
 
   isRefreshing = true;
-  refreshPromise = refreshFn();
+  if (typeof refreshFn === 'function') {
+    refreshPromise = refreshFn();
+  } else {
+    refreshPromise = Promise.resolve(false);
+  }
 
   try {
     const success = await refreshPromise;
-    if (!success) {
+    if (!success && typeof logoutFn === 'function') {
       logoutFn();
       return false;
     }
@@ -118,113 +90,129 @@ export const apiClient = {
     return token ? { 'Authorization': `Bearer ${token}` } : {};
   },
 
-  handleResponseError: async (response) => {
-    const errData = await response.json().catch(() => ({}));
-    throw new Error(errData.message || 'API request failed');
-  },
-
   get: async (url, logoutFn, refreshFn) => {
-    const headers = await apiClient.getHeaders();
-    let response = await fetch(`${BASE_URL}${url}`, {
-      method: 'GET',
-      headers,
-    });
+    try {
+      const headers = await apiClient.getHeaders();
+      let response = await fetch(`${BASE_URL}${url}`, {
+        method: 'GET',
+        headers,
+      });
 
-    if (response.status === 401) {
-      const refreshed = await handleUnauthorized(logoutFn, refreshFn);
-      if (refreshed) {
-        const newHeaders = await apiClient.getHeaders();
-        response = await fetch(`${BASE_URL}${url}`, {
-          method: 'GET',
-          headers: newHeaders,
-        });
+      if (response.status === 401) {
+        const refreshed = await handleUnauthorized(logoutFn, refreshFn);
+        if (refreshed) {
+          const newHeaders = await apiClient.getHeaders();
+          response = await fetch(`${BASE_URL}${url}`, {
+            method: 'GET',
+            headers: newHeaders,
+          });
+        }
       }
-    }
 
-    if (!response.ok) {
-      await apiClient.handleResponseError(response);
+      if (!response.ok) {
+        return null;
+      }
+      return await response.json();
+    } catch (e) {
+      console.log(`GET ${url} error:`, e.message);
+      return null;
     }
-    return response.json();
   },
 
   post: async (url, data, logoutFn, refreshFn) => {
-    const isFormData = data instanceof FormData;
-    const headers = isFormData ? await apiClient.getAuthHeaders() : await apiClient.getHeaders();
+    try {
+      const isFormData = data instanceof FormData;
+      const headers = isFormData ? await apiClient.getAuthHeaders() : await apiClient.getHeaders();
 
-    let response = await fetch(`${BASE_URL}${url}`, {
-      method: 'POST',
-      headers,
-      body: isFormData ? data : JSON.stringify(data),
-    });
+      let response = await fetch(`${BASE_URL}${url}`, {
+        method: 'POST',
+        headers,
+        body: isFormData ? data : JSON.stringify(data),
+      });
 
-    if (response.status === 401) {
-      const refreshed = await handleUnauthorized(logoutFn, refreshFn);
-      if (refreshed) {
-        const newHeaders = isFormData ? await apiClient.getAuthHeaders() : await apiClient.getHeaders();
-        response = await fetch(`${BASE_URL}${url}`, {
-          method: 'POST',
-          headers: newHeaders,
-          body: isFormData ? data : JSON.stringify(data),
-        });
+      if (response.status === 401) {
+        const refreshed = await handleUnauthorized(logoutFn, refreshFn);
+        if (refreshed) {
+          const newHeaders = isFormData ? await apiClient.getAuthHeaders() : await apiClient.getHeaders();
+          response = await fetch(`${BASE_URL}${url}`, {
+            method: 'POST',
+            headers: newHeaders,
+            body: isFormData ? data : JSON.stringify(data),
+          });
+        }
       }
-    }
 
-    if (!response.ok) {
-      await apiClient.handleResponseError(response);
+      if (!response.ok) {
+        return null;
+      }
+      return await response.json();
+    } catch (e) {
+      console.log(`POST ${url} error:`, e.message);
+      return null;
     }
-    return response.json();
   },
 
   put: async (url, data, logoutFn, refreshFn) => {
-    const isFormData = data instanceof FormData;
-    const headers = isFormData ? await apiClient.getAuthHeaders() : await apiClient.getHeaders();
+    try {
+      const isFormData = data instanceof FormData;
+      const headers = isFormData ? await apiClient.getAuthHeaders() : await apiClient.getHeaders();
 
-    let response = await fetch(`${BASE_URL}${url}`, {
-      method: 'PUT',
-      headers,
-      body: isFormData ? data : data ? JSON.stringify(data) : undefined,
-    });
+      let response = await fetch(`${BASE_URL}${url}`, {
+        method: 'PUT',
+        headers,
+        body: isFormData ? data : data ? JSON.stringify(data) : undefined,
+      });
 
-    if (response.status === 401) {
-      const refreshed = await handleUnauthorized(logoutFn, refreshFn);
-      if (refreshed) {
-        const newHeaders = isFormData ? await apiClient.getAuthHeaders() : await apiClient.getHeaders();
-        response = await fetch(`${BASE_URL}${url}`, {
-          method: 'PUT',
-          headers: newHeaders,
-          body: isFormData ? data : data ? JSON.stringify(data) : undefined,
-        });
+      if (response.status === 401) {
+        const refreshed = await handleUnauthorized(logoutFn, refreshFn);
+        if (refreshed) {
+          const newHeaders = isFormData ? await apiClient.getAuthHeaders() : await apiClient.getHeaders();
+          response = await fetch(`${BASE_URL}${url}`, {
+            method: 'PUT',
+            headers: newHeaders,
+            body: isFormData ? data : data ? JSON.stringify(data) : undefined,
+          });
+        }
       }
-    }
 
-    if (!response.ok) {
-      await apiClient.handleResponseError(response);
+      if (!response.ok) {
+        return null;
+      }
+      return await response.json();
+    } catch (e) {
+      console.log(`PUT ${url} error:`, e.message);
+      return null;
     }
-    return response.json();
   },
 
   delete: async (url, logoutFn, refreshFn) => {
-    const headers = await apiClient.getHeaders();
-    let response = await fetch(`${BASE_URL}${url}`, {
-      method: 'DELETE',
-      headers,
-    });
+    try {
+      const headers = await apiClient.getHeaders();
+      let response = await fetch(`${BASE_URL}${url}`, {
+        method: 'DELETE',
+        headers,
+      });
 
-    if (response.status === 401) {
-      const refreshed = await handleUnauthorized(logoutFn, refreshFn);
-      if (refreshed) {
-        const newHeaders = await apiClient.getHeaders();
-        response = await fetch(`${BASE_URL}${url}`, {
-          method: 'DELETE',
-          headers: newHeaders,
-        });
+      if (response.status === 401) {
+        const refreshed = await handleUnauthorized(logoutFn, refreshFn);
+        if (refreshed) {
+          const newHeaders = await apiClient.getHeaders();
+          response = await fetch(`${BASE_URL}${url}`, {
+            method: 'DELETE',
+            headers: newHeaders,
+          });
+        }
       }
-    }
 
-    if (!response.ok) {
-      await apiClient.handleResponseError(response);
+      if (!response.ok) {
+        return null;
+      }
+      return await response.json();
+    } catch (e) {
+      console.log(`DELETE ${url} error:`, e.message);
+      return null;
     }
-    return response.json();
   },
 };
+
 export default apiClient;
