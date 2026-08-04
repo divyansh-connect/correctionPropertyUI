@@ -34,6 +34,7 @@ import { DistributionsScreen } from './screens/DistributionsScreen';
 import { ReportsScreen } from './screens/ReportsScreen';
 import { InvoicesScreen } from './screens/InvoicesScreen';
 import { TenantLedgerScreen } from './screens/TenantLedgerScreen';
+import { TenantServicesScreen } from './screens/TenantServicesScreen';
 
 export default function App() {
   const { user, isAuthenticated, isLoaded, initializeAuth } = useAuthStore();
@@ -134,8 +135,8 @@ export default function App() {
         { id: 'dashboard', label: 'Dashboard', icon: 'grid-outline', activeIcon: 'grid' },
         { id: 'lease', label: 'Lease', icon: 'document-text-outline', activeIcon: 'document-text' },
         { id: 'rent', label: 'Payments', icon: 'card-outline', activeIcon: 'card' },
-        { id: 'maintenance', label: 'Repairs', icon: 'hammer-outline', activeIcon: 'hammer' },
-        { id: 'more', label: 'All', icon: 'menu-outline', activeIcon: 'menu' },
+        { id: 'messages', label: 'Messages', icon: 'chatbubbles-outline', activeIcon: 'chatbubbles' },
+        { id: 'more', label: 'Services', icon: 'apps-outline', activeIcon: 'apps' },
       ];
       break;
 
@@ -226,13 +227,27 @@ export default function App() {
         return renderDashboardByRole();
       case 'profile':
         return <ProfileScreen />;
+      case 'more':
+        return role === 'Tenant' ? (
+          <TenantServicesScreen 
+            onNavigate={(screenId) => {
+              if (screenId === 'logout') {
+                useAuthStore.getState().logout();
+              } else {
+                setActiveTab(screenId);
+              }
+            }} 
+          />
+        ) : (
+          renderDashboardByRole()
+        );
       default:
         return renderDashboardByRole();
     }
   };
 
   const handleTabPress = (tabId) => {
-    if (tabId === 'more') {
+    if (tabId === 'more' && role !== 'Tenant') {
       setDrawerVisible(true);
     } else {
       setActiveTab(tabId);

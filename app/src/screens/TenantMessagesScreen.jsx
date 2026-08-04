@@ -61,7 +61,7 @@ export const TenantMessagesScreen = () => {
   const isOwner = user?.role === 'Owner';
 
   const defaultContact = isOwner ? 'Property Manager' : 'Property Manager Office';
-  const [activeContact, setActiveContact] = useState(defaultContact);
+  const [activeContact, setActiveContact] = useState(null); // null means show conversation list
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -127,16 +127,16 @@ export const TenantMessagesScreen = () => {
 
   const contacts = isOwner
     ? [
-        { id: '1', name: 'Property Manager', icon: 'business-outline' },
-        { id: '2', name: 'Accountant', icon: 'book-outline' },
-        { id: '3', name: 'Leasing Lead', icon: 'key-outline' },
-        { id: '4', name: 'Resident Representative', icon: 'chatbubbles-outline' },
+        { id: '1', name: 'Property Manager', icon: 'business-outline', color: '#f59e0b' },
+        { id: '2', name: 'Accountant', icon: 'book-outline', color: '#38bdf8' },
+        { id: '3', name: 'Leasing Lead', icon: 'key-outline', color: '#10b981' },
+        { id: '4', name: 'Resident Representative', icon: 'chatbubbles-outline', color: '#ec4899' },
       ]
     : [
-        { id: '1', name: 'Property Manager Office', icon: 'business-outline' },
-        { id: '2', name: 'Leasing Office', icon: 'key-outline' },
-        { id: '3', name: 'Maintenance Team', icon: 'hammer-outline' },
-        { id: '4', name: 'Accounting Office', icon: 'book-outline' },
+        { id: '1', name: 'Property Manager Office', icon: 'business-outline', color: '#f59e0b' },
+        { id: '2', name: 'Leasing Office', icon: 'key-outline', color: '#38bdf8' },
+        { id: '3', name: 'Maintenance Team', icon: 'hammer-outline', color: '#10b981' },
+        { id: '4', name: 'Accounting Office', icon: 'book-outline', color: '#ec4899' },
       ];
 
   // Strictly call live Railway backend endpoint: GET /portal/owner/messages OR GET /messages
@@ -175,7 +175,7 @@ export const TenantMessagesScreen = () => {
   }, [user?.role]);
 
   const handleSendReply = async () => {
-    if (!inputText.trim()) return;
+    if (!inputText.trim() || !activeContact) return;
     const msgText = inputText.trim();
     const newMsg = {
       id: String(Date.now()),
@@ -260,61 +260,42 @@ export const TenantMessagesScreen = () => {
     );
   }
 
-  const currentMessages = chatHistory[activeContact] || [];
-
-  return (
-    <View style={styles.mainWrapper}>
-      {/* Page Header */}
-      <View style={styles.header}>
-        <View style={styles.titleRow}>
-          <Text style={styles.title} allowFontScaling={false}>
-            {isOwner ? 'Communications' : 'My Messages'}
-          </Text>
-
-          <AnimatedTouchable style={styles.composeBtn} onPress={() => setIsComposeOpen(true)}>
-            <Ionicons name="create-outline" size={15} color="#ffffff" style={{ marginRight: 4 }} />
-            <Text style={styles.composeBtnText} allowFontScaling={false}>New Message</Text>
-          </AnimatedTouchable>
-        </View>
-      </View>
-
-      {/* Horizontal Contacts Selector */}
-      <View style={{ maxHeight: 50, marginBottom: 12 }}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.contactScroll}>
-          {contacts.map((c) => {
-            const isSelected = activeContact === c.name;
-            return (
-              <TouchableOpacity
-                key={c.id}
-                style={[styles.contactChip, isSelected && styles.contactChipActive]}
-                onPress={() => setActiveContact(c.name)}
-              >
-                <Ionicons name={c.icon} size={14} color={isSelected ? '#ffffff' : '#cbd5e1'} style={{ marginRight: 4 }} />
-                <Text style={[styles.contactNameText, isSelected && styles.contactNameActive]} allowFontScaling={false}>
-                  {c.name}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-      </View>
-
-      {/* Active Contact Header */}
-      <View style={styles.threadHeader}>
-        <Ionicons name="chatbubbles-outline" size={15} color="#38bdf8" style={{ marginRight: 6 }} />
-        <Text style={styles.threadHeaderTitle} allowFontScaling={false}>Conversation: {activeContact}</Text>
-      </View>
-
-      {/* Chat Thread Messages List */}
-      <ScrollView
-        style={styles.threadScroll}
-        contentContainerStyle={{ padding: 14, paddingBottom: 20 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchMessages} tintColor="#38bdf8" />}
+  // SCREEN 1: Chat Detail View (Thread)
+  if (activeContact) {
+    const currentMessages = chatHistory[activeContact] || [];
+    return (
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.chatRoomContainer}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
-        <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
+        {/* Chat Room Header */}
+        <View style={styles.chatRoomHeader}>
+          <TouchableOpacity style={styles.backBtn} onPress={() => setActiveContact(null)}>
+            <Ionicons name="chevron-back" size={24} color="#38bdf8" />
+          </TouchableOpacity>
+          
+          <View style={styles.chatHeaderAvatar}>
+            <Text style={styles.chatHeaderAvatarText} allowFontScaling={false}>
+              {activeContact.charAt(0)}
+            </Text>
+          </View>
+
+          <View style={styles.chatHeaderInfo}>
+            <Text style={styles.chatHeaderTitle} allowFontScaling={false}>{activeContact}</Text>
+            <Text style={styles.chatHeaderSubtitle} allowFontScaling={false}>Online Support Thread</Text>
+          </View>
+        </View>
+
+        {/* Messages List */}
+        <ScrollView
+          style={styles.threadScroll}
+          contentContainerStyle={{ padding: 16, paddingBottom: 20 }}
+          showsVerticalScrollIndicator={true}
+        >
           {currentMessages.length === 0 ? (
             <View style={styles.emptyThreadCard}>
-              <Ionicons name="mail-unread-outline" size={40} color="#475569" style={{ marginBottom: 8 }} />
+              <Ionicons name="chatbox-ellipses-outline" size={40} color="#475569" style={{ marginBottom: 8 }} />
               <Text style={styles.emptyThreadText} allowFontScaling={false}>No messages recorded</Text>
             </View>
           ) : (
@@ -334,22 +315,86 @@ export const TenantMessagesScreen = () => {
               );
             })
           )}
+        </ScrollView>
+
+        {/* Input Bar */}
+        <View style={styles.replyBar}>
+          <TextInput
+            style={styles.replyInput}
+            placeholder={`Message ${activeContact}...`}
+            placeholderTextColor="#94a3b8"
+            value={inputText}
+            onChangeText={setInputText}
+          />
+          <TouchableOpacity style={styles.sendBtn} onPress={handleSendReply} activeOpacity={0.8}>
+            <Ionicons name="send" size={16} color="#ffffff" />
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    );
+  }
+
+  // SCREEN 2: Conversations List View
+  return (
+    <View style={styles.mainWrapper}>
+      {/* Page Header */}
+      <View style={styles.header}>
+        <View style={styles.titleRow}>
+          <Text style={styles.title} allowFontScaling={false}>Inbox</Text>
+          <AnimatedTouchable style={styles.composeBtn} onPress={() => setIsComposeOpen(true)}>
+            <Ionicons name="create-outline" size={16} color="#ffffff" style={{ marginRight: 4 }} />
+            <Text style={styles.composeBtnText} allowFontScaling={false}>New Message</Text>
+          </AnimatedTouchable>
+        </View>
+      </View>
+
+      {/* Conversations List */}
+      <ScrollView
+        style={styles.threadScroll}
+        contentContainerStyle={{ padding: 16, paddingBottom: 20 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchMessages} tintColor="#38bdf8" />}
+      >
+        <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
+          {contacts.map((contact) => {
+            const thread = chatHistory[contact.name] || [];
+            const lastMsg = thread[thread.length - 1];
+            const initials = contact.name.split(' ').map(n => n.charAt(0)).join('').substring(0, 2);
+
+            return (
+              <TouchableOpacity
+                key={contact.id}
+                style={styles.conversationItem}
+                onPress={() => setActiveContact(contact.name)}
+                activeOpacity={0.7}
+              >
+                {/* Circular Avatar */}
+                <View style={[styles.avatarBox, { backgroundColor: `${contact.color}15` }]}>
+                  <Text style={[styles.avatarText, { color: contact.color }]} allowFontScaling={false}>
+                    {initials}
+                  </Text>
+                </View>
+
+                {/* Info and Last Message Snippet */}
+                <View style={styles.convoInfo}>
+                  <View style={styles.convoHeaderRow}>
+                    <Text style={styles.convoName} allowFontScaling={false} numberOfLines={1}>
+                      {contact.name}
+                    </Text>
+                    <Text style={styles.convoTime} allowFontScaling={false}>
+                      {lastMsg ? lastMsg.time : ''}
+                    </Text>
+                  </View>
+                  <Text style={styles.convoSnippet} allowFontScaling={false} numberOfLines={1}>
+                    {lastMsg ? lastMsg.text : 'Tap to start conversation'}
+                  </Text>
+                </View>
+
+                <Ionicons name="chevron-forward" size={16} color="#475569" style={{ marginLeft: 8 }} />
+              </TouchableOpacity>
+            );
+          })}
         </Animated.View>
       </ScrollView>
-
-      {/* Reply Input Bar */}
-      <View style={styles.replyBar}>
-        <TextInput
-          style={styles.replyInput}
-          placeholder={`Message ${activeContact}...`}
-          placeholderTextColor="#94a3b8"
-          value={inputText}
-          onChangeText={setInputText}
-        />
-        <TouchableOpacity style={styles.sendBtn} onPress={handleSendReply} activeOpacity={0.8}>
-          <Text style={styles.sendBtnText} allowFontScaling={false}>Send</Text>
-        </TouchableOpacity>
-      </View>
 
       {/* MODAL: + New Message / Compose */}
       <Modal visible={isComposeOpen} animationType="slide" transparent>
@@ -365,7 +410,7 @@ export const TenantMessagesScreen = () => {
             >
               <View style={styles.modalCard}>
                 <View style={styles.modalHeaderRow}>
-                  <Text style={styles.modalTitle} allowFontScaling={false}>Compose Message</Text>
+                  <Text style={styles.modalTitle} allowFontScaling={false}>New Message</Text>
                   <TouchableOpacity onPress={() => setIsComposeOpen(false)}>
                     <Ionicons name="close" size={22} color="#94a3b8" />
                   </TouchableOpacity>
@@ -430,6 +475,7 @@ export const TenantMessagesScreen = () => {
 
 const styles = StyleSheet.create({
   mainWrapper: { flex: 1, backgroundColor: '#0f172a' },
+  chatRoomContainer: { flex: 1, backgroundColor: '#0f172a' },
   center: { flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center' },
   loadingText: { color: '#94a3b8', marginTop: 8 },
 
@@ -440,17 +486,63 @@ const styles = StyleSheet.create({
   composeBtn: { backgroundColor: '#0284c7', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, flexDirection: 'row', alignItems: 'center' },
   composeBtnText: { color: '#ffffff', fontSize: 11, fontWeight: '700' },
 
-  contactScroll: { paddingHorizontal: 16, flexDirection: 'row' },
-  contactChip: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#1e293b', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, marginRight: 8, borderWidth: 1, borderColor: '#334155' },
-  contactChipActive: { backgroundColor: '#0284c7', borderColor: '#38bdf8' },
-  contactNameText: { color: '#cbd5e1', fontSize: 11, fontWeight: '600' },
-  contactNameActive: { color: '#ffffff', fontWeight: '800' },
-
-  threadHeader: { backgroundColor: '#1e293b', paddingHorizontal: 16, paddingVertical: 10, borderTopWidth: 1, borderBottomWidth: 1, borderColor: '#334155', flexDirection: 'row', alignItems: 'center' },
-  threadHeaderTitle: { color: '#38bdf8', fontSize: 12, fontWeight: '800' },
-
   threadScroll: { flex: 1 },
-  emptyThreadCard: { backgroundColor: '#1e293b', padding: 32, borderRadius: 16, alignItems: 'center', borderWidth: 1, borderColor: '#334155', marginTop: 16, marginHorizontal: 16 },
+
+  conversationItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1e293b',
+    padding: 14,
+    borderRadius: 16,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  avatarBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  avatarText: {
+    fontSize: 14,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+  },
+  convoInfo: { flex: 1 },
+  convoHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  convoName: { fontSize: 14, fontWeight: '800', color: '#f8fafc', flex: 1, marginRight: 8 },
+  convoTime: { fontSize: 10.5, color: '#64748b' },
+  convoSnippet: { fontSize: 12, color: '#cbd5e1', marginTop: 3 },
+
+  chatRoomHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1e293b',
+    paddingHorizontal: 12,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#334155',
+    paddingTop: Platform.OS === 'ios' ? 12 : 14,
+  },
+  backBtn: { padding: 4, marginRight: 6 },
+  chatHeaderAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#38bdf8',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  chatHeaderAvatarText: { color: '#0f172a', fontWeight: '800', fontSize: 15 },
+  chatHeaderInfo: { flex: 1 },
+  chatHeaderTitle: { fontSize: 14, fontWeight: '800', color: '#f8fafc' },
+  chatHeaderSubtitle: { fontSize: 10.5, color: '#10b981', marginTop: 1 },
+
+  emptyThreadCard: { backgroundColor: '#1e293b', padding: 32, borderRadius: 16, alignItems: 'center', borderWidth: 1, borderColor: '#334155', marginTop: 24, marginHorizontal: 16 },
   emptyThreadText: { color: '#f8fafc', fontSize: 15, fontWeight: '700' },
 
   bubbleWrapper: { marginBottom: 12, flexDirection: 'row' },
@@ -468,8 +560,7 @@ const styles = StyleSheet.create({
 
   replyBar: { flexDirection: 'row', padding: 12, backgroundColor: '#1e293b', borderTopWidth: 1, borderColor: '#334155', gap: 8, paddingBottom: Platform.OS === 'ios' ? 24 : 12 },
   replyInput: { flex: 1, backgroundColor: '#0f172a', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, color: '#f8fafc', fontSize: 13, borderWidth: 1, borderColor: '#334155' },
-  sendBtn: { backgroundColor: '#0284c7', paddingHorizontal: 16, justifyContent: 'center', borderRadius: 10 },
-  sendBtnText: { color: '#ffffff', fontWeight: '800', fontSize: 12 },
+  sendBtn: { backgroundColor: '#0284c7', width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
 
   modalBg: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.85)', justifyContent: 'center', padding: 20 },
   modalScrollContent: {
