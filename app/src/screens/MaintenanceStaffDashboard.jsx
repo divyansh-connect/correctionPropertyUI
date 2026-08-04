@@ -13,6 +13,7 @@ import {
   Platform,
   Keyboard,
   TouchableWithoutFeedback,
+  RefreshControl,
 } from 'react-native';
 import { useAuthStore } from '../store/useStore';
 import apiClient from '../api/client';
@@ -53,7 +54,7 @@ export const MaintenanceStaffDashboard = ({ activeSubTab }) => {
 
   useEffect(() => {
     fetchTasks();
-  }, []);
+  }, [activeSubTab]);
 
   const handleUpdateStatus = async (id, newStatus, extraData = {}) => {
     try {
@@ -127,7 +128,10 @@ export const MaintenanceStaffDashboard = ({ activeSubTab }) => {
     const rejectedCount = tasks.filter((t) => t.status === 'Rejected').length;
 
     return (
-      <ScrollView style={styles.tabContent}>
+      <ScrollView 
+        style={styles.tabContent}
+        refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchTasks} tintColor="#38bdf8" />}
+      >
         <View style={styles.headerBanner}>
           <Text style={styles.welcomeTitle}>Maintenance Staff Portal</Text>
           <Text style={styles.welcomeSub}>
@@ -201,8 +205,9 @@ export const MaintenanceStaffDashboard = ({ activeSubTab }) => {
     const priorityColor = getPriorityColor(task.priority);
     const estimatedBudget = task.estimatedCost || task.estimatedBudget || 200;
     const taskIsActive = isInProgress(task.status);
-    const hasActionBtn = task.status === 'Assigned' || taskIsActive;
-    
+    const showStartWork = task.status === 'Assigned';
+    const showMarkCompleted = !isDashboard && taskIsActive;
+    const showActionBtn = isDashboard ? showStartWork : (task.status === 'Assigned' || taskIsActive);
     // Dynamic cost showing actual and extra expenses if completed
     const isCompleted = task.status === 'Completed';
     const baseCost = task.labourCost || task.cost || task.actualCost || estimatedBudget;
@@ -214,13 +219,11 @@ export const MaintenanceStaffDashboard = ({ activeSubTab }) => {
         <View style={styles.cardTopRow}>
           <Text style={styles.taskIdText}>{task.workOrderNumber || `SR-${task.id.slice(-8).toUpperCase()}`}</Text>
           <View style={styles.badgeRow}>
-            {!isDashboard && (
-              <View style={[styles.statusBadge, { backgroundColor: taskIsActive ? '#eab30815' : isCompleted ? '#10b98115' : '#38bdf815' }]}>
-                <Text style={[styles.statusBadgeText, { color: taskIsActive ? '#eab308' : isCompleted ? '#10b981' : '#38bdf8' }]}>
-                  {taskIsActive ? 'In Progress' : task.status}
-                </Text>
-              </View>
-            )}
+            <View style={[styles.statusBadge, { backgroundColor: taskIsActive ? '#eab30815' : isCompleted ? '#10b98115' : '#38bdf815' }]}>
+              <Text style={[styles.statusBadgeText, { color: taskIsActive ? '#eab308' : isCompleted ? '#10b981' : '#38bdf8' }]}>
+                {taskIsActive ? 'In Progress' : task.status}
+              </Text>
+            </View>
             <View style={[styles.priorityBadge, { backgroundColor: `${priorityColor}15` }]}>
               <Text style={[styles.priorityBadgeText, { color: priorityColor }]}>
                 {task.priority || 'Medium'}
@@ -255,65 +258,46 @@ export const MaintenanceStaffDashboard = ({ activeSubTab }) => {
           </Text>
         ) : null}
 
-        {isDashboard ? (
-          /* Dashboard: Full width status badge */
-          <View style={[
-            styles.fullWidthStatusBadge, 
-            { 
-              backgroundColor: taskIsActive ? '#eab30815' : isCompleted ? '#10b98115' : '#3b82f615',
-              borderColor: taskIsActive ? '#eab308' : isCompleted ? '#10b981' : '#3b82f6'
-            }
-          ]}>
-            <Text style={[
-              styles.fullWidthStatusText, 
-              { color: taskIsActive ? '#eab308' : isCompleted ? '#10b981' : '#3b82f6' }
-            ]}>
-              {taskIsActive ? 'In Progress' : task.status}
-            </Text>
-          </View>
-        ) : (
-          /* My Tasks & History tabs: buttons row */
-          <View style={styles.actionButtonsRow}>
-            {task.status === 'Assigned' && (
-              <TouchableOpacity
-                style={[styles.btnBase, styles.startBtn, hasActionBtn ? styles.halfBtn : styles.fullBtn]}
-                onPress={() => handleUpdateStatus(task.id, 'In_Progress')}
-                disabled={updatingId !== null}
-              >
-                {updatingId === task.id ? (
-                  <ActivityIndicator size="small" color="#ffffff" />
-                ) : (
-                  <Text style={styles.startBtnText}>▶ Start Work</Text>
-                )}
-              </TouchableOpacity>
-            )}
-
-            {taskIsActive && (
-              <TouchableOpacity
-                style={[styles.btnBase, styles.completeBtn, hasActionBtn ? styles.halfBtn : styles.fullBtn]}
-                onPress={() => openResolutionModal(task)}
-                disabled={updatingId !== null}
-              >
-                <Text style={styles.completeBtnText}>✓ Mark Completed</Text>
-              </TouchableOpacity>
-            )}
-
+        <View style={styles.actionButtonsRow}>
+          {task.status === 'Assigned' && (
             <TouchableOpacity
-              style={[
-                styles.btnBase, 
-                styles.detailsBtn, 
-                hasActionBtn ? styles.halfBtn : styles.fullBtn
-              ]}
-              onPress={() => {
-                setSelectedTask(task);
-                setDetailsModalVisible(true);
-              }}
+              style={[styles.btnBase, styles.startBtn, showActionBtn ? styles.halfBtn : styles.fullBtn]}
+              onPress={() => handleUpdateStatus(task.id, 'In_Progress')}
+              disabled={updatingId !== null}
             >
-              <Ionicons name="eye" size={13} color="#cbd5e1" style={{ marginRight: 4 }} />
-              <Text style={styles.detailsBtnText}>Details</Text>
+              {updatingId === task.id ? (
+                <ActivityIndicator size="small" color="#ffffff" />
+              ) : (
+                <Text style={styles.startBtnText}>▶ Start Work</Text>
+              )}
             </TouchableOpacity>
-          </View>
-        )}
+          )}
+
+          {showMarkCompleted && (
+            <TouchableOpacity
+              style={[styles.btnBase, styles.completeBtn, showActionBtn ? styles.halfBtn : styles.fullBtn]}
+              onPress={() => openResolutionModal(task)}
+              disabled={updatingId !== null}
+            >
+              <Text style={styles.completeBtnText}>✓ Mark Completed</Text>
+            </TouchableOpacity>
+          )}
+
+          <TouchableOpacity
+            style={[
+              styles.btnBase, 
+              styles.detailsBtn, 
+              showActionBtn ? styles.halfBtn : styles.fullBtn
+            ]}
+            onPress={() => {
+              setSelectedTask(task);
+              setDetailsModalVisible(true);
+            }}
+          >
+            <Ionicons name="eye" size={13} color="#cbd5e1" style={{ marginRight: 4 }} />
+            <Text style={styles.detailsBtnText}>Details</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   };
@@ -323,7 +307,10 @@ export const MaintenanceStaffDashboard = ({ activeSubTab }) => {
       {activeSubTab === 'dashboard' && renderDashboardTab()}
       
       {(activeSubTab === 'mytasks' || activeSubTab === 'history') && (
-        <ScrollView style={styles.tabContent}>
+        <ScrollView 
+          style={styles.tabContent}
+          refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchTasks} tintColor="#38bdf8" />}
+        >
           {/* Search Bar */}
           <View style={styles.searchContainer}>
             <Ionicons name="search" size={18} color="#64748b" style={{ marginRight: 8 }} />
@@ -375,66 +362,94 @@ export const MaintenanceStaffDashboard = ({ activeSubTab }) => {
 
                 <View style={styles.detailGrid}>
                   <View style={styles.detailGridCol}>
-                    <Text style={styles.detailLabel}>📍 LOCATION</Text>
+                    <Text style={styles.detailLabel}>LOCATION</Text>
                     <Text style={styles.detailValSmall}>
                       {selectedTask.propertyName} · Unit {selectedTask.unitNumber}
                     </Text>
                   </View>
                   <View style={styles.detailGridCol}>
-                    <Text style={styles.detailLabel}>📅 SCHEDULED DATE</Text>
+                    <Text style={styles.detailLabel}>SCHEDULED DATE</Text>
                     <Text style={styles.detailValSmall}>{selectedTask.scheduledDate || '2026-08-04'}</Text>
                   </View>
                 </View>
 
-                {/* Costs Detail Section */}
                 <View style={styles.detailGrid}>
                   <View style={styles.detailGridCol}>
-                    <Text style={styles.detailLabel}>💵 EST</Text>
-                    <Text style={styles.detailValSmall}>
-                      ${selectedTask.estimatedCost || selectedTask.estimatedBudget || 200}
-                    </Text>
-                  </View>
-                  <View style={styles.detailGridCol}>
-                    <Text style={styles.detailLabel}>🔵 JOB PRIORITY</Text>
+                    <Text style={styles.detailLabel}>JOB PRIORITY</Text>
                     <Text style={[styles.detailValSmall, { color: getPriorityColor(selectedTask.priority), fontWeight: '700' }]}>
                       {selectedTask.priority || 'Medium'}
                     </Text>
                   </View>
+                  <View style={styles.detailGridCol}>
+                    <Text style={styles.detailLabel}>ESTIMATED COST</Text>
+                    <Text style={styles.detailValSmall}>
+                      ${selectedTask.estimatedCost || selectedTask.estimatedBudget || 200}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* WORKFLOW PROGRESS timeline */}
+                <Text style={styles.detailLabel}>WORKFLOW PROGRESS</Text>
+                <View style={styles.timelineContainer}>
+                  <View style={styles.timelineItem}>
+                    <View style={[styles.timelineDot, styles.dotCompleted]} />
+                    <Text style={styles.timelineText}>New (Job created)</Text>
+                  </View>
+                  <View style={styles.timelineItem}>
+                    <View style={[
+                      styles.timelineDot, 
+                      ['Assigned', 'In_Progress', 'In Progress', 'Completed'].includes(selectedTask.status) ? styles.dotCompleted : styles.dotPending
+                    ]} />
+                    <Text style={styles.timelineText}>Assigned (Tech assigned)</Text>
+                  </View>
+                  <View style={styles.timelineItem}>
+                    <View style={[
+                      styles.timelineDot, 
+                      ['In_Progress', 'In Progress'].includes(selectedTask.status) ? styles.dotActive : (selectedTask.status === 'Completed' ? styles.dotCompleted : styles.dotPending)
+                    ]} />
+                    <Text style={styles.timelineText}>In Progress (Work active)</Text>
+                  </View>
+                  <View style={styles.timelineItem}>
+                    <View style={[
+                      styles.timelineDot, 
+                      selectedTask.status === 'Completed' ? styles.dotCompleted : styles.dotPending
+                    ]} />
+                    <Text style={styles.timelineText}>Completed (Job finished)</Text>
+                  </View>
                 </View>
 
                 {selectedTask.status === 'Completed' && (
-                  <View style={styles.detailGrid}>
-                    <View style={styles.detailGridCol}>
-                      <Text style={styles.detailLabel}>✅ ACT</Text>
-                      <Text style={[styles.detailValSmall, { color: '#10b981', fontWeight: '700' }]}>
-                        ${selectedTask.labourCost || selectedTask.cost || selectedTask.actualCost || 0}
-                      </Text>
+                  <>
+                    <View style={[styles.detailGrid, { marginTop: 12 }]}>
+                      <View style={styles.detailGridCol}>
+                        <Text style={styles.detailLabel}>BASE COST (ACT)</Text>
+                        <Text style={[styles.detailValSmall, { color: '#10b981', fontWeight: '700' }]}>
+                          ${selectedTask.labourCost || selectedTask.cost || selectedTask.actualCost || 0}
+                        </Text>
+                      </View>
+                      <View style={styles.detailGridCol}>
+                        <Text style={styles.detailLabel}>EXTRA COST</Text>
+                        <Text style={[styles.detailValSmall, { color: '#f43f5e', fontWeight: '700' }]}>
+                          ${selectedTask.extraExpenses || 0}
+                        </Text>
+                      </View>
                     </View>
-                    <View style={styles.detailGridCol}>
-                      <Text style={styles.detailLabel}>➕ EXTRA EXPENSES</Text>
-                      <Text style={[styles.detailValSmall, { color: '#f43f5e', fontWeight: '700' }]}>
-                        ${selectedTask.extraExpenses || 0}
-                      </Text>
-                    </View>
-                  </View>
-                )}
 
-                {selectedTask.status === 'Completed' && (
-                  <View style={styles.detailGrid}>
-                    <View style={styles.detailGridCol}>
-                      <Text style={styles.detailLabel}>📊 TOTAL</Text>
-                      <Text style={[styles.detailValSmall, { color: '#38bdf8', fontWeight: '800' }]}>
-                        ${(parseFloat(selectedTask.labourCost || selectedTask.cost || selectedTask.actualCost) || 0) + (parseFloat(selectedTask.extraExpenses) || 0)}
-                      </Text>
+                    <View style={styles.detailGrid}>
+                      <View style={styles.detailGridCol}>
+                        <Text style={styles.detailLabel}>TOTAL COST</Text>
+                        <Text style={[styles.detailValSmall, { color: '#38bdf8', fontWeight: '800' }]}>
+                          ${(parseFloat(selectedTask.labourCost || selectedTask.cost || selectedTask.actualCost) || 0) + (parseFloat(selectedTask.extraExpenses) || 0)}
+                        </Text>
+                      </View>
                     </View>
-                  </View>
-                )}
 
-                {/* Resolution / Details Notes */}
-                <Text style={styles.detailLabel}>📝 NOTES</Text>
-                <Text style={styles.detailVal}>
-                  {selectedTask.resolutionNotes || selectedTask.notes || 'No notes provided.'}
-                </Text>
+                    <Text style={[styles.detailLabel, { marginTop: 8 }]}>RESOLUTION NOTES</Text>
+                    <Text style={styles.detailVal}>
+                      {selectedTask.resolutionNotes || selectedTask.notes || 'No notes provided.'}
+                    </Text>
+                  </>
+                )}
 
 
               </ScrollView>

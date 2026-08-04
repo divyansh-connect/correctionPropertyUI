@@ -44,9 +44,20 @@ export const ProfileScreen = () => {
   const [resettingPassword, setResettingPassword] = useState(false);
 
   const isDarkMode = theme === 'dark';
-  const role = user?.role || 'Tenant';
+  const getNormalizedRole = (r) => {
+    if (!r) return 'Property Manager';
+    const lower = String(r).toLowerCase().replace(/_/g, ' ').replace(/-/g, ' ');
+    if (lower.includes('super')) return 'Super Admin';
+    if (lower.includes('collection')) return 'Collection Manager';
+    if (lower.includes('owner')) return 'Owner';
+    if (lower.includes('staff') || lower.includes('vendor')) return 'Maintenance Staff';
+    if (lower.includes('tenant') || lower.includes('resident')) return 'Tenant';
+    return 'Property Manager';
+  };
+  const role = getNormalizedRole(user?.role);
   const isTenant = role === 'Tenant';
   const isOwner = role === 'Owner';
+  const isStaff = role === 'Maintenance Staff';
 
   // Strictly hit Railway live endpoints: /portal/tenant/profile or /portal/owner/profile
   const fetchLiveProfile = async () => {
@@ -173,25 +184,47 @@ export const ProfileScreen = () => {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchLiveProfile} tintColor="#38bdf8" />}
     >
       {/* Page Header */}
-      <View style={styles.header}>
-        <Text style={styles.breadcrumb} allowFontScaling={false}>Home › Profile</Text>
-        <View style={styles.titleRow}>
-          <Text style={styles.title} allowFontScaling={false}>Account Profile</Text>
-          
-          <View style={styles.headerBtnsRow}>
-            <TouchableOpacity style={styles.editHeaderBtn} onPress={() => setIsEditModalOpen(true)}>
-              <Text style={styles.editHeaderBtnText} allowFontScaling={false}>✏️ Edit Profile</Text>
+      {isStaff ? (
+        <View style={styles.mobileProfileHeader}>
+          <View style={styles.mobileAvatarContainer}>
+            <Text style={styles.mobileAvatarText}>
+              {firstName.charAt(0).toUpperCase() || 'V'}
+            </Text>
+          </View>
+          <Text style={styles.mobileProfileName}>{firstName} {lastName}</Text>
+          <View style={styles.roleBadgeContainer}>
+            <Text style={styles.roleBadgeText}>Maintenance Staff</Text>
+          </View>
+          <View style={styles.mobileHeaderBtnsRow}>
+            <TouchableOpacity style={styles.mobileEditBtn} onPress={() => setIsEditModalOpen(true)}>
+              <Text style={styles.mobileEditBtnText}>✏️ Edit Profile</Text>
             </TouchableOpacity>
-
-            <TouchableOpacity style={styles.passwordHeaderBtn} onPress={() => setIsPasswordModalOpen(true)}>
-              <Text style={styles.passwordHeaderBtnText} allowFontScaling={false}>🔒 Reset Password</Text>
+            <TouchableOpacity style={styles.mobilePasswordBtn} onPress={() => setIsPasswordModalOpen(true)}>
+              <Text style={styles.mobilePasswordBtnText}>🔒 Reset Password</Text>
             </TouchableOpacity>
           </View>
         </View>
-        <Text style={styles.subtitle} allowFontScaling={false}>
-          Verify personal contact details, security credentials, unit assignments, and emergency contacts.
-        </Text>
-      </View>
+      ) : (
+        <View style={styles.header}>
+          <Text style={styles.breadcrumb} allowFontScaling={false}>Home › Profile</Text>
+          <View style={styles.titleRow}>
+            <Text style={styles.title} allowFontScaling={false}>Account Profile</Text>
+            
+            <View style={styles.headerBtnsRow}>
+              <TouchableOpacity style={styles.editHeaderBtn} onPress={() => setIsEditModalOpen(true)}>
+                <Text style={styles.editHeaderBtnText} allowFontScaling={false}>✏️ Edit Profile</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.passwordHeaderBtn} onPress={() => setIsPasswordModalOpen(true)}>
+                <Text style={styles.passwordHeaderBtnText} allowFontScaling={false}>🔒 Reset Password</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+          <Text style={styles.subtitle} allowFontScaling={false}>
+            Verify personal contact details, security credentials, unit assignments, and emergency contacts.
+          </Text>
+        </View>
+      )}
 
       {/* Box 1: CONTACT & RESIDENT DETAILS matching Web Screenshot 1-to-1 */}
       <View style={styles.card}>
@@ -263,46 +296,48 @@ export const ProfileScreen = () => {
       </View>
 
       {/* Box 2: PERMITS & RECORDS / BANK SPECS */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle} allowFontScaling={false}>
-          {isOwner ? 'ACH DIRECT DEPOSIT BANKING' : 'PERMITS & RESIDENT RECORDS'}
-        </Text>
-        <View style={styles.divider} />
+      {!isStaff && (
+        <View style={styles.card}>
+          <Text style={styles.cardTitle} allowFontScaling={false}>
+            {isOwner ? 'ACH DIRECT DEPOSIT BANKING' : 'PERMITS & RESIDENT RECORDS'}
+          </Text>
+          <View style={styles.divider} />
 
-        {isOwner ? (
-          <>
-            <View style={styles.permitItem}>
-              <Text style={styles.permitLabel} allowFontScaling={false}>BANK NAME</Text>
-              <Text style={styles.permitVal} allowFontScaling={false}>{profileData.bankName || 'Checking Account'}</Text>
-            </View>
-            <View style={styles.permitItem}>
-              <Text style={styles.permitLabel} allowFontScaling={false}>ACCOUNT NUMBER</Text>
-              <Text style={styles.permitVal} allowFontScaling={false}>{profileData.accountNumber || 'XXXX-XXXX-9822'}</Text>
-            </View>
-            <View style={styles.permitItem}>
-              <Text style={styles.permitLabel} allowFontScaling={false}>ROUTING STATUS</Text>
-              <Text style={[styles.permitVal, { color: '#4ade80', fontWeight: '800' }]} allowFontScaling={false}>Verified</Text>
-            </View>
-          </>
-        ) : (
-          <>
-            <View style={styles.permitItem}>
-              <Text style={styles.permitLabel} allowFontScaling={false}>REGISTERED VEHICLES</Text>
-              <Text style={styles.permitVal} allowFontScaling={false}>{vehicles}</Text>
-            </View>
+          {isOwner ? (
+            <>
+              <View style={styles.permitItem}>
+                <Text style={styles.permitLabel} allowFontScaling={false}>BANK NAME</Text>
+                <Text style={styles.permitVal} allowFontScaling={false}>{profileData.bankName || 'Checking Account'}</Text>
+              </View>
+              <View style={styles.permitItem}>
+                <Text style={styles.permitLabel} allowFontScaling={false}>ACCOUNT NUMBER</Text>
+                <Text style={styles.permitVal} allowFontScaling={false}>{profileData.accountNumber || 'XXXX-XXXX-9822'}</Text>
+              </View>
+              <View style={styles.permitItem}>
+                <Text style={styles.permitLabel} allowFontScaling={false}>ROUTING STATUS</Text>
+                <Text style={[styles.permitVal, { color: '#4ade80', fontWeight: '800' }]} allowFontScaling={false}>Verified</Text>
+              </View>
+            </>
+          ) : (
+            <>
+              <View style={styles.permitItem}>
+                <Text style={styles.permitLabel} allowFontScaling={false}>REGISTERED VEHICLES</Text>
+                <Text style={styles.permitVal} allowFontScaling={false}>{vehicles}</Text>
+              </View>
 
-            <View style={styles.permitItem}>
-              <Text style={styles.permitLabel} allowFontScaling={false}>REGISTERED PETS</Text>
-              <Text style={styles.permitVal} allowFontScaling={false}>{pets}</Text>
-            </View>
+              <View style={styles.permitItem}>
+                <Text style={styles.permitLabel} allowFontScaling={false}>REGISTERED PETS</Text>
+                <Text style={styles.permitVal} allowFontScaling={false}>{pets}</Text>
+              </View>
 
-            <View style={styles.permitItem}>
-              <Text style={styles.permitLabel} allowFontScaling={false}>PREFERRED LANGUAGE</Text>
-              <Text style={styles.permitVal} allowFontScaling={false}>{preferredLanguage}</Text>
-            </View>
-          </>
-        )}
-      </View>
+              <View style={styles.permitItem}>
+                <Text style={styles.permitLabel} allowFontScaling={false}>PREFERRED LANGUAGE</Text>
+                <Text style={styles.permitVal} allowFontScaling={false}>{preferredLanguage}</Text>
+              </View>
+            </>
+          )}
+        </View>
+      )}
 
       {/* App Preferences */}
       <View style={styles.card}>
@@ -557,4 +592,87 @@ const styles = StyleSheet.create({
   cancelBtnText: { color: '#cbd5e1', fontWeight: '600' },
   saveBtn: { backgroundColor: '#0284c7' },
   saveBtnText: { color: '#ffffff', fontWeight: '700' },
+
+  mobileProfileHeader: {
+    alignItems: 'center',
+    paddingVertical: 20,
+    backgroundColor: '#1e293b',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#334155',
+    marginBottom: 16,
+  },
+  mobileAvatarContainer: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: '#38bdf8',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+    shadowColor: '#38bdf8',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+  mobileAvatarText: {
+    color: '#0f172a',
+    fontSize: 28,
+    fontWeight: '800',
+  },
+  mobileProfileName: {
+    color: '#f8fafc',
+    fontSize: 20,
+    fontWeight: '800',
+    marginBottom: 6,
+  },
+  roleBadgeContainer: {
+    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 99,
+    borderWidth: 1,
+    borderColor: '#10b981',
+    marginBottom: 16,
+  },
+  roleBadgeText: {
+    color: '#10b981',
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  mobileHeaderBtnsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 12,
+    width: '100%',
+    paddingHorizontal: 16,
+  },
+  mobileEditBtn: {
+    flex: 1,
+    backgroundColor: '#38bdf8',
+    paddingVertical: 8,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  mobileEditBtnText: {
+    color: '#0f172a',
+    fontWeight: '800',
+    fontSize: 12,
+  },
+  mobilePasswordBtn: {
+    flex: 1,
+    backgroundColor: '#334155',
+    paddingVertical: 8,
+    borderRadius: 8,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#475569',
+  },
+  mobilePasswordBtnText: {
+    color: '#f8fafc',
+    fontWeight: '800',
+    fontSize: 12,
+  },
 });

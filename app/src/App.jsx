@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, ActivityIndicator, Platform, SafeAreaView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useAuthStore } from './store/useStore';
+import { Ionicons } from '@expo/vector-icons';
 
 import { SplashScreen } from './components/SplashScreen';
 import { LoginScreen } from './screens/LoginScreen';
@@ -13,6 +14,7 @@ import { CollectionDashboard } from './screens/CollectionDashboard';
 import { StaffDashboard } from './screens/StaffDashboard';
 import { OwnerDashboard } from './screens/OwnerDashboard';
 import { TenantDashboard } from './screens/TenantDashboard';
+import { MaintenanceStaffDashboard } from './screens/MaintenanceStaffDashboard';
 
 import { PropertiesScreen } from './screens/PropertiesScreen';
 import { LeadsScreen } from './screens/LeadsScreen';
@@ -110,10 +112,10 @@ export default function App() {
 
     case 'Maintenance Staff':
       moduleTabs = [
-        { id: 'dashboard', label: '📊 Dashboard', icon: '📊' },
-        { id: 'maintenance', label: '🛠️ Orders', icon: '🛠️' },
-        { id: 'properties', label: '🏢 Properties', icon: '🏢' },
-        { id: 'profile', label: '⚙️ Settings', icon: '⚙️' },
+        { id: 'dashboard', label: 'Dashboard', icon: 'grid-outline', activeIcon: 'grid' },
+        { id: 'mytasks', label: 'My Tasks', icon: 'clipboard-outline', activeIcon: 'clipboard' },
+        { id: 'history', label: 'History', icon: 'time-outline', activeIcon: 'time' },
+        { id: 'profile', label: 'Profile', icon: 'person-outline', activeIcon: 'person' },
       ];
       break;
 
@@ -171,6 +173,13 @@ export default function App() {
   };
 
   const renderScreen = () => {
+    if (role === 'Maintenance Staff') {
+      if (activeTab === 'dashboard') return <MaintenanceStaffDashboard activeSubTab="dashboard" />;
+      if (activeTab === 'mytasks') return <MaintenanceStaffDashboard activeSubTab="mytasks" />;
+      if (activeTab === 'history') return <MaintenanceStaffDashboard activeSubTab="history" />;
+      if (activeTab === 'profile') return <ProfileScreen />;
+    }
+
     switch (activeTab) {
       case 'dashboard':
         return renderDashboardByRole();
@@ -231,46 +240,48 @@ export default function App() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <StatusBar style="light" />
 
       {/* Top Header Bar with Hamburger Drawer, Notification Bell Icon & Profile Badge */}
-      <View style={styles.topHeader}>
-        <View style={styles.brandContainer}>
-          <TouchableOpacity style={styles.hamburgerBtn} onPress={() => setDrawerVisible(true)}>
-            <Text style={styles.hamburgerIcon} allowFontScaling={false}>☰</Text>
-          </TouchableOpacity>
-          <Text style={styles.brandIcon} allowFontScaling={false}>🏢</Text>
-          <Text style={styles.headerTitle} allowFontScaling={false}>
-            {role === 'Tenant' ? 'Tenant Portal' : 'Zentrol Property'}
-          </Text>
-        </View>
-
-        <View style={styles.headerRightActions}>
-          {/* Notification Bell Icon */}
-          <TouchableOpacity
-            style={styles.bellBtn}
-            onPress={() => setActiveTab('notifications')}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.bellIcon} allowFontScaling={false}>🔔</Text>
-            <View style={styles.bellBadge}>
-              <Text style={styles.bellBadgeText} allowFontScaling={false}>3</Text>
-            </View>
-          </TouchableOpacity>
-
-          {/* Profile Avatar Badge */}
-          <TouchableOpacity
-            style={styles.profileBadge}
-            onPress={() => setActiveTab('profile')}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.profileBadgeText} allowFontScaling={false}>
-              {user?.firstName?.charAt(0) || user?.email?.charAt(0) || 'P'}
+      {role !== 'Maintenance Staff' && (
+        <View style={styles.topHeader}>
+          <View style={styles.brandContainer}>
+            <TouchableOpacity style={styles.hamburgerBtn} onPress={() => setDrawerVisible(true)}>
+              <Text style={styles.hamburgerIcon} allowFontScaling={false}>☰</Text>
+            </TouchableOpacity>
+            <Text style={styles.brandIcon} allowFontScaling={false}>🏢</Text>
+            <Text style={styles.headerTitle} allowFontScaling={false}>
+              {role === 'Tenant' ? 'Tenant Portal' : 'Zentrol Property'}
             </Text>
-          </TouchableOpacity>
+          </View>
+
+          <View style={styles.headerRightActions}>
+            {/* Notification Bell Icon */}
+            <TouchableOpacity
+              style={styles.bellBtn}
+              onPress={() => setActiveTab('notifications')}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.bellIcon} allowFontScaling={false}>🔔</Text>
+              <View style={styles.bellBadge}>
+                <Text style={styles.bellBadgeText} allowFontScaling={false}>3</Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* Profile Avatar Badge */}
+            <TouchableOpacity
+              style={styles.profileBadge}
+              onPress={() => setActiveTab('profile')}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.profileBadgeText} allowFontScaling={false}>
+                {user?.firstName?.charAt(0) || user?.email?.charAt(0) || 'P'}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
+      )}
 
       {/* Navigation Drawer Component */}
       <NavigationDrawer
@@ -286,27 +297,40 @@ export default function App() {
       </View>
 
       {/* Fixed Bottom Navigation Bar */}
-      <View style={styles.bottomBarContainer}>
+      <View style={[styles.bottomBarContainer, role === 'Maintenance Staff' && { paddingBottom: Platform.OS === 'ios' ? 24 : 16, paddingTop: 10 }]}>
         <View style={styles.fixedBottomBar}>
           {moduleTabs.map((tab) => {
             const isActive = activeTab === tab.id;
+            const isStaff = role === 'Maintenance Staff';
             return (
               <TouchableOpacity
                 key={`bottom-${tab.id}`}
-                style={[styles.bottomTabItem, isActive && styles.bottomTabItemActive]}
+                style={[styles.bottomTabItem, (isActive && !isStaff) && styles.bottomTabItemActive]}
                 onPress={() => handleTabPress(tab.id)}
                 activeOpacity={0.7}
               >
-                <Text style={styles.bottomTabIcon} allowFontScaling={false}>{tab.icon}</Text>
+                {isStaff && isActive && (
+                  <View style={{ height: 2.5, backgroundColor: '#38bdf8', position: 'absolute', top: -6, left: 16, right: 16, borderRadius: 1 }} />
+                )}
+                {isStaff ? (
+                  <Ionicons 
+                    name={isActive ? tab.activeIcon : tab.icon} 
+                    size={20} 
+                    color={isActive ? '#38bdf8' : '#94a3b8'} 
+                    style={{ marginBottom: 2 }}
+                  />
+                ) : (
+                  <Text style={styles.bottomTabIcon} allowFontScaling={false}>{tab.icon}</Text>
+                )}
                 <Text style={[styles.bottomTabText, isActive && styles.bottomTabTextActive]} allowFontScaling={false}>
-                  {tab.label.split(' ')[1] || tab.label}
+                  {isStaff ? tab.label : (tab.label.split(' ')[1] || tab.label)}
                 </Text>
               </TouchableOpacity>
             );
           })}
         </View>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -314,7 +338,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#0f172a',
-    paddingTop: Platform.OS === 'ios' ? 44 : Platform.OS === 'android' ? 32 : 0,
+    paddingTop: Platform.OS === 'ios' ? 52 : Platform.OS === 'android' ? 38 : 0,
   },
   loadingContainer: {
     flex: 1,
