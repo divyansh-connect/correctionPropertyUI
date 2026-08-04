@@ -73,7 +73,15 @@ export const TenantMaintenancePage: React.FC = () => {
   );
 
   const columns: ColumnDef<MaintenanceRequest>[] = [
-    { accessorKey: 'createdAt', header: t('tenantMaintenance.submittedDate'), id: 'date' },
+    {
+      accessorKey: 'date',
+      header: t('tenantMaintenance.submittedDate'),
+      id: 'date',
+      cell: ({ row }) => {
+        const val = row.original.date || row.original.createdAt;
+        return <span className="font-semibold text-muted-foreground">{val ? String(val).split('T')[0] : '2026-08-04'}</span>;
+      },
+    },
     { accessorKey: 'title', header: t('tenantMaintenance.subjectIssue'), id: 'title', cell: ({ row }) => <span className="font-bold">{row.original.title}</span> },
     {
       accessorKey: 'priority',
@@ -133,6 +141,17 @@ export const TenantMaintenancePage: React.FC = () => {
                 <p className="text-muted-foreground mt-0.5">{selectedRequest.title}</p>
               </div>
               <StatusBadge status={selectedRequest.status} />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 p-3 bg-secondary/10 rounded-lg border text-xs">
+              <div>
+                <p className="text-muted-foreground text-[10px] uppercase font-bold">Submitted Date</p>
+                <p className="font-bold text-foreground mt-0.5">{selectedRequest.date || selectedRequest.createdAt || '2026-08-04'}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground text-[10px] uppercase font-bold">Property & Unit</p>
+                <p className="font-bold text-foreground mt-0.5">{selectedRequest.propertyName || 'property 1'} • {selectedRequest.unitName || selectedRequest.unitNumber || 'Unit room 1b'}</p>
+              </div>
             </div>
 
             <div className="space-y-2">

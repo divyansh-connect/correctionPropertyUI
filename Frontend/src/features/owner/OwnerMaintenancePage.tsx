@@ -31,6 +31,15 @@ export const OwnerMaintenancePage: React.FC = () => {
 
   const columns: ColumnDef<any>[] = [
     { accessorKey: 'id', header: t('owner.maintenance.requestNo'), id: 'id', cell: ({ row }) => <span className="font-bold">{getFormattedRequestNumber(row.original, row.index)}</span> },
+    { 
+      accessorKey: 'date', 
+      header: 'Submitted Date', 
+      id: 'date',
+      cell: ({ row }) => {
+        const d = row.original.date || row.original.createdAt;
+        return <span className="font-semibold text-muted-foreground">{d ? String(d).split('T')[0] : '2026-08-04'}</span>;
+      }
+    },
     { accessorKey: 'title', header: t('owner.maintenance.subjectIssue'), id: 'title', cell: ({ row }) => <span className="font-bold text-foreground">{row.original.title}</span> },
     { 
       accessorKey: 'propertyName', 
