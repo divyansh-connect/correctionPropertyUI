@@ -12,9 +12,12 @@ import {
   Alert,
   Animated,
   Easing,
+  Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
 import apiClient from '../api/client';
 import { useAuthStore } from '../store/useStore';
+import { Ionicons } from '@expo/vector-icons';
 
 // Animated Touchable Component
 const AnimatedTouchable = ({ children, onPress, style, disabled }) => {
@@ -60,19 +63,24 @@ export const RentScreen = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedPropertyFilter, setSelectedPropertyFilter] = useState('All Properties');
-  const [selectedStatusFilter, setSelectedStatusFilter] = useState('All Statuses');
-  const [selectedPayment, setSelectedPayment] = useState(null);
+  const [selectedTx, setSelectedTx] = useState(null);
 
-  // Pagination State
-  const [entriesPerPage] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
+  // Stats
+  const [outstandingBalance, setOutstandingBalance] = useState(0);
 
   // Submit Rent Payment Modal State
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
-  const [payAmount, setPayAmount] = useState('1000');
-  const [paymentMethod, setPaymentMethod] = useState('ACH Bank Transfer');
+  const [paymentOption, setPaymentOption] = useState('full'); // 'full' or 'partial'
+  const [payAmount, setPayAmount] = useState('0');
+  const [paymentMethod, setPaymentMethod] = useState('ACH'); // 'ACH', 'Credit Card', 'Debit Card'
   const [submittingPay, setSubmittingPay] = useState(false);
+
+  // ACH Bank details state
+  const [achHolderName, setAchHolderName] = useState('');
+  const [achBankName, setAchBankName] = useState('Chase Bank');
+  const [achRoutingNumber, setAchRoutingNumber] = useState('');
+  const [achAccountNumber, setAchAccountNumber] = useState('');
+  const [achAccountType, setAchAccountType] = useState('Checking'); // 'Checking' or 'Savings'
 
   // Animations
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -97,46 +105,111 @@ export const RentScreen = () => {
     ]).start();
   };
 
-  // Strictly fetch from live Railway endpoints: GET /payments & GET /properties (1-to-1 Web Parity)
+  // Sync amount with payment option selection
+  useEffect(() => {
+    if (paymentOption === 'full') {
+      setPayAmount(outstandingBalance.toString());
+    }
+  }, [outstandingBalance, paymentOption]);
+
+  const amountNum = parseFloat(payAmount) || 0;
+  const convenienceFee = paymentMethod === 'ACH' 
+    ? 0 
+    : paymentMethod === 'Credit Card' 
+      ? Number((amountNum * 0.029).toFixed(2)) 
+      : 4.99;
+  const totalCharge = amountNum + convenienceFee;
+
+  // Strictly fetch from live Railway endpoints: GET /payments & GET /invoices
   const fetchLiveFinancials = async () => {
     try {
       setLoading(true);
-      const [paymentsRes, propsRes] = await Promise.all([
+      const [paymentsRes, invoicesRes] = await Promise.all([
         apiClient.get('/payments', logout, refreshAccessToken).catch(() => null),
-        apiClient.get('/properties', logout, refreshAccessToken).catch(() => null),
+        apiClient.get('/invoices', logout, refreshAccessToken).catch(() => null),
       ]);
 
       const rawPayments = Array.isArray(paymentsRes) ? paymentsRes : (paymentsRes?.data || []);
+      const rawInvoices = Array.isArray(invoicesRes) ? invoicesRes : (invoicesRes?.data || []);
 
-      if (rawPayments && rawPayments.length > 0) {
-        const mapped = rawPayments.map((p) => ({
-          id: p.id,
-          tenant: p.tenant ? `${p.tenant.firstName || ''} ${p.tenant.lastName || ''}`.trim() : (p.tenantName || 'person 1'),
-          property: p.property?.name || p.propertyName || 'property 1',
-          unitNumber: p.unitNumber || p.unit?.unitNumber || 'room 1b',
-          datePaid: p.paidDate ? p.paidDate.split('T')[0] : p.dueDate ? p.dueDate.split('T')[0] : '2026-08-01',
-          amountPaid: Number(p.amount) || 1068.1,
-          method: p.paymentMethod ? (p.paymentMethod.toLowerCase().includes('ach') ? 'ACH' : p.paymentMethod) : 'ACH',
-          status: p.status || 'Paid',
-        }));
+      const list = [];
+      
+      // Map invoices
+      rawInvoices.forEach((inv) => {
+        list.push({
+          id: inv.id,
+          date: inv.dueDate ? inv.dueDate.split('T')[0] : '2026-08-01',
+          type: 'Invoice',
+          desc: 'Monthly Rent Assessment',
+          ref: `INV-${inv.id.substring(0, 8).toUpperCase()}`,
+          invoiceAmt: Number(inv.amount) || 1100,
+          paymentAmt: 0,
+          additionalChg: 0,
+          status: inv.status === 'PAID' || inv.status === 'Paid' ? 'Paid' : 'Unpaid',
+        });
+      });
+
+      // Map payments
+      rawPayments.forEach((pay) => {
+        list.push({
+          id: pay.id,
+          date: pay.paidDate ? pay.paidDate.split('T')[0] : pay.dueDate ? pay.dueDate.split('T')[0] : '2026-08-01',
+          type: 'Payment',
+          desc: `Rent Payment - ${pay.paymentMethod || 'ACH'}`,
+          ref: `PAY-${pay.id.substring(0, 8).toUpperCase()}`,
+          invoiceAmt: 0,
+          paymentAmt: Number(pay.amount) || 1068.1,
+          additionalChg: 0,
+          status: 'Cleared',
+        });
+      });
+
+      if (list.length > 0) {
+        // Sort by date and calculate running balance
+        const sorted = [...list].sort((a, b) => a.date.localeCompare(b.date));
+        let runningBalance = 0;
+        const mapped = sorted.map((tx) => {
+          if (tx.type === 'Invoice') {
+            runningBalance += tx.invoiceAmt;
+          } else {
+            runningBalance -= tx.paymentAmt;
+          }
+          return {
+            ...tx,
+            runningBal: runningBalance,
+          };
+        });
         setLedger(mapped);
+        setOutstandingBalance(Math.max(0, runningBalance));
       } else {
-        // Exact 4 Payment Receipts matching Web Screenshot 1-to-1
-        setLedger([
-          { id: 'pay-1', tenant: 'person 2', property: 'Property 2', unitNumber: 'Room 2B', datePaid: '2026-08-01', amountPaid: 2550, method: 'ACH', status: 'Paid' },
-          { id: 'pay-2', tenant: 'person 1', property: 'property 1', unitNumber: 'room 1b', datePaid: '2026-08-01', amountPaid: 1131.9, method: 'ACH', status: 'Paid' },
-          { id: 'pay-3', tenant: 'person 1', property: 'property 1', unitNumber: 'room 1b', datePaid: '2026-08-01', amountPaid: 1068.1, method: 'ACH', status: 'Paid' },
-          { id: 'pay-4', tenant: 'person 2', property: 'Property 2', unitNumber: 'Room 2B', datePaid: '2026-08-01', amountPaid: 5247.9, method: 'ACH', status: 'Paid' },
-        ]);
+        // Fallback default mock data matching Web portal 1-to-1
+        const mockList = [
+          { id: 'inv-1', date: '2026-07-01', type: 'Invoice', desc: 'Monthly Rent Assessment', ref: 'INV-459DABAD', invoiceAmt: 1100, paymentAmt: 0, additionalChg: 0, status: 'Unpaid' },
+          { id: 'inv-2', date: '2026-08-01', type: 'Invoice', desc: 'Monthly Rent Assessment', ref: 'INV-D784D6BE', invoiceAmt: 1100, paymentAmt: 0, additionalChg: 0, status: 'Unpaid' },
+          { id: 'pay-1', date: '2026-08-01', type: 'Payment', desc: 'Rent Payment - ACH', ref: 'PAY-1E53FF68', invoiceAmt: 0, paymentAmt: 1131.9, additionalChg: 0, status: 'Cleared' },
+          { id: 'pay-2', date: '2026-08-01', type: 'Payment', desc: 'Rent Payment - ACH', ref: 'PAY-782BAE44', invoiceAmt: 0, paymentAmt: 1068.1, additionalChg: 0, status: 'Cleared' },
+        ];
+        const sorted = [...mockList].sort((a, b) => a.date.localeCompare(b.date));
+        let runningBalance = 0;
+        const mapped = sorted.map((tx) => {
+          if (tx.type === 'Invoice') {
+            runningBalance += tx.invoiceAmt;
+          } else {
+            runningBalance -= tx.paymentAmt;
+          }
+          return {
+            ...tx,
+            runningBal: runningBalance,
+          };
+        });
+        setLedger(mapped);
+        setOutstandingBalance(Math.max(0, runningBalance));
       }
     } catch (e) {
-      console.log('Error fetching GET /payments & GET /properties:', e.message);
-      setLedger([
-        { id: 'pay-1', tenant: 'person 2', property: 'Property 2', unitNumber: 'Room 2B', datePaid: '2026-08-01', amountPaid: 2550, method: 'ACH', status: 'Paid' },
-        { id: 'pay-2', tenant: 'person 1', property: 'property 1', unitNumber: 'room 1b', datePaid: '2026-08-01', amountPaid: 1131.9, method: 'ACH', status: 'Paid' },
-        { id: 'pay-3', tenant: 'person 1', property: 'property 1', unitNumber: 'room 1b', datePaid: '2026-08-01', amountPaid: 1068.1, method: 'ACH', status: 'Paid' },
-        { id: 'pay-4', tenant: 'person 2', property: 'Property 2', unitNumber: 'Room 2B', datePaid: '2026-08-01', amountPaid: 5247.9, method: 'ACH', status: 'Paid' },
-      ]);
+      console.log('Error fetching GET /payments & GET /invoices:', e.message);
+      // Fallback
+      setLedger([]);
+      setOutstandingBalance(0);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -149,8 +222,7 @@ export const RentScreen = () => {
   }, []);
 
   const handleSubmitPayment = async () => {
-    const amtNum = parseFloat(payAmount);
-    if (isNaN(amtNum) || amtNum <= 0) {
+    if (amountNum <= 0) {
       Alert.alert('Error', 'Please enter a valid payment amount');
       return;
     }
@@ -160,7 +232,8 @@ export const RentScreen = () => {
       await apiClient.post(
         '/payments',
         {
-          amount: amtNum,
+          amount: totalCharge,
+          baseAmount: amountNum,
           paymentMethod: paymentMethod,
           status: 'Paid',
           tenantId: user?.id || '',
@@ -170,47 +243,26 @@ export const RentScreen = () => {
       );
       fetchLiveFinancials();
       setIsPayModalOpen(false);
-      Alert.alert('Payment Successful', `Rent payment of $${amtNum.toFixed(2)} via ${paymentMethod} submitted!`);
+      Alert.alert('Payment Successful', `Rent payment of $${totalCharge.toFixed(2)} via ${paymentMethod} submitted!`);
     } catch (e) {
       console.log('Post payment error:', e.message);
       setIsPayModalOpen(false);
-      Alert.alert('Payment Recorded', `Payment of $${amtNum.toFixed(2)} submitted.`);
+      Alert.alert('Payment Recorded', `Payment of $${totalCharge.toFixed(2)} submitted.`);
     } finally {
       setSubmittingPay(false);
     }
   };
 
-  const handleExportCSV = () => {
-    Alert.alert('Export CSV', 'Exporting payment receipts ledger as CSV spreadsheet...');
-  };
-
-  const handleResetFilters = () => {
-    setSearchQuery('');
-    setSelectedPropertyFilter('All Properties');
-    setSelectedStatusFilter('All Statuses');
-    setCurrentPage(1);
-  };
-
   const filteredLedger = ledger.filter((item) => {
-    const text = `${item.tenant || ''} ${item.property || ''} ${item.unitNumber || ''} ${item.datePaid || ''}`.toLowerCase();
-    const matchesSearch = text.includes(searchQuery.toLowerCase());
-    const matchesProp = selectedPropertyFilter === 'All Properties' ? true : (item.property || '').toLowerCase() === selectedPropertyFilter.toLowerCase();
-    const matchesStatus = selectedStatusFilter === 'All Statuses' ? true : (item.status || '').toLowerCase() === selectedStatusFilter.toLowerCase();
-    return matchesSearch && matchesProp && matchesStatus;
+    const text = `${item.ref || ''} ${item.desc || ''} ${item.date || ''}`.toLowerCase();
+    return text.includes(searchQuery.toLowerCase());
   });
-
-  // Pagination logic
-  const totalPages = Math.max(1, Math.ceil(filteredLedger.length / entriesPerPage));
-  const displayedLedger = filteredLedger.slice(
-    (currentPage - 1) * entriesPerPage,
-    currentPage * entriesPerPage
-  );
 
   if (loading && !refreshing) {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color="#38bdf8" />
-        <Text style={styles.loadingText} allowFontScaling={false}>Loading Payment History...</Text>
+        <Text style={styles.loadingText} allowFontScaling={false}>Loading Ledger & Balance...</Text>
       </View>
     );
   }
@@ -223,139 +275,120 @@ export const RentScreen = () => {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchLiveFinancials} tintColor="#38bdf8" />}
     >
       <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
-        {/* Page Header matching Web Screenshot 1-to-1 */}
+        {/* Page Header */}
         <View style={styles.header}>
-          <Text style={styles.breadcrumb} allowFontScaling={false}>Home › Payments</Text>
           <View style={styles.titleRow}>
-            <Text style={styles.title} allowFontScaling={false}>Payment History & Receipts</Text>
+            <Text style={styles.title} allowFontScaling={false}>Rent Payments</Text>
             
-            <View style={styles.headerButtonsGroup}>
-              {/* 📥 Export CSV Button */}
-              <AnimatedTouchable style={styles.exportBtn} onPress={handleExportCSV}>
-                <Text style={styles.exportBtnText} allowFontScaling={false}>📥 Export CSV</Text>
-              </AnimatedTouchable>
-
-              {/* + Pay Rent Button */}
-              <AnimatedTouchable style={styles.submitPayBtn} onPress={() => setIsPayModalOpen(true)}>
-                <Text style={styles.submitPayBtnText} allowFontScaling={false}>+ Pay Rent</Text>
-              </AnimatedTouchable>
-            </View>
+            {/* Submit Rent Payment Button */}
+            <AnimatedTouchable style={styles.submitPayBtn} onPress={() => setIsPayModalOpen(true)}>
+              <Ionicons name="card-outline" size={16} color="#0f172a" style={{ marginRight: 6 }} />
+              <Text style={styles.submitPayBtnText} allowFontScaling={false}>Submit Payment</Text>
+            </AnimatedTouchable>
           </View>
-          <Text style={styles.subtitle} allowFontScaling={false}>
-            Monitor processed ACH bank deposits, tenant receipts, cleared transactions, and rental balances.
-          </Text>
         </View>
 
-        {/* Subheader matching Web Screenshot */}
-        <View style={styles.showingRow}>
-          <Text style={styles.showingText} allowFontScaling={false}>
-            SHOWING {filteredLedger.length} PAYMENT RECEIPTS
-          </Text>
-        </View>
-
-        {/* Search Bar & Filter Controls Bar matching Web Screenshot 1-to-1 */}
-        <View style={styles.searchBarRow}>
-          <TextInput
-            style={styles.searchInput}
-            placeholder="🔍 Search payments by tenant or property..."
-            placeholderTextColor="#94a3b8"
-            value={searchQuery}
-            onChangeText={(txt) => {
-              setSearchQuery(txt);
-              setCurrentPage(1);
-            }}
-          />
-          <AnimatedTouchable style={styles.resetBtn} onPress={handleResetFilters}>
-            <Text style={styles.resetBtnText} allowFontScaling={false}>🔄 Reset</Text>
-          </AnimatedTouchable>
-        </View>
-
-        {/* Property & Status Filter Pills */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterPillsScroll}>
-          {['All Properties', 'property 1', 'Property 2'].map((p) => {
-            const isSelected = selectedPropertyFilter === p;
-            return (
-              <TouchableOpacity
-                key={p}
-                style={[styles.filterChip, isSelected && styles.filterChipActive]}
-                onPress={() => {
-                  setSelectedPropertyFilter(p);
-                  setCurrentPage(1);
-                }}
-              >
-                <Text style={[styles.filterChipText, isSelected && styles.filterChipTextActive]} allowFontScaling={false}>
-                  🏢 {p}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-
-          <View style={styles.filterDivider} />
-
-          {['All Statuses', 'Paid', 'Pending', 'Failed'].map((s) => {
-            const isSelected = selectedStatusFilter === s;
-            return (
-              <TouchableOpacity
-                key={s}
-                style={[styles.filterChip, isSelected && styles.filterChipActive]}
-                onPress={() => {
-                  setSelectedStatusFilter(s);
-                  setCurrentPage(1);
-                }}
-              >
-                <Text style={[styles.filterChipText, isSelected && styles.filterChipTextActive]} allowFontScaling={false}>
-                  {s}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-
-        {/* Table / Cards List matching Web Screenshot 1-to-1 */}
-        {displayedLedger.length === 0 ? (
-          <View style={styles.emptyCard}>
-            <Text style={styles.emptyText} allowFontScaling={false}>No se encontraron resultados.</Text>
-            <Text style={styles.emptySubText} allowFontScaling={false}>
-              No payment receipts found matching search or filter selection.
+        {/* Outstanding & Autopay Status Cards Grid */}
+        <View style={styles.statsContainer}>
+          <View style={styles.outstandingCard}>
+            <Text style={styles.statsLabel} allowFontScaling={false}>OUTSTANDING BALANCE DUE</Text>
+            <View style={styles.balanceRow}>
+              <Text style={[styles.balanceVal, outstandingBalance === 0 ? { color: '#10b981' } : { color: '#f87171' }]} allowFontScaling={false}>
+                ${outstandingBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              </Text>
+              {outstandingBalance === 0 && (
+                <Ionicons name="checkmark-circle" size={18} color="#10b981" style={{ marginLeft: 6 }} />
+              )}
+            </View>
+            <Text style={styles.statsSubText} allowFontScaling={false}>
+              {outstandingBalance === 0 ? 'No Balance Due' : 'Next rent period invoices active.'}
             </Text>
           </View>
+
+          <View style={styles.autopayCard}>
+            <View style={styles.autopayHeaderRow}>
+              <Ionicons name="settings-outline" size={12} color="#38bdf8" style={{ marginRight: 4 }} />
+              <Text style={styles.statsLabel} allowFontScaling={false}>AUTOPAY SETUP</Text>
+            </View>
+            <View style={styles.autopayBadge}>
+              <Text style={styles.autopayBadgeText} allowFontScaling={false}>ENABLED</Text>
+            </View>
+            <Text style={styles.statsSubText} allowFontScaling={false} numberOfLines={2}>
+              Automatically pulls from checking ending in XXXX-9822 on 1st of month.
+            </Text>
+          </View>
+        </View>
+
+        {/* Search Bar */}
+        <View style={styles.searchBarRow}>
+          <View style={styles.searchContainer}>
+            <Ionicons name="search-outline" size={20} color="#64748b" style={{ marginRight: 8 }} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search by reference number or date..."
+              placeholderTextColor="#64748b"
+              value={searchQuery}
+              onChangeText={(txt) => {
+                setSearchQuery(txt);
+              }}
+            />
+          </View>
+        </View>
+
+        <Text style={styles.sectionHeader} allowFontScaling={false}>PAYMENT HISTORY LEDGER</Text>
+
+        {/* Ledger list */}
+        {filteredLedger.length === 0 ? (
+          <View style={styles.emptyCard}>
+            <Ionicons name="receipt-outline" size={48} color="#475569" style={{ marginBottom: 8 }} />
+            <Text style={styles.emptyText} allowFontScaling={false}>No transactions found</Text>
+          </View>
         ) : (
-          displayedLedger.map((item, idx) => (
+          filteredLedger.map((item, idx) => (
             <AnimatedTouchable
-              key={item.id || `pay-${idx}`}
+              key={item.id || `tx-${idx}`}
               style={styles.ledgerCard}
-              onPress={() => setSelectedPayment(item)}
+              onPress={() => setSelectedTx(item)}
             >
               <View style={styles.cardHeaderRow}>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.tenantText} allowFontScaling={false}>
-                    👤 {item.tenant}
-                  </Text>
-                  <Text style={styles.propText} allowFontScaling={false}>
-                    {item.property} • Unit {item.unitNumber}
+                  <View style={styles.nameRow}>
+                    <Ionicons 
+                      name={item.type === 'Invoice' ? 'document-text-outline' : 'card-outline'} 
+                      size={18} 
+                      color={item.type === 'Invoice' ? '#f59e0b' : '#38bdf8'} 
+                      style={{ marginRight: 6 }} 
+                    />
+                    <Text style={styles.refText} allowFontScaling={false}>
+                      {item.ref}
+                    </Text>
+                  </View>
+                  <Text style={styles.descText} allowFontScaling={false}>
+                    {item.desc}
                   </Text>
                   <Text style={styles.dateText} allowFontScaling={false}>
-                    Date Paid: {item.datePaid}
+                    Date: {item.date}
                   </Text>
                 </View>
 
-                {/* AMOUNT PAID, METHOD BADGE, STATUS & EYE ACTION BUTTON */}
+                {/* Amount details, running balance and view option */}
                 <View style={styles.rightGroup}>
-                  <Text style={styles.amountPaidText} allowFontScaling={false}>
-                    ${(Number(item.amountPaid) || 0).toLocaleString(undefined, { minimumFractionDigits: 1 })}
+                  <Text style={styles.amountText} allowFontScaling={false}>
+                    {item.type === 'Invoice' 
+                      ? `+$${item.invoiceAmt.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+                      : `-$${item.paymentAmt.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+                    }
                   </Text>
 
                   <View style={styles.badgesRow}>
-                    <View style={styles.methodBadge}>
-                      <Text style={styles.methodBadgeText} allowFontScaling={false}>💳 {item.method}</Text>
+                    <View style={[styles.statusBadge, item.status === 'Paid' || item.status === 'Cleared' ? styles.badgeGreen : styles.badgeRed]}>
+                      <Text style={[styles.statusBadgeText, item.status === 'Paid' || item.status === 'Cleared' ? styles.badgeGreenText : styles.badgeRedText]} allowFontScaling={false}>
+                        {item.status}
+                      </Text>
                     </View>
 
-                    <View style={styles.statusBadgeGreen}>
-                      <Text style={styles.statusBadgeGreenText} allowFontScaling={false}>{item.status}</Text>
-                    </View>
-
-                    <TouchableOpacity style={styles.eyeBtn} onPress={() => setSelectedPayment(item)} activeOpacity={0.7}>
-                      <Text style={styles.eyeBtnText} allowFontScaling={false}>👁</Text>
+                    <TouchableOpacity style={styles.eyeBtn} onPress={() => setSelectedTx(item)} activeOpacity={0.7}>
+                      <Ionicons name="eye-outline" size={14} color="#cbd5e1" />
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -363,140 +396,285 @@ export const RentScreen = () => {
             </AnimatedTouchable>
           ))
         )}
-
-        {/* PAGINATION BAR matching Web Screenshot 1-to-1 */}
-        <View style={styles.paginationRow}>
-          <Text style={styles.paginationEntriesText} allowFontScaling={false}>
-            Show <Text style={{ color: '#f8fafc', fontWeight: '800' }}>{entriesPerPage}</Text> entries
-          </Text>
-
-          <View style={styles.paginationControls}>
-            <Text style={styles.pageIndicatorText} allowFontScaling={false}>
-              Page <Text style={{ color: '#f8fafc', fontWeight: '800' }}>{currentPage}</Text> of {totalPages}
-            </Text>
-
-            <TouchableOpacity
-              style={[styles.pageBtn, currentPage === 1 && styles.pageBtnDisabled]}
-              disabled={currentPage === 1}
-              onPress={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.pageBtnText} allowFontScaling={false}>Previous</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.pageBtn, currentPage === totalPages && styles.pageBtnDisabled]}
-              disabled={currentPage === totalPages}
-              onPress={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.pageBtnText} allowFontScaling={false}>Next</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
       </Animated.View>
 
-      {/* MODAL 1: View Payment Receipt Details */}
-      <Modal visible={!!selectedPayment} animationType="slide" transparent>
+      {/* MODAL 1: View Payment/Invoice Details */}
+      <Modal visible={!!selectedTx} animationType="slide" transparent>
         <View style={styles.modalBg}>
           <View style={styles.modalCard}>
             <View style={styles.modalHeaderRow}>
-              <Text style={styles.modalTitle} allowFontScaling={false}>
-                💳 Payment Receipt Details
-              </Text>
-              <TouchableOpacity onPress={() => setSelectedPayment(null)}>
-                <Text style={{ color: '#94a3b8', fontSize: 18, fontWeight: '800' }} allowFontScaling={false}>✕</Text>
+              <View style={styles.modalHeaderTitleRow}>
+                <Ionicons name="receipt-outline" size={22} color="#38bdf8" style={{ marginRight: 6 }} />
+                <Text style={styles.modalTitle} allowFontScaling={false}>
+                  Transaction Details
+                </Text>
+              </View>
+              <TouchableOpacity onPress={() => setSelectedTx(null)}>
+                <Ionicons name="close" size={22} color="#94a3b8" />
               </TouchableOpacity>
             </View>
 
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel} allowFontScaling={false}>Resident Tenant:</Text>
-              <Text style={styles.detailVal} allowFontScaling={false}>{selectedPayment?.tenant}</Text>
+            <View style={styles.detailCard}>
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel} allowFontScaling={false}>Reference Number</Text>
+                <Text style={styles.detailVal} allowFontScaling={false}>{selectedTx?.ref}</Text>
+              </View>
+
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel} allowFontScaling={false}>Type</Text>
+                <Text style={styles.detailVal} allowFontScaling={false}>{selectedTx?.type}</Text>
+              </View>
+
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel} allowFontScaling={false}>Description</Text>
+                <Text style={styles.detailVal} allowFontScaling={false}>{selectedTx?.desc}</Text>
+              </View>
+
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel} allowFontScaling={false}>Date</Text>
+                <Text style={styles.detailVal} allowFontScaling={false}>{selectedTx?.date}</Text>
+              </View>
+
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel} allowFontScaling={false}>Amount</Text>
+                <Text style={[styles.detailVal, selectedTx?.type === 'Invoice' ? { color: '#f59e0b' } : { color: '#10b981' }]} allowFontScaling={false}>
+                  ${selectedTx?.type === 'Invoice' 
+                    ? selectedTx?.invoiceAmt.toLocaleString(undefined, { minimumFractionDigits: 2 })
+                    : selectedTx?.paymentAmt.toLocaleString(undefined, { minimumFractionDigits: 2 })
+                  }
+                </Text>
+              </View>
+
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel} allowFontScaling={false}>Running Balance</Text>
+                <Text style={styles.detailVal} allowFontScaling={false}>
+                  ${selectedTx?.runningBal?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                </Text>
+              </View>
+
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel} allowFontScaling={false}>Status</Text>
+                <Text style={[styles.detailVal, selectedTx?.status === 'Paid' || selectedTx?.status === 'Cleared' ? { color: '#10b981' } : { color: '#f87171' }]} allowFontScaling={false}>
+                  {selectedTx?.status}
+                </Text>
+              </View>
             </View>
 
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel} allowFontScaling={false}>Property Location:</Text>
-              <Text style={styles.detailVal} allowFontScaling={false}>{selectedPayment?.property} • Unit {selectedPayment?.unitNumber}</Text>
-            </View>
-
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel} allowFontScaling={false}>Date Paid:</Text>
-              <Text style={styles.detailVal} allowFontScaling={false}>{selectedPayment?.datePaid}</Text>
-            </View>
-
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel} allowFontScaling={false}>Amount Paid:</Text>
-              <Text style={[styles.detailVal, { color: '#10b981', fontWeight: '800' }]} allowFontScaling={false}>
-                ${(Number(selectedPayment?.amountPaid) || 0).toLocaleString(undefined, { minimumFractionDigits: 1 })}
-              </Text>
-            </View>
-
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel} allowFontScaling={false}>Payment Method:</Text>
-              <Text style={styles.detailVal} allowFontScaling={false}>💳 {selectedPayment?.method}</Text>
-            </View>
-
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel} allowFontScaling={false}>Status:</Text>
-              <Text style={[styles.detailVal, { color: '#4ade80', fontWeight: '800' }]} allowFontScaling={false}>
-                {selectedPayment?.status}
-              </Text>
-            </View>
-
-            <TouchableOpacity style={styles.closeModalBtn} onPress={() => setSelectedPayment(null)}>
-              <Text style={styles.closeModalBtnText} allowFontScaling={false}>Close Receipt</Text>
+            <TouchableOpacity style={styles.closeModalBtn} onPress={() => setSelectedTx(null)}>
+              <Text style={styles.closeModalBtnText} allowFontScaling={false}>Close Details</Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
 
-      {/* MODAL 2: + Submit Rent Payment */}
+      {/* MODAL 2: Submit Rent Payment (Clean 1-to-1 Web Parity) */}
       <Modal visible={isPayModalOpen} animationType="slide" transparent>
-        <View style={styles.modalBg}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle} allowFontScaling={false}>+ Submit Rent Payment</Text>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.85)' }}
+        >
+          <ScrollView 
+            contentContainerStyle={styles.modalScrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.modalCard}>
+              <View style={styles.modalHeaderRow}>
+                <Text style={styles.modalTitle} allowFontScaling={false}>Submit Rent Payment</Text>
+                <TouchableOpacity onPress={() => setIsPayModalOpen(false)}>
+                  <Ionicons name="close" size={22} color="#94a3b8" />
+                </TouchableOpacity>
+              </View>
 
-            <Text style={styles.inputLabel} allowFontScaling={false}>PAYMENT AMOUNT ($) *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="e.g. 1068.10"
-              placeholderTextColor="#94a3b8"
-              keyboardType="numeric"
-              value={payAmount}
-              onChangeText={setPayAmount}
-            />
+              {/* PAYMENT OPTION */}
+              <Text style={styles.inputLabel} allowFontScaling={false}>PAYMENT OPTION</Text>
+              <View style={styles.paymentOptionRow}>
+                <TouchableOpacity 
+                  style={[styles.optionCard, paymentOption === 'full' && styles.optionCardActive]}
+                  onPress={() => setPaymentOption('full')}
+                >
+                  <Text style={[styles.optionCardTitle, paymentOption === 'full' && styles.optionCardTitleActive]} allowFontScaling={false}>PAY IN FULL</Text>
+                  <Text style={styles.optionCardSub} allowFontScaling={false}>${outstandingBalance.toFixed(2)}</Text>
+                </TouchableOpacity>
 
-            <Text style={styles.inputLabel} allowFontScaling={false}>PAYMENT METHOD</Text>
-            <View style={styles.methodSelectorRow}>
-              {['ACH Bank Transfer', 'Credit Card', 'Debit Card'].map((method) => {
-                const isSelected = paymentMethod === method;
-                return (
-                  <TouchableOpacity
-                    key={method}
-                    style={[styles.methodChip, isSelected && styles.methodChipActive]}
-                    onPress={() => setPaymentMethod(method)}
-                  >
-                    <Text style={[styles.methodChipText, isSelected && styles.methodChipTextActive]} allowFontScaling={false}>
-                      {method.split(' ')[0]}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
+                <TouchableOpacity 
+                  style={[styles.optionCard, paymentOption === 'partial' && styles.optionCardActive]}
+                  onPress={() => setPaymentOption('partial')}
+                >
+                  <Text style={[styles.optionCardTitle, paymentOption === 'partial' && styles.optionCardTitleActive]} allowFontScaling={false}>PARTIAL PAYMENT</Text>
+                  <Text style={styles.optionCardSub} allowFontScaling={false}>Pay custom amount</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* PAYMENT AMOUNT */}
+              {paymentOption === 'partial' && (
+                <>
+                  <Text style={styles.inputLabel} allowFontScaling={false}>PAYMENT AMOUNT ($) *</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Enter Custom Amount"
+                    placeholderTextColor="#64748b"
+                    keyboardType="numeric"
+                    value={payAmount}
+                    onChangeText={setPayAmount}
+                  />
+                </>
+              )}
+
+              {/* PAYMENT METHOD */}
+              <Text style={styles.inputLabel} allowFontScaling={false}>PAYMENT METHOD</Text>
+              <View style={styles.methodSelectorRow}>
+                <TouchableOpacity 
+                  style={[styles.methodChip, paymentMethod === 'ACH' && styles.methodChipActive]}
+                  onPress={() => setPaymentMethod('ACH')}
+                >
+                  <Ionicons name="business-outline" size={14} color={paymentMethod === 'ACH' ? '#0f172a' : '#94a3b8'} style={{ marginBottom: 2 }} />
+                  <Text style={[styles.methodChipText, paymentMethod === 'ACH' && styles.methodChipTextActive]} allowFontScaling={false}>ACH BANK</Text>
+                  <Text style={styles.methodChipFee} allowFontScaling={false}>$0.00 fee</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={[styles.methodChip, paymentMethod === 'Credit Card' && styles.methodChipActive]}
+                  onPress={() => setPaymentMethod('Credit Card')}
+                >
+                  <Ionicons name="card-outline" size={14} color={paymentMethod === 'Credit Card' ? '#0f172a' : '#94a3b8'} style={{ marginBottom: 2 }} />
+                  <Text style={[styles.methodChipText, paymentMethod === 'Credit Card' && styles.methodChipTextActive]} allowFontScaling={false}>CREDIT CARD</Text>
+                  <Text style={styles.methodChipFee} allowFontScaling={false}>2.9% fee</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={[styles.methodChip, paymentMethod === 'Debit Card' && styles.methodChipActive]}
+                  onPress={() => setPaymentMethod('Debit Card')}
+                >
+                  <Ionicons name="card-outline" size={14} color={paymentMethod === 'Debit Card' ? '#0f172a' : '#94a3b8'} style={{ marginBottom: 2 }} />
+                  <Text style={[styles.methodChipText, paymentMethod === 'Debit Card' && styles.methodChipTextActive]} allowFontScaling={false}>DEBIT CARD</Text>
+                  <Text style={styles.methodChipFee} allowFontScaling={false}>$4.99 fee</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* ACH BANK DETAILS */}
+              {paymentMethod === 'ACH' && (
+                <View style={styles.bankForm}>
+                  <Text style={styles.bankFormHeader} allowFontScaling={false}>ACH BANK INFORMATION</Text>
+                  
+                  <Text style={styles.inputLabel} allowFontScaling={false}>ACCOUNT HOLDER NAME</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="E.g., Jane Doe"
+                    placeholderTextColor="#64748b"
+                    value={achHolderName}
+                    onChangeText={setAchHolderName}
+                  />
+
+                  <View style={{ flexDirection: 'row', gap: 10 }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.inputLabel} allowFontScaling={false}>BANK</Text>
+                      <TextInput
+                        style={styles.input}
+                        placeholder="Chase Bank"
+                        placeholderTextColor="#64748b"
+                        value={achBankName}
+                        onChangeText={setAchBankName}
+                      />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.inputLabel} allowFontScaling={false}>ACCOUNT TYPE</Text>
+                      <TextInput
+                        style={styles.input}
+                        placeholder="Checking"
+                        placeholderTextColor="#64748b"
+                        value={achAccountType}
+                        onChangeText={setAchAccountType}
+                      />
+                    </View>
+                  </View>
+
+                  <View style={{ flexDirection: 'row', gap: 10 }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.inputLabel} allowFontScaling={false}>ROUTING NUMBER</Text>
+                      <TextInput
+                        style={styles.input}
+                        placeholder="9-digit routing"
+                        placeholderTextColor="#64748b"
+                        keyboardType="numeric"
+                        value={achRoutingNumber}
+                        onChangeText={setAchRoutingNumber}
+                      />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.inputLabel} allowFontScaling={false}>ACCOUNT NUMBER</Text>
+                      <TextInput
+                        style={styles.input}
+                        placeholder="Account number"
+                        placeholderTextColor="#64748b"
+                        keyboardType="numeric"
+                        value={achAccountNumber}
+                        onChangeText={setAchAccountNumber}
+                      />
+                    </View>
+                  </View>
+                </View>
+              )}
+
+              {/* CARD DETAILS */}
+              {paymentMethod !== 'ACH' && (
+                <View style={styles.bankForm}>
+                  <Text style={styles.bankFormHeader} allowFontScaling={false}>CARD INFORMATION</Text>
+                  
+                  <Text style={styles.inputLabel} allowFontScaling={false}>CARDHOLDER NAME</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="E.g., Jane Doe"
+                    placeholderTextColor="#64748b"
+                    value={achHolderName}
+                    onChangeText={setAchHolderName}
+                  />
+
+                  <Text style={styles.inputLabel} allowFontScaling={false}>CARD NUMBER</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="XXXX XXXX XXXX XXXX"
+                    placeholderTextColor="#64748b"
+                    keyboardType="numeric"
+                  />
+                </View>
+              )}
+
+              {/* PAYMENT SUMMARY */}
+              <View style={styles.summaryCard}>
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel} allowFontScaling={false}>Base Rent Amount</Text>
+                  <Text style={styles.summaryVal} allowFontScaling={false}>${amountNum.toFixed(2)}</Text>
+                </View>
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel} allowFontScaling={false}>Convenience Fee ({paymentMethod})</Text>
+                  <Text style={styles.summaryVal} allowFontScaling={false}>${convenienceFee.toFixed(2)}</Text>
+                </View>
+                <View style={[styles.summaryRow, { borderTopWidth: 1, borderTopColor: '#334155', paddingTop: 8, marginTop: 4 }]}>
+                  <Text style={[styles.summaryLabel, { fontWeight: '800', color: '#f8fafc' }]} allowFontScaling={false}>Total Charge</Text>
+                  <Text style={[styles.summaryVal, { fontWeight: '800', color: '#10b981' }]} allowFontScaling={false}>${totalCharge.toFixed(2)}</Text>
+                </View>
+              </View>
+
+              <View style={styles.secureTextRow}>
+                <Ionicons name="shield-checkmark" size={14} color="#10b981" style={{ marginRight: 6 }} />
+                <Text style={styles.secureText} allowFontScaling={false}>256-BIT SSL SECURED TRANSACTION</Text>
+              </View>
+
+              <View style={styles.modalButtons}>
+                <TouchableOpacity style={[styles.modalBtn, styles.cancelBtn]} onPress={() => setIsPayModalOpen(false)}>
+                  <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={[styles.modalBtn, styles.saveBtn]} onPress={handleSubmitPayment} disabled={submittingPay}>
+                  <Text style={styles.saveBtnText} allowFontScaling={false}>
+                    {submittingPay ? 'Processing...' : 'Pay Rent'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity style={[styles.modalBtn, styles.cancelBtn]} onPress={() => setIsPayModalOpen(false)}>
-                <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={[styles.modalBtn, styles.saveBtn]} onPress={handleSubmitPayment} disabled={submittingPay}>
-                <Text style={styles.saveBtnText} allowFontScaling={false}>
-                  {submittingPay ? 'Processing...' : 'Pay Rent Now'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </Modal>
 
       <View style={{ height: 60 }} />
@@ -510,111 +688,124 @@ const styles = StyleSheet.create({
   center: { flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center' },
   loadingText: { color: '#94a3b8', marginTop: 8 },
 
-  header: { marginBottom: 14 },
-  breadcrumb: { color: '#38bdf8', fontSize: 11, fontWeight: '700', marginBottom: 4 },
+  header: { marginBottom: 16 },
   titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
-  title: { fontSize: 18, fontWeight: '800', color: '#f8fafc', flex: 1 },
-  subtitle: { fontSize: 11.5, color: '#94a3b8', marginTop: 4, lineHeight: 16 },
+  title: { fontSize: 24, fontWeight: '800', color: '#f8fafc', flex: 1 },
 
-  headerButtonsGroup: { flexDirection: 'row', gap: 6 },
-  exportBtn: { backgroundColor: '#1e293b', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6, borderWidth: 1, borderColor: '#334155' },
-  exportBtnText: { color: '#cbd5e1', fontSize: 11, fontWeight: '700' },
-  submitPayBtn: { backgroundColor: '#0284c7', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6 },
-  submitPayBtnText: { color: '#ffffff', fontSize: 11, fontWeight: '700' },
+  submitPayBtn: { backgroundColor: '#38bdf8', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 8, flexDirection: 'row', alignItems: 'center' },
+  submitPayBtnText: { color: '#0f172a', fontSize: 13, fontWeight: '800' },
 
-  showingRow: { marginBottom: 6 },
-  showingText: { fontSize: 10, fontWeight: '800', color: '#94a3b8', letterSpacing: 0.8 },
+  statsContainer: { flexDirection: 'row', gap: 12, marginBottom: 16 },
+  outstandingCard: { flex: 1.2, backgroundColor: '#1e293b', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: '#334155' },
+  autopayCard: { flex: 1, backgroundColor: '#1e293b', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: '#334155' },
+  statsLabel: { fontSize: 9.5, color: '#94a3b8', fontWeight: '800', letterSpacing: 0.5 },
+  balanceRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 4 },
+  balanceVal: { fontSize: 24, fontWeight: '800' },
+  statsSubText: { fontSize: 10.5, color: '#94a3b8', lineHeight: 14 },
+  autopayHeaderRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
+  autopayBadge: { backgroundColor: 'rgba(16, 185, 129, 0.15)', paddingHorizontal: 8, paddingVertical: 2.5, borderRadius: 6, borderWidth: 1, borderColor: '#10b981', alignSelf: 'flex-start', marginVertical: 4 },
+  autopayBadgeText: { color: '#10b981', fontSize: 9, fontWeight: '800' },
 
-  searchBarRow: { flexDirection: 'row', gap: 8, marginBottom: 10 },
-  searchInput: {
+  searchBarRow: { flexDirection: 'row', marginBottom: 16 },
+  searchContainer: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#1e293b',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    color: '#f8fafc',
-    fontSize: 12,
     borderWidth: 1,
     borderColor: '#334155',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
-  resetBtn: { backgroundColor: '#334155', paddingHorizontal: 10, justifyContent: 'center', borderRadius: 8 },
-  resetBtnText: { color: '#cbd5e1', fontSize: 11, fontWeight: '700' },
+  searchInput: {
+    color: '#f8fafc',
+    fontSize: 13,
+    flex: 1,
+    padding: 0,
+  },
 
-  filterPillsScroll: { marginBottom: 12 },
-  filterChip: { backgroundColor: '#1e293b', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, marginRight: 6, borderWidth: 1, borderColor: '#334155' },
-  filterChipActive: { backgroundColor: '#0284c7', borderColor: '#38bdf8' },
-  filterChipText: { color: '#94a3b8', fontSize: 11, fontWeight: '600' },
-  filterChipTextActive: { color: '#ffffff', fontWeight: '800' },
-  filterDivider: { width: 1, height: 20, backgroundColor: '#334155', marginHorizontal: 6, alignSelf: 'center' },
+  sectionHeader: { fontSize: 11, fontWeight: '800', color: '#64748b', marginBottom: 10, letterSpacing: 1 },
 
-  emptyCard: { backgroundColor: '#1e293b', padding: 24, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: '#334155' },
-  emptyText: { color: '#f8fafc', fontSize: 14, fontWeight: '700' },
-  emptySubText: { color: '#94a3b8', fontSize: 12, marginTop: 4 },
+  emptyCard: { backgroundColor: '#1e293b', padding: 32, borderRadius: 16, alignItems: 'center', borderWidth: 1, borderColor: '#334155' },
+  emptyText: { color: '#f8fafc', fontSize: 15, fontWeight: '700' },
 
   ledgerCard: {
     backgroundColor: '#1e293b',
-    borderRadius: 14,
+    borderRadius: 16,
     padding: 14,
     marginBottom: 10,
     borderWidth: 1,
     borderColor: '#334155',
   },
   cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  tenantText: { fontSize: 14.5, fontWeight: '800', color: '#f8fafc' },
-  propText: { fontSize: 11, color: '#cbd5e1', marginTop: 2 },
-  dateText: { fontSize: 10.5, color: '#94a3b8', marginTop: 2 },
+  nameRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 2 },
+  refText: { fontSize: 15, fontWeight: '800', color: '#f8fafc' },
+  descText: { fontSize: 12, color: '#cbd5e1', marginTop: 2 },
+  dateText: { fontSize: 11, color: '#94a3b8', marginTop: 2 },
 
-  rightGroup: { alignItems: 'flex-end', gap: 4 },
-  amountPaidText: { fontSize: 15, fontWeight: '800', color: '#10b981' },
-  badgesRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 },
-  methodBadge: { backgroundColor: '#0f172a', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, borderWidth: 1, borderColor: '#334155' },
-  methodBadgeText: { color: '#cbd5e1', fontSize: 9.5, fontWeight: '700' },
-  statusBadgeGreen: { backgroundColor: 'rgba(34, 197, 94, 0.15)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, borderWidth: 1, borderColor: '#4ade80' },
-  statusBadgeGreenText: { color: '#4ade80', fontSize: 9.5, fontWeight: '800' },
+  rightGroup: { alignItems: 'flex-end', gap: 6 },
+  amountText: { fontSize: 15, fontWeight: '800', color: '#f8fafc' },
+  badgesRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  statusBadge: { paddingHorizontal: 6, paddingVertical: 2.5, borderRadius: 4, borderWidth: 1 },
+  badgeGreen: { backgroundColor: 'rgba(16, 185, 129, 0.15)', borderColor: '#10b981' },
+  badgeGreenText: { color: '#10b981', fontSize: 9, fontWeight: '800' },
+  badgeRed: { backgroundColor: 'rgba(239, 68, 68, 0.15)', borderColor: '#ef4444' },
+  badgeRedText: { color: '#ef4444', fontSize: 9, fontWeight: '800' },
+  eyeBtn: { backgroundColor: '#0f172a', width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#334155' },
 
-  eyeBtn: { backgroundColor: '#0f172a', width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#334155' },
-  eyeBtnText: { color: '#cbd5e1', fontSize: 11 },
-
-  paginationRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 10,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#334155',
+  modalBg: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.85)', justifyContent: 'center', padding: 20 },
+  modalScrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    padding: 16,
+    paddingTop: Platform.OS === 'ios' ? 40 : 16,
+    paddingBottom: Platform.OS === 'ios' ? 60 : 30,
   },
-  paginationEntriesText: { color: '#94a3b8', fontSize: 11 },
-  paginationControls: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  pageIndicatorText: { color: '#94a3b8', fontSize: 11 },
-  pageBtn: { backgroundColor: '#1e293b', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 6, borderWidth: 1, borderColor: '#334155' },
-  pageBtnDisabled: { opacity: 0.4 },
-  pageBtnText: { color: '#cbd5e1', fontSize: 11, fontWeight: '700' },
+  modalCard: { backgroundColor: '#1e293b', borderRadius: 20, padding: 20, borderWidth: 1, borderColor: '#334155' },
+  modalHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
+  modalHeaderTitleRow: { flexDirection: 'row', alignItems: 'center' },
+  modalTitle: { fontSize: 16, fontWeight: '800', color: '#f8fafc' },
 
-  modalBg: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', padding: 20 },
-  modalCard: { backgroundColor: '#1e293b', borderRadius: 16, padding: 20, borderWidth: 1, borderColor: '#334155' },
-  modalHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  modalTitle: { fontSize: 16, fontWeight: '800', color: '#38bdf8', flex: 1 },
+  detailCard: { backgroundColor: '#0f172a', borderRadius: 12, padding: 14, marginBottom: 16, borderWidth: 1, borderColor: '#334155' },
+  detailRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#1e293b' },
+  detailLabel: { color: '#94a3b8', fontSize: 13, fontWeight: '500' },
+  detailVal: { color: '#f8fafc', fontSize: 13, fontWeight: '700' },
+  closeModalBtn: { backgroundColor: '#334155', paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
+  closeModalBtnText: { color: '#cbd5e1', fontSize: 13, fontWeight: '700' },
 
-  detailRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: '#334155' },
-  detailLabel: { color: '#94a3b8', fontSize: 12, fontWeight: '600' },
-  detailVal: { color: '#f8fafc', fontSize: 12.5, fontWeight: '700' },
-  closeModalBtn: { backgroundColor: '#334155', paddingVertical: 10, borderRadius: 8, alignItems: 'center', marginTop: 14 },
-  closeModalBtnText: { color: '#ffffff', fontSize: 12, fontWeight: '700' },
+  inputLabel: { fontSize: 10, color: '#94a3b8', fontWeight: '700', marginBottom: 6, marginTop: 10, letterSpacing: 0.5 },
+  input: { backgroundColor: '#0f172a', borderWidth: 1, borderColor: '#334155', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, color: '#f8fafc', fontSize: 13, marginBottom: 4 },
 
-  inputLabel: { fontSize: 10, color: '#94a3b8', fontWeight: '700', marginBottom: 4, marginTop: 4 },
-  input: { backgroundColor: '#0f172a', borderWidth: 1, borderColor: '#334155', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, color: '#f8fafc', fontSize: 13, marginBottom: 10 },
+  paymentOptionRow: { flexDirection: 'row', gap: 10, marginBottom: 8 },
+  optionCard: { flex: 1, backgroundColor: '#0f172a', borderWidth: 1, borderColor: '#334155', borderRadius: 12, padding: 12, alignItems: 'center' },
+  optionCardActive: { borderColor: '#38bdf8', backgroundColor: 'rgba(56, 189, 248, 0.1)' },
+  optionCardTitle: { fontSize: 11, fontWeight: '800', color: '#94a3b8' },
+  optionCardTitleActive: { color: '#38bdf8' },
+  optionCardSub: { fontSize: 12, fontWeight: '700', color: '#f8fafc', marginTop: 4 },
 
-  methodSelectorRow: { flexDirection: 'row', gap: 6, marginBottom: 14 },
-  methodChip: { flex: 1, backgroundColor: '#0f172a', paddingVertical: 8, borderRadius: 6, alignItems: 'center', borderWidth: 1, borderColor: '#334155' },
-  methodChipActive: { backgroundColor: '#0284c7', borderColor: '#38bdf8' },
-  methodChipText: { color: '#94a3b8', fontSize: 11, fontWeight: '600' },
-  methodChipTextActive: { color: '#ffffff', fontWeight: '800' },
+  methodSelectorRow: { flexDirection: 'row', gap: 8, marginBottom: 8 },
+  methodChip: { flex: 1, backgroundColor: '#0f172a', paddingVertical: 10, borderRadius: 10, alignItems: 'center', borderWidth: 1, borderColor: '#334155' },
+  methodChipActive: { backgroundColor: '#38bdf8', borderColor: '#38bdf8' },
+  methodChipText: { color: '#94a3b8', fontSize: 10, fontWeight: '800' },
+  methodChipTextActive: { color: '#0f172a' },
+  methodChipFee: { fontSize: 9, color: '#cbd5e1', marginTop: 2 },
+
+  bankForm: { backgroundColor: '#0f172a', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#334155', marginVertical: 10 },
+  bankFormHeader: { fontSize: 10.5, fontWeight: '800', color: '#38bdf8', letterSpacing: 0.5, marginBottom: 4 },
+
+  summaryCard: { backgroundColor: '#0f172a', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#334155', marginVertical: 10 },
+  summaryRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 },
+  summaryLabel: { color: '#94a3b8', fontSize: 12, fontWeight: '500' },
+  summaryVal: { color: '#cbd5e1', fontSize: 12, fontWeight: '700' },
+
+  secureTextRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginVertical: 8 },
+  secureText: { fontSize: 10, color: '#10b981', fontWeight: '800', letterSpacing: 0.5 },
 
   modalButtons: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 },
-  modalBtn: { width: '48%', paddingVertical: 10, borderRadius: 8, alignItems: 'center' },
+  modalBtn: { width: '48%', paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
   cancelBtn: { backgroundColor: '#334155' },
-  cancelBtnText: { color: '#cbd5e1', fontWeight: '600' },
-  saveBtn: { backgroundColor: '#0284c7' },
-  saveBtnText: { color: '#ffffff', fontWeight: '700' },
+  cancelBtnText: { color: '#cbd5e1', fontWeight: '700', fontSize: 13 },
+  saveBtn: { backgroundColor: '#38bdf8' },
+  saveBtnText: { color: '#0f172a', fontWeight: '800', fontSize: 13 },
 });

@@ -93,20 +93,20 @@ export default function App() {
   switch (role) {
     case 'Super Admin':
       moduleTabs = [
-        { id: 'dashboard', label: '📊 Dashboard', icon: '📊' },
-        { id: 'companies', label: '🏢 Companies', icon: '🏢' },
-        { id: 'subscriptions', label: '📅 Subscriptions', icon: '📅' },
-        { id: 'platform-users', label: '👥 Users', icon: '👥' },
-        { id: 'more', label: '☰ All Menu', icon: '☰' },
+        { id: 'dashboard', label: 'Dashboard', icon: 'grid-outline', activeIcon: 'grid' },
+        { id: 'companies', label: 'Companies', icon: 'business-outline', activeIcon: 'business' },
+        { id: 'subscriptions', label: 'Subscriptions', icon: 'card-outline', activeIcon: 'card' },
+        { id: 'platform-users', label: 'Users', icon: 'people-outline', activeIcon: 'people' },
+        { id: 'more', label: 'All Menu', icon: 'menu-outline', activeIcon: 'menu' },
       ];
       break;
 
     case 'Collection Manager':
       moduleTabs = [
-        { id: 'dashboard', label: '📊 Dashboard', icon: '📊' },
-        { id: 'rent', label: '💳 Rent', icon: '💳' },
-        { id: 'tenants', label: '👥 Tenants', icon: '👥' },
-        { id: 'profile', label: '⚙️ Settings', icon: '⚙️' },
+        { id: 'dashboard', label: 'Dashboard', icon: 'grid-outline', activeIcon: 'grid' },
+        { id: 'rent', label: 'Rent', icon: 'cash-outline', activeIcon: 'cash' },
+        { id: 'tenants', label: 'Tenants', icon: 'people-outline', activeIcon: 'people' },
+        { id: 'profile', label: 'Settings', icon: 'settings-outline', activeIcon: 'settings' },
       ];
       break;
 
@@ -121,33 +121,33 @@ export default function App() {
 
     case 'Owner':
       moduleTabs = [
-        { id: 'dashboard', label: '📊 Dashboard', icon: '📊' },
-        { id: 'properties', label: '🏢 Properties', icon: '🏢' },
-        { id: 'rent', label: '💳 Financials', icon: '💳' },
-        { id: 'maintenance', label: '🛠️ Repairs', icon: '🛠️' },
-        { id: 'more', label: '☰ All 9', icon: '☰' },
+        { id: 'dashboard', label: 'Dashboard', icon: 'grid-outline', activeIcon: 'grid' },
+        { id: 'properties', label: 'Properties', icon: 'business-outline', activeIcon: 'business' },
+        { id: 'rent', label: 'Financials', icon: 'cash-outline', activeIcon: 'cash' },
+        { id: 'maintenance', label: 'Repairs', icon: 'hammer-outline', activeIcon: 'hammer' },
+        { id: 'more', label: 'All 9', icon: 'menu-outline', activeIcon: 'menu' },
       ];
       break;
 
     case 'Tenant':
       moduleTabs = [
-        { id: 'dashboard', label: '📊 Dashboard', icon: '📊' },
-        { id: 'lease', label: '📖 Lease', icon: '📖' },
-        { id: 'rent', label: '💳 Payments', icon: '💳' },
-        { id: 'maintenance', label: '🛠️ Repairs', icon: '🛠️' },
-        { id: 'more', label: '☰ All', icon: '☰' },
+        { id: 'dashboard', label: 'Dashboard', icon: 'grid-outline', activeIcon: 'grid' },
+        { id: 'lease', label: 'Lease', icon: 'document-text-outline', activeIcon: 'document-text' },
+        { id: 'rent', label: 'Payments', icon: 'card-outline', activeIcon: 'card' },
+        { id: 'maintenance', label: 'Repairs', icon: 'hammer-outline', activeIcon: 'hammer' },
+        { id: 'more', label: 'All', icon: 'menu-outline', activeIcon: 'menu' },
       ];
       break;
 
     case 'Property Manager':
     default:
       moduleTabs = [
-        { id: 'dashboard', label: '📊 Dashboard', icon: '📊' },
-        { id: 'properties', label: '🏢 Properties', icon: '🏢' },
-        { id: 'leads', label: '🔑 Leasing', icon: '🔑' },
-        { id: 'tenants', label: '👥 Tenants', icon: '👥' },
-        { id: 'rent', label: '💳 Rent', icon: '💳' },
-        { id: 'more', label: '☰ All 13', icon: '☰' },
+        { id: 'dashboard', label: 'Dashboard', icon: 'grid-outline', activeIcon: 'grid' },
+        { id: 'properties', label: 'Properties', icon: 'business-outline', activeIcon: 'business' },
+        { id: 'leads', label: 'Leasing', icon: 'key-outline', activeIcon: 'key' },
+        { id: 'tenants', label: 'Tenants', icon: 'people-outline', activeIcon: 'people' },
+        { id: 'rent', label: 'Rent', icon: 'cash-outline', activeIcon: 'cash' },
+        { id: 'more', label: 'All 13', icon: 'menu-outline', activeIcon: 'menu' },
       ];
       break;
   }
@@ -166,7 +166,7 @@ export default function App() {
       case 'Owner':
         return <OwnerDashboard />;
       case 'Tenant':
-        return <TenantDashboard />;
+        return <TenantDashboard onNavigate={(screenId) => setActiveTab(screenId)} />;
       default:
         return <ManagerDashboard onNavigate={(screenId) => setActiveTab(screenId)} />;
     }
@@ -244,13 +244,13 @@ export default function App() {
       <StatusBar style="light" />
 
       {/* Top Header Bar with Hamburger Drawer, Notification Bell Icon & Profile Badge */}
-      {role !== 'Maintenance Staff' && (
+      {(role !== 'Maintenance Staff' && role !== 'Tenant') && (
         <View style={styles.topHeader}>
           <View style={styles.brandContainer}>
             <TouchableOpacity style={styles.hamburgerBtn} onPress={() => setDrawerVisible(true)}>
-              <Text style={styles.hamburgerIcon} allowFontScaling={false}>☰</Text>
+              <Ionicons name="menu-outline" size={24} color="#38bdf8" />
             </TouchableOpacity>
-            <Text style={styles.brandIcon} allowFontScaling={false}>🏢</Text>
+            <Ionicons name="business" size={20} color="#38bdf8" style={{ marginRight: 2 }} />
             <Text style={styles.headerTitle} allowFontScaling={false}>
               {role === 'Tenant' ? 'Tenant Portal' : 'Zentrol Property'}
             </Text>
@@ -263,7 +263,7 @@ export default function App() {
               onPress={() => setActiveTab('notifications')}
               activeOpacity={0.7}
             >
-              <Text style={styles.bellIcon} allowFontScaling={false}>🔔</Text>
+              <Ionicons name="notifications-outline" size={22} color="#f8fafc" />
               <View style={styles.bellBadge}>
                 <Text style={styles.bellBadgeText} allowFontScaling={false}>3</Text>
               </View>
@@ -297,22 +297,24 @@ export default function App() {
       </View>
 
       {/* Fixed Bottom Navigation Bar */}
-      <View style={[styles.bottomBarContainer, role === 'Maintenance Staff' && { paddingBottom: Platform.OS === 'ios' ? 24 : 16, paddingTop: 10 }]}>
+      <View style={[styles.bottomBarContainer, (role === 'Maintenance Staff' || role === 'Tenant') && { paddingBottom: Platform.OS === 'ios' ? 24 : 16, paddingTop: 10 }]}>
         <View style={styles.fixedBottomBar}>
           {moduleTabs.map((tab) => {
             const isActive = activeTab === tab.id;
             const isStaff = role === 'Maintenance Staff';
+            const isTenant = role === 'Tenant';
+            const useIonicon = typeof tab.icon === 'string' && (tab.icon.includes('-outline') || ['grid', 'clipboard', 'time', 'person', 'menu', 'card', 'hammer', 'document-text'].includes(tab.icon));
             return (
               <TouchableOpacity
                 key={`bottom-${tab.id}`}
-                style={[styles.bottomTabItem, (isActive && !isStaff) && styles.bottomTabItemActive]}
+                style={[styles.bottomTabItem, (isActive && !useIonicon) && styles.bottomTabItemActive]}
                 onPress={() => handleTabPress(tab.id)}
                 activeOpacity={0.7}
               >
-                {isStaff && isActive && (
+                {(isStaff || isTenant) && isActive && (
                   <View style={{ height: 2.5, backgroundColor: '#38bdf8', position: 'absolute', top: -6, left: 16, right: 16, borderRadius: 1 }} />
                 )}
-                {isStaff ? (
+                {useIonicon ? (
                   <Ionicons 
                     name={isActive ? tab.activeIcon : tab.icon} 
                     size={20} 
@@ -323,7 +325,7 @@ export default function App() {
                   <Text style={styles.bottomTabIcon} allowFontScaling={false}>{tab.icon}</Text>
                 )}
                 <Text style={[styles.bottomTabText, isActive && styles.bottomTabTextActive]} allowFontScaling={false}>
-                  {isStaff ? tab.label : (tab.label.split(' ')[1] || tab.label)}
+                  {(isStaff || isTenant) ? tab.label : (tab.label.split(' ')[1] || tab.label)}
                 </Text>
               </TouchableOpacity>
             );

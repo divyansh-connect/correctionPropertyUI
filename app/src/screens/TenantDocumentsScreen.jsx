@@ -12,9 +12,12 @@ import {
   RefreshControl,
   Animated,
   Easing,
+  Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
 import apiClient from '../api/client';
 import { useAuthStore } from '../store/useStore';
+import { Ionicons } from '@expo/vector-icons';
 
 // Animated Touchable Component
 const AnimatedTouchable = ({ children, onPress, style, disabled }) => {
@@ -177,9 +180,7 @@ export const TenantDocumentsScreen = () => {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color="#38bdf8" />
-        <Text style={styles.loadingText} allowFontScaling={false}>
-          Loading {isOwner ? 'Owner' : 'Tenant'} Documents...
-        </Text>
+        <Text style={styles.loadingText} allowFontScaling={false}>Loading Documents...</Text>
       </View>
     );
   }
@@ -192,39 +193,32 @@ export const TenantDocumentsScreen = () => {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchDocuments} tintColor="#38bdf8" />}
     >
       <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
-        {/* Page Header matching Web Screenshot 1-to-1 */}
+        {/* Page Header */}
         <View style={styles.header}>
-          <Text style={styles.breadcrumb} allowFontScaling={false}>Home › Documents</Text>
           <View style={styles.titleRow}>
             <Text style={styles.title} allowFontScaling={false}>
-              {isOwner ? 'Owner Documents Repository' : 'Tenant Documents'}
+              {isOwner ? 'Owner Documents' : 'My Documents'}
             </Text>
 
             <AnimatedTouchable style={styles.uploadBtn} onPress={() => setIsUploadModalOpen(true)}>
-              <Text style={styles.uploadBtnText} allowFontScaling={false}>+ Upload Document</Text>
+              <Ionicons name="cloud-upload-outline" size={15} color="#ffffff" style={{ marginRight: 4 }} />
+              <Text style={styles.uploadBtnText} allowFontScaling={false}>Upload Document</Text>
             </AnimatedTouchable>
           </View>
-          <Text style={styles.subtitle} allowFontScaling={false}>
-            {isOwner
-              ? 'Access property statements, tax forms, owner agreements, and insurance policies.'
-              : 'Access your lease contracts, payment receipts, official notices, and community files.'}
-          </Text>
         </View>
 
         {/* Search Bar */}
         <View style={styles.searchBarRow}>
-          <TextInput
-            style={styles.searchInput}
-            placeholder="🔍 Search documents by file name..."
-            placeholderTextColor="#94a3b8"
-            value={searchTerm}
-            onChangeText={setSearchTerm}
-          />
-          {searchTerm ? (
-            <AnimatedTouchable style={styles.resetBtn} onPress={() => setSearchTerm('')}>
-              <Text style={styles.resetBtnText} allowFontScaling={false}>🔄 Reset</Text>
-            </AnimatedTouchable>
-          ) : null}
+          <View style={styles.searchContainer}>
+            <Ionicons name="search-outline" size={20} color="#64748b" style={{ marginRight: 8 }} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search documents by name..."
+              placeholderTextColor="#64748b"
+              value={searchTerm}
+              onChangeText={setSearchTerm}
+            />
+          </View>
         </View>
 
         {/* Category Pills horizontal selector */}
@@ -248,30 +242,28 @@ export const TenantDocumentsScreen = () => {
         {/* Section Header */}
         <View style={styles.showingRow}>
           <Text style={styles.showingText} allowFontScaling={false}>
-            DOCUMENTS REPOSITORY ({filteredDocs.length})
+            DOCUMENTS ({filteredDocs.length})
           </Text>
         </View>
 
-        {/* Documents Cards List matching Web 1-to-1 */}
+        {/* Documents Cards List */}
         {filteredDocs.length === 0 ? (
           <View style={styles.emptyCard}>
-            <Text style={styles.emptyText} allowFontScaling={false}>No se encontraron resultados.</Text>
-            <Text style={styles.emptySubText} allowFontScaling={false}>
-              No document files found matching search or category filter.
-            </Text>
+            <Ionicons name="document-text-outline" size={48} color="#475569" style={{ marginBottom: 8 }} />
+            <Text style={styles.emptyText} allowFontScaling={false}>No document files found</Text>
           </View>
         ) : (
           filteredDocs.map((doc, idx) => (
             <AnimatedTouchable key={doc.id || `doc-${idx}`} style={styles.docCard} onPress={() => handleDownload(doc.name)}>
               <View style={styles.docRow}>
                 <View style={styles.iconBox}>
-                  <Text style={{ fontSize: 20 }}>📄</Text>
+                  <Ionicons name="document-text-outline" size={20} color="#cbd5e1" />
                 </View>
 
                 <View style={{ flex: 1 }}>
                   <Text style={styles.docName} allowFontScaling={false}>{doc.name}</Text>
                   <Text style={styles.docMeta} allowFontScaling={false}>
-                    {doc.uploadedDate || doc.createdAt || '2026-08-04'} • {doc.size || doc.fileSize || '1.2 MB'}
+                    {doc.uploadedDate || doc.createdAt || '2026-08-04'} · {doc.size || doc.fileSize || '1.2 MB'}
                   </Text>
                 </View>
 
@@ -281,7 +273,7 @@ export const TenantDocumentsScreen = () => {
                   </View>
 
                   <TouchableOpacity style={styles.downloadIconBtn} onPress={() => handleDownload(doc.name)} activeOpacity={0.7}>
-                    <Text style={styles.downloadIconText} allowFontScaling={false}>📥</Text>
+                    <Ionicons name="download-outline" size={14} color="#38bdf8" />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -293,48 +285,64 @@ export const TenantDocumentsScreen = () => {
       {/* MODAL: + Upload Document */}
       <Modal visible={isUploadModalOpen} animationType="slide" transparent>
         <View style={styles.modalBg}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle} allowFontScaling={false}>+ Upload Document</Text>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={{ flex: 1, width: '100%', justifyContent: 'center' }}
+          >
+            <ScrollView 
+              contentContainerStyle={styles.modalScrollContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={styles.modalCard}>
+                <View style={styles.modalHeaderRow}>
+                  <Text style={styles.modalTitle} allowFontScaling={false}>Upload Document</Text>
+                  <TouchableOpacity onPress={() => setIsUploadModalOpen(false)}>
+                    <Ionicons name="close" size={22} color="#94a3b8" />
+                  </TouchableOpacity>
+                </View>
 
-            <Text style={styles.inputLabel} allowFontScaling={false}>FILE NAME *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="e.g. Owner_Statement_July2026.pdf"
-              placeholderTextColor="#94a3b8"
-              value={docName}
-              onChangeText={setDocName}
-            />
+                <Text style={styles.inputLabel} allowFontScaling={false}>FILE NAME *</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="E.g. Owner_Statement_July2026.pdf"
+                  placeholderTextColor="#64748b"
+                  value={docName}
+                  onChangeText={setDocName}
+                />
 
-            <Text style={styles.inputLabel} allowFontScaling={false}>CATEGORY</Text>
-            <View style={styles.categorySelectorRow}>
-              {categories.filter((c) => c !== 'All').map((cat) => {
-                const isSelected = docCategory === cat;
-                return (
-                  <TouchableOpacity
-                    key={cat}
-                    style={[styles.catChip, isSelected && styles.catChipActive]}
-                    onPress={() => setDocCategory(cat)}
-                  >
-                    <Text style={[styles.catChipText, isSelected && styles.catChipTextActive]} allowFontScaling={false}>
-                      {cat}
+                <Text style={styles.inputLabel} allowFontScaling={false}>CATEGORY</Text>
+                <View style={styles.categorySelectorRow}>
+                  {categories.filter((c) => c !== 'All').map((cat) => {
+                    const isSelected = docCategory === cat;
+                    return (
+                      <TouchableOpacity
+                        key={cat}
+                        style={[styles.catChip, isSelected && styles.catChipActive]}
+                        onPress={() => setDocCategory(cat)}
+                      >
+                        <Text style={[styles.catChipText, isSelected && styles.catChipTextActive]} allowFontScaling={false}>
+                          {cat}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity style={[styles.modalBtn, styles.cancelBtn]} onPress={() => setIsUploadModalOpen(false)}>
+                    <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity style={[styles.modalBtn, styles.saveBtn]} onPress={handleUploadSubmit} disabled={uploading}>
+                    <Text style={styles.saveBtnText} allowFontScaling={false}>
+                      {uploading ? 'Uploading...' : 'Upload Now'}
                     </Text>
                   </TouchableOpacity>
-                );
-              })}
-            </View>
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity style={[styles.modalBtn, styles.cancelBtn]} onPress={() => setIsUploadModalOpen(false)}>
-                <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={[styles.modalBtn, styles.saveBtn]} onPress={handleUploadSubmit} disabled={uploading}>
-                <Text style={styles.saveBtnText} allowFontScaling={false}>
-                  {uploading ? 'Uploading...' : 'Upload Now'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+                </View>
+              </View>
+            </ScrollView>
+          </KeyboardAvoidingView>
         </View>
       </Modal>
 
@@ -349,71 +357,79 @@ const styles = StyleSheet.create({
   center: { flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center' },
   loadingText: { color: '#94a3b8', marginTop: 8 },
 
-  header: { marginBottom: 14 },
-  breadcrumb: { color: '#38bdf8', fontSize: 11, fontWeight: '700', marginBottom: 4 },
+  header: { marginBottom: 16 },
   titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
-  title: { fontSize: 18, fontWeight: '800', color: '#f8fafc', flex: 1 },
-  subtitle: { fontSize: 11.5, color: '#94a3b8', marginTop: 4, lineHeight: 16 },
+  title: { fontSize: 24, fontWeight: '800', color: '#f8fafc', flex: 1 },
 
-  uploadBtn: { backgroundColor: '#0284c7', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6 },
+  uploadBtn: { backgroundColor: '#0284c7', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, flexDirection: 'row', alignItems: 'center' },
   uploadBtnText: { color: '#ffffff', fontSize: 11, fontWeight: '700' },
 
-  showingRow: { marginBottom: 6, marginTop: 4 },
-  showingText: { fontSize: 10, fontWeight: '800', color: '#94a3b8', letterSpacing: 0.8 },
+  showingRow: { marginBottom: 10 },
+  showingText: { fontSize: 10, fontWeight: '800', color: '#64748b', letterSpacing: 1 },
 
-  searchBarRow: { flexDirection: 'row', gap: 8, marginBottom: 10 },
-  searchInput: {
+  searchBarRow: { flexDirection: 'row', marginBottom: 16 },
+  searchContainer: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#1e293b',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    color: '#f8fafc',
-    fontSize: 12,
     borderWidth: 1,
     borderColor: '#334155',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
-  resetBtn: { backgroundColor: '#334155', paddingHorizontal: 10, justifyContent: 'center', borderRadius: 8 },
-  resetBtnText: { color: '#cbd5e1', fontSize: 11, fontWeight: '700' },
+  searchInput: {
+    color: '#f8fafc',
+    fontSize: 12,
+    flex: 1,
+    padding: 0,
+  },
 
-  categoryScroll: { marginBottom: 10 },
+  categoryScroll: { marginBottom: 14, flexDirection: 'row' },
   categoryChip: { backgroundColor: '#1e293b', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, marginRight: 8, borderWidth: 1, borderColor: '#334155' },
   categoryChipActive: { backgroundColor: '#0284c7', borderColor: '#38bdf8' },
-  categoryChipText: { color: '#94a3b8', fontSize: 11, fontWeight: '600' },
+  categoryChipText: { color: '#cbd5e1', fontSize: 11, fontWeight: '600' },
   categoryChipTextActive: { color: '#ffffff', fontWeight: '800' },
 
-  emptyCard: { backgroundColor: '#1e293b', padding: 24, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: '#334155' },
-  emptyText: { color: '#f8fafc', fontSize: 14, fontWeight: '700' },
-  emptySubText: { color: '#94a3b8', fontSize: 12, marginTop: 4 },
+  emptyCard: { backgroundColor: '#1e293b', padding: 32, borderRadius: 16, alignItems: 'center', borderWidth: 1, borderColor: '#334155' },
+  emptyText: { color: '#f8fafc', fontSize: 15, fontWeight: '700' },
 
-  docCard: { backgroundColor: '#1e293b', borderRadius: 14, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: '#334155' },
+  docCard: { backgroundColor: '#1e293b', borderRadius: 16, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: '#334155' },
   docRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   iconBox: { width: 38, height: 38, borderRadius: 10, backgroundColor: '#0f172a', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#334155' },
   docName: { fontSize: 14, fontWeight: '800', color: '#f8fafc' },
   docMeta: { fontSize: 10.5, color: '#94a3b8', marginTop: 2 },
 
-  rightGroup: { alignItems: 'flex-end', gap: 4 },
+  rightGroup: { alignItems: 'flex-end', gap: 8 },
   catBadge: { backgroundColor: '#0f172a', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, borderWidth: 1, borderColor: '#334155' },
   catBadgeText: { color: '#cbd5e1', fontSize: 9.5, fontWeight: '800' },
-  downloadIconBtn: { backgroundColor: '#0f172a', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, borderWidth: 1, borderColor: '#334155' },
-  downloadIconText: { fontSize: 11 },
+  downloadIconBtn: { backgroundColor: '#0f172a', width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#334155' },
 
-  modalBg: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', padding: 20 },
-  modalCard: { backgroundColor: '#1e293b', borderRadius: 16, padding: 20, borderWidth: 1, borderColor: '#334155' },
-  modalTitle: { fontSize: 17, fontWeight: '800', color: '#38bdf8', marginBottom: 14, textAlign: 'center' },
-  inputLabel: { fontSize: 10, color: '#94a3b8', fontWeight: '700', marginBottom: 4, marginTop: 4 },
-  input: { backgroundColor: '#0f172a', borderWidth: 1, borderColor: '#334155', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, color: '#f8fafc', fontSize: 13, marginBottom: 10 },
+  modalBg: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.85)', justifyContent: 'center', padding: 20 },
+  modalScrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    padding: 16,
+    paddingTop: Platform.OS === 'ios' ? 40 : 16,
+    paddingBottom: Platform.OS === 'ios' ? 60 : 30,
+  },
+  modalCard: { backgroundColor: '#1e293b', borderRadius: 20, padding: 20, borderWidth: 1, borderColor: '#334155' },
+  modalHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
+  modalTitle: { fontSize: 16, fontWeight: '800', color: '#f8fafc' },
+  inputLabel: { fontSize: 10, color: '#94a3b8', fontWeight: '700', marginBottom: 6, marginTop: 10, letterSpacing: 0.5 },
+  input: { backgroundColor: '#0f172a', borderWidth: 1, borderColor: '#334155', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, color: '#f8fafc', fontSize: 13, marginBottom: 4 },
 
   categorySelectorRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 14 },
-  catChip: { backgroundColor: '#0f172a', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6, borderWidth: 1, borderColor: '#334155' },
+  catChip: { backgroundColor: '#0f172a', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: '#334155' },
   catChipActive: { backgroundColor: '#0284c7', borderColor: '#38bdf8' },
   catChipText: { color: '#94a3b8', fontSize: 11, fontWeight: '600' },
   catChipTextActive: { color: '#ffffff', fontWeight: '800' },
 
-  modalButtons: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 },
-  modalBtn: { width: '48%', paddingVertical: 10, borderRadius: 8, alignItems: 'center' },
+  modalButtons: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 16 },
+  modalBtn: { width: '48%', paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
   cancelBtn: { backgroundColor: '#334155' },
-  cancelBtnText: { color: '#cbd5e1', fontWeight: '600' },
+  cancelBtnText: { color: '#cbd5e1', fontWeight: '700', fontSize: 13 },
   saveBtn: { backgroundColor: '#0284c7' },
-  saveBtnText: { color: '#ffffff', fontWeight: '700' },
+  saveBtnText: { color: '#ffffff', fontWeight: '700', fontSize: 13 },
 });

@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 export const TenantNotificationsScreen = () => {
   const [notifications, setNotifications] = useState([
@@ -21,7 +22,7 @@ export const TenantNotificationsScreen = () => {
     {
       id: '2',
       title: 'Maintenance Request Scheduled',
-      description: 'Work order #WO-1042 for HVAC repair is assigned for Thursday at 10 AM',
+      description: 'Work order #WO-1042 for HVAC repair is assigned for Thursday at 10 AM.',
       time: '06:41 AM',
       tag: 'success',
       read: false,
@@ -55,16 +56,13 @@ export const TenantNotificationsScreen = () => {
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.breadcrumb} allowFontScaling={false}>Home › Tenant Notifications Center</Text>
         <View style={styles.titleRow}>
-          <Text style={styles.title} allowFontScaling={false}>Tenant Notifications Center</Text>
+          <Text style={styles.title} allowFontScaling={false}>Notifications</Text>
           <TouchableOpacity style={styles.markAllBtn} onPress={handleMarkAllRead}>
-            <Text style={styles.markAllBtnText} allowFontScaling={false}>✓ Mark All as Read</Text>
+            <Ionicons name="checkmark-done-outline" size={16} color="#0f172a" style={{ marginRight: 4 }} />
+            <Text style={styles.markAllBtnText} allowFontScaling={false}>Mark All Read</Text>
           </TouchableOpacity>
         </View>
-        <Text style={styles.subtitle} allowFontScaling={false}>
-          Verify recent updates regarding your lease, payments, maintenance orders, and announcements.
-        </Text>
       </View>
 
       {/* Section Subheader */}
@@ -73,8 +71,9 @@ export const TenantNotificationsScreen = () => {
           RECENT ACTIVITY ({notifications.length})
         </Text>
         {notifications.length > 0 && (
-          <TouchableOpacity onPress={handleClearAll}>
-            <Text style={styles.clearAllText} allowFontScaling={false}>🗑️ Clear All</Text>
+          <TouchableOpacity style={styles.clearAllBtn} onPress={handleClearAll}>
+            <Ionicons name="trash-outline" size={14} color="#f87171" style={{ marginRight: 4 }} />
+            <Text style={styles.clearAllText} allowFontScaling={false}>Clear All</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -82,28 +81,41 @@ export const TenantNotificationsScreen = () => {
       {/* Empty State */}
       {notifications.length === 0 ? (
         <View style={styles.emptyCard}>
+          <Ionicons name="notifications-off-outline" size={48} color="#475569" style={{ marginBottom: 8 }} />
           <Text style={styles.emptyText} allowFontScaling={false}>No recent notifications found.</Text>
         </View>
       ) : (
         notifications.map((item) => {
-          let tagBg = 'rgba(234, 179, 8, 0.2)';
-          let tagColor = '#facc15';
+          let tagBg = 'rgba(245, 158, 11, 0.15)';
+          let tagColor = '#f59e0b';
 
           if (item.tag === 'success') {
-            tagBg = 'rgba(34, 197, 94, 0.2)';
-            tagColor = '#4ade80';
+            tagBg = 'rgba(16, 185, 129, 0.15)';
+            tagColor = '#10b981';
           } else if (item.tag === 'info') {
-            tagBg = 'rgba(56, 189, 248, 0.2)';
+            tagBg = 'rgba(56, 189, 248, 0.15)';
             tagColor = '#38bdf8';
           }
 
           return (
-            <View key={item.id} style={[styles.card, item.read && styles.cardRead]}>
+            <TouchableOpacity 
+              key={item.id} 
+              style={[
+                styles.card, 
+                item.read && styles.cardRead,
+                !item.read && styles.cardUnreadHighlight
+              ]}
+              onPress={() => toggleRead(item.id)}
+              activeOpacity={0.8}
+            >
               <View style={styles.cardMain}>
                 <View style={styles.cardTitleRow}>
                   <Text style={styles.cardTitle} allowFontScaling={false}>
-                    {item.title} {!item.read && <Text style={styles.dot}>•</Text>}
+                    {item.title}
                   </Text>
+                  {!item.read && (
+                    <View style={styles.unreadDot} />
+                  )}
                 </View>
                 <Text style={styles.cardDesc} allowFontScaling={false}>{item.description}</Text>
                 <Text style={styles.cardTime} allowFontScaling={false}>{item.time}</Text>
@@ -122,7 +134,7 @@ export const TenantNotificationsScreen = () => {
                   </Text>
                 </TouchableOpacity>
               </View>
-            </View>
+            </TouchableOpacity>
           );
         })
       )}
@@ -134,25 +146,24 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0f172a' },
   contentContainer: { padding: 16, paddingBottom: 60 },
 
-  header: { marginBottom: 16 },
-  breadcrumb: { color: '#38bdf8', fontSize: 11, fontWeight: '700', marginBottom: 4 },
+  header: { marginBottom: 20 },
   titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
-  title: { fontSize: 18, fontWeight: '800', color: '#f8fafc', flex: 1 },
-  subtitle: { fontSize: 11.5, color: '#94a3b8', marginTop: 4, lineHeight: 16 },
+  title: { fontSize: 24, fontWeight: '800', color: '#f8fafc', flex: 1 },
 
-  markAllBtn: { backgroundColor: '#0284c7', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6 },
-  markAllBtnText: { color: '#ffffff', fontSize: 11, fontWeight: '700' },
+  markAllBtn: { backgroundColor: '#38bdf8', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, flexDirection: 'row', alignItems: 'center' },
+  markAllBtnText: { color: '#0f172a', fontSize: 11, fontWeight: '800' },
 
-  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  sectionTitle: { fontSize: 13, fontWeight: '700', color: '#f8fafc', letterSpacing: 0.5 },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
+  sectionTitle: { fontSize: 11, fontWeight: '800', color: '#64748b', letterSpacing: 1 },
+  clearAllBtn: { flexDirection: 'row', alignItems: 'center' },
   clearAllText: { color: '#f87171', fontSize: 12, fontWeight: '700' },
 
-  emptyCard: { backgroundColor: '#1e293b', padding: 24, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: '#334155' },
-  emptyText: { color: '#94a3b8', fontSize: 13 },
+  emptyCard: { backgroundColor: '#1e293b', padding: 32, borderRadius: 16, alignItems: 'center', borderWidth: 1, borderColor: '#334155' },
+  emptyText: { color: '#94a3b8', fontSize: 13, fontWeight: '600' },
 
   card: {
     backgroundColor: '#1e293b',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 14,
     marginBottom: 10,
     borderWidth: 1,
@@ -160,18 +171,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  cardRead: { opacity: 0.65 },
+  cardRead: { opacity: 0.6 },
+  cardUnreadHighlight: {
+    borderLeftWidth: 4,
+    borderLeftColor: '#38bdf8',
+  },
   cardMain: { flex: 1, paddingRight: 10 },
-  cardTitleRow: { flexDirection: 'row', alignItems: 'center' },
+  cardTitleRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' },
   cardTitle: { fontSize: 14, fontWeight: '800', color: '#f8fafc' },
-  dot: { color: '#38bdf8', fontSize: 16 },
+  unreadDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#38bdf8', marginLeft: 6, alignSelf: 'center' },
   cardDesc: { fontSize: 12, color: '#cbd5e1', marginTop: 4, lineHeight: 17 },
   cardTime: { fontSize: 10.5, color: '#94a3b8', marginTop: 6 },
 
   cardRight: { alignItems: 'flex-end', justifyContent: 'space-between' },
-  tagBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
-  tagText: { fontSize: 10.5, fontWeight: '700', textTransform: 'lowercase' },
+  tagBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
+  tagText: { fontSize: 9.5, fontWeight: '800', textTransform: 'lowercase' },
 
-  readActionBtn: { marginTop: 10 },
+  readActionBtn: { marginTop: 10, paddingVertical: 4 },
   readActionText: { color: '#38bdf8', fontSize: 11, fontWeight: '700' },
 });
