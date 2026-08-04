@@ -52,8 +52,8 @@ export const OwnerMaintenancePage: React.FC = () => {
       cell: ({ row }) => {
         const est = Number(row.original.estimatedCost || 0);
         const act = Number(row.original.actualCost || row.original.cost || 0);
-        const extra = Number(row.original.extraCost > 0 ? row.original.extraCost : (act > est ? act - est : 0));
-        const displayActual = act > 0 ? act : est + extra;
+        const extra = Number(row.original.extraExpenses || row.original.extraCost || 0);
+        const displayActual = act + extra;
         return (
           <div>
             <span className="font-extrabold text-foreground">${displayActual.toLocaleString()}</span>
@@ -142,17 +142,24 @@ export const OwnerMaintenancePage: React.FC = () => {
                 <div>
                   <p className="text-[9.5px] text-muted-foreground uppercase font-black">Actual Final Cost</p>
                   <p className="font-black text-sm text-emerald-400">
-                    ${(selectedRequest.actualCost > 0 ? selectedRequest.actualCost : (selectedRequest.estimatedCost || 0) + (selectedRequest.extraCost || 0)).toLocaleString()}
+                    ${((selectedRequest.actualCost || selectedRequest.cost || 0) + (selectedRequest.extraExpenses || selectedRequest.extraCost || 0)).toLocaleString()}
                   </p>
                 </div>
                 <div>
                   <p className="text-[9.5px] text-muted-foreground uppercase font-black">Extra Variance</p>
-                  <p className={`font-black text-sm ${(selectedRequest.extraCost || 0) > 0 || (selectedRequest.actualCost > selectedRequest.estimatedCost) ? 'text-rose-500' : 'text-emerald-500'}`}>
-                    +${(selectedRequest.extraCost > 0 ? selectedRequest.extraCost : Math.max(0, (selectedRequest.actualCost || 0) - (selectedRequest.estimatedCost || 0))).toLocaleString()}
+                  <p className={`font-black text-sm ${(selectedRequest.extraExpenses || selectedRequest.extraCost || 0) > 0 ? 'text-rose-500' : 'text-emerald-500'}`}>
+                    +${(selectedRequest.extraExpenses || selectedRequest.extraCost || 0).toLocaleString()}
                   </p>
                 </div>
               </div>
             </div>
+
+            {selectedRequest.resolutionNotes && (
+              <div className="border-t pt-3">
+                <p className="text-muted-foreground text-[10px] uppercase">Resolution Notes</p>
+                <p className="font-medium text-xs italic mt-0.5 text-foreground">"{selectedRequest.resolutionNotes}"</p>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4 border-t pt-3">
               <div>

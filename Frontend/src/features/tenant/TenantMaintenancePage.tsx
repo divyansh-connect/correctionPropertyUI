@@ -140,6 +140,15 @@ export const TenantMaintenancePage: React.FC = () => {
               <p className="leading-relaxed bg-secondary/15 p-3 rounded-lg border font-medium">{selectedRequest.description}</p>
             </div>
 
+            {selectedRequest.status === 'Completed' && (selectedRequest.notes || selectedRequest.resolutionNotes) && (
+              <div className="space-y-2">
+                <p className="text-muted-foreground text-[10px] uppercase">Resolution Notes</p>
+                <p className="leading-relaxed bg-emerald-500/5 text-emerald-600 p-3 rounded-lg border border-emerald-500/10 font-medium italic">
+                  "{selectedRequest.notes || selectedRequest.resolutionNotes}"
+                </p>
+              </div>
+            )}
+
             {selectedRequest.preferredTime && (
               <div>
                 <p className="text-muted-foreground text-[10px] uppercase">{t('tenantMaintenance.preferredTime')}</p>
