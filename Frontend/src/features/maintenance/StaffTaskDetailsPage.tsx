@@ -209,16 +209,22 @@ export const StaffTaskDetailsPage: React.FC = () => {
                 </div>
 
                 <div className="flex items-center space-x-3 text-muted-foreground">
-                  <DollarSign className="w-4.5 h-4.5 text-emerald-500 shrink-0" />
+                  <DollarSign className="w-4.5 h-4.5 text-primary shrink-0" />
                   <div>
-                    <p className="text-[10px] uppercase font-bold text-muted-foreground/60">
-                      {localStatus === 'Completed' ? 'Actual / Total Cost' : 'Estimated Cost'}
-                    </p>
-                    <p className="text-foreground mt-0.5 font-bold">
-                      ${localStatus === 'Completed' ? (actualCost + extraExpenses) : (task.estimatedCost || '0.00')}
-                    </p>
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground/60">Estimated Cost</p>
+                    <p className="text-foreground mt-0.5 font-bold">${task.estimatedCost || '0.00'}</p>
                   </div>
                 </div>
+
+                {localStatus === 'Completed' && (
+                  <div className="flex items-center space-x-3 text-muted-foreground">
+                    <DollarSign className="w-4.5 h-4.5 text-emerald-500 shrink-0" />
+                    <div>
+                      <p className="text-[10px] uppercase font-bold text-emerald-600">Actual / Total Cost</p>
+                      <p className="text-emerald-600 mt-0.5 font-black text-sm">${actualCost + extraExpenses}</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
             
@@ -310,23 +316,6 @@ export const StaffTaskDetailsPage: React.FC = () => {
             )}
           </Card>
 
-          {/* Images Section */}
-          <Card className="p-6 border bg-card space-y-4">
-            <h3 className="font-extrabold text-sm uppercase tracking-wider">Before & After Photos</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="border border-dashed rounded-2xl p-8 flex flex-col items-center justify-center text-center text-muted-foreground bg-secondary/10 hover:bg-secondary/20 transition cursor-pointer">
-                <ImageIcon className="w-8 h-8 text-muted-foreground/60 mb-2" />
-                <p className="text-xs font-bold">Before Repair Photo</p>
-                <p className="text-[10px] text-muted-foreground/60 mt-1">Tap to capture or upload</p>
-              </div>
-
-              <div className="border border-dashed rounded-2xl p-8 flex flex-col items-center justify-center text-center text-muted-foreground bg-secondary/10 hover:bg-secondary/20 transition cursor-pointer">
-                <ImageIcon className="w-8 h-8 text-muted-foreground/60 mb-2" />
-                <p className="text-xs font-bold">After Repair Photo</p>
-                <p className="text-[10px] text-muted-foreground/60 mt-1">Tap to capture or upload</p>
-              </div>
-            </div>
-          </Card>
         </div>
 
         {/* Right Section - Progress Tracker */}
