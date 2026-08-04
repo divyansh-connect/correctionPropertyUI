@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import apiClient from '../api/client';
 import { useAuthStore } from '../store/useStore';
+import { Ionicons } from '@expo/vector-icons';
 
 export const TenantLeaseScreen = () => {
   const { logout, refreshAccessToken } = useAuthStore();
@@ -54,7 +55,7 @@ export const TenantLeaseScreen = () => {
       setLoading(false);
     }
 
-    // Default matching Railway DB record
+    // Default fallback matching Railway DB record
     setLeaseData({
       tenantName: 'person 1',
       tenantEmail: 'person1b@gmail.com',
@@ -74,9 +75,9 @@ export const TenantLeaseScreen = () => {
       startDate: '2026-08-01',
       endDate: '2027-08-01',
       status: 'Active',
-      ownerName: 'owner 1',
+      ownerName: 'owner new 2',
       ownerEmail: 'owner1b@gmail.com',
-      ownerPhone: '2342524525252',
+      ownerPhone: '23425245252',
       managementCompany: 'Apex Property Management',
     });
   };
@@ -109,22 +110,22 @@ export const TenantLeaseScreen = () => {
       {/* Page Header */}
       <View style={styles.header}>
         <Text style={styles.title} allowFontScaling={false}>My Lease Agreement</Text>
-        <Text style={styles.subtitle} allowFontScaling={false}>
-          Verify monthly lease schedules, renewal options eligibility, and utility splits.
-        </Text>
       </View>
 
       {/* Lease Term Details Card */}
       <View style={styles.card}>
         <View style={styles.cardHeader}>
-          <Text style={styles.cardTitle} allowFontScaling={false}>LEASE TERM DETAILS</Text>
+          <View style={styles.cardHeaderTitleRow}>
+            <Ionicons name="document-text-outline" size={18} color="#38bdf8" style={{ marginRight: 6 }} />
+            <Text style={styles.cardTitle} allowFontScaling={false}>LEASE TERM DETAILS</Text>
+          </View>
           <View style={styles.activeBadge}>
             <Text style={styles.activeBadgeText} allowFontScaling={false}>{d.status || 'Active'}</Text>
           </View>
         </View>
 
         <Text style={styles.termRange} allowFontScaling={false}>
-          Start: {d.startDate} • End: {d.endDate}
+          Start: {d.startDate} · End: {d.endDate}
         </Text>
 
         <View style={styles.metricGrid}>
@@ -154,75 +155,102 @@ export const TenantLeaseScreen = () => {
         </View>
       </View>
 
-      {/* LEASE ACTIONS Card matching Web Screenshot */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle} allowFontScaling={false}>🎗 LEASE ACTIONS</Text>
-        <View style={styles.divider} />
-
-        <View style={styles.actionsContainer}>
-          {/* Download Lease Agreement Button */}
-          <TouchableOpacity style={styles.actionBtnPrimary} onPress={handleDownloadLease} activeOpacity={0.7}>
-            <Text style={styles.actionBtnPrimaryText} numberOfLines={1} adjustsFontSizeToFit allowFontScaling={false}>
-              📥 DOWNLOAD LEASE AGREEMENT
-            </Text>
-          </TouchableOpacity>
-
-          {/* Request Renewal Form Button */}
-          <TouchableOpacity style={styles.actionBtnOutline} onPress={handleRequestRenewal} activeOpacity={0.7}>
-            <Text style={styles.actionBtnOutlineText} numberOfLines={1} adjustsFontSizeToFit allowFontScaling={false}>
-              🔑 REQUEST RENEWAL FORM
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
       {/* Property & Unit Information */}
       <View style={styles.card}>
-        <Text style={styles.cardTitle} allowFontScaling={false}>PROPERTY & UNIT INFORMATION</Text>
+        <View style={styles.cardHeaderTitleRow}>
+          <Ionicons name="business-outline" size={18} color="#f59e0b" style={{ marginRight: 6 }} />
+          <Text style={styles.cardTitle} allowFontScaling={false}>PROPERTY & UNIT INFORMATION</Text>
+        </View>
         <Text style={styles.unitHeadline} allowFontScaling={false}>
-          {d.propertyName} — Unit {d.unitNumber}
+          {d.propertyName} · Unit {d.unitNumber}
         </Text>
 
         <View style={styles.divider} />
 
         <Text style={styles.subSectionTitle} allowFontScaling={false}>Unit Specs</Text>
         <View style={styles.specsRow}>
-          <View style={styles.specChip}><Text style={styles.specText} allowFontScaling={false}>🛏️ {d.bedrooms} Bedrooms</Text></View>
-          <View style={styles.specChip}><Text style={styles.specText} allowFontScaling={false}>🚿 {d.bathrooms} Bathrooms</Text></View>
-          <View style={styles.specChip}><Text style={styles.specText} allowFontScaling={false}>📐 {d.squareFootage} Sq Ft</Text></View>
-          <View style={styles.specChip}><Text style={styles.specText} allowFontScaling={false}>🏢 Floor: {d.floor}</Text></View>
+          <View style={styles.specChip}>
+            <Ionicons name="bed-outline" size={12} color="#cbd5e1" style={{ marginRight: 4 }} />
+            <Text style={styles.specText} allowFontScaling={false}>{d.bedrooms} Bedrooms</Text>
+          </View>
+          <View style={styles.specChip}>
+            <Ionicons name="water-outline" size={12} color="#cbd5e1" style={{ marginRight: 4 }} />
+            <Text style={styles.specText} allowFontScaling={false}>{d.bathrooms} Bathrooms</Text>
+          </View>
+          <View style={styles.specChip}>
+            <Ionicons name="resize-outline" size={12} color="#cbd5e1" style={{ marginRight: 4 }} />
+            <Text style={styles.specText} allowFontScaling={false}>{d.squareFootage} Sq Ft</Text>
+          </View>
+          <View style={styles.specChip}>
+            <Ionicons name="layers-outline" size={12} color="#cbd5e1" style={{ marginRight: 4 }} />
+            <Text style={styles.specText} allowFontScaling={false}>Floor: {d.floor}</Text>
+          </View>
         </View>
 
         <View style={styles.divider} />
 
         <Text style={styles.subSectionTitle} allowFontScaling={false}>Property Location & Details</Text>
-        <Text style={styles.addressText} allowFontScaling={false}>{d.streetAddress}</Text>
-        <Text style={styles.addressSub} allowFontScaling={false}>{d.cityStateZip}</Text>
+        <View style={styles.locationContainer}>
+          <Ionicons name="location-outline" size={16} color="#38bdf8" style={{ marginRight: 6, marginTop: 2 }} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.addressText} allowFontScaling={false}>{d.streetAddress}</Text>
+            <Text style={styles.addressSub} allowFontScaling={false}>{d.cityStateZip}</Text>
+          </View>
+        </View>
+        
         <View style={styles.detailsRow}>
-          <Text style={styles.detailText} allowFontScaling={false}>Type: {d.propertyType}</Text>
-          <Text style={styles.detailText} allowFontScaling={false}>Year Built: {d.yearBuilt}</Text>
+          <View style={styles.detailItem}>
+            <Ionicons name="information-circle-outline" size={13} color="#cbd5e1" style={{ marginRight: 4 }} />
+            <Text style={styles.detailText} allowFontScaling={false}>Type: {d.propertyType}</Text>
+          </View>
+          <View style={styles.detailItem}>
+            <Ionicons name="calendar-outline" size={13} color="#cbd5e1" style={{ marginRight: 4 }} />
+            <Text style={styles.detailText} allowFontScaling={false}>Built: {d.yearBuilt}</Text>
+          </View>
         </View>
 
         <View style={styles.divider} />
 
         <Text style={styles.subSectionTitle} allowFontScaling={false}>Included Utilities</Text>
         <View style={styles.utilitiesRow}>
-          <View style={styles.utilityChip}><Text style={styles.utilityText} allowFontScaling={false}>🗑️ Trash Valet</Text></View>
-          <View style={styles.utilityChip}><Text style={styles.utilityText} allowFontScaling={false}>💧 Sewage</Text></View>
-          <View style={styles.utilityChip}><Text style={styles.utilityText} allowFontScaling={false}>🐛 Pest Control</Text></View>
-          <View style={styles.utilityChip}><Text style={styles.utilityText} allowFontScaling={false}>🔥 Water & Gas</Text></View>
+          <View style={styles.utilityChip}>
+            <Ionicons name="trash-outline" size={12} color="#38bdf8" style={{ marginRight: 4 }} />
+            <Text style={styles.utilityText} allowFontScaling={false}>Trash Valet</Text>
+          </View>
+          <View style={styles.utilityChip}>
+            <Ionicons name="water-outline" size={12} color="#38bdf8" style={{ marginRight: 4 }} />
+            <Text style={styles.utilityText} allowFontScaling={false}>Sewage</Text>
+          </View>
+          <View style={styles.utilityChip}>
+            <Ionicons name="bug-outline" size={12} color="#38bdf8" style={{ marginRight: 4 }} />
+            <Text style={styles.utilityText} allowFontScaling={false}>Pest Control</Text>
+          </View>
+          <View style={styles.utilityChip}>
+            <Ionicons name="flame-outline" size={12} color="#38bdf8" style={{ marginRight: 4 }} />
+            <Text style={styles.utilityText} allowFontScaling={false}>Water & Gas</Text>
+          </View>
         </View>
       </View>
 
       {/* Landlord & Management */}
       <View style={styles.card}>
-        <Text style={styles.cardTitle} allowFontScaling={false}>LANDLORD & MANAGEMENT</Text>
+        <View style={styles.cardHeaderTitleRow}>
+          <Ionicons name="person-outline" size={18} color="#38bdf8" style={{ marginRight: 6 }} />
+          <Text style={styles.cardTitle} allowFontScaling={false}>LANDLORD & MANAGEMENT</Text>
+        </View>
+        <View style={styles.divider} />
 
         <View style={styles.contactGroup}>
           <Text style={styles.contactLabel} allowFontScaling={false}>Property Owner</Text>
           <Text style={styles.contactName} allowFontScaling={false}>{d.ownerName}</Text>
-          <Text style={styles.contactSub} allowFontScaling={false}>✉️ {d.ownerEmail}</Text>
-          <Text style={styles.contactSub} allowFontScaling={false}>📞 {d.ownerPhone}</Text>
+          <View style={styles.contactDetailRow}>
+            <Ionicons name="mail-outline" size={14} color="#94a3b8" style={{ marginRight: 6 }} />
+            <Text style={styles.contactSub} allowFontScaling={false}>{d.ownerEmail}</Text>
+          </View>
+          <View style={styles.contactDetailRow}>
+            <Ionicons name="call-outline" size={14} color="#94a3b8" style={{ marginRight: 6 }} />
+            <Text style={styles.contactSub} allowFontScaling={false}>{d.ownerPhone}</Text>
+          </View>
         </View>
 
         <View style={styles.divider} />
@@ -235,12 +263,50 @@ export const TenantLeaseScreen = () => {
 
       {/* Tenant Profile */}
       <View style={styles.card}>
-        <Text style={styles.cardTitle} allowFontScaling={false}>TENANT PROFILE</Text>
+        <View style={styles.cardHeaderTitleRow}>
+          <Ionicons name="person-circle-outline" size={18} color="#38bdf8" style={{ marginRight: 6 }} />
+          <Text style={styles.cardTitle} allowFontScaling={false}>TENANT PROFILE</Text>
+        </View>
+        <View style={styles.divider} />
+        
         <View style={styles.contactGroup}>
           <Text style={styles.contactLabel} allowFontScaling={false}>Full Name</Text>
           <Text style={styles.contactName} allowFontScaling={false}>{d.tenantName}</Text>
-          <Text style={styles.contactSub} allowFontScaling={false}>✉️ {d.tenantEmail}</Text>
-          <Text style={styles.contactSub} allowFontScaling={false}>📞 {d.tenantPhone}</Text>
+          <View style={styles.contactDetailRow}>
+            <Ionicons name="mail-outline" size={14} color="#94a3b8" style={{ marginRight: 6 }} />
+            <Text style={styles.contactSub} allowFontScaling={false}>{d.tenantEmail}</Text>
+          </View>
+          <View style={styles.contactDetailRow}>
+            <Ionicons name="call-outline" size={14} color="#94a3b8" style={{ marginRight: 6 }} />
+            <Text style={styles.contactSub} allowFontScaling={false}>{d.tenantPhone}</Text>
+          </View>
+        </View>
+      </View>
+
+      {/* LEASE ACTIONS Card */}
+      <View style={styles.card}>
+        <View style={styles.cardHeaderTitleRow}>
+          <Ionicons name="settings-outline" size={18} color="#cbd5e1" style={{ marginRight: 6 }} />
+          <Text style={styles.cardTitle} allowFontScaling={false}>LEASE ACTIONS</Text>
+        </View>
+        <View style={styles.divider} />
+
+        <View style={styles.actionsContainer}>
+          {/* Download Lease Agreement Button */}
+          <TouchableOpacity style={styles.actionBtnPrimary} onPress={handleDownloadLease} activeOpacity={0.7}>
+            <Ionicons name="download-outline" size={16} color="#ffffff" style={{ marginRight: 8 }} />
+            <Text style={styles.actionBtnPrimaryText} numberOfLines={1} adjustsFontSizeToFit allowFontScaling={false}>
+              DOWNLOAD LEASE AGREEMENT
+            </Text>
+          </TouchableOpacity>
+
+          {/* Request Renewal Form Button */}
+          <TouchableOpacity style={styles.actionBtnOutline} onPress={handleRequestRenewal} activeOpacity={0.7}>
+            <Ionicons name="document-text-outline" size={16} color="#f8fafc" style={{ marginRight: 8 }} />
+            <Text style={styles.actionBtnOutlineText} numberOfLines={1} adjustsFontSizeToFit allowFontScaling={false}>
+              REQUEST RENEWAL FORM
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -254,85 +320,88 @@ const styles = StyleSheet.create({
   scrollContent: { padding: 16, paddingBottom: 60 },
   center: { flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center' },
   loadingText: { color: '#94a3b8', marginTop: 8 },
-  header: { marginBottom: 14 },
-  title: { fontSize: 20, fontWeight: '800', color: '#f8fafc' },
-  subtitle: { fontSize: 11.5, color: '#94a3b8', marginTop: 4, lineHeight: 16 },
+  header: { marginBottom: 16 },
+  title: { fontSize: 24, fontWeight: '800', color: '#f8fafc' },
 
   card: {
     backgroundColor: '#1e293b',
-    borderRadius: 14,
+    borderRadius: 16,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
     borderColor: '#334155',
   },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  cardHeaderTitleRow: { flexDirection: 'row', alignItems: 'center' },
   cardTitle: { fontSize: 11, fontWeight: '800', color: '#94a3b8', letterSpacing: 0.8 },
-  activeBadge: { backgroundColor: 'rgba(34, 197, 94, 0.2)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
-  activeBadgeText: { color: '#4ade80', fontSize: 11, fontWeight: '800' },
-  termRange: { color: '#f8fafc', fontSize: 13, fontWeight: '700', marginVertical: 8 },
+  activeBadge: { backgroundColor: 'rgba(16, 185, 129, 0.15)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, borderWidth: 1, borderColor: '#10b981' },
+  activeBadgeText: { color: '#10b981', fontSize: 11, fontWeight: '800' },
+  termRange: { color: '#f8fafc', fontSize: 15, fontWeight: '800', marginVertical: 10 },
 
   metricGrid: { flexDirection: 'row', gap: 10, marginTop: 6 },
-  metricItem: { flex: 1, backgroundColor: '#0f172a', borderRadius: 8, padding: 10, borderWidth: 1, borderColor: '#334155' },
+  metricItem: { flex: 1, backgroundColor: '#0f172a', borderRadius: 10, padding: 12, borderWidth: 1, borderColor: '#334155' },
   metricLabel: { fontSize: 9.5, color: '#94a3b8', fontWeight: '800', letterSpacing: 0.5 },
   metricValue: { fontSize: 16, fontWeight: '800', color: '#f8fafc', marginTop: 2 },
 
-  actionsContainer: { gap: 8, marginTop: 4 },
+  actionsContainer: { gap: 10, marginTop: 4 },
   actionBtnPrimary: {
     backgroundColor: '#0284c7',
     paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 8,
+    paddingVertical: 12,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
+    flexDirection: 'row',
   },
   actionBtnPrimaryText: {
     color: '#ffffff',
-    fontSize: 11.5,
+    fontSize: 12,
     fontWeight: '800',
     letterSpacing: 0.3,
-    textAlign: 'center',
   },
 
   actionBtnOutline: {
     backgroundColor: '#0f172a',
     paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 8,
+    paddingVertical: 12,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
     borderWidth: 1,
     borderColor: '#334155',
+    flexDirection: 'row',
   },
   actionBtnOutlineText: {
     color: '#f8fafc',
-    fontSize: 11.5,
+    fontSize: 12,
     fontWeight: '800',
     letterSpacing: 0.3,
-    textAlign: 'center',
   },
 
-  unitHeadline: { fontSize: 16, fontWeight: '800', color: '#38bdf8', marginTop: 6 },
+  unitHeadline: { fontSize: 16, fontWeight: '800', color: '#38bdf8', marginTop: 8 },
   divider: { height: 1, backgroundColor: '#334155', marginVertical: 12 },
-  subSectionTitle: { fontSize: 12, fontWeight: '700', color: '#cbd5e1', marginBottom: 8 },
+  subSectionTitle: { fontSize: 11, fontWeight: '800', color: '#cbd5e1', marginBottom: 8, letterSpacing: 0.5, textTransform: 'uppercase' },
 
   specsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  specChip: { backgroundColor: '#0f172a', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, borderWidth: 1, borderColor: '#334155' },
-  specText: { color: '#cbd5e1', fontSize: 11, fontWeight: '600' },
+  specChip: { backgroundColor: '#0f172a', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: '#334155', flexDirection: 'row', alignItems: 'center' },
+  specText: { color: '#cbd5e1', fontSize: 11.5, fontWeight: '600' },
 
-  addressText: { color: '#f8fafc', fontSize: 14, fontWeight: '700' },
+  locationContainer: { flexDirection: 'row', alignItems: 'flex-start', marginVertical: 4 },
+  addressText: { color: '#f8fafc', fontSize: 15, fontWeight: '800' },
   addressSub: { color: '#94a3b8', fontSize: 12, marginTop: 2 },
-  detailsRow: { flexDirection: 'row', gap: 16, marginTop: 6 },
-  detailText: { color: '#cbd5e1', fontSize: 12 },
+  detailsRow: { flexDirection: 'row', gap: 16, marginTop: 10 },
+  detailItem: { flexDirection: 'row', alignItems: 'center' },
+  detailText: { color: '#cbd5e1', fontSize: 12, fontWeight: '600' },
 
   utilitiesRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  utilityChip: { backgroundColor: 'rgba(56, 189, 248, 0.15)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, borderWidth: 1, borderColor: 'rgba(56, 189, 248, 0.3)' },
+  utilityChip: { backgroundColor: 'rgba(56, 189, 248, 0.15)', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(56, 189, 248, 0.3)', flexDirection: 'row', alignItems: 'center' },
   utilityText: { color: '#38bdf8', fontSize: 11, fontWeight: '700' },
 
   contactGroup: { marginTop: 4 },
-  contactLabel: { fontSize: 10, color: '#94a3b8', fontWeight: '700', textTransform: 'uppercase' },
-  contactName: { fontSize: 15, fontWeight: '800', color: '#f8fafc', marginTop: 2 },
-  contactSub: { color: '#94a3b8', fontSize: 12, marginTop: 2 },
+  contactLabel: { fontSize: 9.5, color: '#94a3b8', fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 },
+  contactName: { fontSize: 15, fontWeight: '800', color: '#f8fafc', marginTop: 2, marginBottom: 4 },
+  contactDetailRow: { flexDirection: 'row', alignItems: 'center', marginTop: 3 },
+  contactSub: { color: '#94a3b8', fontSize: 12.5, fontWeight: '600' },
 });

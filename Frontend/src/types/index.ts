@@ -189,6 +189,7 @@ export interface MaintenanceRequest {
   messages?: { id: string; senderName: string; role: 'Tenant' | 'Manager'; text: string; timestamp: string }[];
   notes?: string;
   resolutionNotes?: string;
+  date?: string;
 }
 
 export interface Vendor {

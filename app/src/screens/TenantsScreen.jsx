@@ -12,9 +12,11 @@ import {
   Alert,
   Animated,
   Easing,
+  Platform,
 } from 'react-native';
 import apiClient from '../api/client';
 import { useAuthStore } from '../store/useStore';
+import { Ionicons } from '@expo/vector-icons';
 
 // Animated Touchable Wrapper Component
 const AnimatedTouchable = ({ children, onPress, style, disabled }) => {
@@ -60,10 +62,6 @@ export const TenantsScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTenant, setSelectedTenant] = useState(null);
-
-  // Pagination State
-  const [entriesPerPage] = useState(10);
-  const [currentPage, setCurrentPage] = useState(1);
 
   // Add Tenant Modal State
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -219,18 +217,11 @@ export const TenantsScreen = () => {
     return text.includes(searchQuery.toLowerCase());
   });
 
-  // Pagination logic
-  const totalPages = Math.max(1, Math.ceil(filteredTenants.length / entriesPerPage));
-  const displayedTenants = filteredTenants.slice(
-    (currentPage - 1) * entriesPerPage,
-    currentPage * entriesPerPage
-  );
-
   if (loading && !refreshing) {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color="#38bdf8" />
-        <Text style={styles.loadingText} allowFontScaling={false}>Loading Tenant Directory & Ledger...</Text>
+        <Text style={styles.loadingText} allowFontScaling={false}>Loading Tenant Directory...</Text>
       </View>
     );
   }
@@ -245,12 +236,11 @@ export const TenantsScreen = () => {
       <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
         {/* Page Header */}
         <View style={styles.header}>
-          <Text style={styles.breadcrumb} allowFontScaling={false}>Home › Tenants</Text>
           <View style={styles.titleRow}>
-            <Text style={styles.title} allowFontScaling={false}>Tenant Directory & Ledger</Text>
-
+            <Text style={styles.title} allowFontScaling={false}>Tenant Directory</Text>
             <AnimatedTouchable style={styles.addBtn} onPress={() => setIsAddOpen(true)}>
-              <Text style={styles.addBtnText} allowFontScaling={false}>+ Add Tenant</Text>
+              <Ionicons name="person-add" size={14} color="#fff" style={{ marginRight: 4 }} />
+              <Text style={styles.addBtnText} allowFontScaling={false}>Add Tenant</Text>
             </AnimatedTouchable>
           </View>
           <Text style={styles.subtitle} allowFontScaling={false}>
@@ -260,19 +250,21 @@ export const TenantsScreen = () => {
 
         {/* Search Bar */}
         <View style={styles.searchBarRow}>
-          <TextInput
-            style={styles.searchInput}
-            placeholder="🔍 Search tenants by name, email, or property..."
-            placeholderTextColor="#94a3b8"
-            value={searchQuery}
-            onChangeText={(txt) => {
-              setSearchQuery(txt);
-              setCurrentPage(1);
-            }}
-          />
+          <View style={styles.searchContainer}>
+            <Ionicons name="search" size={18} color="#64748b" style={{ marginRight: 8 }} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search by name, email, or property..."
+              placeholderTextColor="#64748b"
+              value={searchQuery}
+              onChangeText={(txt) => {
+                setSearchQuery(txt);
+              }}
+            />
+          </View>
           {searchQuery ? (
             <AnimatedTouchable style={styles.resetBtn} onPress={() => setSearchQuery('')}>
-              <Text style={styles.resetBtnText} allowFontScaling={false}>🔄 Reset</Text>
+              <Text style={styles.resetBtnText} allowFontScaling={false}>Reset</Text>
             </AnimatedTouchable>
           ) : null}
         </View>
@@ -284,16 +276,17 @@ export const TenantsScreen = () => {
           </Text>
         </View>
 
-        {/* Tenants Cards List matching Web 1-to-1 */}
-        {displayedTenants.length === 0 ? (
+        {/* Tenants Cards List */}
+        {filteredTenants.length === 0 ? (
           <View style={styles.emptyCard}>
-            <Text style={styles.emptyText} allowFontScaling={false}>No se encontraron resultados.</Text>
+            <Ionicons name="people" size={48} color="#475569" style={{ marginBottom: 8 }} />
+            <Text style={styles.emptyText} allowFontScaling={false}>No tenants found</Text>
             <Text style={styles.emptySubText} allowFontScaling={false}>
-              No tenants found matching search query.
+              Try adjusting your search criteria or register a new tenant.
             </Text>
           </View>
         ) : (
-          displayedTenants.map((item, idx) => {
+          filteredTenants.map((item, idx) => {
             const name = item.name || `${item.firstName || ''} ${item.lastName || ''}`.trim() || 'Tenant';
             const propName = item.unit?.property?.name || item.propertyName || 'property 1';
             const unitNum = item.unit?.unitNumber || item.unitNumber || 'room 1b';
@@ -307,13 +300,33 @@ export const TenantsScreen = () => {
               >
                 <View style={styles.cardHeaderRow}>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.tenantNameText} allowFontScaling={false}>👤 {name}</Text>
-                    <Text style={styles.propText} allowFontScaling={false}>
-                      🏢 {propName} • Unit {unitNum}
-                    </Text>
-                    <Text style={styles.emailText} allowFontScaling={false}>
-                      ✉️ {item.email || 'N/A'} | 📞 {item.phone || 'N/A'}
-                    </Text>
+                    <View style={styles.nameRow}>
+                      <Ionicons name="person-circle-outline" size={18} color="#38bdf8" style={{ marginRight: 6 }} />
+                      <Text style={styles.tenantNameText} allowFontScaling={false}>{name}</Text>
+                    </View>
+                    
+                    <View style={styles.metaInfoRow}>
+                      <Ionicons name="business-outline" size={13} color="#94a3b8" style={{ marginRight: 4 }} />
+                      <Text style={styles.propText} allowFontScaling={false}>
+                        {propName} · Unit {unitNum}
+                      </Text>
+                    </View>
+
+                    <View style={styles.metaInfoRow}>
+                      <Ionicons name="mail-outline" size={12} color="#64748b" style={{ marginRight: 4 }} />
+                      <Text style={styles.emailText} allowFontScaling={false} numberOfLines={1}>
+                        {item.email || 'N/A'}
+                      </Text>
+                      {item.phone && (
+                        <>
+                          <Text style={styles.bulletSeparator}>·</Text>
+                          <Ionicons name="call-outline" size={11} color="#64748b" style={{ marginRight: 4 }} />
+                          <Text style={styles.emailText} allowFontScaling={false}>
+                            {item.phone}
+                          </Text>
+                        </>
+                      )}
+                    </View>
                   </View>
 
                   <View style={styles.rightGroup}>
@@ -322,11 +335,11 @@ export const TenantsScreen = () => {
                     </View>
 
                     <Text style={styles.rentText} allowFontScaling={false}>
-                      ${rent.toLocaleString()}/mo
+                      ${rent.toLocaleString()}
                     </Text>
 
                     <TouchableOpacity style={styles.eyeBtn} onPress={() => setSelectedTenant(item)} activeOpacity={0.7}>
-                      <Text style={styles.eyeBtnText} allowFontScaling={false}>👁</Text>
+                      <Ionicons name="eye-outline" size={14} color="#cbd5e1" />
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -334,50 +347,24 @@ export const TenantsScreen = () => {
             );
           })
         )}
-
-        {/* PAGINATION BAR matching Web Screenshot 1-to-1 */}
-        <View style={styles.paginationRow}>
-          <Text style={styles.paginationEntriesText} allowFontScaling={false}>
-            Show <Text style={{ color: '#f8fafc', fontWeight: '800' }}>{entriesPerPage}</Text> entries
-          </Text>
-
-          <View style={styles.paginationControls}>
-            <Text style={styles.pageIndicatorText} allowFontScaling={false}>
-              Page <Text style={{ color: '#f8fafc', fontWeight: '800' }}>{currentPage}</Text> of {totalPages}
-            </Text>
-
-            <TouchableOpacity
-              style={[styles.pageBtn, currentPage === 1 && styles.pageBtnDisabled]}
-              disabled={currentPage === 1}
-              onPress={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.pageBtnText} allowFontScaling={false}>Previous</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.pageBtn, currentPage === totalPages && styles.pageBtnDisabled]}
-              disabled={currentPage === totalPages}
-              onPress={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.pageBtnText} allowFontScaling={false}>Next</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
       </Animated.View>
 
       {/* MODAL 1: + Add Tenant */}
       <Modal visible={isAddOpen} animationType="slide" transparent>
         <View style={styles.modalBg}>
           <View style={styles.modalCard}>
-            <Text style={styles.modalTitle} allowFontScaling={false}>+ Register New Tenant</Text>
+            <View style={styles.modalHeaderRow}>
+              <Text style={styles.modalTitle} allowFontScaling={false}>Register New Tenant</Text>
+              <TouchableOpacity onPress={() => setIsAddOpen(false)}>
+                <Ionicons name="close" size={22} color="#94a3b8" />
+              </TouchableOpacity>
+            </View>
 
             <Text style={styles.inputLabel} allowFontScaling={false}>FIRST NAME *</Text>
             <TextInput
               style={styles.input}
-              placeholder="e.g. person"
-              placeholderTextColor="#94a3b8"
+              placeholder="e.g. John"
+              placeholderTextColor="#64748b"
               value={firstName}
               onChangeText={setFirstName}
             />
@@ -385,8 +372,8 @@ export const TenantsScreen = () => {
             <Text style={styles.inputLabel} allowFontScaling={false}>LAST NAME</Text>
             <TextInput
               style={styles.input}
-              placeholder="e.g. 1"
-              placeholderTextColor="#94a3b8"
+              placeholder="e.g. Doe"
+              placeholderTextColor="#64748b"
               value={lastName}
               onChangeText={setLastName}
             />
@@ -394,8 +381,8 @@ export const TenantsScreen = () => {
             <Text style={styles.inputLabel} allowFontScaling={false}>EMAIL ADDRESS *</Text>
             <TextInput
               style={styles.input}
-              placeholder="person1b@gmail.com"
-              placeholderTextColor="#94a3b8"
+              placeholder="john.doe@gmail.com"
+              placeholderTextColor="#64748b"
               keyboardType="email-address"
               value={email}
               onChangeText={setEmail}
@@ -404,8 +391,8 @@ export const TenantsScreen = () => {
             <Text style={styles.inputLabel} allowFontScaling={false}>PHONE NUMBER</Text>
             <TextInput
               style={styles.input}
-              placeholder="344232"
-              placeholderTextColor="#94a3b8"
+              placeholder="512-555-0199"
+              placeholderTextColor="#64748b"
               keyboardType="phone-pad"
               value={phone}
               onChangeText={setPhone}
@@ -418,7 +405,7 @@ export const TenantsScreen = () => {
 
               <TouchableOpacity style={[styles.modalBtn, styles.saveBtn]} onPress={handleAddSubmit} disabled={submitting}>
                 <Text style={styles.saveBtnText} allowFontScaling={false}>
-                  {submitting ? 'Registering...' : 'Register Tenant'}
+                  {submitting ? 'Registering...' : 'Register'}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -431,54 +418,59 @@ export const TenantsScreen = () => {
         <View style={styles.modalBg}>
           <View style={styles.modalCard}>
             <View style={styles.modalHeaderRow}>
-              <Text style={styles.modalTitle} allowFontScaling={false}>
-                👤 {selectedTenant?.name || `${selectedTenant?.firstName || ''} ${selectedTenant?.lastName || ''}`.trim()}
-              </Text>
+              <View style={styles.nameRow}>
+                <Ionicons name="person-circle" size={24} color="#38bdf8" style={{ marginRight: 8 }} />
+                <Text style={styles.modalTitle} allowFontScaling={false} numberOfLines={1}>
+                  {selectedTenant?.name || `${selectedTenant?.firstName || ''} ${selectedTenant?.lastName || ''}`.trim()}
+                </Text>
+              </View>
               <TouchableOpacity onPress={() => setSelectedTenant(null)}>
-                <Text style={{ color: '#94a3b8', fontSize: 18, fontWeight: '800' }} allowFontScaling={false}>✕</Text>
+                <Ionicons name="close" size={22} color="#94a3b8" />
               </TouchableOpacity>
             </View>
 
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel} allowFontScaling={false}>Email Address:</Text>
-              <Text style={styles.detailVal} allowFontScaling={false}>{selectedTenant?.email || 'N/A'}</Text>
-            </View>
+            <View style={styles.detailCard}>
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel} allowFontScaling={false}>Email Address</Text>
+                <Text style={styles.detailVal} allowFontScaling={false}>{selectedTenant?.email || 'N/A'}</Text>
+              </View>
 
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel} allowFontScaling={false}>Phone Contact:</Text>
-              <Text style={styles.detailVal} allowFontScaling={false}>{selectedTenant?.phone || 'N/A'}</Text>
-            </View>
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel} allowFontScaling={false}>Phone Contact</Text>
+                <Text style={styles.detailVal} allowFontScaling={false}>{selectedTenant?.phone || 'N/A'}</Text>
+              </View>
 
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel} allowFontScaling={false}>Property Location:</Text>
-              <Text style={styles.detailVal} allowFontScaling={false}>
-                {selectedTenant?.unit?.property?.name || selectedTenant?.propertyName || 'property 1'}
-              </Text>
-            </View>
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel} allowFontScaling={false}>Property Location</Text>
+                <Text style={styles.detailVal} allowFontScaling={false}>
+                  {selectedTenant?.unit?.property?.name || selectedTenant?.propertyName || 'property 1'}
+                </Text>
+              </View>
 
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel} allowFontScaling={false}>Assigned Unit:</Text>
-              <Text style={styles.detailVal} allowFontScaling={false}>
-                Unit {selectedTenant?.unit?.unitNumber || selectedTenant?.unitNumber || 'room 1b'}
-              </Text>
-            </View>
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel} allowFontScaling={false}>Assigned Unit</Text>
+                <Text style={styles.detailVal} allowFontScaling={false}>
+                  Unit {selectedTenant?.unit?.unitNumber || selectedTenant?.unitNumber || 'room 1b'}
+                </Text>
+              </View>
 
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel} allowFontScaling={false}>Monthly Rent Rate:</Text>
-              <Text style={[styles.detailVal, { color: '#4ade80', fontWeight: '800' }]} allowFontScaling={false}>
-                ${(Number(selectedTenant?.unit?.rentAmount || selectedTenant?.rentAmount) || 1000).toLocaleString()}/month
-              </Text>
-            </View>
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel} allowFontScaling={false}>Monthly Rent Rate</Text>
+                <Text style={[styles.detailVal, { color: '#10b981', fontWeight: '800' }]} allowFontScaling={false}>
+                  ${(Number(selectedTenant?.unit?.rentAmount || selectedTenant?.rentAmount) || 1000).toLocaleString()}
+                </Text>
+              </View>
 
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel} allowFontScaling={false}>Account Status:</Text>
-              <Text style={[styles.detailVal, { color: '#4ade80', fontWeight: '800' }]} allowFontScaling={false}>
-                {selectedTenant?.status || 'Active'}
-              </Text>
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel} allowFontScaling={false}>Account Status</Text>
+                <Text style={[styles.detailVal, { color: '#10b981', fontWeight: '800' }]} allowFontScaling={false}>
+                  {selectedTenant?.status || 'Active'}
+                </Text>
+              </View>
             </View>
 
             <TouchableOpacity style={styles.closeModalBtn} onPress={() => setSelectedTenant(null)}>
-              <Text style={styles.closeModalBtnText} allowFontScaling={false}>Close Tenant Details</Text>
+              <Text style={styles.closeModalBtnText} allowFontScaling={false}>Close Details</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -495,84 +487,77 @@ const styles = StyleSheet.create({
   center: { flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center' },
   loadingText: { color: '#94a3b8', marginTop: 8 },
 
-  header: { marginBottom: 14 },
-  breadcrumb: { color: '#38bdf8', fontSize: 11, fontWeight: '700', marginBottom: 4 },
+  header: { marginBottom: 16 },
   titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
-  title: { fontSize: 18, fontWeight: '800', color: '#f8fafc', flex: 1 },
-  subtitle: { fontSize: 11.5, color: '#94a3b8', marginTop: 4, lineHeight: 16 },
+  title: { fontSize: 24, fontWeight: '800', color: '#f8fafc', flex: 1 },
+  subtitle: { fontSize: 12, color: '#94a3b8', marginTop: 4, lineHeight: 16 },
 
-  addBtn: { backgroundColor: '#0284c7', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6 },
+  addBtn: { backgroundColor: '#0284c7', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, flexDirection: 'row', alignItems: 'center' },
   addBtnText: { color: '#ffffff', fontSize: 11, fontWeight: '700' },
 
-  showingRow: { marginBottom: 6 },
-  showingText: { fontSize: 10, fontWeight: '800', color: '#94a3b8', letterSpacing: 0.8 },
+  showingRow: { marginBottom: 10 },
+  showingText: { fontSize: 10, fontWeight: '800', color: '#64748b', letterSpacing: 1 },
 
-  searchBarRow: { flexDirection: 'row', gap: 8, marginBottom: 14 },
-  searchInput: {
+  searchBarRow: { flexDirection: 'row', gap: 8, marginBottom: 16 },
+  searchContainer: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#1e293b',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    color: '#f8fafc',
-    fontSize: 12,
     borderWidth: 1,
     borderColor: '#334155',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
-  resetBtn: { backgroundColor: '#334155', paddingHorizontal: 10, justifyContent: 'center', borderRadius: 8 },
+  searchInput: {
+    color: '#f8fafc',
+    fontSize: 12,
+    flex: 1,
+    padding: 0,
+  },
+  resetBtn: { backgroundColor: '#334155', paddingHorizontal: 12, justifyContent: 'center', borderRadius: 8 },
   resetBtnText: { color: '#cbd5e1', fontSize: 11, fontWeight: '700' },
 
-  emptyCard: { backgroundColor: '#1e293b', padding: 24, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: '#334155' },
-  emptyText: { color: '#f8fafc', fontSize: 14, fontWeight: '700' },
-  emptySubText: { color: '#94a3b8', fontSize: 12, marginTop: 4 },
+  emptyCard: { backgroundColor: '#1e293b', padding: 32, borderRadius: 16, alignItems: 'center', borderWidth: 1, borderColor: '#334155' },
+  emptyText: { color: '#f8fafc', fontSize: 15, fontWeight: '700' },
+  emptySubText: { color: '#64748b', fontSize: 12, marginTop: 4, textAlign: 'center', lineHeight: 16 },
 
-  card: { backgroundColor: '#1e293b', borderRadius: 14, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: '#334155' },
+  card: { backgroundColor: '#1e293b', borderRadius: 16, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: '#334155' },
   cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  nameRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 2 },
   tenantNameText: { fontSize: 15, fontWeight: '800', color: '#f8fafc' },
-  propText: { fontSize: 11, color: '#cbd5e1', marginTop: 2 },
-  emailText: { fontSize: 10.5, color: '#94a3b8', marginTop: 2 },
+  metaInfoRow: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
+  propText: { fontSize: 12, color: '#cbd5e1' },
+  emailText: { fontSize: 11, color: '#64748b' },
+  bulletSeparator: { color: '#64748b', marginHorizontal: 6, fontSize: 11 },
 
-  rightGroup: { alignItems: 'flex-end', gap: 4 },
-  badgeGreen: { backgroundColor: 'rgba(34, 197, 94, 0.15)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, borderWidth: 1, borderColor: '#4ade80' },
-  badgeGreenText: { color: '#4ade80', fontSize: 10, fontWeight: '800' },
-  rentText: { fontSize: 13, fontWeight: '800', color: '#10b981' },
-  eyeBtn: { backgroundColor: '#0f172a', width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#334155' },
-  eyeBtnText: { color: '#cbd5e1', fontSize: 11 },
+  rightGroup: { alignItems: 'flex-end', gap: 6 },
+  badgeGreen: { backgroundColor: 'rgba(16, 185, 129, 0.15)', paddingHorizontal: 8, paddingVertical: 2.5, borderRadius: 6, borderWidth: 1, borderColor: '#10b981' },
+  badgeGreenText: { color: '#10b981', fontSize: 9, fontWeight: '800' },
+  rentText: { fontSize: 14, fontWeight: '800', color: '#38bdf8' },
+  eyeBtn: { backgroundColor: '#0f172a', width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#334155' },
 
-  paginationRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 10,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#334155',
-  },
-  paginationEntriesText: { color: '#94a3b8', fontSize: 11 },
-  paginationControls: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  pageIndicatorText: { color: '#94a3b8', fontSize: 11 },
-  pageBtn: { backgroundColor: '#1e293b', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 6, borderWidth: 1, borderColor: '#334155' },
-  pageBtnDisabled: { opacity: 0.4 },
-  pageBtnText: { color: '#cbd5e1', fontSize: 11, fontWeight: '700' },
+  modalBg: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.85)', justifyContent: 'center', padding: 20 },
+  modalCard: { backgroundColor: '#1e293b', borderRadius: 20, padding: 20, borderWidth: 1, borderColor: '#334155' },
+  modalHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
+  modalTitle: { fontSize: 16, fontWeight: '800', color: '#f8fafc', flex: 1 },
 
-  modalBg: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', padding: 20 },
-  modalCard: { backgroundColor: '#1e293b', borderRadius: 16, padding: 20, borderWidth: 1, borderColor: '#334155' },
-  modalHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  modalTitle: { fontSize: 16, fontWeight: '800', color: '#38bdf8', flex: 1 },
-
-  inputLabel: { fontSize: 10, color: '#94a3b8', fontWeight: '700', marginBottom: 4, marginTop: 4 },
-  input: { backgroundColor: '#0f172a', borderWidth: 1, borderColor: '#334155', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, color: '#f8fafc', fontSize: 13, marginBottom: 10 },
+  inputLabel: { fontSize: 10, color: '#94a3b8', fontWeight: '700', marginBottom: 4, marginTop: 4, letterSpacing: 0.5 },
+  input: { backgroundColor: '#0f172a', borderWidth: 1, borderColor: '#334155', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, color: '#f8fafc', fontSize: 13, marginBottom: 12 },
 
   modalButtons: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 },
-  modalBtn: { width: '48%', paddingVertical: 10, borderRadius: 8, alignItems: 'center' },
+  modalBtn: { width: '48%', paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
   cancelBtn: { backgroundColor: '#334155' },
-  cancelBtnText: { color: '#cbd5e1', fontWeight: '600' },
+  cancelBtnText: { color: '#cbd5e1', fontWeight: '700', fontSize: 13 },
   saveBtn: { backgroundColor: '#0284c7' },
-  saveBtnText: { color: '#ffffff', fontWeight: '700' },
+  saveBtnText: { color: '#ffffff', fontWeight: '700', fontSize: 13 },
 
-  detailRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: '#334155' },
-  detailLabel: { color: '#94a3b8', fontSize: 12, fontWeight: '600' },
-  detailVal: { color: '#f8fafc', fontSize: 12.5, fontWeight: '700' },
-  closeModalBtn: { backgroundColor: '#334155', paddingVertical: 10, borderRadius: 8, alignItems: 'center', marginTop: 14 },
-  closeModalBtnText: { color: '#ffffff', fontSize: 12, fontWeight: '700' },
+  detailCard: { backgroundColor: '#0f172a', borderRadius: 12, padding: 14, marginBottom: 16, borderWidth: 1, borderColor: '#334155' },
+  detailRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#1e293b' },
+  detailLabel: { color: '#94a3b8', fontSize: 13, fontWeight: '500' },
+  detailVal: { color: '#f8fafc', fontSize: 13, fontWeight: '700' },
+  closeModalBtn: { backgroundColor: '#334155', paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
+  closeModalBtnText: { color: '#cbd5e1', fontSize: 13, fontWeight: '700' },
 });
+

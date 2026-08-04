@@ -12,9 +12,12 @@ import {
   RefreshControl,
   Animated,
   Easing,
+  Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
 import apiClient from '../api/client';
 import { useAuthStore } from '../store/useStore';
+import { Ionicons } from '@expo/vector-icons';
 
 // Animated Touchable Wrapper Component
 const AnimatedTouchable = ({ children, onPress, style, disabled }) => {
@@ -124,16 +127,16 @@ export const TenantMessagesScreen = () => {
 
   const contacts = isOwner
     ? [
-        { id: '1', name: 'Property Manager', icon: '🏢' },
-        { id: '2', name: 'Accountant', icon: '📚' },
-        { id: '3', name: 'Leasing Lead', icon: '🔑' },
-        { id: '4', name: 'Resident Representative', icon: '💬' },
+        { id: '1', name: 'Property Manager', icon: 'business-outline' },
+        { id: '2', name: 'Accountant', icon: 'book-outline' },
+        { id: '3', name: 'Leasing Lead', icon: 'key-outline' },
+        { id: '4', name: 'Resident Representative', icon: 'chatbubbles-outline' },
       ]
     : [
-        { id: '1', name: 'Property Manager Office', icon: '🏢' },
-        { id: '2', name: 'Leasing Office', icon: '🔑' },
-        { id: '3', name: 'Maintenance Team', icon: '🛠️' },
-        { id: '4', name: 'Accounting Office', icon: '📚' },
+        { id: '1', name: 'Property Manager Office', icon: 'business-outline' },
+        { id: '2', name: 'Leasing Office', icon: 'key-outline' },
+        { id: '3', name: 'Maintenance Team', icon: 'hammer-outline' },
+        { id: '4', name: 'Accounting Office', icon: 'book-outline' },
       ];
 
   // Strictly call live Railway backend endpoint: GET /portal/owner/messages OR GET /messages
@@ -252,9 +255,7 @@ export const TenantMessagesScreen = () => {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color="#38bdf8" />
-        <Text style={styles.loadingText} allowFontScaling={false}>
-          Loading {isOwner ? 'Owner' : 'Tenant'} Messages...
-        </Text>
+        <Text style={styles.loadingText} allowFontScaling={false}>Loading Messages...</Text>
       </View>
     );
   }
@@ -265,40 +266,43 @@ export const TenantMessagesScreen = () => {
     <View style={styles.mainWrapper}>
       {/* Page Header */}
       <View style={styles.header}>
-        <Text style={styles.breadcrumb} allowFontScaling={false}>Home › Messages</Text>
         <View style={styles.titleRow}>
           <Text style={styles.title} allowFontScaling={false}>
-            {isOwner ? 'Owner Communication Hub' : 'Messages & Support'}
+            {isOwner ? 'Communications' : 'My Messages'}
           </Text>
 
           <AnimatedTouchable style={styles.composeBtn} onPress={() => setIsComposeOpen(true)}>
-            <Text style={styles.composeBtnText} allowFontScaling={false}>+ New Message</Text>
+            <Ionicons name="create-outline" size={15} color="#ffffff" style={{ marginRight: 4 }} />
+            <Text style={styles.composeBtnText} allowFontScaling={false}>New Message</Text>
           </AnimatedTouchable>
         </View>
       </View>
 
       {/* Horizontal Contacts Selector */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.contactScroll}>
-        {contacts.map((c) => {
-          const isSelected = activeContact === c.name;
-          return (
-            <TouchableOpacity
-              key={c.id}
-              style={[styles.contactChip, isSelected && styles.contactChipActive]}
-              onPress={() => setActiveContact(c.name)}
-            >
-              <Text style={styles.contactIcon}>{c.icon}</Text>
-              <Text style={[styles.contactName, isSelected && styles.contactNameActive]} allowFontScaling={false}>
-                {c.name}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
+      <View style={{ maxHeight: 50, marginBottom: 12 }}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.contactScroll}>
+          {contacts.map((c) => {
+            const isSelected = activeContact === c.name;
+            return (
+              <TouchableOpacity
+                key={c.id}
+                style={[styles.contactChip, isSelected && styles.contactChipActive]}
+                onPress={() => setActiveContact(c.name)}
+              >
+                <Ionicons name={c.icon} size={14} color={isSelected ? '#ffffff' : '#cbd5e1'} style={{ marginRight: 4 }} />
+                <Text style={[styles.contactNameText, isSelected && styles.contactNameActive]} allowFontScaling={false}>
+                  {c.name}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
 
       {/* Active Contact Header */}
       <View style={styles.threadHeader}>
-        <Text style={styles.threadHeaderTitle} allowFontScaling={false}>💬 Conversation: {activeContact}</Text>
+        <Ionicons name="chatbubbles-outline" size={15} color="#38bdf8" style={{ marginRight: 6 }} />
+        <Text style={styles.threadHeaderTitle} allowFontScaling={false}>Conversation: {activeContact}</Text>
       </View>
 
       {/* Chat Thread Messages List */}
@@ -310,8 +314,8 @@ export const TenantMessagesScreen = () => {
         <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
           {currentMessages.length === 0 ? (
             <View style={styles.emptyThreadCard}>
-              <Text style={styles.emptyThreadText} allowFontScaling={false}>No se encontraron resultados.</Text>
-              <Text style={styles.emptyThreadSub} allowFontScaling={false}>No messages recorded in this conversation thread.</Text>
+              <Ionicons name="mail-unread-outline" size={40} color="#475569" style={{ marginBottom: 8 }} />
+              <Text style={styles.emptyThreadText} allowFontScaling={false}>No messages recorded</Text>
             </View>
           ) : (
             currentMessages.map((msg) => {
@@ -350,58 +354,74 @@ export const TenantMessagesScreen = () => {
       {/* MODAL: + New Message / Compose */}
       <Modal visible={isComposeOpen} animationType="slide" transparent>
         <View style={styles.modalBg}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle} allowFontScaling={false}>+ Compose Message</Text>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={{ flex: 1, width: '100%', justifyContent: 'center' }}
+          >
+            <ScrollView 
+              contentContainerStyle={styles.modalScrollContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={styles.modalCard}>
+                <View style={styles.modalHeaderRow}>
+                  <Text style={styles.modalTitle} allowFontScaling={false}>Compose Message</Text>
+                  <TouchableOpacity onPress={() => setIsComposeOpen(false)}>
+                    <Ionicons name="close" size={22} color="#94a3b8" />
+                  </TouchableOpacity>
+                </View>
 
-            <Text style={styles.inputLabel} allowFontScaling={false}>RECIPIENT GROUP</Text>
-            <View style={styles.recipientRow}>
-              {contacts.map((c) => {
-                const isSelected = composeRecipient === c.name;
-                return (
-                  <TouchableOpacity
-                    key={c.id}
-                    style={[styles.recChip, isSelected && styles.recChipActive]}
-                    onPress={() => setComposeRecipient(c.name)}
-                  >
-                    <Text style={[styles.recChipText, isSelected && styles.recChipTextActive]} allowFontScaling={false}>
-                      {c.name.split(' ')[0]}
+                <Text style={styles.inputLabel} allowFontScaling={false}>RECIPIENT GROUP</Text>
+                <View style={styles.recipientRow}>
+                  {contacts.map((c) => {
+                    const isSelected = composeRecipient === c.name;
+                    return (
+                      <TouchableOpacity
+                        key={c.id}
+                        style={[styles.recChip, isSelected && styles.recChipActive]}
+                        onPress={() => setComposeRecipient(c.name)}
+                      >
+                        <Text style={[styles.recChipText, isSelected && styles.recChipTextActive]} allowFontScaling={false}>
+                          {c.name.split(' ')[0]}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+
+                <Text style={styles.inputLabel} allowFontScaling={false}>SUBJECT *</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="E.g. Inquiry regarding monthly statement"
+                  placeholderTextColor="#64748b"
+                  value={composeSubject}
+                  onChangeText={setComposeSubject}
+                />
+
+                <Text style={styles.inputLabel} allowFontScaling={false}>MESSAGE BODY *</Text>
+                <TextInput
+                  style={[styles.input, { height: 100, textAlignVertical: 'top' }]}
+                  placeholder="Type message content..."
+                  placeholderTextColor="#64748b"
+                  multiline
+                  value={composeBody}
+                  onChangeText={setComposeBody}
+                />
+
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity style={[styles.modalBtn, styles.cancelBtn]} onPress={() => setIsComposeOpen(false)}>
+                    <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity style={[styles.modalBtn, styles.saveBtn]} onPress={handleComposeSubmit} disabled={sending}>
+                    <Text style={styles.saveBtnText} allowFontScaling={false}>
+                      {sending ? 'Sending...' : 'Send Message'}
                     </Text>
                   </TouchableOpacity>
-                );
-              })}
-            </View>
-
-            <Text style={styles.inputLabel} allowFontScaling={false}>SUBJECT *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="e.g. Inquiry regarding monthly statement"
-              placeholderTextColor="#94a3b8"
-              value={composeSubject}
-              onChangeText={setComposeSubject}
-            />
-
-            <Text style={styles.inputLabel} allowFontScaling={false}>MESSAGE BODY *</Text>
-            <TextInput
-              style={[styles.input, { height: 90, textAlignVertical: 'top' }]}
-              placeholder="Type message content..."
-              placeholderTextColor="#94a3b8"
-              multiline
-              value={composeBody}
-              onChangeText={setComposeBody}
-            />
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity style={[styles.modalBtn, styles.cancelBtn]} onPress={() => setIsComposeOpen(false)}>
-                <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={[styles.modalBtn, styles.saveBtn]} onPress={handleComposeSubmit} disabled={sending}>
-                <Text style={styles.saveBtnText} allowFontScaling={false}>
-                  {sending ? 'Sending...' : 'Send Message'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+                </View>
+              </View>
+            </ScrollView>
+          </KeyboardAvoidingView>
         </View>
       </Modal>
     </View>
@@ -414,32 +434,29 @@ const styles = StyleSheet.create({
   loadingText: { color: '#94a3b8', marginTop: 8 },
 
   header: { padding: 16, paddingBottom: 6 },
-  breadcrumb: { color: '#38bdf8', fontSize: 11, fontWeight: '700', marginBottom: 4 },
   titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
-  title: { fontSize: 18, fontWeight: '800', color: '#f8fafc', flex: 1 },
+  title: { fontSize: 24, fontWeight: '800', color: '#f8fafc', flex: 1 },
 
-  composeBtn: { backgroundColor: '#0284c7', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6 },
+  composeBtn: { backgroundColor: '#0284c7', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, flexDirection: 'row', alignItems: 'center' },
   composeBtnText: { color: '#ffffff', fontSize: 11, fontWeight: '700' },
 
-  contactScroll: { paddingHorizontal: 16, marginBottom: 8, maxHeight: 40 },
-  contactChip: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#1e293b', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, marginRight: 8, borderWidth: 1, borderColor: '#334155', gap: 6 },
+  contactScroll: { paddingHorizontal: 16, flexDirection: 'row' },
+  contactChip: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#1e293b', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, marginRight: 8, borderWidth: 1, borderColor: '#334155' },
   contactChipActive: { backgroundColor: '#0284c7', borderColor: '#38bdf8' },
-  contactIcon: { fontSize: 13 },
-  contactName: { color: '#cbd5e1', fontSize: 11, fontWeight: '600' },
+  contactNameText: { color: '#cbd5e1', fontSize: 11, fontWeight: '600' },
   contactNameActive: { color: '#ffffff', fontWeight: '800' },
 
-  threadHeader: { backgroundColor: '#1e293b', paddingHorizontal: 16, paddingVertical: 8, borderTopWidth: 1, borderBottomWidth: 1, borderColor: '#334155' },
+  threadHeader: { backgroundColor: '#1e293b', paddingHorizontal: 16, paddingVertical: 10, borderTopWidth: 1, borderBottomWidth: 1, borderColor: '#334155', flexDirection: 'row', alignItems: 'center' },
   threadHeaderTitle: { color: '#38bdf8', fontSize: 12, fontWeight: '800' },
 
   threadScroll: { flex: 1 },
-  emptyThreadCard: { backgroundColor: '#1e293b', padding: 24, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: '#334155', marginTop: 10 },
-  emptyThreadText: { color: '#f8fafc', fontSize: 14, fontWeight: '700' },
-  emptyThreadSub: { color: '#94a3b8', fontSize: 12, marginTop: 4 },
+  emptyThreadCard: { backgroundColor: '#1e293b', padding: 32, borderRadius: 16, alignItems: 'center', borderWidth: 1, borderColor: '#334155', marginTop: 16, marginHorizontal: 16 },
+  emptyThreadText: { color: '#f8fafc', fontSize: 15, fontWeight: '700' },
 
   bubbleWrapper: { marginBottom: 12, flexDirection: 'row' },
   bubbleLeft: { justifyContent: 'flex-start' },
   bubbleRight: { justifyContent: 'flex-end' },
-  bubble: { maxWidth: '80%', padding: 12, borderRadius: 14 },
+  bubble: { maxWidth: '80%', padding: 12, borderRadius: 16 },
   bubbleManager: { backgroundColor: '#1e293b', borderWidth: 1, borderColor: '#334155' },
   bubbleUser: { backgroundColor: '#0284c7' },
   bubbleText: { fontSize: 13, lineHeight: 18 },
@@ -449,27 +466,35 @@ const styles = StyleSheet.create({
   timeManager: { color: '#94a3b8' },
   timeUser: { color: 'rgba(255,255,255,0.75)' },
 
-  replyBar: { flexDirection: 'row', padding: 12, backgroundColor: '#1e293b', borderTopWidth: 1, borderColor: '#334155', gap: 8, marginBottom: 20 },
+  replyBar: { flexDirection: 'row', padding: 12, backgroundColor: '#1e293b', borderTopWidth: 1, borderColor: '#334155', gap: 8, paddingBottom: Platform.OS === 'ios' ? 24 : 12 },
   replyInput: { flex: 1, backgroundColor: '#0f172a', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, color: '#f8fafc', fontSize: 13, borderWidth: 1, borderColor: '#334155' },
   sendBtn: { backgroundColor: '#0284c7', paddingHorizontal: 16, justifyContent: 'center', borderRadius: 10 },
   sendBtnText: { color: '#ffffff', fontWeight: '800', fontSize: 12 },
 
-  modalBg: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', padding: 20 },
-  modalCard: { backgroundColor: '#1e293b', borderRadius: 16, padding: 20, borderWidth: 1, borderColor: '#334155' },
-  modalTitle: { fontSize: 17, fontWeight: '800', color: '#38bdf8', marginBottom: 14, textAlign: 'center' },
-  inputLabel: { fontSize: 10, color: '#94a3b8', fontWeight: '700', marginBottom: 4, marginTop: 4 },
-  input: { backgroundColor: '#0f172a', borderWidth: 1, borderColor: '#334155', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, color: '#f8fafc', fontSize: 13, marginBottom: 10 },
+  modalBg: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.85)', justifyContent: 'center', padding: 20 },
+  modalScrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    padding: 16,
+    paddingTop: Platform.OS === 'ios' ? 40 : 16,
+    paddingBottom: Platform.OS === 'ios' ? 60 : 30,
+  },
+  modalCard: { backgroundColor: '#1e293b', borderRadius: 20, padding: 20, borderWidth: 1, borderColor: '#334155' },
+  modalHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
+  modalTitle: { fontSize: 16, fontWeight: '800', color: '#f8fafc' },
+  inputLabel: { fontSize: 10, color: '#94a3b8', fontWeight: '700', marginBottom: 6, marginTop: 10, letterSpacing: 0.5 },
+  input: { backgroundColor: '#0f172a', borderWidth: 1, borderColor: '#334155', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, color: '#f8fafc', fontSize: 13, marginBottom: 4 },
 
   recipientRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 14 },
-  recChip: { backgroundColor: '#0f172a', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6, borderWidth: 1, borderColor: '#334155' },
+  recChip: { backgroundColor: '#0f172a', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: '#334155' },
   recChipActive: { backgroundColor: '#0284c7', borderColor: '#38bdf8' },
   recChipText: { color: '#94a3b8', fontSize: 11, fontWeight: '600' },
   recChipTextActive: { color: '#ffffff', fontWeight: '800' },
 
-  modalButtons: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 },
-  modalBtn: { width: '48%', paddingVertical: 10, borderRadius: 8, alignItems: 'center' },
+  modalButtons: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 16 },
+  modalBtn: { width: '48%', paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
   cancelBtn: { backgroundColor: '#334155' },
-  cancelBtnText: { color: '#cbd5e1', fontWeight: '600' },
+  cancelBtnText: { color: '#cbd5e1', fontWeight: '700', fontSize: 13 },
   saveBtn: { backgroundColor: '#0284c7' },
-  saveBtnText: { color: '#ffffff', fontWeight: '700' },
+  saveBtnText: { color: '#ffffff', fontWeight: '700', fontSize: 13 },
 });
