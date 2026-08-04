@@ -276,11 +276,11 @@ export const TenantLeasePage: React.FC = () => {
             </div>
 
             <div className="space-y-3">
-              <Button size="sm" className="w-full text-xs font-bold uppercase flex items-center justify-center gap-1.5" onClick={() => alert('Downloading Lease PDF...')}>
-                <Download className="w-4 h-4" /> {t('tenantLease.download')}
+              <Button size="sm" className="w-full text-[11px] font-extrabold uppercase flex items-center justify-center gap-1.5 h-auto py-2.5 px-3 leading-tight text-center break-words text-primary-foreground" onClick={() => alert('Downloading Lease PDF...')}>
+                <Download className="w-3.5 h-3.5 shrink-0" /> <span>{t('tenantLease.download')}</span>
               </Button>
-              <Button size="sm" variant="outline" className="w-full text-xs font-bold uppercase flex items-center justify-center gap-1.5" onClick={() => alert('Contacting leasing office...')}>
-                <Key className="w-4 h-4" /> {t('tenantLease.requestRenewal')}
+              <Button size="sm" variant="outline" className="w-full text-[11px] font-extrabold uppercase flex items-center justify-center gap-1.5 h-auto py-2.5 px-3 leading-tight text-center break-words" onClick={() => alert('Contacting leasing office...')}>
+                <Key className="w-3.5 h-3.5 shrink-0" /> <span>{t('tenantLease.requestRenewal')}</span>
               </Button>
             </div>
           </Card>
