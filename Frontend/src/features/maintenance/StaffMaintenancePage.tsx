@@ -112,7 +112,8 @@ export const StaffMaintenancePage: React.FC = () => {
       {
         id: completeTaskId,
         status: 'Completed',
-        actualCost: actual + extra,
+        labourCost: actual,
+        extraExpenses: extra,
         resolutionNotes: resolutionNotesVal || 'Repairs completed.',
       },
       {
@@ -237,7 +238,7 @@ export const StaffMaintenancePage: React.FC = () => {
                         {/* Resolution notes */}
                         {order.status === 'Completed' && order.resolutionNotes && (
                           <div className="p-3 bg-emerald-500/5 border border-emerald-500/20 text-emerald-600 rounded-xl text-[11px] font-semibold space-y-0.5 mt-2">
-                            <p className="uppercase text-[8px] text-muted-foreground font-bold tracking-wide">{t('staffMaintenance.resolutionSummary')}</p>
+                            <p className="uppercase text-[8px] text-muted-foreground font-bold tracking-wide">{t('staffMaintenance.resolutionNotes')}</p>
                             <p className="leading-relaxed italic">"{order.resolutionNotes}"</p>
                           </div>
                         )}
@@ -259,7 +260,10 @@ export const StaffMaintenancePage: React.FC = () => {
                           </span>
                           <span className="text-foreground font-black text-sm block">
                             {isCompletedView ? (
-                              <span className="text-emerald-500">${order.actualCost ?? 0}</span>
+                              <span className="text-emerald-500">
+                                ${order.actualCost ?? 0}
+                                {order.extraExpenses && order.extraExpenses > 0 ? ` (+${order.extraExpenses} extra)` : ''}
+                              </span>
                             ) : (
                               `$${order.estimatedCost ?? 0}`
                             )}

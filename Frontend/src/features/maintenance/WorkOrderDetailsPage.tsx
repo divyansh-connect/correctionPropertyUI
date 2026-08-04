@@ -166,9 +166,25 @@ export const WorkOrderDetailsPage: React.FC = () => {
                   <span className="font-bold">${wo.estimatedCost.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between border-b pb-2">
-                  <span className="text-muted-foreground">Actual Cost:</span>
-                  <span className="font-extrabold text-rose-500">${wo.actualCost.toLocaleString()}</span>
+                  <span className="text-muted-foreground">Actual Cost (Base):</span>
+                  <span className="font-bold">${wo.actualCost.toLocaleString()}</span>
                 </div>
+                {wo.extraExpenses > 0 && (
+                  <div className="flex justify-between border-b pb-2">
+                    <span className="text-muted-foreground">Extra Expenses:</span>
+                    <span className="font-bold text-rose-500">${wo.extraExpenses.toLocaleString()}</span>
+                  </div>
+                )}
+                <div className="flex justify-between border-b pb-2">
+                  <span className="text-muted-foreground">Total Final Cost:</span>
+                  <span className="font-extrabold text-emerald-600">${(wo.actualCost + (wo.extraExpenses || 0)).toLocaleString()}</span>
+                </div>
+                {wo.resolutionNotes && (
+                  <div className="pt-2">
+                    <span className="text-muted-foreground block mb-1">Resolution Notes:</span>
+                    <p className="text-[11px] text-foreground bg-secondary/10 p-2.5 rounded-lg font-medium italic">"{wo.resolutionNotes}"</p>
+                  </div>
+                )}
               </div>
             </Card>
           </div>
@@ -268,7 +284,7 @@ export const WorkOrderDetailsPage: React.FC = () => {
                   <p className="text-[10px] text-muted-foreground">Reference Work Order: {wo.workOrderNumber}</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-extrabold text-sm">${wo.actualCost.toLocaleString()}</p>
+                  <p className="font-extrabold text-sm">${(wo.actualCost + (wo.extraExpenses || 0)).toLocaleString()}</p>
                   <StatusBadge status={wo.status === 'Closed' ? 'Paid' : 'Approved'} />
                 </div>
               </div>
@@ -277,7 +293,7 @@ export const WorkOrderDetailsPage: React.FC = () => {
                 <div className="border-t pt-3 space-y-1 bg-secondary/10 p-3 rounded-lg">
                   <div className="flex justify-between text-muted-foreground">
                     <span>Gross Services Cost</span>
-                    <span>${wo.actualCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                    <span>${(wo.actualCost + (wo.extraExpenses || 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                   </div>
                   <div className="flex justify-between text-amber-500 font-bold">
                     <span>Less: Advance Payment</span>
@@ -285,7 +301,7 @@ export const WorkOrderDetailsPage: React.FC = () => {
                   </div>
                   <div className="flex justify-between text-foreground font-black border-t pt-1 mt-1 text-sm">
                     <span>Net Balance Due</span>
-                    <span className="text-rose-500">${(wo.actualCost - wo.advancePaymentAmount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                    <span className="text-rose-500">${((wo.actualCost + (wo.extraExpenses || 0)) - wo.advancePaymentAmount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                   </div>
                 </div>
               ) : null}
