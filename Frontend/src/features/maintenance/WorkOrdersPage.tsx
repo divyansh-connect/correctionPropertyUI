@@ -95,7 +95,7 @@ export const WorkOrdersPage: React.FC = () => {
       accessorKey: 'estimatedCost',
       header: t('maintenanceWorkOrders.estCost'),
       id: 'estCost',
-      cell: ({ row }) => <span className="font-semibold text-foreground">${(row.original.estimatedCost || 0).toLocaleString()}</span>,
+      cell: ({ row }) => <span className="font-semibold text-foreground">${((row.original.estimatedCost || 0) + (row.original.extraExpenses || 0)).toLocaleString()}</span>,
     },
     {
       accessorKey: 'actualCost',
@@ -103,7 +103,7 @@ export const WorkOrdersPage: React.FC = () => {
       id: 'actCost',
       cell: ({ row }) => (
         <span className="font-extrabold text-rose-500">
-          ${(row.original.actualCost || 0).toLocaleString()}
+          ${((row.original.actualCost || 0) + (row.original.extraExpenses || 0)).toLocaleString()}
         </span>
       ),
     },
