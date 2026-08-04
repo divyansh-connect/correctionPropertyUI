@@ -5,6 +5,9 @@ import { useAuthStore } from './store/useStore';
 import { Ionicons } from '@expo/vector-icons';
 
 import { SplashScreen } from './components/SplashScreen';
+import TenantHeader from './components/TenantHeader';
+import theme from './theme';
+import * as Haptics from 'expo-haptics';
 import { LoginScreen } from './screens/LoginScreen';
 import { NavigationDrawer } from './components/NavigationDrawer';
 
@@ -232,6 +235,8 @@ export default function App() {
   };
 
   const handleTabPress = (tabId) => {
+    // Provide tactile feedback on native interactions
+    Haptics.selectionAsync();
     if (tabId === 'more') {
       setDrawerVisible(true);
     } else {
@@ -240,47 +245,56 @@ export default function App() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <StatusBar style="light" />
 
-      {/* Top Header Bar with Hamburger Drawer, Notification Bell Icon & Profile Badge */}
+      {/* Top Header Bar */}
       {role !== 'Maintenance Staff' && (
-        <View style={styles.topHeader}>
-          <View style={styles.brandContainer}>
-            <TouchableOpacity style={styles.hamburgerBtn} onPress={() => setDrawerVisible(true)}>
-              <Text style={styles.hamburgerIcon} allowFontScaling={false}>☰</Text>
-            </TouchableOpacity>
-            <Text style={styles.brandIcon} allowFontScaling={false}>🏢</Text>
-            <Text style={styles.headerTitle} allowFontScaling={false}>
-              {role === 'Tenant' ? 'Tenant Portal' : 'Zentrol Property'}
-            </Text>
-          </View>
-
-          <View style={styles.headerRightActions}>
-            {/* Notification Bell Icon */}
-            <TouchableOpacity
-              style={styles.bellBtn}
-              onPress={() => setActiveTab('notifications')}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.bellIcon} allowFontScaling={false}>🔔</Text>
-              <View style={styles.bellBadge}>
-                <Text style={styles.bellBadgeText} allowFontScaling={false}>3</Text>
-              </View>
-            </TouchableOpacity>
-
-            {/* Profile Avatar Badge */}
-            <TouchableOpacity
-              style={styles.profileBadge}
-              onPress={() => setActiveTab('profile')}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.profileBadgeText} allowFontScaling={false}>
-                {user?.firstName?.charAt(0) || user?.email?.charAt(0) || 'P'}
+        role === 'Tenant' ? (
+          <TenantHeader
+            user={user}
+            onDrawerOpen={() => setDrawerVisible(true)}
+            onNotifications={() => setActiveTab('notifications')}
+            onProfile={() => setActiveTab('profile')}
+          />
+        ) : (
+          <View style={styles.topHeader}>
+            <View style={styles.brandContainer}>
+              <TouchableOpacity style={styles.hamburgerBtn} onPress={() => setDrawerVisible(true)}>
+                <Text style={styles.hamburgerIcon} allowFontScaling={false}>☰</Text>
+              </TouchableOpacity>
+              <Text style={styles.brandIcon} allowFontScaling={false}>🏢</Text>
+              <Text style={styles.headerTitle} allowFontScaling={false}>
+                {role === 'Tenant' ? 'Tenant Portal' : 'Zentrol Property'}
               </Text>
-            </TouchableOpacity>
+            </View>
+
+            <View style={styles.headerRightActions}>
+              {/* Notification Bell Icon */}
+              <TouchableOpacity
+                style={styles.bellBtn}
+                onPress={() => setActiveTab('notifications')}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.bellIcon} allowFontScaling={false}>🔔</Text>
+                <View style={styles.bellBadge}>
+                  <Text style={styles.bellBadgeText} allowFontScaling={false}>3</Text>
+                </View>
+              </TouchableOpacity>
+
+              {/* Profile Avatar Badge */}
+              <TouchableOpacity
+                style={styles.profileBadge}
+                onPress={() => setActiveTab('profile')}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.profileBadgeText} allowFontScaling={false}>
+                  {user?.firstName?.charAt(0) || user?.email?.charAt(0) || 'P'}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
+        )
       )}
 
       {/* Navigation Drawer Component */}
@@ -461,7 +475,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   bottomTabTextActive: {
-    color: '#38bdf8',
+    color: theme.colors.primary,
     fontWeight: '700',
   },
 });
