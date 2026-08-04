@@ -24,6 +24,14 @@ import { ProfileScreen } from './screens/ProfileScreen';
 import { TenantLeaseScreen } from './screens/TenantLeaseScreen';
 import { SubscriptionsScreen } from './screens/SubscriptionsScreen';
 import { PlatformUsersScreen } from './screens/PlatformUsersScreen';
+import { TenantNotificationsScreen } from './screens/TenantNotificationsScreen';
+import { TenantMessagesScreen } from './screens/TenantMessagesScreen';
+import { TenantDocumentsScreen } from './screens/TenantDocumentsScreen';
+import { StatementsScreen } from './screens/StatementsScreen';
+import { DistributionsScreen } from './screens/DistributionsScreen';
+import { ReportsScreen } from './screens/ReportsScreen';
+import { InvoicesScreen } from './screens/InvoicesScreen';
+import { TenantLedgerScreen } from './screens/TenantLedgerScreen';
 
 export default function App() {
   const { user, isAuthenticated, isLoaded, initializeAuth } = useAuthStore();
@@ -64,7 +72,18 @@ export default function App() {
     );
   }
 
-  const role = user?.role || 'Property Manager';
+  const getNormalizedRole = (r) => {
+    if (!r) return 'Property Manager';
+    const lower = String(r).toLowerCase().replace(/_/g, ' ').replace(/-/g, ' ');
+    if (lower.includes('super')) return 'Super Admin';
+    if (lower.includes('collection')) return 'Collection Manager';
+    if (lower.includes('owner')) return 'Owner';
+    if (lower.includes('staff') || lower.includes('vendor')) return 'Maintenance Staff';
+    if (lower.includes('tenant') || lower.includes('resident')) return 'Tenant';
+    return 'Property Manager';
+  };
+
+  const role = getNormalizedRole(user?.role);
 
   // Role-Specific Navigation Menu Tabs matching Web App strictly
   let moduleTabs = [];
@@ -102,9 +121,9 @@ export default function App() {
       moduleTabs = [
         { id: 'dashboard', label: '📊 Dashboard', icon: '📊' },
         { id: 'properties', label: '🏢 Properties', icon: '🏢' },
-        { id: 'tenants', label: '👥 Tenants', icon: '👥' },
-        { id: 'rent', label: '💰 Income', icon: '💰' },
-        { id: 'profile', label: '⚙️ Settings', icon: '⚙️' },
+        { id: 'rent', label: '💳 Financials', icon: '💳' },
+        { id: 'maintenance', label: '🛠️ Repairs', icon: '🛠️' },
+        { id: 'more', label: '☰ All 9', icon: '☰' },
       ];
       break;
 
@@ -114,7 +133,7 @@ export default function App() {
         { id: 'lease', label: '📖 Lease', icon: '📖' },
         { id: 'rent', label: '💳 Payments', icon: '💳' },
         { id: 'maintenance', label: '🛠️ Repairs', icon: '🛠️' },
-        { id: 'profile', label: '⚙️ Settings', icon: '⚙️' },
+        { id: 'more', label: '☰ All', icon: '☰' },
       ];
       break;
 
@@ -131,7 +150,7 @@ export default function App() {
       break;
   }
 
-  // 1-to-1 Dashboard & Screen Router for ALL 13 Web Menus
+  // 1-to-1 Dashboard & Screen Router for ALL Web Menus
   const renderDashboardByRole = () => {
     switch (role) {
       case 'Super Admin':
@@ -168,17 +187,32 @@ export default function App() {
         return <LeadsScreen />;
       case 'tenants':
       case 'owners':
-      case 'documents':
         return <TenantsScreen />;
+      case 'documents':
+        return <TenantDocumentsScreen />;
+      case 'invoices':
+        return <InvoicesScreen />;
+      case 'communication':
+      case 'messages':
+        return <TenantMessagesScreen />;
+      case 'notifications':
+        return <TenantNotificationsScreen />;
+      case 'statements':
+        return <StatementsScreen />;
+      case 'reports':
+        return <ReportsScreen />;
       case 'rent':
+        return role === 'Owner' ? <RentScreen /> : <RentScreen />;
+      case 'financials':
+      case 'ledger':
       case 'accounting':
-        return <RentScreen />;
+        return role === 'Owner' ? <RentScreen /> : <TenantLedgerScreen />;
       case 'maintenance':
         return <MaintenanceScreen />;
       case 'companies':
         return <CompaniesScreen />;
-      case 'reports':
-      case 'communication':
+      case 'distributions':
+        return <DistributionsScreen />;
       case 'ai':
         return renderDashboardByRole();
       case 'profile':
@@ -200,21 +234,42 @@ export default function App() {
     <SafeAreaView style={styles.container}>
       <StatusBar style="light" />
 
-      {/* Top Header Bar with Hamburger Drawer Trigger */}
+      {/* Top Header Bar with Hamburger Drawer, Notification Bell Icon & Profile Badge */}
       <View style={styles.topHeader}>
         <View style={styles.brandContainer}>
           <TouchableOpacity style={styles.hamburgerBtn} onPress={() => setDrawerVisible(true)}>
             <Text style={styles.hamburgerIcon} allowFontScaling={false}>☰</Text>
           </TouchableOpacity>
           <Text style={styles.brandIcon} allowFontScaling={false}>🏢</Text>
-          <Text style={styles.headerTitle} allowFontScaling={false}>Zentrol Property</Text>
+          <Text style={styles.headerTitle} allowFontScaling={false}>
+            {role === 'Tenant' ? 'Tenant Portal' : 'Zentrol Property'}
+          </Text>
         </View>
 
-        <TouchableOpacity style={styles.profileBadge} onPress={() => setActiveTab('profile')}>
-          <Text style={styles.profileBadgeText} allowFontScaling={false}>
-            {user?.firstName?.charAt(0) || user?.email?.charAt(0) || 'U'}
-          </Text>
-        </TouchableOpacity>
+        <View style={styles.headerRightActions}>
+          {/* Notification Bell Icon */}
+          <TouchableOpacity
+            style={styles.bellBtn}
+            onPress={() => setActiveTab('notifications')}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.bellIcon} allowFontScaling={false}>🔔</Text>
+            <View style={styles.bellBadge}>
+              <Text style={styles.bellBadgeText} allowFontScaling={false}>3</Text>
+            </View>
+          </TouchableOpacity>
+
+          {/* Profile Avatar Badge */}
+          <TouchableOpacity
+            style={styles.profileBadge}
+            onPress={() => setActiveTab('profile')}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.profileBadgeText} allowFontScaling={false}>
+              {user?.firstName?.charAt(0) || user?.email?.charAt(0) || 'P'}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Navigation Drawer Component */}
@@ -304,6 +359,34 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     letterSpacing: 0.3,
+  },
+  headerRightActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  bellBtn: {
+    position: 'relative',
+    padding: 4,
+  },
+  bellIcon: {
+    fontSize: 18,
+  },
+  bellBadge: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    backgroundColor: '#ef4444',
+    borderRadius: 7,
+    width: 14,
+    height: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bellBadgeText: {
+    color: '#ffffff',
+    fontSize: 9,
+    fontWeight: '900',
   },
   profileBadge: {
     width: 30,

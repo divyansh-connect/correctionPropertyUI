@@ -89,6 +89,10 @@ export const TenantLeaseScreen = () => {
     Alert.alert('Downloading PDF', 'Downloading signed copy of Lease_Agreement_Signed.pdf...');
   };
 
+  const handleRequestRenewal = () => {
+    Alert.alert('Request Sent', 'Lease renewal request form submitted to property management.');
+  };
+
   if (loading) {
     return (
       <View style={styles.center}>
@@ -101,7 +105,7 @@ export const TenantLeaseScreen = () => {
   const d = leaseData || {};
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={true}>
       {/* Page Header */}
       <View style={styles.header}>
         <Text style={styles.title} allowFontScaling={false}>My Lease Agreement</Text>
@@ -125,13 +129,13 @@ export const TenantLeaseScreen = () => {
 
         <View style={styles.metricGrid}>
           <View style={styles.metricItem}>
-            <Text style={styles.metricLabel} allowFontScaling={false}>Monthly Rent</Text>
+            <Text style={styles.metricLabel} allowFontScaling={false}>MONTHLY RENT</Text>
             <Text style={[styles.metricValue, { color: '#38bdf8' }]} allowFontScaling={false}>
               ${Number(d.monthlyRent).toLocaleString()}
             </Text>
           </View>
           <View style={styles.metricItem}>
-            <Text style={styles.metricLabel} allowFontScaling={false}>Security Deposit</Text>
+            <Text style={styles.metricLabel} allowFontScaling={false}>REFUNDABLE DEPOSIT</Text>
             <Text style={styles.metricValue} allowFontScaling={false}>
               ${Number(d.securityDeposit).toLocaleString()}
             </Text>
@@ -140,18 +144,36 @@ export const TenantLeaseScreen = () => {
 
         <View style={styles.metricGrid}>
           <View style={styles.metricItem}>
-            <Text style={styles.metricLabel} allowFontScaling={false}>Lease Duration</Text>
+            <Text style={styles.metricLabel} allowFontScaling={false}>LEASE DURATION</Text>
             <Text style={styles.metricValue} allowFontScaling={false}>12 Months</Text>
           </View>
           <View style={styles.metricItem}>
-            <Text style={styles.metricLabel} allowFontScaling={false}>Next Due Date</Text>
+            <Text style={styles.metricLabel} allowFontScaling={false}>NEXT DUE DATE</Text>
             <Text style={[styles.metricValue, { color: '#f87171' }]} allowFontScaling={false}>Aug 1, 2026</Text>
           </View>
         </View>
+      </View>
 
-        <TouchableOpacity style={styles.downloadBtn} onPress={handleDownloadLease}>
-          <Text style={styles.downloadBtnText} allowFontScaling={false}>📄 Download Signed Lease PDF</Text>
-        </TouchableOpacity>
+      {/* LEASE ACTIONS Card matching Web Screenshot */}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle} allowFontScaling={false}>🎗 LEASE ACTIONS</Text>
+        <View style={styles.divider} />
+
+        <View style={styles.actionsContainer}>
+          {/* Download Lease Agreement Button */}
+          <TouchableOpacity style={styles.actionBtnPrimary} onPress={handleDownloadLease} activeOpacity={0.7}>
+            <Text style={styles.actionBtnPrimaryText} numberOfLines={1} adjustsFontSizeToFit allowFontScaling={false}>
+              📥 DOWNLOAD LEASE AGREEMENT
+            </Text>
+          </TouchableOpacity>
+
+          {/* Request Renewal Form Button */}
+          <TouchableOpacity style={styles.actionBtnOutline} onPress={handleRequestRenewal} activeOpacity={0.7}>
+            <Text style={styles.actionBtnOutlineText} numberOfLines={1} adjustsFontSizeToFit allowFontScaling={false}>
+              🔑 REQUEST RENEWAL FORM
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Property & Unit Information */}
@@ -221,18 +243,20 @@ export const TenantLeaseScreen = () => {
           <Text style={styles.contactSub} allowFontScaling={false}>📞 {d.tenantPhone}</Text>
         </View>
       </View>
+
+      <View style={{ height: 60 }} />
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0f172a' },
-  scrollContent: { padding: 16 },
+  scrollContent: { padding: 16, paddingBottom: 60 },
   center: { flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center' },
   loadingText: { color: '#94a3b8', marginTop: 8 },
   header: { marginBottom: 14 },
-  title: { fontSize: 22, fontWeight: '800', color: '#f8fafc' },
-  subtitle: { fontSize: 12, color: '#94a3b8', marginTop: 4, lineHeight: 16 },
+  title: { fontSize: 20, fontWeight: '800', color: '#f8fafc' },
+  subtitle: { fontSize: 11.5, color: '#94a3b8', marginTop: 4, lineHeight: 16 },
 
   card: {
     backgroundColor: '#1e293b',
@@ -250,17 +274,45 @@ const styles = StyleSheet.create({
 
   metricGrid: { flexDirection: 'row', gap: 10, marginTop: 6 },
   metricItem: { flex: 1, backgroundColor: '#0f172a', borderRadius: 8, padding: 10, borderWidth: 1, borderColor: '#334155' },
-  metricLabel: { fontSize: 10, color: '#94a3b8', fontWeight: '600' },
+  metricLabel: { fontSize: 9.5, color: '#94a3b8', fontWeight: '800', letterSpacing: 0.5 },
   metricValue: { fontSize: 16, fontWeight: '800', color: '#f8fafc', marginTop: 2 },
 
-  downloadBtn: {
+  actionsContainer: { gap: 8, marginTop: 4 },
+  actionBtnPrimary: {
     backgroundColor: '#0284c7',
+    paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 8,
     alignItems: 'center',
-    marginTop: 12,
+    justifyContent: 'center',
+    width: '100%',
   },
-  downloadBtnText: { color: '#ffffff', fontSize: 12, fontWeight: '700' },
+  actionBtnPrimaryText: {
+    color: '#ffffff',
+    fontSize: 11.5,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+    textAlign: 'center',
+  },
+
+  actionBtnOutline: {
+    backgroundColor: '#0f172a',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  actionBtnOutlineText: {
+    color: '#f8fafc',
+    fontSize: 11.5,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+    textAlign: 'center',
+  },
 
   unitHeadline: { fontSize: 16, fontWeight: '800', color: '#38bdf8', marginTop: 6 },
   divider: { height: 1, backgroundColor: '#334155', marginVertical: 12 },

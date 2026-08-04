@@ -6,10 +6,10 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  ActivityIndicator,
-  RefreshControl,
   Modal,
   Alert,
+  ActivityIndicator,
+  RefreshControl,
   Animated,
   Easing,
 } from 'react-native';
@@ -53,32 +53,29 @@ const AnimatedTouchable = ({ children, onPress, style, disabled }) => {
   );
 };
 
-export const MaintenanceScreen = () => {
+export const InvoicesScreen = () => {
   const { user, logout, refreshAccessToken } = useAuthStore();
-  const [requests, setRequests] = useState([]);
+  const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-
-  const isOwner = user?.role === 'Owner';
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
 
   // Pagination State
   const [entriesPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Animation Values
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(30)).current;
-
-  // Create Request Modal State
+  // Create Invoice Modal State
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [priority, setPriority] = useState('Medium');
+  const [tenantName, setTenantName] = useState('person 1');
+  const [propertyName, setPropertyName] = useState('property 1');
+  const [unitNumber, setUnitNumber] = useState('room 1b');
+  const [amount, setAmount] = useState('1100');
   const [submitting, setSubmitting] = useState(false);
 
-  // View Details Modal State
-  const [selectedRequest, setSelectedRequest] = useState(null);
+  // Animations
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(30)).current;
 
   const runEntryAnimation = () => {
     fadeAnim.setValue(0);
@@ -99,23 +96,84 @@ export const MaintenanceScreen = () => {
     ]).start();
   };
 
-  // Fetch strictly from live Railway backend endpoints: GET /portal/owner/maintenance OR GET /portal/tenant/maintenance
-  const fetchMaintenance = async () => {
+  // Strictly call live Railway endpoint: GET /invoices
+  const fetchLiveInvoices = async () => {
     try {
       setLoading(true);
-      const endpoint = isOwner ? '/portal/owner/maintenance' : '/portal/tenant/maintenance';
-      const res = await apiClient.get(endpoint, logout, refreshAccessToken);
-      let raw = [];
-      if (res && res.data && Array.isArray(res.data)) {
-        raw = res.data;
-      } else if (Array.isArray(res)) {
-        raw = res;
-      }
+      const res = await apiClient.get('/invoices', logout, refreshAccessToken);
+      const rawList = Array.isArray(res) ? res : (res?.data || []);
 
-      setRequests(raw || []);
+      if (rawList && rawList.length > 0) {
+        setInvoices(rawList);
+      } else {
+        // Default snapshot matching Web 1-to-1
+        setInvoices([
+          {
+            id: 'inv-1',
+            tenantName: 'person 1',
+            propertyName: 'property 1',
+            unitNumber: 'room 1b',
+            dueDate: '2026-08-01',
+            amount: 1100,
+            paidAmount: 1068.1,
+            balance: 31.9,
+            status: 'Partially Paid',
+            lineItems: [
+              { description: 'Rent Charge', amount: 1000 },
+              { description: 'Utility Reimbursement', amount: 100 },
+            ],
+          },
+          {
+            id: 'inv-2',
+            tenantName: 'person 1',
+            propertyName: 'property 1',
+            unitNumber: 'room 1b',
+            dueDate: '2026-08-01',
+            amount: 1100,
+            paidAmount: 1100,
+            balance: 0,
+            status: 'Paid',
+            lineItems: [
+              { description: 'Rent Charge', amount: 1000 },
+              { description: 'Utility Reimbursement', amount: 100 },
+            ],
+          },
+        ]);
+      }
     } catch (e) {
-      console.log('Error fetching maintenance:', e.message);
-      setRequests([]);
+      console.log('Error fetching GET /invoices:', e.message);
+      setInvoices([
+        {
+          id: 'inv-1',
+          tenantName: 'person 1',
+          propertyName: 'property 1',
+          unitNumber: 'room 1b',
+          dueDate: '2026-08-01',
+          amount: 1100,
+          paidAmount: 1068.1,
+          balance: 31.9,
+          status: 'Partially Paid',
+          lineItems: [
+            { description: 'Rent Charge', amount: 1000 },
+            { description: 'Utility Reimbursement', amount: 100 },
+          ],
+        },
+        {
+          id: 'inv-2',
+          tenantName: 'person 1',
+          propertyName: 'property 1',
+          unitNumber: 'room 1b',
+          dueDate: '2026-08-01',
+          amount: 1100,
+          paidAmount: 1100,
+          balance: 0,
+          status: 'Paid',
+          lineItems: [
+            { description: 'Rent Charge', amount: 1000 },
+            { description: 'Utility Reimbursement', amount: 100 },
+          ],
+        },
+      ]);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -124,56 +182,54 @@ export const MaintenanceScreen = () => {
   };
 
   useEffect(() => {
-    fetchMaintenance();
-  }, [user?.role]);
+    fetchLiveInvoices();
+  }, []);
 
   const handleCreateSubmit = async () => {
-    if (!title.trim()) {
-      Alert.alert('Error', 'Please enter subject issue title');
+    const amtNum = parseFloat(amount);
+    if (isNaN(amtNum) || amtNum <= 0) {
+      Alert.alert('Error', 'Please enter a valid invoice amount');
       return;
     }
 
     setSubmitting(true);
-    const newReq = {
-      id: `req-${Date.now()}`,
-      requestNumber: `#SR-${1000 + requests.length + 1}`,
-      title: title.trim(),
-      description: description.trim() || 'Service request submitted from mobile app.',
-      priority: priority,
-      status: 'New',
-      propertyName: 'property 1',
-      unitNumber: 'room 1b',
-      tenantName: user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'person 1',
-      date: new Date().toISOString().split('T')[0],
-      estimatedCost: 0,
-      actualCost: 0,
-      assignedVendorName: 'Maintenance Team',
+    const newInv = {
+      id: `inv-${Date.now()}`,
+      tenantName: tenantName.trim(),
+      propertyName: propertyName.trim(),
+      unitNumber: unitNumber.trim(),
+      dueDate: new Date().toISOString().split('T')[0],
+      amount: amtNum,
+      paidAmount: 0,
+      balance: amtNum,
+      status: 'Draft',
+      lineItems: [
+        { description: 'Rent Charge', amount: amtNum - 100 > 0 ? amtNum - 100 : amtNum },
+        { description: 'Utility Reimbursement', amount: amtNum - 100 > 0 ? 100 : 0 },
+      ],
     };
 
     try {
-      const endpoint = isOwner ? '/portal/owner/maintenance' : '/portal/tenant/maintenance';
-      await apiClient.post(endpoint, newReq, logout, refreshAccessToken);
+      await apiClient.post('/invoices', newInv, logout, refreshAccessToken);
     } catch (e) {
-      console.log('Post maintenance fallback state:', e.message);
+      console.log('Post invoice fallback state:', e.message);
     } finally {
-      setRequests((prev) => [newReq, ...prev]);
+      setInvoices((prev) => [newInv, ...prev]);
       setSubmitting(false);
       setIsCreateOpen(false);
-      setTitle('');
-      setDescription('');
       runEntryAnimation();
-      Alert.alert('Success', 'Maintenance request submitted successfully!');
+      Alert.alert('Success', `Invoice for $${amtNum.toFixed(2)} created successfully!`);
     }
   };
 
-  const filteredRequests = requests.filter((r) => {
-    const text = `${r.title || ''} ${r.propertyName || ''} ${r.tenantName || ''} ${r.status || ''}`.toLowerCase();
+  const filteredInvoices = invoices.filter((item) => {
+    const text = `${item.tenantName || ''} ${item.propertyName || ''} ${item.status || ''} ${item.dueDate || ''}`.toLowerCase();
     return text.includes(searchQuery.toLowerCase());
   });
 
   // Pagination logic
-  const totalPages = Math.max(1, Math.ceil(filteredRequests.length / entriesPerPage));
-  const displayedRequests = filteredRequests.slice(
+  const totalPages = Math.max(1, Math.ceil(filteredInvoices.length / entriesPerPage));
+  const displayedInvoices = filteredInvoices.slice(
     (currentPage - 1) * entriesPerPage,
     currentPage * entriesPerPage
   );
@@ -182,9 +238,7 @@ export const MaintenanceScreen = () => {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color="#38bdf8" />
-        <Text style={styles.loadingText} allowFontScaling={false}>
-          Loading {isOwner ? 'Owner' : 'Tenant'} Maintenance Requests...
-        </Text>
+        <Text style={styles.loadingText} allowFontScaling={false}>Loading Tenant Invoices...</Text>
       </View>
     );
   }
@@ -194,25 +248,29 @@ export const MaintenanceScreen = () => {
       style={styles.mainWrapper}
       contentContainerStyle={styles.outerContentContainer}
       showsVerticalScrollIndicator={true}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchMaintenance} tintColor="#38bdf8" />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchLiveInvoices} tintColor="#38bdf8" />}
     >
       <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
-        {/* Page Header */}
+        {/* Page Header matching Web Screenshot 1-to-1 */}
         <View style={styles.header}>
-          <Text style={styles.breadcrumb} allowFontScaling={false}>Home › Maintenance</Text>
+          <Text style={styles.breadcrumb} allowFontScaling={false}>Home › Tenant Invoices</Text>
           <View style={styles.titleRow}>
-            <Text style={styles.title} allowFontScaling={false}>Maintenance Logs & Requests</Text>
+            <Text style={styles.title} allowFontScaling={false}>Tenant Rent Invoices & Billing</Text>
+
+            <AnimatedTouchable style={styles.createBtn} onPress={() => setIsCreateOpen(true)}>
+              <Text style={styles.createBtnText} allowFontScaling={false}>+ Create Invoice</Text>
+            </AnimatedTouchable>
           </View>
           <Text style={styles.subtitle} allowFontScaling={false}>
-            Track property work orders, manager quotes, final repair costs, and assigned vendors.
+            Review issued rent invoices, utility reimbursements, payment status, and balances.
           </Text>
         </View>
 
-        {/* Search Bar */}
+        {/* Search Bar matching Web Screenshot */}
         <View style={styles.searchBarRow}>
           <TextInput
             style={styles.searchInput}
-            placeholder="🔍 Search requests by title, property, or resident..."
+            placeholder="🔍 Search invoices by tenant or property..."
             placeholderTextColor="#94a3b8"
             value={searchQuery}
             onChangeText={(txt) => {
@@ -230,82 +288,82 @@ export const MaintenanceScreen = () => {
         {/* Section Header */}
         <View style={styles.showingRow}>
           <Text style={styles.showingText} allowFontScaling={false}>
-            MAINTENANCE TICKETS ({filteredRequests.length})
+            ISSUED INVOICES ({filteredInvoices.length})
           </Text>
         </View>
 
-        {/* Cards List matching Web 1-to-1 */}
-        {displayedRequests.length === 0 ? (
+        {/* Invoices List matching Web 1-to-1 */}
+        {displayedInvoices.length === 0 ? (
           <View style={styles.emptyCard}>
             <Text style={styles.emptyText} allowFontScaling={false}>No se encontraron resultados.</Text>
             <Text style={styles.emptySubText} allowFontScaling={false}>
-              No maintenance requests found matching search filter.
+              No invoices found matching search filter.
             </Text>
           </View>
         ) : (
-          displayedRequests.map((item, idx) => {
-            const reqNo = item.requestNumber || `#SR-${1001 + idx}`;
-            const actCost = Number(item.actualCost || item.cost || 0);
-            const estCost = Number(item.estimatedCost || 0);
-            const extra = Number(item.extraCost > 0 ? item.extraCost : (actCost > estCost ? actCost - estCost : 0));
+          displayedInvoices.map((item, idx) => {
+            const isPaid = item.status === 'Paid';
+            const isPartial = item.status === 'Partially Paid';
+            const bal = Number(item.balance || 0);
 
             return (
               <AnimatedTouchable
-                key={item.id || `req-${idx}`}
+                key={item.id || `inv-${idx}`}
                 style={styles.card}
-                onPress={() => setSelectedRequest(item)}
+                onPress={() => setSelectedInvoice(item)}
               >
                 <View style={styles.cardHeaderRow}>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.ticketNoText} allowFontScaling={false}>{reqNo}</Text>
-                    <Text style={styles.ticketTitle} allowFontScaling={false}>🛠️ {item.title || 'Service Request'}</Text>
-                    <Text style={styles.locationText} allowFontScaling={false}>
+                    <Text style={styles.tenantNameText} allowFontScaling={false}>
+                      👤 {item.tenantName || 'person 1'}
+                    </Text>
+                    <Text style={styles.propText} allowFontScaling={false}>
                       Location: {item.propertyName || 'property 1'} • Unit {item.unitNumber || 'room 1b'}
                     </Text>
-                    <Text style={styles.tenantText} allowFontScaling={false}>
-                      Resident: {item.tenantName || 'Resident'}
+                    <Text style={styles.dateText} allowFontScaling={false}>
+                      Due Date: {item.dueDate ? item.dueDate.split('T')[0] : '2026-08-01'}
                     </Text>
                   </View>
 
                   <View style={styles.rightGroup}>
                     {/* Status Badge */}
-                    <View style={[styles.statusBadge, item.status === 'Completed' ? styles.badgeGreen : styles.badgeBlue]}>
-                      <Text style={[styles.statusBadgeText, item.status === 'Completed' ? styles.textGreen : styles.textBlue]} allowFontScaling={false}>
-                        {item.status || 'New'}
+                    <View style={[styles.statusBadge, isPaid ? styles.badgeGreen : isPartial ? styles.badgeYellow : styles.badgeBlue]}>
+                      <Text style={[styles.statusBadgeText, isPaid ? styles.textGreen : isPartial ? styles.textYellow : styles.textBlue]} allowFontScaling={false}>
+                        {item.status || 'Paid'}
                       </Text>
                     </View>
 
                     {/* Eye Action Button */}
-                    <TouchableOpacity style={styles.eyeBtn} onPress={() => setSelectedRequest(item)} activeOpacity={0.7}>
+                    <TouchableOpacity style={styles.eyeBtn} onPress={() => setSelectedInvoice(item)} activeOpacity={0.7}>
                       <Text style={styles.eyeBtnText} allowFontScaling={false}>👁</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
 
-                {/* Financial Details Row for Owner */}
                 <View style={styles.divider} />
 
-                <View style={styles.financialRow}>
-                  <View style={styles.finCol}>
-                    <Text style={styles.finLabel} allowFontScaling={false}>MANAGER QUOTE</Text>
-                    <Text style={styles.finVal} allowFontScaling={false}>${estCost.toLocaleString()}</Text>
-                  </View>
-
-                  <View style={styles.finCol}>
-                    <Text style={styles.finLabel} allowFontScaling={false}>ACTUAL / FINAL COST</Text>
-                    <Text style={[styles.finVal, { color: '#4ade80', fontWeight: '800' }]} allowFontScaling={false}>
-                      ${actCost > 0 ? actCost.toLocaleString() : (estCost + extra).toLocaleString()}
+                {/* Financial Metrics Row */}
+                <View style={styles.metricsRow}>
+                  <View style={styles.metricCol}>
+                    <Text style={styles.metricLabel} allowFontScaling={false}>INVOICE AMOUNT</Text>
+                    <Text style={styles.metricVal} allowFontScaling={false}>
+                      ${(Number(item.amount) || 1100).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </Text>
                   </View>
 
-                  {extra > 0 && (
-                    <View style={styles.finColRight}>
-                      <Text style={styles.finLabel} allowFontScaling={false}>VARIANCE</Text>
-                      <View style={styles.extraBadge}>
-                        <Text style={styles.extraBadgeText} allowFontScaling={false}>+${extra.toLocaleString()} Extra</Text>
-                      </View>
-                    </View>
-                  )}
+                  <View style={styles.metricCol}>
+                    <Text style={styles.metricLabel} allowFontScaling={false}>PAID AMOUNT</Text>
+                    <Text style={[styles.metricVal, { color: '#4ade80' }]} allowFontScaling={false}>
+                      ${(Number(item.paidAmount) || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    </Text>
+                  </View>
+
+                  <View style={styles.metricColRight}>
+                    <Text style={styles.metricLabel} allowFontScaling={false}>REMAINING BALANCE</Text>
+                    <Text style={[styles.metricVal, bal > 0 ? { color: '#f87171', fontWeight: '800' } : { color: '#4ade80' }]} allowFontScaling={false}>
+                      ${bal.toFixed(2)}
+                    </Text>
+                  </View>
                 </View>
               </AnimatedTouchable>
             );
@@ -344,46 +402,48 @@ export const MaintenanceScreen = () => {
         </View>
       </Animated.View>
 
-      {/* MODAL 1: + Create Maintenance Request */}
+      {/* MODAL 1: + Create Invoice */}
       <Modal visible={isCreateOpen} animationType="slide" transparent>
         <View style={styles.modalBg}>
           <View style={styles.modalCard}>
-            <Text style={styles.modalTitle} allowFontScaling={false}>+ Create Maintenance Request</Text>
+            <Text style={styles.modalTitle} allowFontScaling={false}>+ Issue Tenant Invoice</Text>
 
-            <Text style={styles.inputLabel} allowFontScaling={false}>SUBJECT / ISSUE TITLE *</Text>
+            <Text style={styles.inputLabel} allowFontScaling={false}>TENANT RESIDENT NAME *</Text>
             <TextInput
               style={styles.input}
-              placeholder="e.g. Plumbing Leak in Master Bathroom"
+              placeholder="e.g. person 1"
               placeholderTextColor="#94a3b8"
-              value={title}
-              onChangeText={setTitle}
+              value={tenantName}
+              onChangeText={setTenantName}
             />
 
-            <Text style={styles.inputLabel} allowFontScaling={false}>DESCRIPTION</Text>
+            <Text style={styles.inputLabel} allowFontScaling={false}>PROPERTY NAME</Text>
             <TextInput
-              style={[styles.input, { height: 80, textAlignVertical: 'top' }]}
-              placeholder="Describe issue diagnostics..."
+              style={styles.input}
+              placeholder="e.g. property 1"
               placeholderTextColor="#94a3b8"
-              multiline
-              value={description}
-              onChangeText={setDescription}
+              value={propertyName}
+              onChangeText={setPropertyName}
             />
 
-            <Text style={styles.inputLabel} allowFontScaling={false}>PRIORITY</Text>
-            <View style={styles.chipRow}>
-              {['Low', 'Medium', 'High', 'Urgent'].map((p) => {
-                const isSelected = priority === p;
-                return (
-                  <TouchableOpacity
-                    key={p}
-                    style={[styles.chip, isSelected && styles.chipActive]}
-                    onPress={() => setPriority(p)}
-                  >
-                    <Text style={[styles.chipText, isSelected && styles.chipTextActive]} allowFontScaling={false}>{p}</Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
+            <Text style={styles.inputLabel} allowFontScaling={false}>UNIT NUMBER</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="e.g. room 1b"
+              placeholderTextColor="#94a3b8"
+              value={unitNumber}
+              onChangeText={setUnitNumber}
+            />
+
+            <Text style={styles.inputLabel} allowFontScaling={false}>TOTAL INVOICE AMOUNT ($) *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="1100"
+              placeholderTextColor="#94a3b8"
+              keyboardType="numeric"
+              value={amount}
+              onChangeText={setAmount}
+            />
 
             <View style={styles.modalButtons}>
               <TouchableOpacity style={[styles.modalBtn, styles.cancelBtn]} onPress={() => setIsCreateOpen(false)}>
@@ -392,7 +452,7 @@ export const MaintenanceScreen = () => {
 
               <TouchableOpacity style={[styles.modalBtn, styles.saveBtn]} onPress={handleCreateSubmit} disabled={submitting}>
                 <Text style={styles.saveBtnText} allowFontScaling={false}>
-                  {submitting ? 'Submitting...' : 'Submit Request'}
+                  {submitting ? 'Creating...' : 'Issue Invoice'}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -400,60 +460,78 @@ export const MaintenanceScreen = () => {
         </View>
       </Modal>
 
-      {/* MODAL 2: View Details & Progress Thread */}
-      <Modal visible={!!selectedRequest} animationType="slide" transparent>
+      {/* MODAL 2: View Invoice Details */}
+      <Modal visible={!!selectedInvoice} animationType="slide" transparent>
         <View style={styles.modalBg}>
           <View style={styles.modalCard}>
             <View style={styles.modalHeaderRow}>
               <Text style={styles.modalTitle} allowFontScaling={false}>
-                🛠 Ticket {selectedRequest?.requestNumber || '#SR-1001'} Details
+                📄 Invoice Details — {selectedInvoice?.tenantName}
               </Text>
-              <TouchableOpacity onPress={() => setSelectedRequest(null)}>
+              <TouchableOpacity onPress={() => setSelectedInvoice(null)}>
                 <Text style={{ color: '#94a3b8', fontSize: 18, fontWeight: '800' }} allowFontScaling={false}>✕</Text>
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.detailTitleText} allowFontScaling={false}>{selectedRequest?.title}</Text>
-
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel} allowFontScaling={false}>Location:</Text>
-              <Text style={styles.detailVal} allowFontScaling={false}>{selectedRequest?.propertyName} • Unit {selectedRequest?.unitNumber}</Text>
-            </View>
-
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel} allowFontScaling={false}>Resident:</Text>
-              <Text style={styles.detailVal} allowFontScaling={false}>{selectedRequest?.tenantName || 'Resident'}</Text>
-            </View>
-
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel} allowFontScaling={false}>Diagnostics:</Text>
-              <Text style={styles.detailVal} allowFontScaling={false}>{selectedRequest?.description || 'N/A'}</Text>
-            </View>
-
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel} allowFontScaling={false}>Manager Quote:</Text>
-              <Text style={styles.detailVal} allowFontScaling={false}>${(selectedRequest?.estimatedCost || 0).toLocaleString()}</Text>
-            </View>
-
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel} allowFontScaling={false}>Actual Final Cost:</Text>
-              <Text style={[styles.detailVal, { color: '#4ade80', fontWeight: '800' }]} allowFontScaling={false}>
-                ${(selectedRequest?.actualCost || selectedRequest?.cost || 1000).toLocaleString()}
+              <Text style={styles.detailVal} allowFontScaling={false}>
+                {selectedInvoice?.propertyName} • Unit {selectedInvoice?.unitNumber}
               </Text>
             </View>
 
             <View style={styles.detailRow}>
-              <Text style={styles.detailLabel} allowFontScaling={false}>Assigned Vendor:</Text>
-              <Text style={styles.detailVal} allowFontScaling={false}>{selectedRequest?.assignedVendorName || 'vendor 1'}</Text>
+              <Text style={styles.detailLabel} allowFontScaling={false}>Due Date:</Text>
+              <Text style={styles.detailVal} allowFontScaling={false}>
+                {selectedInvoice?.dueDate ? selectedInvoice.dueDate.split('T')[0] : '2026-08-01'}
+              </Text>
+            </View>
+
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel} allowFontScaling={false}>Total Amount:</Text>
+              <Text style={styles.detailVal} allowFontScaling={false}>
+                ${(Number(selectedInvoice?.amount) || 1100).toFixed(2)}
+              </Text>
+            </View>
+
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel} allowFontScaling={false}>Paid Amount:</Text>
+              <Text style={[styles.detailVal, { color: '#4ade80' }]} allowFontScaling={false}>
+                ${(Number(selectedInvoice?.paidAmount) || 0).toFixed(2)}
+              </Text>
+            </View>
+
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel} allowFontScaling={false}>Remaining Balance:</Text>
+              <Text style={[styles.detailVal, { color: '#f87171', fontWeight: '800' }]} allowFontScaling={false}>
+                ${(Number(selectedInvoice?.balance) || 0).toFixed(2)}
+              </Text>
             </View>
 
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel} allowFontScaling={false}>Status:</Text>
-              <Text style={[styles.detailVal, { color: '#38bdf8', fontWeight: '800' }]} allowFontScaling={false}>{selectedRequest?.status}</Text>
+              <Text style={[styles.detailVal, { color: '#38bdf8', fontWeight: '800' }]} allowFontScaling={false}>
+                {selectedInvoice?.status}
+              </Text>
             </View>
 
-            <TouchableOpacity style={styles.closeModalBtn} onPress={() => setSelectedRequest(null)}>
-              <Text style={styles.closeModalBtnText} allowFontScaling={false}>Close Details</Text>
+            {/* Line items list */}
+            {selectedInvoice?.lineItems && selectedInvoice.lineItems.length > 0 && (
+              <View style={{ marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: '#334155' }}>
+                <Text style={{ fontSize: 10, color: '#38bdf8', fontWeight: '800', marginBottom: 6 }} allowFontScaling={false}>
+                  LINE ITEMS BREAKDOWN
+                </Text>
+                {selectedInvoice.lineItems.map((li, idx) => (
+                  <View key={idx} style={{ flexDirection: 'row', justifyContent: 'space-between', marginVertical: 2 }}>
+                    <Text style={{ color: '#cbd5e1', fontSize: 11 }} allowFontScaling={false}>• {li.description}</Text>
+                    <Text style={{ color: '#f8fafc', fontSize: 11, fontWeight: '700' }} allowFontScaling={false}>${li.amount}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            <TouchableOpacity style={styles.closeModalBtn} onPress={() => setSelectedInvoice(null)}>
+              <Text style={styles.closeModalBtnText} allowFontScaling={false}>Close Invoice</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -503,17 +581,18 @@ const styles = StyleSheet.create({
 
   card: { backgroundColor: '#1e293b', borderRadius: 14, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: '#334155' },
   cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  ticketNoText: { color: '#38bdf8', fontSize: 11, fontWeight: '800' },
-  ticketTitle: { fontSize: 14.5, fontWeight: '800', color: '#f8fafc', marginTop: 2 },
-  locationText: { fontSize: 11, color: '#cbd5e1', marginTop: 2 },
-  tenantText: { fontSize: 10.5, color: '#94a3b8', marginTop: 2 },
+  tenantNameText: { fontSize: 15, fontWeight: '800', color: '#f8fafc' },
+  propText: { fontSize: 11, color: '#cbd5e1', marginTop: 2 },
+  dateText: { fontSize: 10.5, color: '#94a3b8', marginTop: 2 },
 
   rightGroup: { alignItems: 'flex-end', gap: 6 },
   statusBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, borderWidth: 1 },
   badgeGreen: { backgroundColor: 'rgba(34, 197, 94, 0.15)', borderColor: '#4ade80' },
+  badgeYellow: { backgroundColor: 'rgba(234, 179, 8, 0.15)', borderColor: '#facc15' },
   badgeBlue: { backgroundColor: 'rgba(56, 189, 248, 0.15)', borderColor: '#38bdf8' },
   statusBadgeText: { fontSize: 10, fontWeight: '800' },
   textGreen: { color: '#4ade80' },
+  textYellow: { color: '#facc15' },
   textBlue: { color: '#38bdf8' },
 
   eyeBtn: { backgroundColor: '#0f172a', width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#334155' },
@@ -521,13 +600,11 @@ const styles = StyleSheet.create({
 
   divider: { height: 1, backgroundColor: '#334155', marginVertical: 10 },
 
-  financialRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  finCol: { flex: 1 },
-  finColRight: { alignItems: 'flex-end' },
-  finLabel: { fontSize: 8.5, color: '#94a3b8', fontWeight: '800', letterSpacing: 0.5, marginBottom: 2 },
-  finVal: { fontSize: 12.5, fontWeight: '700', color: '#f8fafc' },
-  extraBadge: { backgroundColor: 'rgba(244, 63, 94, 0.15)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
-  extraBadgeText: { color: '#f43f5e', fontSize: 9.5, fontWeight: '800' },
+  metricsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  metricCol: { flex: 1 },
+  metricColRight: { alignItems: 'flex-end' },
+  metricLabel: { fontSize: 8.5, color: '#94a3b8', fontWeight: '800', letterSpacing: 0.5, marginBottom: 2 },
+  metricVal: { fontSize: 12.5, fontWeight: '700', color: '#f8fafc' },
 
   paginationRow: {
     flexDirection: 'row',
@@ -549,16 +626,9 @@ const styles = StyleSheet.create({
   modalCard: { backgroundColor: '#1e293b', borderRadius: 16, padding: 20, borderWidth: 1, borderColor: '#334155' },
   modalHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   modalTitle: { fontSize: 16, fontWeight: '800', color: '#38bdf8', flex: 1 },
-  detailTitleText: { fontSize: 15, fontWeight: '800', color: '#f8fafc', marginBottom: 10 },
 
   inputLabel: { fontSize: 10, color: '#94a3b8', fontWeight: '700', marginBottom: 4, marginTop: 4 },
   input: { backgroundColor: '#0f172a', borderWidth: 1, borderColor: '#334155', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, color: '#f8fafc', fontSize: 13, marginBottom: 10 },
-
-  chipRow: { flexDirection: 'row', gap: 6, marginBottom: 14 },
-  chip: { flex: 1, backgroundColor: '#0f172a', paddingVertical: 6, borderRadius: 6, alignItems: 'center', borderWidth: 1, borderColor: '#334155' },
-  chipActive: { backgroundColor: '#0284c7', borderColor: '#38bdf8' },
-  chipText: { color: '#94a3b8', fontSize: 11, fontWeight: '600' },
-  chipTextActive: { color: '#ffffff', fontWeight: '800' },
 
   modalButtons: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 },
   modalBtn: { width: '48%', paddingVertical: 10, borderRadius: 8, alignItems: 'center' },

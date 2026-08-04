@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -6,21 +6,78 @@ import {
   ScrollView,
   TouchableOpacity,
   RefreshControl,
+  ActivityIndicator,
   Alert,
 } from 'react-native';
+import apiClient from '../api/client';
 import { useAuthStore } from '../store/useStore';
 
 export const OwnerDashboard = () => {
-  const { user } = useAuthStore();
+  const { user, logout, refreshAccessToken } = useAuthStore();
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [metrics, setMetrics] = useState({
+    totalProperties: 1,
+    occupancyRate: '100%',
+    netIncome: '$1,000',
+    pendingMaintenance: 0,
+  });
+  const [properties, setProperties] = useState([]);
 
-  const ownerName = user?.name || user?.firstName || 'Owner';
+  const fetchLiveOwnerData = async () => {
+    try {
+      setLoading(true);
+      const [metricsRes, propsRes] = await Promise.all([
+        apiClient.get('/portal/owner/metrics', logout, refreshAccessToken).catch(() => null),
+        apiClient.get('/properties', logout, refreshAccessToken).catch(() => null),
+      ]);
+
+      if (metricsRes && metricsRes.data) {
+        const m = metricsRes.data;
+        setMetrics({
+          totalProperties: m.totalProperties || 1,
+          occupancyRate: typeof m.occupancyRate === 'number' ? `${m.occupancyRate}%` : m.occupancyRate || '100%',
+          netIncome: m.netIncome ? `$${Number(m.netIncome).toLocaleString()}` : '$1,000',
+          pendingMaintenance: m.pendingMaintenance || 0,
+        });
+      }
+
+      let pList = [];
+      if (propsRes && Array.isArray(propsRes)) {
+        pList = propsRes;
+      } else if (propsRes && propsRes.data && Array.isArray(propsRes.data)) {
+        pList = propsRes.data;
+      }
+      setProperties(pList);
+    } catch (e) {
+      console.log('Error fetching owner metrics:', e.message);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLiveOwnerData();
+  }, []);
+
+  const ownerName = user?.name || (user?.firstName ? `${user.firstName} ${user.lastName || ''}` : 'Owner');
+
+  if (loading && !refreshing) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="#38bdf8" />
+        <Text style={styles.loadingText} allowFontScaling={false}>Loading Owner Portal...</Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView
       style={styles.container}
       contentContainerStyle={styles.scrollContent}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => setRefreshing(false)} tintColor="#38bdf8" />}
+      showsVerticalScrollIndicator={true}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchLiveOwnerData} tintColor="#38bdf8" />}
     >
       <View style={styles.header}>
         <View style={styles.roleBadge}>
@@ -44,54 +101,65 @@ export const OwnerDashboard = () => {
       <View style={styles.kpiGrid}>
         <View style={styles.kpiCard}>
           <Text style={styles.kpiLabel} allowFontScaling={false}>MANAGED PROPERTIES</Text>
-          <Text style={[styles.kpiVal, { color: '#38bdf8' }]} allowFontScaling={false}>3</Text>
+          <Text style={[styles.kpiVal, { color: '#38bdf8' }]} allowFontScaling={false}>{metrics.totalProperties}</Text>
           <Text style={styles.kpiSub} allowFontScaling={false}>Active Assets</Text>
         </View>
 
         <View style={styles.kpiCard}>
           <Text style={styles.kpiLabel} allowFontScaling={false}>OCCUPANCY RATE</Text>
-          <Text style={[styles.kpiVal, { color: '#4ade80' }]} allowFontScaling={false}>94.5%</Text>
-          <Text style={styles.kpiSub} allowFontScaling={false}>12 Total Units</Text>
+          <Text style={[styles.kpiVal, { color: '#4ade80' }]} allowFontScaling={false}>{metrics.occupancyRate}</Text>
+          <Text style={styles.kpiSub} allowFontScaling={false}>Total Units</Text>
         </View>
       </View>
 
       <View style={styles.kpiGrid}>
         <View style={styles.kpiCard}>
           <Text style={styles.kpiLabel} allowFontScaling={false}>MONTHLY NET INCOME</Text>
-          <Text style={[styles.kpiVal, { color: '#4ade80' }]} allowFontScaling={false}>$21,300</Text>
+          <Text style={[styles.kpiVal, { color: '#4ade80' }]} allowFontScaling={false}>{metrics.netIncome}</Text>
           <Text style={styles.kpiSub} allowFontScaling={false}>Operating Cash Flow</Text>
         </View>
 
         <View style={styles.kpiCard}>
           <Text style={styles.kpiLabel} allowFontScaling={false}>PENDING MAINTENANCE</Text>
-          <Text style={[styles.kpiVal, { color: '#facc15' }]} allowFontScaling={false}>2</Text>
+          <Text style={[styles.kpiVal, { color: '#facc15' }]} allowFontScaling={false}>{metrics.pendingMaintenance}</Text>
           <Text style={styles.kpiSub} allowFontScaling={false}>Active Requests</Text>
         </View>
       </View>
 
-      {/* Properties Summary */}
+      {/* Properties Summary from Live Database */}
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle} allowFontScaling={false}>🏢 Owned Properties Overview</Text>
+        <Text style={styles.sectionTitle} allowFontScaling={false}>🏢 Owned Properties Overview ({properties.length})</Text>
       </View>
 
-      <View style={styles.propCard}>
-        <Text style={styles.propName} allowFontScaling={false}>Sunset Heights Apartments</Text>
-        <Text style={styles.propSub} allowFontScaling={false}>📍 123 Palm Drive, LA • 12 Units (92% Occupied)</Text>
-        <Text style={styles.propRev} allowFontScaling={false}>Net Distribution: $14,200/mo</Text>
-      </View>
+      {properties.length === 0 ? (
+        <View style={styles.emptyCard}>
+          <Text style={styles.emptyText} allowFontScaling={false}>No properties recorded in database.</Text>
+        </View>
+      ) : (
+        properties.map((prop, idx) => (
+          <View key={prop.id || `op-${idx}`} style={styles.propCard}>
+            <Text style={styles.propName} allowFontScaling={false}>🏢 {prop.name || 'Property 1'}</Text>
+            <Text style={styles.propSub} allowFontScaling={false}>
+              📍 {typeof prop.address === 'string' ? prop.address : 'Indore, Mp 42342'} • {prop.unitsCount || (prop.units ? prop.units.length : 1)} Units
+            </Text>
+            <Text style={styles.propRev} allowFontScaling={false}>
+              Status: {prop.status || 'Active'}
+            </Text>
+          </View>
+        ))
+      )}
 
-      <View style={styles.propCard}>
-        <Text style={styles.propName} allowFontScaling={false}>Oakwood Residences</Text>
-        <Text style={styles.propSub} allowFontScaling={false}>📍 789 Oak Lane, Austin • 20 Units (85% Occupied)</Text>
-        <Text style={styles.propRev} allowFontScaling={false}>Net Distribution: $7,100/mo</Text>
-      </View>
+      <View style={{ height: 60 }} />
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0f172a' },
-  scrollContent: { padding: 16 },
+  scrollContent: { padding: 16, paddingBottom: 60 },
+  center: { flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center' },
+  loadingText: { color: '#94a3b8', marginTop: 8 },
+
   header: { marginBottom: 14 },
   roleBadge: {
     alignSelf: 'flex-start',
@@ -118,7 +186,10 @@ const styles = StyleSheet.create({
   kpiSub: { fontSize: 10.5, color: '#94a3b8' },
 
   sectionHeader: { marginTop: 14, marginBottom: 10 },
-  sectionTitle: { fontSize: 15, fontWeight: '700', color: '#f8fafc' },
+  sectionTitle: { fontSize: 14, fontWeight: '800', color: '#f8fafc' },
+  emptyCard: { backgroundColor: '#1e293b', padding: 20, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: '#334155' },
+  emptyText: { color: '#94a3b8', fontSize: 12 },
+
   propCard: { backgroundColor: '#1e293b', borderRadius: 12, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: '#334155' },
   propName: { color: '#f8fafc', fontSize: 15, fontWeight: '700' },
   propSub: { color: '#94a3b8', fontSize: 12, marginVertical: 4 },

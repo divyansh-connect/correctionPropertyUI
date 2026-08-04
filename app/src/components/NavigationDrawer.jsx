@@ -14,9 +14,11 @@ import { useAuthStore } from '../store/useStore';
 export const NavigationDrawer = ({ visible, onClose, activeScreen, onSelectScreen }) => {
   const { user, logout } = useAuthStore();
 
-  const isSuperAdmin = user?.role === 'Super Admin';
-  const isManager = user?.role === 'Property Manager' || isSuperAdmin;
-  const isOwner = user?.role === 'Owner';
+  const roleLower = String(user?.role || '').toLowerCase();
+  const isSuperAdmin = roleLower.includes('super');
+  const isCollectionManager = roleLower.includes('collection');
+  const isOwner = roleLower.includes('owner');
+  const isManager = roleLower.includes('manager') || isSuperAdmin;
 
   let menuItems = [];
 
@@ -29,8 +31,14 @@ export const NavigationDrawer = ({ visible, onClose, activeScreen, onSelectScree
       { id: 'properties', label: '🏠 Properties' },
       { id: 'maintenance', label: '🛠️ Maintenance' },
     ];
+  } else if (isCollectionManager) {
+    menuItems = [
+      { id: 'dashboard', label: '📊 Dashboard' },
+      { id: 'invoices', label: '📄 Tenant Invoices' },
+      { id: 'rent', label: '💳 Payment History' },
+      { id: 'financials', label: '📖 Tenant Ledger' },
+    ];
   } else if (isManager) {
-    // 13 Web Property Manager Menus A-Z
     menuItems = [
       { id: 'dashboard', label: '📊 Dashboard' },
       { id: 'properties', label: '🏢 Properties' },
@@ -44,24 +52,29 @@ export const NavigationDrawer = ({ visible, onClose, activeScreen, onSelectScree
       { id: 'reports', label: '📊 Reports' },
       { id: 'communication', label: '💬 Communication' },
       { id: 'ai', label: '🤖 AI Assistant' },
-      { id: 'profile', label: '⚙️ Company Settings' },
     ];
   } else if (isOwner) {
+    // ALL 9 Web Owner Portal Menus strictly matching Web Screenshot
     menuItems = [
       { id: 'dashboard', label: '📊 Dashboard' },
-      { id: 'properties', label: '🏢 My Properties' },
-      { id: 'tenants', label: '👥 Tenants' },
-      { id: 'rent', label: '💰 Financials' },
-      { id: 'profile', label: '⚙️ Settings' },
+      { id: 'properties', label: '🏢 Properties' },
+      { id: 'financials', label: '💳 Financials' },
+      { id: 'statements', label: '📖 Statements' },
+      { id: 'distributions', label: '⚙️ Distributions' },
+      { id: 'maintenance', label: '🛠️ Maintenance' },
+      { id: 'documents', label: '📄 Documents' },
+      { id: 'reports', label: '📊 Reports' },
+      { id: 'communication', label: '💬 Messages' },
     ];
   } else {
-    // Tenant
+    // Tenant Portal Menus (Notifications & Profile accessed via Header Icons)
     menuItems = [
       { id: 'dashboard', label: '📊 Dashboard' },
       { id: 'lease', label: '📖 Lease' },
       { id: 'rent', label: '💳 Payments' },
       { id: 'maintenance', label: '🛠️ Maintenance' },
-      { id: 'profile', label: '⚙️ Settings' },
+      { id: 'documents', label: '📄 Documents' },
+      { id: 'communication', label: '👤 Messages' },
     ];
   }
 
@@ -96,20 +109,22 @@ export const NavigationDrawer = ({ visible, onClose, activeScreen, onSelectScree
 
             <View style={styles.divider} />
 
-            {/* Scrollable Navigation Menu (With smooth bottom padding clearance) */}
+            {/* Scrollable Navigation Menu */}
             <ScrollView
               style={styles.menuList}
               contentContainerStyle={styles.menuContentContainer}
               showsVerticalScrollIndicator={true}
               nestedScrollEnabled={true}
             >
-              <Text style={styles.sectionHeader} allowFontScaling={false}>NAVIGATION MENU (13 ITEMS)</Text>
+              <Text style={styles.sectionHeader} allowFontScaling={false}>
+                {user?.role === 'Owner' ? 'OWNER PORTAL MENU' : user?.role === 'Tenant' ? 'TENANT PORTAL MENU' : 'NAVIGATION MENU'}
+              </Text>
 
-              {menuItems.map((item) => {
+              {menuItems.map((item, index) => {
                 const isActive = activeScreen === item.id;
                 return (
                   <TouchableOpacity
-                    key={item.id}
+                    key={`${item.id}-${index}`}
                     style={[styles.menuItem, isActive && styles.menuItemActive]}
                     onPress={() => {
                       onSelectScreen(item.id);
