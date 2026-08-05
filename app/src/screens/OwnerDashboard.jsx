@@ -111,7 +111,7 @@ export const OwnerDashboard = ({ onNavigate }) => {
           onPress={() => onNavigate('notifications')}
           activeOpacity={0.7}
         >
-          <Ionicons name="notifications-outline" size={22} color="#f8fafc" />
+          <Ionicons name="notifications-outline" size={22} color={isDarkMode ? '#cbd5e1' : '#475569'} />
           <View style={styles.bellBadge}>
             <Text style={styles.bellBadgeText} allowFontScaling={false}>2</Text>
           </View>

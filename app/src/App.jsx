@@ -108,7 +108,7 @@ export default function App() {
         { id: 'companies', label: 'Companies', icon: 'business-outline', activeIcon: 'business' },
         { id: 'subscriptions', label: 'Subscriptions', icon: 'card-outline', activeIcon: 'card' },
         { id: 'platform-users', label: 'Users', icon: 'people-outline', activeIcon: 'people' },
-        { id: 'more', label: 'All Menu', icon: 'menu-outline', activeIcon: 'menu' },
+        { id: 'profile', label: 'Profile', icon: 'person-outline', activeIcon: 'person' },
       ];
       break;
 
@@ -166,7 +166,7 @@ export default function App() {
   const renderDashboardByRole = () => {
     switch (role) {
       case 'Super Admin':
-        return <AdminDashboard />;
+        return <AdminDashboard onNavigate={(screenId) => setActiveTab(screenId)} />;
       case 'Property Manager':
         return <ManagerDashboard onNavigate={(screenId) => setActiveTab(screenId)} />;
       case 'Collection Manager':
@@ -301,45 +301,7 @@ export default function App() {
     <View style={[styles.container, { backgroundColor: isDarkMode ? '#0f172a' : '#f8fafc' }]}>
       <StatusBar style={isDarkMode ? "light" : "dark"} />
 
-      {/* Top Header Bar with Hamburger Drawer, Notification Bell Icon & Profile Badge */}
-      {(role !== 'Maintenance Staff' && role !== 'Tenant' && role !== 'Owner' && role !== 'Property Manager' && role !== 'Collection Manager') && (
-        <View style={[styles.topHeader, { backgroundColor: isDarkMode ? '#1e293b' : '#ffffff', borderBottomColor: isDarkMode ? '#334155' : '#e2e8f0' }]}>
-          <View style={styles.brandContainer}>
-            <TouchableOpacity style={styles.hamburgerBtn} onPress={() => setDrawerVisible(true)}>
-              <Ionicons name="menu-outline" size={24} color="#38bdf8" />
-            </TouchableOpacity>
-            <Ionicons name="business" size={20} color="#38bdf8" style={{ marginRight: 2 }} />
-            <Text style={[styles.headerTitle, { color: isDarkMode ? '#f8fafc' : '#0f172a' }]} allowFontScaling={false}>
-              {role === 'Tenant' ? 'Tenant Portal' : 'Zentrol Property'}
-            </Text>
-          </View>
 
-          <View style={styles.headerRightActions}>
-            {/* Notification Bell Icon */}
-            <TouchableOpacity
-              style={styles.bellBtn}
-              onPress={() => setActiveTab('notifications')}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="notifications-outline" size={22} color={isDarkMode ? '#f8fafc' : '#475569'} />
-              <View style={styles.bellBadge}>
-                <Text style={styles.bellBadgeText} allowFontScaling={false}>3</Text>
-              </View>
-            </TouchableOpacity>
-
-            {/* Profile Avatar Badge */}
-            <TouchableOpacity
-              style={styles.profileBadge}
-              onPress={() => setActiveTab('profile')}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.profileBadgeText} allowFontScaling={false}>
-                {user?.firstName?.charAt(0) || user?.email?.charAt(0) || 'P'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
 
       {/* Navigation Drawer Component */}
       <NavigationDrawer
@@ -502,6 +464,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    paddingTop: Platform.OS === 'ios' ? 22 : 0,
   },
   bottomBarContainer: {
     backgroundColor: '#1e293b',

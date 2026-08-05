@@ -19,6 +19,7 @@ import {
 } from 'react-native';
 import apiClient from '../api/client';
 import { useAuthStore } from '../store/useStore';
+import { useThemeColors } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
 
 // Animated Touchable Component
@@ -60,6 +61,8 @@ const AnimatedTouchable = ({ children, onPress, style, disabled }) => {
 
 export const PropertiesScreen = () => {
   const { logout, refreshAccessToken } = useAuthStore();
+  const { colors, isDarkMode } = useThemeColors();
+  const styles = getStyles(colors, isDarkMode);
   const [activeTab, setActiveTab] = useState('properties'); // properties, buildings, units
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -1444,27 +1447,27 @@ export const PropertiesScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  mainWrapper: { flex: 1, backgroundColor: '#0f172a' },
+const getStyles = (colors, isDarkMode) => StyleSheet.create({
+  mainWrapper: { flex: 1, backgroundColor: colors.background },
   container: { flex: 1 },
   scrollContent: { padding: 16, paddingBottom: 60 },
-  center: { flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center' },
-  loadingText: { color: '#94a3b8', marginTop: 8 },
+  center: { flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { color: colors.textSecondary, marginTop: 8 },
 
   // Tabs bar
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     margin: 16,
     marginBottom: 0,
     padding: 4,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.cardBorder,
   },
   tabBtn: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 8 },
-  tabBtnActive: { backgroundColor: '#0f172a' },
-  tabBtnText: { color: '#94a3b8', fontSize: 13, fontWeight: '700' },
+  tabBtnActive: { backgroundColor: colors.background },
+  tabBtnText: { color: colors.textSecondary, fontSize: 13, fontWeight: '700' },
   tabBtnTextActive: { color: '#38bdf8' },
 
   // Controls Row
@@ -1473,14 +1476,14 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.cardBorder,
     borderRadius: 10,
     paddingHorizontal: 10,
     height: 40,
   },
-  searchInput: { color: '#f8fafc', fontSize: 12, flex: 1, padding: 0 },
+  searchInput: { color: colors.textPrimary, fontSize: 12, flex: 1, padding: 0 },
   addBtn: {
     backgroundColor: '#38bdf8',
     paddingHorizontal: 12,
@@ -1494,16 +1497,16 @@ const styles = StyleSheet.create({
   addBtnText: { color: '#0f172a', fontSize: 12, fontWeight: '800' },
 
   sectionHeader: { marginBottom: 12 },
-  sectionTitle: { fontSize: 10, fontWeight: '800', color: '#94a3b8', letterSpacing: 0.8 },
+  sectionTitle: { fontSize: 10, fontWeight: '800', color: colors.textMuted, letterSpacing: 0.8 },
 
-  emptyCard: { backgroundColor: '#1e293b', padding: 32, borderRadius: 16, alignItems: 'center', borderWidth: 1, borderColor: '#334155' },
-  emptyText: { color: '#f8fafc', fontSize: 15, fontWeight: '700' },
+  emptyCard: { backgroundColor: colors.surface, padding: 32, borderRadius: 16, alignItems: 'center', borderWidth: 1, borderColor: colors.cardBorder },
+  emptyText: { color: colors.textPrimary, fontSize: 15, fontWeight: '700' },
 
   // Cards
-  card: { backgroundColor: '#1e293b', borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: '#334155' },
+  card: { backgroundColor: colors.surface, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: colors.cardBorder },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   headerTitleContainer: { flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8 },
-  propertyName: { fontSize: 15, fontWeight: '800', color: '#f8fafc' },
+  propertyName: { fontSize: 15, fontWeight: '800', color: colors.textPrimary },
   badgesRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   activeBadge: { backgroundColor: 'rgba(16, 185, 129, 0.12)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, borderWidth: 1, borderColor: '#10b981' },
   activeBadgeText: { color: '#10b981', fontSize: 10, fontWeight: '800' },
@@ -1511,41 +1514,41 @@ const styles = StyleSheet.create({
   eyeBtn: { width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(56, 189, 248, 0.12)', alignItems: 'center', justifyContent: 'center' },
 
   locationRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
-  address: { fontSize: 12.5, color: '#cbd5e1' },
+  address: { fontSize: 12.5, color: colors.textSecondary },
 
   specsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 10 },
-  specChip: { backgroundColor: '#0f172a', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, borderWidth: 1, borderColor: '#334155' },
-  specChipText: { color: '#94a3b8', fontSize: 11, fontWeight: '600' },
+  specChip: { backgroundColor: colors.inputBackground, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, borderWidth: 1, borderColor: colors.cardBorder },
+  specChipText: { color: colors.textSecondary, fontSize: 11, fontWeight: '600' },
 
-  divider: { height: 1, backgroundColor: '#334155', marginVertical: 12 },
+  divider: { height: 1, backgroundColor: colors.divider, marginVertical: 12 },
 
   // Metrics Columns
   metricsArea: { flexDirection: 'row', justifyContent: 'space-between' },
   metricColumn: { flex: 1, marginRight: 8 },
   metricColumnRight: { alignItems: 'flex-end', flex: 1 },
-  metricLabel: { fontSize: 8.5, color: '#94a3b8', fontWeight: '850', letterSpacing: 0.5, marginBottom: 4 },
-  metricVal: { fontSize: 13, fontWeight: '800', color: '#f8fafc' },
-  metricSub: { fontSize: 9.5, color: '#64748b', marginTop: 2 },
+  metricLabel: { fontSize: 8.5, color: colors.textMuted, fontWeight: '850', letterSpacing: 0.5, marginBottom: 4 },
+  metricVal: { fontSize: 13, fontWeight: '800', color: colors.textPrimary },
+  metricSub: { fontSize: 9.5, color: colors.textMuted, marginTop: 2 },
 
   // Modals
   modalBg: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.85)', justifyContent: 'center', padding: 20 },
-  modalCard: { backgroundColor: '#1e293b', borderRadius: 20, padding: 20, borderWidth: 1, borderColor: '#334155', maxHeight: '85%' },
+  modalCard: { backgroundColor: colors.surface, borderRadius: 20, padding: 20, borderWidth: 1, borderColor: colors.cardBorder, maxHeight: '85%' },
   modalHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  modalTitle: { fontSize: 16, fontWeight: '800', color: '#f8fafc' },
+  modalTitle: { fontSize: 16, fontWeight: '800', color: colors.textPrimary },
   modalSubHeader: { fontSize: 9, fontWeight: '850', color: '#38bdf8', letterSpacing: 0.8, marginTop: 10, marginBottom: 10 },
   modalScroll: { marginBottom: 16 },
 
   formGroup: { marginBottom: 14 },
   formRow: { flexDirection: 'row', gap: 10 },
-  formLabel: { fontSize: 9.5, fontWeight: '800', color: '#94a3b8', letterSpacing: 0.5, marginBottom: 6 },
+  formLabel: { fontSize: 9.5, fontWeight: '800', color: colors.textMuted, letterSpacing: 0.5, marginBottom: 6 },
   formInput: {
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.inputBackground,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.inputBorder,
     borderRadius: 10,
     paddingHorizontal: 12,
     height: 44,
-    color: '#f8fafc',
+    color: colors.textPrimary,
     fontSize: 13,
   },
 
@@ -1553,22 +1556,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.inputBackground,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.inputBorder,
     borderRadius: 10,
     paddingHorizontal: 12,
     height: 44,
   },
-  dropdownTriggerText: { color: '#cbd5e1', fontSize: 13 },
+  dropdownTriggerText: { color: colors.textSecondary, fontSize: 13 },
   dropdownContainer: {
     position: 'absolute',
     top: 68,
     left: 0,
     right: 0,
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.inputBackground,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.inputBorder,
     borderRadius: 10,
     zIndex: 9999,
     elevation: 5,
@@ -1581,28 +1584,28 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#1e293b',
+    borderBottomColor: colors.surface,
   },
-  dropdownItemText: { color: '#cbd5e1', fontSize: 12.5 },
+  dropdownItemText: { color: colors.textSecondary, fontSize: 12.5 },
 
-  modalActions: { flexDirection: 'row', gap: 10, justifyContent: 'flex-end', borderTopWidth: 1, borderTopColor: '#334155', paddingTop: 14, marginTop: 10 },
-  cancelBtn: { paddingVertical: 10, paddingHorizontal: 16, borderRadius: 10, borderWidth: 1, borderColor: '#334155' },
-  cancelBtnText: { color: '#cbd5e1', fontSize: 12.5, fontWeight: '700' },
+  modalActions: { flexDirection: 'row', gap: 10, justifyContent: 'flex-end', borderTopWidth: 1, borderTopColor: colors.divider, paddingTop: 14, marginTop: 10 },
+  cancelBtn: { paddingVertical: 10, paddingHorizontal: 16, borderRadius: 10, borderWidth: 1, borderColor: colors.inputBorder },
+  cancelBtnText: { color: colors.textSecondary, fontSize: 12.5, fontWeight: '700' },
   submitBtn: { backgroundColor: '#38bdf8', paddingVertical: 10, paddingHorizontal: 16, borderRadius: 10, minWidth: 110, alignItems: 'center', justifyContent: 'center' },
   submitBtnDisabled: { opacity: 0.5 },
   submitBtnText: { color: '#0f172a', fontSize: 12.5, fontWeight: '800' },
 
   // Detail Modal styling
   modalTitleRow: { flexDirection: 'row', alignItems: 'center' },
-  detailContainer: { backgroundColor: '#0f172a', borderRadius: 12, padding: 14, marginBottom: 16, borderWidth: 1, borderColor: '#334155' },
-  detailRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#1e293b' },
-  detailLabel: { color: '#94a3b8', fontSize: 12.5, fontWeight: '600' },
-  detailVal: { color: '#f8fafc', fontSize: 12.5, fontWeight: '700', textAlign: 'right', flex: 1, marginLeft: 16 },
-  closeModalBtn: { backgroundColor: '#334155', paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
-  closeModalBtnText: { color: '#cbd5e1', fontSize: 13, fontWeight: '700' },
+  detailContainer: { backgroundColor: colors.inputBackground, borderRadius: 12, padding: 14, marginBottom: 16, borderWidth: 1, borderColor: colors.cardBorder },
+  detailRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.surface },
+  detailLabel: { color: colors.textMuted, fontSize: 12.5, fontWeight: '600' },
+  detailVal: { color: colors.textPrimary, fontSize: 12.5, fontWeight: '700', textAlign: 'right', flex: 1, marginLeft: 16 },
+  closeModalBtn: { backgroundColor: colors.buttonSecondary, paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
+  closeModalBtnText: { color: colors.textSecondary, fontSize: 13, fontWeight: '700' },
 
   // Unit Details Modal specific styles
-  sectionCard: { backgroundColor: '#0f172a', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: '#334155', marginBottom: 12 },
+  sectionCard: { backgroundColor: colors.inputBackground, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: colors.cardBorder, marginBottom: 12 },
   sectionTitleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   sectionTitleText: { color: '#38bdf8', fontSize: 11, fontWeight: '850', letterSpacing: 0.8 },
   valBadge: { backgroundColor: 'rgba(245, 158, 11, 0.12)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, borderWidth: 1, borderColor: '#f59e0b' },
@@ -1611,21 +1614,21 @@ const styles = StyleSheet.create({
   tenantAvatarRow: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
   tenantAvatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#38bdf8', alignItems: 'center', justifyContent: 'center', marginRight: 10 },
   tenantAvatarText: { color: '#0f172a', fontSize: 14, fontWeight: '800' },
-  tenantNameText: { color: '#f8fafc', fontSize: 13.5, fontWeight: '750' },
-  tenantEmailText: { color: '#94a3b8', fontSize: 11.5, marginTop: 1 },
+  tenantNameText: { color: colors.textPrimary, fontSize: 13.5, fontWeight: '750' },
+  tenantEmailText: { color: colors.textSecondary, fontSize: 11.5, marginTop: 1 },
   
-  subTabsRow: { flexDirection: 'row', backgroundColor: '#0f172a', borderRadius: 8, padding: 3, borderWidth: 1, borderColor: '#334155', marginVertical: 12 },
+  subTabsRow: { flexDirection: 'row', backgroundColor: colors.inputBackground, borderRadius: 8, padding: 3, borderWidth: 1, borderColor: colors.cardBorder, marginVertical: 12 },
   subTabBtn: { flex: 1, paddingVertical: 7, alignItems: 'center', borderRadius: 6 },
-  subTabBtnActive: { backgroundColor: '#1e293b' },
-  subTabBtnText: { color: '#94a3b8', fontSize: 11, fontWeight: '700' },
+  subTabBtnActive: { backgroundColor: colors.surface },
+  subTabBtnText: { color: colors.textSecondary, fontSize: 11, fontWeight: '700' },
   subTabBtnTextActive: { color: '#38bdf8' },
   
-  logItem: { paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#1e293b' },
+  logItem: { paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.surface },
   logItemLast: { paddingVertical: 8, borderBottomWidth: 0 },
-  logLabel: { color: '#94a3b8', fontSize: 11.5 },
-  logValue: { color: '#f8fafc', fontSize: 12, fontWeight: '700', marginTop: 2 },
+  logLabel: { color: colors.textSecondary, fontSize: 11.5 },
+  logValue: { color: colors.textPrimary, fontSize: 12, fontWeight: '700', marginTop: 2 },
   
-  docBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#1e293b', padding: 10, borderRadius: 8, marginTop: 8, borderWidth: 1, borderColor: '#334155' },
-  docText: { color: '#cbd5e1', fontSize: 12, marginLeft: 8, flex: 1 },
-  docSize: { color: '#64748b', fontSize: 11 },
+  docBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface, padding: 10, borderRadius: 8, marginTop: 8, borderWidth: 1, borderColor: colors.cardBorder },
+  docText: { color: colors.textSecondary, fontSize: 12, marginLeft: 8, flex: 1 },
+  docSize: { color: colors.textMuted, fontSize: 11 },
 });

@@ -480,9 +480,61 @@ export const ProfileScreen = () => {
   }
 
   // ----------------------------------------------------
+  // A0. SUPER ADMIN: SIMPLE SETTINGS & LOGOUT SCREEN
+  // ----------------------------------------------------
+  if (role === 'Super Admin') {
+    return (
+      <View style={[styles.mainWrapper, { backgroundColor: colors.bg, padding: 20, justifyContent: 'center', alignItems: 'center' }]}>
+        <View style={{ flex: 1, width: '100%', justifyContent: 'center', alignItems: 'center' }}>
+          <View style={[styles.profileHeaderCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder, width: '100%', padding: 24, borderRadius: 16, borderWidth: 1, alignItems: 'center' }]}>
+            <View style={styles.avatarLargeCircle}>
+              <Text style={styles.avatarLargeCircleText} allowFontScaling={false}>
+                {user?.firstName?.charAt(0) || user?.email?.charAt(0) || 'A'}
+              </Text>
+            </View>
+            <Text style={[styles.profileNameTextMain, { color: colors.textPrimary, fontSize: 20, fontWeight: '800', marginTop: 14 }]} allowFontScaling={false}>
+              {user?.firstName ? `${user.firstName} ${user.lastName}`.trim() : 'ADMIN User'}
+            </Text>
+            <Text style={{ color: colors.textSecondary, fontSize: 13, marginTop: 4 }} allowFontScaling={false}>
+              {user?.email || 'superadmin@gmail.com'}
+            </Text>
+            <View style={{ backgroundColor: 'rgba(56, 189, 248, 0.15)', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 6, marginTop: 12 }}>
+              <Text style={{ color: '#38bdf8', fontSize: 10.5, fontWeight: '800', letterSpacing: 0.5 }} allowFontScaling={false}>
+                SUPER ADMIN PLATFORM
+              </Text>
+            </View>
+          </View>
+
+          <View style={{ backgroundColor: colors.cardBg, borderColor: colors.cardBorder, width: '100%', padding: 18, borderRadius: 16, borderWidth: 1, marginTop: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <Ionicons name={isDarkMode ? "moon-outline" : "sunny-outline"} size={20} color="#38bdf8" />
+              <Text style={{ color: colors.textPrimary, fontSize: 14, fontWeight: '700' }} allowFontScaling={false}>Dark Mode Theme</Text>
+            </View>
+            <Switch
+              value={isDarkMode}
+              onValueChange={toggleTheme}
+              trackColor={{ false: '#767577', true: '#38bdf8' }}
+              thumbColor={isDarkMode ? '#ffffff' : '#f4f3f4'}
+            />
+          </View>
+
+          <TouchableOpacity 
+            style={{ width: '100%', backgroundColor: 'rgba(239, 68, 68, 0.12)', paddingVertical: 14, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(239, 68, 68, 0.3)', marginTop: 24, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 }}
+            onPress={logout}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="log-out-outline" size={18} color="#ef4444" />
+            <Text style={{ color: '#ef4444', fontSize: 14, fontWeight: '800' }} allowFontScaling={false}>Log Out</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  // ----------------------------------------------------
   // A. PROPERTY MANAGER: COMPANY SETTINGS & PROFILE
   // ----------------------------------------------------
-  if (role === 'Property Manager' || role === 'Super Admin') {
+  if (role === 'Property Manager') {
     return (
       <View style={[styles.mainWrapper, { backgroundColor: colors.bg }]}>
         <View style={[styles.fixedHeader, { backgroundColor: colors.bg, borderBottomColor: colors.cardBorder }]}>

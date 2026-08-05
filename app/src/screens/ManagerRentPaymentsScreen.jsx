@@ -19,10 +19,13 @@ import {
 } from 'react-native';
 import apiClient from '../api/client';
 import { useAuthStore } from '../store/useStore';
+import { useThemeColors } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
 
 export const ManagerRentPaymentsScreen = () => {
   const { logout, refreshAccessToken } = useAuthStore();
+  const { colors, isDarkMode } = useThemeColors();
+  const styles = getStyles(colors, isDarkMode);
 
   // Sub-tab: 'payments' | 'invoices' | 'ledger'
   const [activeTab, setActiveTab] = useState('payments');
@@ -810,7 +813,7 @@ export const ManagerRentPaymentsScreen = () => {
 
                 <Text style={styles.formLabel} allowFontScaling={false}>UNIT LOCATION</Text>
                 <TextInput
-                  style={[styles.formInput, { backgroundColor: '#0f172a', color: '#94a3b8' }]}
+                  style={[styles.formInput, { backgroundColor: colors.inputBackground, color: colors.textSecondary }]}
                   editable={false}
                   value={getTenantUnitLocationLabel(payTenantId)}
                 />
@@ -1149,27 +1152,27 @@ export const ManagerRentPaymentsScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  mainWrapper: { flex: 1, backgroundColor: '#0f172a' },
+const getStyles = (colors, isDarkMode) => StyleSheet.create({
+  mainWrapper: { flex: 1, backgroundColor: colors.background },
   container: { flex: 1 },
   scrollContent: { paddingHorizontal: 16, paddingBottom: 60 },
 
   fixedHeader: {
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.background,
     paddingHorizontal: 16,
     paddingBottom: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#1e293b',
+    borderBottomColor: colors.cardBorder,
     zIndex: 10,
   },
-  title: { fontSize: 20, fontWeight: '800', color: '#f8fafc' },
-  subtitle: { fontSize: 11.5, color: '#94a3b8', marginTop: 4, lineHeight: 15 },
+  title: { fontSize: 20, fontWeight: '800', color: colors.textPrimary },
+  subtitle: { fontSize: 11.5, color: colors.textSecondary, marginTop: 4, lineHeight: 15 },
 
   // Tab switcher
-  tabRow: { flexDirection: 'row', backgroundColor: '#1e293b', borderRadius: 10, padding: 4, marginTop: 12 },
+  tabRow: { flexDirection: 'row', backgroundColor: colors.surface, borderRadius: 10, padding: 4, marginTop: 12 },
   tabItem: { flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 8 },
   tabItemActive: { backgroundColor: '#38bdf8' },
-  tabItemText: { color: '#94a3b8', fontSize: 13, fontWeight: '700' },
+  tabItemText: { color: colors.textSecondary, fontSize: 13, fontWeight: '700' },
   tabItemTextActive: { color: '#0f172a', fontWeight: '800' },
 
   // Search input and buttons
@@ -1178,15 +1181,15 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.surface,
     borderRadius: 10,
     paddingHorizontal: 10,
     height: 38,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.cardBorder,
     marginRight: 8,
   },
-  searchInput: { flex: 1, color: '#f8fafc', fontSize: 13, height: '100%', padding: 0 },
+  searchInput: { flex: 1, color: colors.textPrimary, fontSize: 13, height: '100%', padding: 0 },
   addBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1199,34 +1202,34 @@ const styles = StyleSheet.create({
 
   // Records card layouts
   recordsCard: {
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.surface,
     borderRadius: 14,
     padding: 14,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.cardBorder,
   },
   coaNum: { fontSize: 11, fontWeight: '800', color: '#38bdf8', letterSpacing: 0.5, marginBottom: 2 },
-  recordLabel: { fontSize: 14.5, fontWeight: '800', color: '#f8fafc' },
+  recordLabel: { fontSize: 14.5, fontWeight: '800', color: colors.textPrimary },
   recordValue: { fontSize: 15, fontWeight: '900' },
-  recordSubText: { fontSize: 12, color: '#94a3b8' },
-  recordSubTextVal: { fontSize: 12, color: '#cbd5e1', fontWeight: '700' },
-  divider: { height: 1, backgroundColor: '#334155', marginVertical: 10 },
+  recordSubText: { fontSize: 12, color: colors.textSecondary },
+  recordSubTextVal: { fontSize: 12, color: colors.textSecondary, fontWeight: '700' },
+  divider: { height: 1, backgroundColor: colors.divider, marginVertical: 10 },
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginVertical: 3 },
   badge: { borderWidth: 1, borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
   badgeText: { fontSize: 10, fontWeight: '800', textTransform: 'uppercase' },
 
   // Ledger elements
-  ledgerDesc: { fontSize: 12.5, color: '#94a3b8', marginTop: 6 },
+  ledgerDesc: { fontSize: 12.5, color: colors.textSecondary, marginTop: 6 },
   ledgerGrid: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 },
   ledgerGridItem: { flex: 1, alignItems: 'flex-start' },
-  ledgerGridLabel: { fontSize: 8.5, fontWeight: '800', color: '#64748b', letterSpacing: 0.5 },
+  ledgerGridLabel: { fontSize: 8.5, fontWeight: '800', color: colors.textMuted, letterSpacing: 0.5 },
   ledgerGridVal: { fontSize: 12.5, fontWeight: '800', marginTop: 2 },
 
   centerLoading: { paddingVertical: 80, alignItems: 'center' },
-  loadingText: { color: '#94a3b8', fontSize: 13, marginTop: 8 },
-  emptyView: { backgroundColor: '#1e293b', borderRadius: 14, padding: 32, alignItems: 'center', borderWidth: 1, borderColor: '#334155' },
-  emptyText: { color: '#94a3b8', fontSize: 13 },
+  loadingText: { color: colors.textSecondary, fontSize: 13, marginTop: 8 },
+  emptyView: { backgroundColor: colors.surface, borderRadius: 14, padding: 32, alignItems: 'center', borderWidth: 1, borderColor: colors.cardBorder },
+  emptyText: { color: colors.textSecondary, fontSize: 13 },
 
   // Modals Styles
   modalOverlay: {
@@ -1237,35 +1240,35 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalContent: {
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.surface,
     borderRadius: 20,
     width: '100%',
     maxHeight: '85%',
     padding: 20,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.cardBorder,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: '#334155',
+    borderBottomColor: colors.cardBorder,
     paddingBottom: 12,
     marginBottom: 16,
   },
-  modalTitle: { fontSize: 16, fontWeight: '800', color: '#f8fafc' },
+  modalTitle: { fontSize: 16, fontWeight: '800', color: colors.textPrimary },
   modalForm: { marginBottom: 16 },
   formSectionTitle: { fontSize: 10, fontWeight: '800', color: '#38bdf8', letterSpacing: 0.8, marginTop: 14, marginBottom: 8 },
-  formLabel: { fontSize: 9.5, fontWeight: '800', color: '#94a3b8', letterSpacing: 0.8, marginTop: 10, marginBottom: 4 },
+  formLabel: { fontSize: 9.5, fontWeight: '800', color: colors.textMuted, letterSpacing: 0.8, marginTop: 10, marginBottom: 4 },
   formInput: {
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.inputBackground,
     borderRadius: 10,
     padding: 10,
-    color: '#f8fafc',
+    color: colors.textPrimary,
     fontSize: 13,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.inputBorder,
     fontWeight: '700',
     marginBottom: 10,
   },
@@ -1273,14 +1276,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.inputBackground,
     borderRadius: 10,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.inputBorder,
     marginBottom: 10,
   },
-  formPickerText: { color: '#f8fafc', fontSize: 13, fontWeight: '700' },
+  formPickerText: { color: colors.textPrimary, fontSize: 13, fontWeight: '700' },
   rowFormGroup: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 },
   
   // Itemized lines
@@ -1296,11 +1299,11 @@ const styles = StyleSheet.create({
   lineItemRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.inputBackground,
     padding: 10,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.cardBorder,
     marginBottom: 8,
   },
   lineTrashBtn: {
@@ -1315,35 +1318,35 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   subtotalBox: {
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.inputBackground,
     padding: 12,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.cardBorder,
     marginVertical: 12,
   },
-  subtotalLabel: { fontSize: 12, color: '#94a3b8' },
-  subtotalVal: { fontSize: 12, color: '#f8fafc', fontWeight: '700' },
-  totalLabel: { fontSize: 13, color: '#f8fafc', fontWeight: '800' },
+  subtotalLabel: { fontSize: 12, color: colors.textSecondary },
+  subtotalVal: { fontSize: 12, color: colors.textPrimary, fontWeight: '700' },
+  totalLabel: { fontSize: 13, color: colors.textPrimary, fontWeight: '800' },
   totalVal: { fontSize: 14.5, color: '#38bdf8', fontWeight: '900' },
 
   modalActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     borderTopWidth: 1,
-    borderTopColor: '#334155',
+    borderTopColor: colors.cardBorder,
     paddingTop: 16,
     marginTop: 16,
   },
   cancelBtn: {
     flex: 1,
-    backgroundColor: '#334155',
+    backgroundColor: colors.buttonSecondary,
     borderRadius: 10,
     paddingVertical: 12,
     alignItems: 'center',
     marginRight: 8,
   },
-  cancelBtnText: { color: '#cbd5e1', fontSize: 13, fontWeight: '800' },
+  cancelBtnText: { color: colors.textSecondary, fontSize: 13, fontWeight: '800' },
   submitBtn: {
     flex: 1.5,
     backgroundColor: '#38bdf8',
@@ -1355,20 +1358,20 @@ const styles = StyleSheet.create({
 
   // Picker modal styling
   pickerModalContent: {
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.surface,
     borderRadius: 16,
     width: '80%',
     padding: 16,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.cardBorder,
   },
-  pickerModalTitle: { fontSize: 14.5, fontWeight: '800', color: '#f8fafc', marginBottom: 12, textAlign: 'center' },
+  pickerModalTitle: { fontSize: 14.5, fontWeight: '800', color: colors.textPrimary, marginBottom: 12, textAlign: 'center' },
   pickerOptionRow: {
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#334155',
+    borderBottomColor: colors.cardBorder,
   },
-  pickerOptionText: { color: '#cbd5e1', fontSize: 13, fontWeight: '700' },
+  pickerOptionText: { color: colors.textSecondary, fontSize: 13, fontWeight: '700' },
   closePickerBtn: {
     marginTop: 14,
     paddingVertical: 10,
@@ -1380,65 +1383,65 @@ const styles = StyleSheet.create({
 
   // Statement specific styles
   stmtHeaderCard: {
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.inputBackground,
     borderRadius: 12,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.cardBorder,
     marginBottom: 16,
   },
   stmtBadgeText: { fontSize: 8.5, fontWeight: '900', color: '#38bdf8', letterSpacing: 0.8, marginBottom: 4 },
-  stmtCompanyName: { fontSize: 14.5, fontWeight: '800', color: '#f8fafc' },
-  stmtCompanyAddress: { fontSize: 10.5, color: '#94a3b8' },
+  stmtCompanyName: { fontSize: 14.5, fontWeight: '800', color: colors.textPrimary },
+  stmtCompanyAddress: { fontSize: 10.5, color: colors.textSecondary },
   stmtRecipientBox: { alignItems: 'flex-end', flex: 1, marginLeft: 8 },
-  stmtRecipientLabel: { fontSize: 8, fontWeight: '800', color: '#64748b', letterSpacing: 0.5, marginBottom: 3 },
-  stmtRecipientName: { fontSize: 13, fontWeight: '800', color: '#f8fafc' },
-  stmtRecipientContact: { fontSize: 10, color: '#94a3b8' },
-  stmtRecipientLocation: { fontSize: 10, color: '#cbd5e1', fontWeight: 'bold', marginTop: 2 },
+  stmtRecipientLabel: { fontSize: 8, fontWeight: '800', color: colors.textMuted, letterSpacing: 0.5, marginBottom: 3 },
+  stmtRecipientName: { fontSize: 13, fontWeight: '800', color: colors.textPrimary },
+  stmtRecipientContact: { fontSize: 10, color: colors.textSecondary },
+  stmtRecipientLocation: { fontSize: 10, color: colors.textSecondary, fontWeight: 'bold', marginTop: 2 },
   stmtTableContainer: {
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.inputBackground,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.cardBorder,
     overflow: 'hidden',
     marginBottom: 16,
   },
   stmtTableHeaderRow: {
     flexDirection: 'row',
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.surface,
     paddingVertical: 10,
     paddingHorizontal: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#334155',
+    borderBottomColor: colors.cardBorder,
   },
-  stmtTableHeaderCol: { fontSize: 8.5, fontWeight: '800', color: '#94a3b8', letterSpacing: 0.5 },
+  stmtTableHeaderCol: { fontSize: 8.5, fontWeight: '800', color: colors.textSecondary, letterSpacing: 0.5 },
   stmtTableRow: {
     flexDirection: 'row',
     paddingVertical: 10,
     paddingHorizontal: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#1e293b',
+    borderBottomColor: colors.surface,
     alignItems: 'center',
   },
-  stmtTableColText: { fontSize: 10.5, color: '#cbd5e1' },
+  stmtTableColText: { fontSize: 10.5, color: colors.textSecondary },
   stmtFooterRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.inputBackground,
     borderRadius: 12,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.cardBorder,
     marginBottom: 16,
   },
-  stmtGeneratedText: { fontSize: 9.5, color: '#64748b' },
-  stmtOutstandingLabel: { fontSize: 8, fontWeight: '800', color: '#94a3b8', letterSpacing: 0.5 },
+  stmtGeneratedText: { fontSize: 9.5, color: colors.textMuted },
+  stmtOutstandingLabel: { fontSize: 8, fontWeight: '800', color: colors.textSecondary, letterSpacing: 0.5 },
   stmtOutstandingValue: { fontSize: 15, fontWeight: '900', color: '#10b981', marginTop: 2 },
 
   // Inline dropdown cards
   inlineDropdownCard: {
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.inputBackground,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: '#38bdf8',
@@ -1453,13 +1456,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#1e293b',
+    borderBottomColor: colors.surface,
   },
   inlineDropdownRowActive: {
     backgroundColor: 'rgba(56, 189, 248, 0.12)',
   },
   inlineDropdownText: {
-    color: '#cbd5e1',
+    color: colors.textSecondary,
     fontSize: 12.5,
     fontWeight: '600',
   },
