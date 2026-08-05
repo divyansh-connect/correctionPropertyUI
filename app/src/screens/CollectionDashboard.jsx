@@ -53,7 +53,7 @@ const AnimatedTouchable = ({ children, onPress, style, disabled }) => {
 
 export const CollectionDashboard = () => {
   const { logout, refreshAccessToken } = useAuthStore();
-  const { theme } = useThemeStore();
+  const { theme, language } = useThemeStore();
   const isDarkMode = theme === 'dark';
 
   const colors = {
@@ -140,20 +140,26 @@ export const CollectionDashboard = () => {
   }, []);
 
   const handleSendAlert = (tenantName, amount) => {
-    Alert.alert('Send Alert', `Sending payment reminder alert to ${tenantName} for overdue balance of ${amount}...`);
+    const msg = language === 'es'
+      ? `Enviando alerta de recordatorio de pago a ${tenantName} por saldo vencido de ${amount}...`
+      : `Sending payment reminder alert to ${tenantName} for overdue balance of ${amount}...`;
+    const title = language === 'es' ? 'Enviar Alerta' : 'Send Alert';
+    Alert.alert(title, msg);
   };
 
   const followUpTenants = [
-    { id: '1', name: 'Robert Johnson', unit: 'Unit 205', daysLate: '12 days late', balance: '$1450' },
-    { id: '2', name: 'Emily Davis', unit: 'Unit 104', daysLate: '8 days late', balance: '$850' },
-    { id: '3', name: 'Michael Chang', unit: 'Unit 310', daysLate: '5 days late', balance: '$1800' },
+    { id: '1', name: 'Robert Johnson', unit: 'Unit 205', daysLate: language === 'es' ? '12 días de retraso' : '12 days late', balance: '$1450' },
+    { id: '2', name: 'Emily Davis', unit: 'Unit 104', daysLate: language === 'es' ? '8 días de retraso' : '8 days late', balance: '$850' },
+    { id: '3', name: 'Michael Chang', unit: 'Unit 310', daysLate: language === 'es' ? '5 días de retraso' : '5 days late', balance: '$1800' },
   ];
 
   if (loading && !refreshing) {
     return (
       <View style={[styles.center, { backgroundColor: colors.bg }]}>
         <ActivityIndicator size="large" color="#38bdf8" />
-        <Text style={[styles.loadingText, { color: colors.textSecondary }]} allowFontScaling={false}>Loading Collection Manager Dashboard...</Text>
+        <Text style={[styles.loadingText, { color: colors.textSecondary }]} allowFontScaling={false}>
+          {language === 'es' ? 'Cargando Tablero de Gestión de Cobros...' : 'Loading Collection Manager Dashboard...'}
+        </Text>
       </View>
     );
   }
@@ -169,14 +175,20 @@ export const CollectionDashboard = () => {
         {/* Page Header matching Web Screenshot 1-to-1 */}
         <View style={styles.header}>
           <View style={styles.titleRow}>
-            <Text style={[styles.title, { color: colors.textPrimary }]} allowFontScaling={false}>Cashflow & Collections</Text>
+            <Text style={[styles.title, { color: colors.textPrimary }]} allowFontScaling={false}>
+              {language === 'es' ? 'Flujo de Caja y Cobros' : 'Cashflow & Collections'}
+            </Text>
             
             <AnimatedTouchable style={[styles.refreshBtn, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]} onPress={fetchDashboardData}>
-              <Text style={[styles.refreshBtnText, { color: colors.textPrimary }]} allowFontScaling={false}>🔄 Refresh Ledger</Text>
+              <Text style={[styles.refreshBtnText, { color: colors.textPrimary }]} allowFontScaling={false}>
+                {language === 'es' ? '🔄 Actualizar Libro' : '🔄 Refresh Ledger'}
+              </Text>
             </AnimatedTouchable>
           </View>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]} allowFontScaling={false}>
-            Monitor tenant rent receipts, owner distribution payouts, and vendor repair payments.
+            {language === 'es'
+              ? 'Supervise los recibos de alquiler de los inquilinos, los pagos a propietarios y los pagos de reparaciones a proveedores.'
+              : 'Monitor tenant rent receipts, owner distribution payouts, and vendor repair payments.'}
           </Text>
         </View>
 
@@ -185,7 +197,9 @@ export const CollectionDashboard = () => {
           {/* Card 1: TENANT COLLECTIONS */}
           <AnimatedTouchable style={[styles.kpiCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
             <View style={styles.kpiHeaderRow}>
-              <Text style={[styles.kpiLabel, { color: colors.textSecondary }]} allowFontScaling={false}>TENANT COLLECTIONS</Text>
+              <Text style={[styles.kpiLabel, { color: colors.textSecondary }]} allowFontScaling={false}>
+                {language === 'es' ? 'COBROS DE INQUILINOS' : 'TENANT COLLECTIONS'}
+              </Text>
               <View style={styles.iconCircleGreen}>
                 <Text style={{ color: '#4ade80', fontSize: 11, fontWeight: '900' }}>↗</Text>
               </View>
@@ -197,14 +211,18 @@ export const CollectionDashboard = () => {
               <View style={styles.badgeGreen}>
                 <Text style={styles.badgeGreenText} allowFontScaling={false}>↗ +12.4%</Text>
               </View>
-              <Text style={[styles.kpiSubText, { color: colors.textMuted }]} allowFontScaling={false}>Gross r...</Text>
+              <Text style={[styles.kpiSubText, { color: colors.textMuted }]} allowFontScaling={false}>
+                {language === 'es' ? 'Ingreso bruto...' : 'Gross r...'}
+              </Text>
             </View>
           </AnimatedTouchable>
 
           {/* Card 2: TENANT OVERDUE BALANCE */}
           <AnimatedTouchable style={[styles.kpiCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
             <View style={styles.kpiHeaderRow}>
-              <Text style={[styles.kpiLabel, { color: colors.textSecondary }]} allowFontScaling={false}>TENANT OVERDUE</Text>
+              <Text style={[styles.kpiLabel, { color: colors.textSecondary }]} allowFontScaling={false}>
+                {language === 'es' ? 'SALDO VENCIDO' : 'TENANT OVERDUE'}
+              </Text>
               <View style={styles.iconCircleRed}>
                 <Text style={{ color: '#f87171', fontSize: 11, fontWeight: '900' }}>!</Text>
               </View>
@@ -216,28 +234,36 @@ export const CollectionDashboard = () => {
               <View style={styles.badgeRed}>
                 <Text style={styles.badgeRedText} allowFontScaling={false}>↘ -8.5%</Text>
               </View>
-              <Text style={[styles.kpiSubText, { color: colors.textMuted }]} allowFontScaling={false}>Pending f...</Text>
+              <Text style={[styles.kpiSubText, { color: colors.textMuted }]} allowFontScaling={false}>
+                {language === 'es' ? 'Pendiente de...' : 'Pending f...'}
+              </Text>
             </View>
           </AnimatedTouchable>
         </View>
 
-
-
         {/* CASHFLOW INFLOW VS OUTFLOW CHART WIDGET matching Web Screenshot 1-to-1 */}
         <View style={[styles.chartCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
-          <Text style={[styles.chartTitle, { color: colors.textPrimary }]} allowFontScaling={false}>Cashflow Inflow vs Outflow</Text>
+          <Text style={[styles.chartTitle, { color: colors.textPrimary }]} allowFontScaling={false}>
+            {language === 'es' ? 'Entradas vs Salidas de Flujo de Caja' : 'Cashflow Inflow vs Outflow'}
+          </Text>
           <Text style={[styles.chartSubtitle, { color: colors.textSecondary }]} allowFontScaling={false}>
-            Comparison of monthly rent collected vs payouts and expenses
+            {language === 'es'
+              ? 'Comparación mensual de alquiler cobrado vs pagos y gastos'
+              : 'Comparison of monthly rent collected vs payouts and expenses'}
           </Text>
 
           <View style={styles.legendRow}>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: '#4ade80' }]} />
-              <Text style={[styles.legendText, { color: colors.textSecondary }]} allowFontScaling={false}>Inflow (Rent)</Text>
+              <Text style={[styles.legendText, { color: colors.textSecondary }]} allowFontScaling={false}>
+                {language === 'es' ? 'Entradas (Alquiler)' : 'Inflow (Rent)'}
+              </Text>
             </View>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: '#f87171' }]} />
-              <Text style={[styles.legendText, { color: colors.textSecondary }]} allowFontScaling={false}>Outflow (Payouts)</Text>
+              <Text style={[styles.legendText, { color: colors.textSecondary }]} allowFontScaling={false}>
+                {language === 'es' ? 'Salidas (Pagos)' : 'Outflow (Payouts)'}
+              </Text>
             </View>
           </View>
 
@@ -261,9 +287,13 @@ export const CollectionDashboard = () => {
 
         {/* FOLLOW-UP REQUIRED WIDGET matching Web Screenshot 1-to-1 */}
         <View style={[styles.followUpCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
-          <Text style={[styles.followUpTitle, { color: colors.textPrimary }]} allowFontScaling={false}>Follow-Up Required</Text>
+          <Text style={[styles.followUpTitle, { color: colors.textPrimary }]} allowFontScaling={false}>
+            {language === 'es' ? 'Seguimiento Requerido' : 'Follow-Up Required'}
+          </Text>
           <Text style={[styles.followUpSubtitle, { color: colors.textSecondary }]} allowFontScaling={false}>
-            Tenants with outstanding balances requiring contact
+            {language === 'es'
+              ? 'Inquilinos con saldos pendientes que requieren contacto'
+              : 'Tenants with outstanding balances requiring contact'}
           </Text>
 
           {followUpTenants.map((t) => (
@@ -282,7 +312,9 @@ export const CollectionDashboard = () => {
                   onPress={() => handleSendAlert(t.name, t.balance)}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.alertBtnText} allowFontScaling={false}>✉ Send Alert</Text>
+                  <Text style={styles.alertBtnText} allowFontScaling={false}>
+                    {language === 'es' ? '✉ Enviar Alerta' : '✉ Send Alert'}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>

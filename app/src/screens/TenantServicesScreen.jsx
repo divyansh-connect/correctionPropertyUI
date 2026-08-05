@@ -7,41 +7,43 @@ import {
   TouchableOpacity,
   Platform,
 } from 'react-native';
-import { useAuthStore } from '../store/useStore';
+import { useAuthStore, useThemeStore } from '../store/useStore';
 import { useThemeColors } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
 
 export const TenantServicesScreen = ({ onNavigate }) => {
   const { user } = useAuthStore();
+  const { language } = useThemeStore();
   const { colors, isDarkMode } = useThemeColors();
   const styles = getStyles(colors, isDarkMode);
+  const es = language === 'es';
 
   const menuItems = [
     {
       id: 'maintenance',
-      label: 'Repairs & Maintenance',
-      subtitle: 'Track and file maintenance tickets',
+      label: es ? 'Reparaciones y Mantenimiento' : 'Repairs & Maintenance',
+      subtitle: es ? 'Rastrear y presentar tickets de mantenimiento' : 'Track and file maintenance tickets',
       icon: 'hammer-outline',
       color: '#f59e0b',
     },
     {
       id: 'documents',
-      label: 'Documents',
-      subtitle: 'Leases, receipts, and community files',
+      label: es ? 'Documentos' : 'Documents',
+      subtitle: es ? 'Contratos, recibos y archivos comunitarios' : 'Leases, receipts, and community files',
       icon: 'document-text-outline',
       color: '#38bdf8',
     },
     {
       id: 'notifications',
-      label: 'Notifications',
-      subtitle: 'View recent updates and announcements',
+      label: es ? 'Notificaciones' : 'Notifications',
+      subtitle: es ? 'Ver actualizaciones y anuncios recientes' : 'View recent updates and announcements',
       icon: 'notifications-outline',
       color: '#10b981',
     },
     {
       id: 'profile',
-      label: 'Profile Settings',
-      subtitle: 'Manage your contact details and account',
+      label: es ? 'Configuración de Perfil' : 'Profile Settings',
+      subtitle: es ? 'Administrar sus datos de contacto y cuenta' : 'Manage your contact details and account',
       icon: 'person-outline',
       color: '#ec4899',
     },
@@ -62,12 +64,14 @@ export const TenantServicesScreen = ({ onNavigate }) => {
               {user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'person 1'}
             </Text>
             <Text style={styles.profileRole} allowFontScaling={false}>
-              Tenant · Active Resident
+              {es ? 'Inquilino · Residente Activo' : 'Tenant · Active Resident'}
             </Text>
           </View>
         </View>
 
-        <Text style={styles.sectionHeader} allowFontScaling={false}>SERVICES MENU</Text>
+        <Text style={styles.sectionHeader} allowFontScaling={false}>
+          {es ? 'MENÚ DE SERVICIOS' : 'SERVICES MENU'}
+        </Text>
 
         {/* Menu Options */}
         {menuItems.map((item) => (
@@ -97,7 +101,9 @@ export const TenantServicesScreen = ({ onNavigate }) => {
           activeOpacity={0.8}
         >
           <Ionicons name="log-out-outline" size={18} color="#ffffff" style={{ marginRight: 8 }} />
-          <Text style={styles.logoutBtnText} allowFontScaling={false}>Log Out</Text>
+          <Text style={styles.logoutBtnText} allowFontScaling={false}>
+            {es ? 'Cerrar Sesión' : 'Log Out'}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>

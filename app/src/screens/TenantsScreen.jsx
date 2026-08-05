@@ -18,7 +18,7 @@ import {
   Keyboard,
 } from 'react-native';
 import apiClient from '../api/client';
-import { useAuthStore } from '../store/useStore';
+import { useAuthStore, useThemeStore } from '../store/useStore';
 import { useThemeColors } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -61,6 +61,7 @@ const AnimatedTouchable = ({ children, onPress, style, disabled }) => {
 
 export const TenantsScreen = () => {
   const { logout, refreshAccessToken } = useAuthStore();
+  const { language } = useThemeStore();
   const { colors, isDarkMode } = useThemeColors();
   const styles = getStyles(colors, isDarkMode);
   const [tenants, setTenants] = useState([]);
@@ -256,7 +257,9 @@ export const TenantsScreen = () => {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color="#38bdf8" />
-        <Text style={styles.loadingText} allowFontScaling={false}>Loading Tenant Directory...</Text>
+        <Text style={styles.loadingText} allowFontScaling={false}>
+          {language === 'es' ? 'Cargando directorio de inquilinos...' : 'Loading Tenant Directory...'}
+        </Text>
       </View>
     );
   }
@@ -267,9 +270,11 @@ export const TenantsScreen = () => {
       <View style={{ paddingHorizontal: 16, paddingTop: Platform.OS === 'ios' ? 48 : 16 }}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title} allowFontScaling={false}>Tenant Directory</Text>
+          <Text style={styles.title} allowFontScaling={false}>
+            {language === 'es' ? 'Directorio de Inquilinos' : 'Tenant Directory'}
+          </Text>
           <Text style={styles.subtitle} allowFontScaling={false}>
-            Verify occupant contact channels, active lease alignments, and rent balances.
+            {language === 'es' ? 'Verifique canales de contacto de residentes, contratos activos y saldos.' : 'Verify occupant contact channels, active lease alignments, and rent balances.'}
           </Text>
         </View>
 
@@ -279,7 +284,7 @@ export const TenantsScreen = () => {
             <Ionicons name="search-outline" size={18} color="#64748b" style={{ marginRight: 6 }} />
             <TextInput
               style={styles.searchInput}
-              placeholder="Search by name, email, or unit..."
+              placeholder={language === 'es' ? 'Buscar por nombre, correo o unidad...' : 'Search by name, email, or unit...'}
               placeholderTextColor="#64748b"
               value={searchQuery}
               onChangeText={setSearchQuery}
@@ -287,7 +292,9 @@ export const TenantsScreen = () => {
           </View>
           <TouchableOpacity style={styles.addBtn} onPress={() => setIsAddOpen(true)} activeOpacity={0.8}>
             <Ionicons name="add" size={18} color="#0f172a" />
-            <Text style={styles.addBtnText} allowFontScaling={false}>Add Tenant</Text>
+            <Text style={styles.addBtnText} allowFontScaling={false}>
+              {language === 'es' ? 'Agregar Inquilino' : 'Add Tenant'}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -302,7 +309,7 @@ export const TenantsScreen = () => {
           {/* Section title */}
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle} allowFontScaling={false}>
-              ACTIVE RESIDENTS ({filteredTenants.length})
+              {language === 'es' ? `RESIDENTES ACTIVOS (${filteredTenants.length})` : `ACTIVE RESIDENTS (${filteredTenants.length})`}
             </Text>
           </View>
 
@@ -310,7 +317,9 @@ export const TenantsScreen = () => {
           {filteredTenants.length === 0 ? (
             <View style={styles.emptyCard}>
               <Ionicons name="people-outline" size={48} color="#475569" style={{ marginBottom: 10 }} />
-              <Text style={styles.emptyText} allowFontScaling={false}>No residents found</Text>
+              <Text style={styles.emptyText} allowFontScaling={false}>
+                {language === 'es' ? 'No se encontraron residentes' : 'No residents found'}
+              </Text>
             </View>
           ) : (
             filteredTenants.map((item, idx) => {

@@ -19,7 +19,7 @@ const CARD_WIDTH = width - 48; // full-width card minus margin
 
 export const ManagerDashboard = ({ onNavigate }) => {
   const { user, logout, refreshAccessToken } = useAuthStore();
-  const { theme } = useThemeStore();
+  const { theme, language } = useThemeStore();
   const isDarkMode = theme === 'dark';
   const styles = getStyles(isDarkMode);
 
@@ -115,32 +115,35 @@ export const ManagerDashboard = ({ onNavigate }) => {
 
   const companyName = user?.companyName || 'Zentrol Property';
   const roleTitle = user?.role || 'Property Manager';
+  const displayRole = language === 'es' ? 'Gerente de Propiedades' : roleTitle;
 
   // Management Module Hub Config
   const managerModules = [
-    { id: 'properties', title: 'Properties & Units', screen: 'properties', icon: 'business-outline', color: '#38bdf8' },
-    { id: 'leasing', title: 'Leasing Pipeline', screen: 'leads', icon: 'key-outline', color: '#10b981' },
-    { id: 'tenants', title: 'Tenants Directory', screen: 'tenants', icon: 'people-outline', color: '#f59e0b' },
-    { id: 'rent', title: 'Rent & Invoices', screen: 'rent', icon: 'cash-outline', color: '#ec4899' },
-    { id: 'maintenance', title: 'Maintenance Tickets', screen: 'maintenance', icon: 'hammer-outline', color: '#8b5cf6' },
-    { id: 'reports', title: 'Reports & Stats', screen: 'reports', icon: 'bar-chart-outline', color: '#6366f1' },
+    { id: 'properties', title: language === 'es' ? 'Propiedades y Unidades' : 'Properties & Units', screen: 'properties', icon: 'business-outline', color: '#38bdf8' },
+    { id: 'leasing', title: language === 'es' ? 'Flujo de Arrendamiento' : 'Leasing Pipeline', screen: 'leads', icon: 'key-outline', color: '#10b981' },
+    { id: 'tenants', title: language === 'es' ? 'Directorio de Inquilinos' : 'Tenants Directory', screen: 'tenants', icon: 'people-outline', color: '#f59e0b' },
+    { id: 'rent', title: language === 'es' ? 'Alquiler y Facturas' : 'Rent & Invoices', screen: 'rent', icon: 'cash-outline', color: '#ec4899' },
+    { id: 'maintenance', title: language === 'es' ? 'Boletos de Mantenimiento' : 'Maintenance Tickets', screen: 'maintenance', icon: 'hammer-outline', color: '#8b5cf6' },
+    { id: 'reports', title: language === 'es' ? 'Informes y Estadísticas' : 'Reports & Stats', screen: 'reports', icon: 'bar-chart-outline', color: '#6366f1' },
   ];
 
   // Vector double bar chart mock values (Income vs Expenses)
   const chartData = [
-    { month: 'Mar', income: 5000, expenses: 3000 },
-    { month: 'Apr', income: 5200, expenses: 3200 },
-    { month: 'May', income: 5300, expenses: 3100 },
-    { month: 'Jun', income: 5400, expenses: 3300 },
-    { month: 'Jul', income: 5600, expenses: 3400 },
-    { month: 'Aug', income: 6000, expenses: 3500 },
+    { month: language === 'es' ? 'Mar' : 'Mar', income: 5000, expenses: 3000 },
+    { month: language === 'es' ? 'Abr' : 'Apr', income: 5200, expenses: 3200 },
+    { month: language === 'es' ? 'May' : 'May', income: 5300, expenses: 3100 },
+    { month: language === 'es' ? 'Jun' : 'Jun', income: 5400, expenses: 3300 },
+    { month: language === 'es' ? 'Jul' : 'Jul', income: 5600, expenses: 3400 },
+    { month: language === 'es' ? 'Ago' : 'Aug', income: 6000, expenses: 3500 },
   ];
 
   if (loading && !refreshing) {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color="#38bdf8" />
-        <Text style={styles.loadingText} allowFontScaling={false}>Loading Operational Metrics...</Text>
+        <Text style={styles.loadingText} allowFontScaling={false}>
+          {language === 'es' ? 'Cargando Métricas Operativas...' : 'Loading Operational Metrics...'}
+        </Text>
       </View>
     );
   }
@@ -155,9 +158,12 @@ export const ManagerDashboard = ({ onNavigate }) => {
       {/* Welcome Header */}
       <View style={styles.welcomeContainer}>
         <View style={styles.welcomeLeft}>
-          <Text style={styles.title} allowFontScaling={false}>Portfolio Analytics</Text>
+          <Text style={styles.title} allowFontScaling={false}>
+            {language === 'es' ? 'Análisis de Portafolio' : 'Portfolio Analytics'}
+          </Text>
           <Text style={styles.subtitle} allowFontScaling={false}>
-            Logged in as <Text style={styles.roleHighlight}>{roleTitle}</Text>
+            {language === 'es' ? 'Sesión iniciada como ' : 'Logged in as '}
+            <Text style={styles.roleHighlight}>{displayRole}</Text>
           </Text>
         </View>
 
@@ -186,19 +192,29 @@ export const ManagerDashboard = ({ onNavigate }) => {
           {/* Card Slide 1: Properties & Units */}
           <View style={styles.slideCard}>
             <View style={styles.cardHeader}>
-              <Text style={styles.cardHeaderTitle} allowFontScaling={false}>PORTFOLIO ASSETS</Text>
+              <Text style={styles.cardHeaderTitle} allowFontScaling={false}>
+                {language === 'es' ? 'ACTIVOS DEL PORTAFOLIO' : 'PORTFOLIO ASSETS'}
+              </Text>
               <Ionicons name="business-outline" size={16} color="#38bdf8" />
             </View>
             <View style={styles.cardMetricsRow}>
               <View style={styles.cardMetricItem}>
-                <Text style={styles.cardMetricLabel} allowFontScaling={false}>TOTAL PROPERTIES</Text>
+                <Text style={styles.cardMetricLabel} allowFontScaling={false}>
+                  {language === 'es' ? 'TOTAL PROPIEDADES' : 'TOTAL PROPERTIES'}
+                </Text>
                 <Text style={styles.cardMetricValue} allowFontScaling={false}>{metrics.totalProperties}</Text>
-                <Text style={[styles.cardMetricTrend, { color: '#10b981' }]} allowFontScaling={false}>↗ +1 this qtr</Text>
+                <Text style={[styles.cardMetricTrend, { color: '#10b981' }]} allowFontScaling={false}>
+                  {language === 'es' ? '↗ +1 este trim' : '↗ +1 this qtr'}
+                </Text>
               </View>
               <View style={styles.cardMetricItem}>
-                <Text style={styles.cardMetricLabel} allowFontScaling={false}>TOTAL UNITS</Text>
+                <Text style={styles.cardMetricLabel} allowFontScaling={false}>
+                  {language === 'es' ? 'TOTAL UNIDADES' : 'TOTAL UNITS'}
+                </Text>
                 <Text style={styles.cardMetricValue} allowFontScaling={false}>{metrics.totalUnits}</Text>
-                <Text style={styles.cardMetricSubText} allowFontScaling={false}>Across all assets</Text>
+                <Text style={styles.cardMetricSubText} allowFontScaling={false}>
+                  {language === 'es' ? 'En todos los activos' : 'Across all assets'}
+                </Text>
               </View>
             </View>
           </View>
@@ -206,22 +222,34 @@ export const ManagerDashboard = ({ onNavigate }) => {
           {/* Card Slide 2: Occupancy & Vacancy */}
           <View style={styles.slideCard}>
             <View style={styles.cardHeader}>
-              <Text style={styles.cardHeaderTitle} allowFontScaling={false}>OCCUPANCY METRICS</Text>
+              <Text style={styles.cardHeaderTitle} allowFontScaling={false}>
+                {language === 'es' ? 'MÉTRICAS DE OCUPACIÓN' : 'OCCUPANCY METRICS'}
+              </Text>
               <Ionicons name="people-outline" size={16} color="#10b981" />
             </View>
             <View style={styles.cardMetricsRow}>
               <View style={styles.cardMetricItem}>
-                <Text style={styles.cardMetricLabel} allowFontScaling={false}>OCCUPIED UNITS</Text>
+                <Text style={styles.cardMetricLabel} allowFontScaling={false}>
+                  {language === 'es' ? 'UNIDADES OCUPADAS' : 'OCCUPIED UNITS'}
+                </Text>
                 <Text style={styles.cardMetricValue} allowFontScaling={false}>{metrics.occupiedUnits}</Text>
-                <Text style={styles.cardMetricSubText} allowFontScaling={false}>Active leases</Text>
+                <Text style={styles.cardMetricSubText} allowFontScaling={false}>
+                  {language === 'es' ? 'Contratos activos' : 'Active leases'}
+                </Text>
               </View>
               <View style={styles.cardMetricItem}>
-                <Text style={styles.cardMetricLabel} allowFontScaling={false}>VACANT UNITS</Text>
+                <Text style={styles.cardMetricLabel} allowFontScaling={false}>
+                  {language === 'es' ? 'UNIDADES VACANTES' : 'VACANT UNITS'}
+                </Text>
                 <Text style={styles.cardMetricValue} allowFontScaling={false}>{metrics.vacantUnits}</Text>
-                <Text style={[styles.cardMetricTrend, { color: '#ef4444' }]} allowFontScaling={false}>↘ -2 vacant</Text>
+                <Text style={[styles.cardMetricTrend, { color: '#ef4444' }]} allowFontScaling={false}>
+                  {language === 'es' ? '↘ -2 vacantes' : '↘ -2 vacant'}
+                </Text>
               </View>
               <View style={styles.cardMetricItem}>
-                <Text style={styles.cardMetricLabel} allowFontScaling={false}>OCCUPANCY RATE</Text>
+                <Text style={styles.cardMetricLabel} allowFontScaling={false}>
+                  {language === 'es' ? 'TASA DE OCUPACIÓN' : 'OCCUPANCY RATE'}
+                </Text>
                 <Text style={[styles.cardMetricValue, { color: '#10b981' }]} allowFontScaling={false}>{metrics.occupancyRate}%</Text>
                 <Text style={[styles.cardMetricTrend, { color: '#10b981' }]} allowFontScaling={false}>↗ +4.2%</Text>
               </View>
@@ -231,30 +259,44 @@ export const ManagerDashboard = ({ onNavigate }) => {
           {/* Card Slide 3: Financial Analytics */}
           <View style={styles.slideCard}>
             <View style={styles.cardHeader}>
-              <Text style={styles.cardHeaderTitle} allowFontScaling={false}>FINANCIAL INTELLIGENCE</Text>
+              <Text style={styles.cardHeaderTitle} allowFontScaling={false}>
+                {language === 'es' ? 'INTELIGENCIA FINANCIERA' : 'FINANCIAL INTELLIGENCE'}
+              </Text>
               <Ionicons name="cash-outline" size={16} color="#ec4899" />
             </View>
             <View style={styles.cardMetricsRow}>
               <View style={styles.cardMetricItem}>
-                <Text style={styles.cardMetricLabel} allowFontScaling={false}>MONTHLY REVENUE</Text>
+                <Text style={styles.cardMetricLabel} allowFontScaling={false}>
+                  {language === 'es' ? 'INGRESOS MENSUALES' : 'MONTHLY REVENUE'}
+                </Text>
                 <Text style={[styles.cardMetricValue, { color: '#38bdf8' }]} allowFontScaling={false}>
                   ${metrics.monthlyRevenue.toLocaleString()}
                 </Text>
-                <Text style={[styles.cardMetricTrend, { color: '#10b981' }]} allowFontScaling={false}>↗ +12.4% collections</Text>
+                <Text style={[styles.cardMetricTrend, { color: '#10b981' }]} allowFontScaling={false}>
+                  {language === 'es' ? '↗ +12.4% cobros' : '↗ +12.4% collections'}
+                </Text>
               </View>
               <View style={styles.cardMetricItem}>
-                <Text style={styles.cardMetricLabel} allowFontScaling={false}>OPERATING EXPENSES</Text>
+                <Text style={styles.cardMetricLabel} allowFontScaling={false}>
+                  {language === 'es' ? 'GASTOS OPERATIVOS' : 'OPERATING EXPENSES'}
+                </Text>
                 <Text style={[styles.cardMetricValue, { color: '#ef4444' }]} allowFontScaling={false}>
                   ${metrics.expenses.toLocaleString()}
                 </Text>
-                <Text style={styles.cardMetricSubText} allowFontScaling={false}>Invoices paid</Text>
+                <Text style={styles.cardMetricSubText} allowFontScaling={false}>
+                  {language === 'es' ? 'Facturas pagadas' : 'Invoices paid'}
+                </Text>
               </View>
               <View style={styles.cardMetricItem}>
-                <Text style={styles.cardMetricLabel} allowFontScaling={false}>PENDING RENT</Text>
+                <Text style={styles.cardMetricLabel} allowFontScaling={false}>
+                  {language === 'es' ? 'RENTA PENDIENTE' : 'PENDING RENT'}
+                </Text>
                 <Text style={styles.cardMetricValue} allowFontScaling={false}>
                   ${metrics.pendingRent.toLocaleString()}
                 </Text>
-                <Text style={[styles.cardMetricTrend, { color: '#10b981' }]} allowFontScaling={false}>↘ -8.5% unpaid</Text>
+                <Text style={[styles.cardMetricTrend, { color: '#10b981' }]} allowFontScaling={false}>
+                  {language === 'es' ? '↘ -8.5% impago' : '↘ -8.5% unpaid'}
+                </Text>
               </View>
             </View>
           </View>
@@ -262,19 +304,29 @@ export const ManagerDashboard = ({ onNavigate }) => {
           {/* Card Slide 4: Maintenance & Leases */}
           <View style={styles.slideCard}>
             <View style={styles.cardHeader}>
-              <Text style={styles.cardHeaderTitle} allowFontScaling={false}>MAINTENANCE & LEASES</Text>
+              <Text style={styles.cardHeaderTitle} allowFontScaling={false}>
+                {language === 'es' ? 'MANTENIMIENTO Y CONTRATOS' : 'MAINTENANCE & LEASES'}
+              </Text>
               <Ionicons name="hammer-outline" size={16} color="#8b5cf6" />
             </View>
             <View style={styles.cardMetricsRow}>
               <View style={styles.cardMetricItem}>
-                <Text style={styles.cardMetricLabel} allowFontScaling={false}>OPEN REQUESTS</Text>
+                <Text style={styles.cardMetricLabel} allowFontScaling={false}>
+                  {language === 'es' ? 'SOLICITUDES ABIERTAS' : 'OPEN REQUESTS'}
+                </Text>
                 <Text style={styles.cardMetricValue} allowFontScaling={false}>{metrics.openMaintenance}</Text>
-                <Text style={[styles.cardMetricTrend, { color: '#10b981' }]} allowFontScaling={false}>↗ +1 active</Text>
+                <Text style={[styles.cardMetricTrend, { color: '#10b981' }]} allowFontScaling={false}>
+                  {language === 'es' ? '↗ +1 activa' : '↗ +1 active'}
+                </Text>
               </View>
               <View style={styles.cardMetricItem}>
-                <Text style={styles.cardMetricLabel} allowFontScaling={false}>EXPIRING SOON</Text>
+                <Text style={styles.cardMetricLabel} allowFontScaling={false}>
+                  {language === 'es' ? 'POR VENCER' : 'EXPIRING SOON'}
+                </Text>
                 <Text style={styles.cardMetricValue} allowFontScaling={false}>{metrics.leasesExpiringSoon}</Text>
-                <Text style={styles.cardMetricSubText} allowFontScaling={false}>Next 60 days</Text>
+                <Text style={styles.cardMetricSubText} allowFontScaling={false}>
+                  {language === 'es' ? 'Próximos 60 días' : 'Next 60 days'}
+                </Text>
               </View>
             </View>
           </View>
@@ -290,8 +342,12 @@ export const ManagerDashboard = ({ onNavigate }) => {
 
       {/* INCOME VS EXPENSES COMPARISON CHART CARD */}
       <View style={styles.chartCard}>
-        <Text style={styles.chartTitle} allowFontScaling={false}>INCOME VS EXPENSES</Text>
-        <Text style={styles.chartSubtitle} allowFontScaling={false}>Net operations performance comparison</Text>
+        <Text style={styles.chartTitle} allowFontScaling={false}>
+          {language === 'es' ? 'INGRESOS VS GASTOS' : 'INCOME VS EXPENSES'}
+        </Text>
+        <Text style={styles.chartSubtitle} allowFontScaling={false}>
+          {language === 'es' ? 'Comparación del rendimiento de operaciones netas' : 'Net operations performance comparison'}
+        </Text>
         <View style={styles.divider} />
         
         {/* Render clean double-bar native chart */}
@@ -330,18 +386,24 @@ export const ManagerDashboard = ({ onNavigate }) => {
         <View style={styles.legendRow}>
           <View style={styles.legendItem}>
             <View style={[styles.legendColor, { backgroundColor: '#10b981' }]} />
-            <Text style={styles.legendText} allowFontScaling={false}>Income</Text>
+            <Text style={styles.legendText} allowFontScaling={false}>
+              {language === 'es' ? 'Ingresos' : 'Income'}
+            </Text>
           </View>
           <View style={styles.legendItem}>
             <View style={[styles.legendColor, { backgroundColor: '#ef4444' }]} />
-            <Text style={styles.legendText} allowFontScaling={false}>Expenses</Text>
+            <Text style={styles.legendText} allowFontScaling={false}>
+              {language === 'es' ? 'Gastos' : 'Expenses'}
+            </Text>
           </View>
         </View>
       </View>
 
       {/* OPERATIONS SERVICES MODULES PANEL */}
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle} allowFontScaling={false}>Management Services Hub</Text>
+        <Text style={styles.sectionTitle} allowFontScaling={false}>
+          {language === 'es' ? 'Centro de Servicios de Gestión' : 'Management Services Hub'}
+        </Text>
       </View>
 
       <View style={styles.modulesGrid}>

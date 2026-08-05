@@ -16,7 +16,7 @@ import {
   KeyboardAvoidingView,
 } from 'react-native';
 import apiClient from '../api/client';
-import { useAuthStore } from '../store/useStore';
+import { useAuthStore, useThemeStore } from '../store/useStore';
 import { useThemeColors } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -59,11 +59,15 @@ const AnimatedTouchable = ({ children, onPress, style, disabled }) => {
 
 export const TenantMessagesScreen = () => {
   const { user, logout, refreshAccessToken } = useAuthStore();
+  const { language } = useThemeStore();
   const { colors, isDarkMode } = useThemeColors();
   const styles = getStyles(colors, isDarkMode);
+  const es = language === 'es';
   const isOwner = user?.role === 'Owner';
 
-  const defaultContact = isOwner ? 'Property Manager' : 'Property Manager Office';
+  const defaultContact = isOwner 
+    ? (es ? 'Administrador de Propiedades' : 'Property Manager') 
+    : (es ? 'Oficina del Administrador' : 'Property Manager Office');
   const [activeContact, setActiveContact] = useState(null); // null means show conversation list
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(true);
@@ -105,41 +109,67 @@ export const TenantMessagesScreen = () => {
       { id: '2', sender: 'user', text: 'Hi! I wanted to check on the monthly ledger statement.', time: '09:32 AM' },
       { id: '3', sender: 'manager', text: 'Your monthly statements for Sky house and property 1 have been published.', time: '09:35 AM' },
     ],
+    'Administrador de Propiedades': [
+      { id: '1', sender: 'manager', text: '¡Hola! Bienvenido al Portal del Propietario de Zentrol. ¿Cómo podemos asistirle hoy con su cartera?', time: '09:30 AM' },
+      { id: '2', sender: 'user', text: '¡Hola! Quería verificar el estado de cuenta mensual.', time: '09:32 AM' },
+      { id: '3', sender: 'manager', text: 'Sus estados de cuenta mensuales para Sky house y property 1 han sido publicados.', time: '09:35 AM' },
+    ],
     'Accountant': [
       { id: '1', sender: 'manager', text: 'Accounting office here. Net owner distribution of $1,980.00 is queued.', time: 'Yesterday' },
+    ],
+    'Contador': [
+      { id: '1', sender: 'manager', text: 'Oficina de contabilidad aquí. La distribución neta del propietario de $1,980.00 está en cola.', time: 'Ayer' },
     ],
     'Leasing Lead': [
       { id: '2', sender: 'manager', text: 'Leasing update: Tenant unit occupied with active lease contract.', time: '08:00 AM' },
     ],
+    'Agente de Alquiler': [
+      { id: '2', sender: 'manager', text: 'Actualización de alquiler: Unidad del inquilino ocupada con contrato activo.', time: '08:00 AM' },
+    ],
     'Resident Representative': [
       { id: '3', sender: 'manager', text: 'Resident representative available for property inquiry.', time: 'Monday' },
+    ],
+    'Representante de Residentes': [
+      { id: '3', sender: 'manager', text: 'Representante de residentes disponible para consultas sobre la propiedad.', time: 'Lunes' },
     ],
     'Property Manager Office': [
       { id: '1', sender: 'manager', text: 'Hello! Welcome to Zentrol Property Management. How can we assist you today?', time: '09:30 AM' },
     ],
+    'Oficina del Administrador': [
+      { id: '1', sender: 'manager', text: '¡Hola! Bienvenido a la administración de propiedades de Zentrol. ¿Cómo podemos asistirle hoy?', time: '09:30 AM' },
+    ],
     'Leasing Office': [
       { id: '1', sender: 'manager', text: 'Leasing office here. Your lease agreement is active.', time: 'Yesterday' },
+    ],
+    'Oficina de Arrendamiento': [
+      { id: '1', sender: 'manager', text: 'Oficina de arrendamiento aquí. Su contrato de arrendamiento está activo.', time: 'Ayer' },
     ],
     'Maintenance Team': [
       { id: '1', sender: 'manager', text: 'Work orders for your property units are currently completed.', time: '08:00 AM' },
     ],
+    'Equipo de Mantenimiento': [
+      { id: '1', sender: 'manager', text: 'Las órdenes de trabajo para las unidades de su propiedad se encuentran completadas.', time: '08:00 AM' },
+    ],
     'Accounting Office': [
       { id: '1', sender: 'manager', text: 'Your account balance is currently clear.', time: 'Monday' },
+    ],
+    'Oficina de Contabilidad': [
+      { id: '1', sender: 'manager', text: 'El saldo de su cuenta se encuentra actualmente al día.', time: 'Lunes' },
     ],
   });
 
   const contacts = isOwner
     ? [
-        { id: '1', name: 'Property Manager', icon: 'business-outline', color: '#f59e0b' },
-        { id: '2', name: 'Accountant', icon: 'book-outline', color: '#38bdf8' },
-        { id: '3', name: 'Leasing Lead', icon: 'key-outline', color: '#10b981' },
-        { id: '4', name: 'Resident Representative', icon: 'chatbubbles-outline', color: '#ec4899' },
+        { id: '1', name: es ? 'Administrador de Propiedades' : 'Property Manager', icon: 'business-outline', color: '#f59e0b' },
+        { id: '2', name: es ? 'Contador' : 'Accountant', icon: 'book-outline', color: '#38bdf8' },
+        { id: '3', name: es ? 'Agente de Alquiler' : 'Leasing Lead', icon: 'key-outline', color: '#10b981' },
+        { id: '4', name: es ? 'Representante de Residentes' : 'Resident Representative', icon: 'chatbubbles-outline', color: '#ec4899' },
       ]
     : [
-        { id: '1', name: 'Property Manager Office', icon: 'business-outline', color: '#f59e0b' },
-        { id: '2', name: 'Leasing Office', icon: 'key-outline', color: '#38bdf8' },
-        { id: '3', name: 'Maintenance Team', icon: 'hammer-outline', color: '#10b981' },
-        { id: '4', name: 'Accounting Office', icon: 'book-outline', color: '#ec4899' },
+        { id: '1', name: es ? 'Oficina del Administrador' : 'Property Manager Office', icon: 'business-outline', color: '#f59e0b' },
+        { id: '2', name: es ? 'Oficina de Arrendamiento' : 'Leasing Office', icon: 'key-outline', color: '#38bdf8' },
+        { id: '3', name: es ? 'Equipo de Mantenimiento' : 'Maintenance Team', icon: 'hammer-outline', color: '#10b981' },
+        { id: '4', name: es ? 'Oficina de Contabilidad' : 'Accounting Office', icon: 'book-outline', color: '#ec4899' },
       ];
 
   // Strictly call live Railway backend endpoint: GET /portal/owner/messages OR GET /messages
@@ -153,12 +183,44 @@ export const TenantMessagesScreen = () => {
       if (rawList && rawList.length > 0) {
         const formatted = {};
         rawList.forEach((m) => {
-          const contactKey = m.sender || m.recipient || defaultContact;
+          let contactKey = m.sender || m.recipient || defaultContact;
+          if (es) {
+            if (contactKey === 'Property Manager Office') contactKey = 'Oficina del Administrador';
+            if (contactKey === 'Property Manager') contactKey = 'Administrador de Propiedades';
+            if (contactKey === 'Leasing Office') contactKey = 'Oficina de Arrendamiento';
+            if (contactKey === 'Leasing Lead') contactKey = 'Agente de Alquiler';
+            if (contactKey === 'Maintenance Team') contactKey = 'Equipo de Mantenimiento';
+            if (contactKey === 'Accountant') contactKey = 'Contador';
+            if (contactKey === 'Accounting Office') contactKey = 'Oficina de Contabilidad';
+            if (contactKey === 'Resident Representative') contactKey = 'Representante de Residentes';
+          }
+
+          let bodyText = m.body || m.text || m.message || '';
+          if (es) {
+            if (bodyText.includes('Hello! Welcome to Zentrol Property Management')) {
+              bodyText = '¡Hola! Bienvenido a la administración de propiedades de Zentrol. ¿Cómo podemos asistirle hoy?';
+            } else if (bodyText.includes('Leasing office here. Your lease agreement is active')) {
+              bodyText = 'Oficina de arrendamiento aquí. Su contrato de arrendamiento está activo.';
+            } else if (bodyText.includes('Work orders for your property units are currently completed')) {
+              bodyText = 'Las órdenes de trabajo para las unidades de su propiedad se encuentran completadas.';
+            } else if (bodyText.includes('Your account balance is currently clear')) {
+              bodyText = 'El saldo de su cuenta se encuentra actualmente al día.';
+            } else if (bodyText.includes('Hello! Welcome to Zentrol Owner Portal')) {
+              bodyText = '¡Hola! Bienvenido al Portal del Propietario de Zentrol. ¿Cómo podemos asistirle hoy con su cartera?';
+            } else if (bodyText.includes('Hi! I wanted to check on the monthly ledger statement')) {
+              bodyText = '¡Hola! Quería verificar el estado de cuenta mensual.';
+            } else if (bodyText.includes('Your monthly statements for Sky house and property 1 have been published')) {
+              bodyText = 'Sus estados de cuenta mensuales para Sky house y property 1 han sido publicados.';
+            } else if (bodyText.includes('Accounting office here. Net owner distribution of')) {
+              bodyText = 'Oficina de contabilidad aquí. La distribución neta del propietario de $1,980.00 está en cola.';
+            }
+          }
+
           if (!formatted[contactKey]) formatted[contactKey] = [];
           formatted[contactKey].push({
             id: m.id || String(Date.now()),
             sender: m.sender === user?.email ? 'user' : 'manager',
-            text: m.body || m.text || m.message || '',
+            text: bodyText,
             time: m.timestamp ? m.timestamp.split('T')[0] : 'Today',
           });
         });
@@ -258,7 +320,9 @@ export const TenantMessagesScreen = () => {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color="#38bdf8" />
-        <Text style={styles.loadingText} allowFontScaling={false}>Loading Messages...</Text>
+        <Text style={styles.loadingText} allowFontScaling={false}>
+          {es ? 'Cargando Mensajes...' : 'Loading Messages...'}
+        </Text>
       </View>
     );
   }
@@ -286,7 +350,9 @@ export const TenantMessagesScreen = () => {
 
           <View style={styles.chatHeaderInfo}>
             <Text style={styles.chatHeaderTitle} allowFontScaling={false}>{activeContact}</Text>
-            <Text style={styles.chatHeaderSubtitle} allowFontScaling={false}>Online Support Thread</Text>
+            <Text style={styles.chatHeaderSubtitle} allowFontScaling={false}>
+              {es ? 'Hilo de Soporte en Línea' : 'Online Support Thread'}
+            </Text>
           </View>
         </View>
 
@@ -299,7 +365,9 @@ export const TenantMessagesScreen = () => {
           {currentMessages.length === 0 ? (
             <View style={styles.emptyThreadCard}>
               <Ionicons name="chatbox-ellipses-outline" size={40} color="#475569" style={{ marginBottom: 8 }} />
-              <Text style={styles.emptyThreadText} allowFontScaling={false}>No messages recorded</Text>
+              <Text style={styles.emptyThreadText} allowFontScaling={false}>
+                {es ? 'No se registraron mensajes' : 'No messages recorded'}
+              </Text>
             </View>
           ) : (
             currentMessages.map((msg) => {
@@ -324,7 +392,7 @@ export const TenantMessagesScreen = () => {
         <View style={styles.replyBar}>
           <TextInput
             style={styles.replyInput}
-            placeholder={`Message ${activeContact}...`}
+            placeholder={es ? `Mensaje a ${activeContact}...` : `Message ${activeContact}...`}
             placeholderTextColor="#94a3b8"
             value={inputText}
             onChangeText={setInputText}
@@ -343,10 +411,14 @@ export const TenantMessagesScreen = () => {
       {/* Page Header */}
       <View style={styles.header}>
         <View style={styles.titleRow}>
-          <Text style={styles.title} allowFontScaling={false}>Inbox</Text>
+          <Text style={styles.title} allowFontScaling={false}>
+            {es ? 'Bandeja de Entrada' : 'Inbox'}
+          </Text>
           <AnimatedTouchable style={styles.composeBtn} onPress={() => setIsComposeOpen(true)}>
             <Ionicons name="create-outline" size={16} color="#ffffff" style={{ marginRight: 4 }} />
-            <Text style={styles.composeBtnText} allowFontScaling={false}>New Message</Text>
+            <Text style={styles.composeBtnText} allowFontScaling={false}>
+              {es ? 'Nuevo Mensaje' : 'New Message'}
+            </Text>
           </AnimatedTouchable>
         </View>
       </View>
@@ -388,7 +460,7 @@ export const TenantMessagesScreen = () => {
                     </Text>
                   </View>
                   <Text style={styles.convoSnippet} allowFontScaling={false} numberOfLines={1}>
-                    {lastMsg ? lastMsg.text : 'Tap to start conversation'}
+                    {lastMsg ? lastMsg.text : (es ? 'Toca para iniciar conversación' : 'Tap to start conversation')}
                   </Text>
                 </View>
 
@@ -413,13 +485,17 @@ export const TenantMessagesScreen = () => {
             >
               <View style={styles.modalCard}>
                 <View style={styles.modalHeaderRow}>
-                  <Text style={styles.modalTitle} allowFontScaling={false}>New Message</Text>
+                  <Text style={styles.modalTitle} allowFontScaling={false}>
+                    {es ? 'Nuevo Mensaje' : 'New Message'}
+                  </Text>
                   <TouchableOpacity onPress={() => setIsComposeOpen(false)}>
                     <Ionicons name="close" size={22} color="#94a3b8" />
                   </TouchableOpacity>
                 </View>
 
-                <Text style={styles.inputLabel} allowFontScaling={false}>RECIPIENT GROUP</Text>
+                <Text style={styles.inputLabel} allowFontScaling={false}>
+                  {es ? 'GRUPO DESTINATARIO' : 'RECIPIENT GROUP'}
+                </Text>
                 <View style={styles.recipientRow}>
                   {contacts.map((c) => {
                     const isSelected = composeRecipient === c.name;
@@ -437,19 +513,23 @@ export const TenantMessagesScreen = () => {
                   })}
                 </View>
 
-                <Text style={styles.inputLabel} allowFontScaling={false}>SUBJECT *</Text>
+                <Text style={styles.inputLabel} allowFontScaling={false}>
+                  {es ? 'ASUNTO *' : 'SUBJECT *'}
+                </Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="E.g. Inquiry regarding monthly statement"
+                  placeholder={es ? 'Ej. Consulta sobre estado mensual' : 'E.g. Inquiry regarding monthly statement'}
                   placeholderTextColor="#64748b"
                   value={composeSubject}
                   onChangeText={setComposeSubject}
                 />
 
-                <Text style={styles.inputLabel} allowFontScaling={false}>MESSAGE BODY *</Text>
+                <Text style={styles.inputLabel} allowFontScaling={false}>
+                  {es ? 'CUERPO DEL MENSAJE *' : 'MESSAGE BODY *'}
+                </Text>
                 <TextInput
                   style={[styles.input, { height: 100, textAlignVertical: 'top' }]}
-                  placeholder="Type message content..."
+                  placeholder={es ? 'Escriba el contenido del mensaje...' : 'Type message content...'}
                   placeholderTextColor="#64748b"
                   multiline
                   value={composeBody}
@@ -458,12 +538,14 @@ export const TenantMessagesScreen = () => {
 
                 <View style={styles.modalButtons}>
                   <TouchableOpacity style={[styles.modalBtn, styles.cancelBtn]} onPress={() => setIsComposeOpen(false)}>
-                    <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
+                    <Text style={styles.cancelBtnText} allowFontScaling={false}>
+                      {es ? 'Cancelar' : 'Cancel'}
+                    </Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity style={[styles.modalBtn, styles.saveBtn]} onPress={handleComposeSubmit} disabled={sending}>
                     <Text style={styles.saveBtnText} allowFontScaling={false}>
-                      {sending ? 'Sending...' : 'Send Message'}
+                      {sending ? (es ? 'Enviando...' : 'Sending...') : (es ? 'Enviar Mensaje' : 'Send Message')}
                     </Text>
                   </TouchableOpacity>
                 </View>

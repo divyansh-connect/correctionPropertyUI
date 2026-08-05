@@ -18,7 +18,7 @@ import {
   Keyboard,
 } from 'react-native';
 import apiClient from '../api/client';
-import { useAuthStore } from '../store/useStore';
+import { useAuthStore, useThemeStore } from '../store/useStore';
 import { Ionicons } from '@expo/vector-icons';
 
 // Animated Touchable Component
@@ -60,6 +60,7 @@ const AnimatedTouchable = ({ children, onPress, style, disabled }) => {
 
 export const PropertiesScreen = () => {
   const { logout, refreshAccessToken } = useAuthStore();
+  const { language } = useThemeStore();
   const [activeTab, setActiveTab] = useState('properties'); // properties, buildings, units
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -422,47 +423,106 @@ export const PropertiesScreen = () => {
     }
   };
 
-  // --- Search Filters ---
-  const filteredProperties = properties.filter(p =>
-    (p.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (p.address || '').toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
-  const filteredBuildings = buildings.filter(b =>
-    (b.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (b.property?.name || '').toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const filteredUnits = units.filter(u =>
-    (u.unitNumber || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (u.property?.name || '').toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   const formatAddress = (addr) => {
     if (!addr) return 'Bhopal, MP, India';
     return String(addr).split(',').slice(0, 3).join(', ').trim();
   };
 
-  // Options Constant Arrays
-  const pTypes = ['Apartment', 'Commercial', 'SingleFamily', 'MultiFamily', 'HOA'];
-  const pStatuses = ['Active', 'Inactive'];
-  const unitStatuses = ['Vacant', 'Occupied'];
+  // Dropdown options compilers
+  const getPickerOptions = () => {
+    switch (activePicker) {
+      case 'propType':
+        return ['Multifamily', 'Commercial', 'Single Family', 'Industrial', 'Condo'].map(t => ({ value: t, label: t }));
+      case 'owner':
+        return owners.map(o => ({ value: o.id, label: o.name || `${o.firstName || ''} ${o.lastName || ''}`.trim() }));
+      case 'property':
+        return properties.map(p => ({ value: p.id, label: p.name }));
+      case 'building':
+        const targetPropId = isAddUnitOpen ? unitPropertyId : bldgPropertyId;
+        const availBldgs = targetPropId ? buildings.filter(b => b.propertyId === targetPropId) : buildings;
+        return availBldgs.map(b => ({ value: b.id, label: b.name }));
+      default:
+        return [];
+    }
+  };
+
+  const handleSelectPickerOption = (val) => {
+    if (activePicker === 'propType') setPropType(val);
+    if (activePicker === 'owner') setPropOwnerId(val);
+    if (activePicker === 'property') {
+      if (isAddBuildingOpen) setBldgPropertyId(val);
+      if (isAddUnitOpen) {
+        setUnitPropertyId(val);
+        setUnitBuildingId('');
+      }
+    }
+    if (activePicker === 'building') setUnitBuildingId(val);
+    setPickerModalOpen(false);
+  };
+
+  // Filters
+  const filteredProperties = properties.filter(item =>
+    (item.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    formatAddress(item.address).toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredBuildings = buildings.filter(item => {
+    const pName = item.property ? item.property.name : (item.propertyName || '');
+    return (item.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      pName.toLowerCase().includes(searchQuery.toLowerCase());
+  });
+
+  const filteredUnits = units.filter(item => {
+    const uNum = String(item.unitNumber || '');
+    const pName = item.property ? item.property.name : (item.propertyName || '');
+    return uNum.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      pName.toLowerCase().includes(searchQuery.toLowerCase());
+  });
+
+  if (loading && !refreshing) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="#38bdf8" />
+        <Text style={styles.loadingText} allowFontScaling={false}>
+          {language === 'es' ? 'Cargando portafolio de propiedades...' : 'Loading property portfolio...'}
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.mainWrapper}>
-      {/* Header Controls (Fixed) */}
-      <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
+      {/* FIXED HEADER WITH SEARCH & TABS */}
+      <View style={[styles.fixedHeader, { paddingTop: 16 }]}>
+        <Text style={styles.headerTitle} allowFontScaling={false}>
+          {activeTab === 'properties'
+            ? (language === 'es' ? 'Propiedades de la Cartera' : 'Portfolio Properties')
+            : activeTab === 'buildings'
+              ? (language === 'es' ? 'Estructuras de Edificios' : 'Building Structures')
+              : (language === 'es' ? 'Directorio de Unidades' : 'Units Directory')}
+        </Text>
+        <Text style={styles.headerSubtitle} allowFontScaling={false}>
+          {activeTab === 'properties'
+            ? (language === 'es' ? 'Verifique activos inmobiliarios, métricas de ocupación y valoración.' : 'Verify real estate assets, occupancy metrics, and valuation.')
+            : activeTab === 'buildings'
+              ? (language === 'es' ? 'Verifique estructuras de edificios, complejos y recuentos de pisos.' : 'Verify building structures, complexes, and floor counts.')
+              : (language === 'es' ? 'Verifique inventario de unidades residenciales, habitaciones y renta.' : 'Verify residential unit inventory, bed/bath counts, and rent.')}
+        </Text>
+
+        {/* Search & Action Bar */}
         <View style={styles.searchBarRow}>
           <View style={styles.searchContainer}>
-            <Ionicons name="search-outline" size={18} color="#64748b" style={{ marginRight: 6 }} />
+            <Ionicons name="search-outline" size={16} color="#64748b" style={{ marginRight: 6 }} />
             <TextInput
               style={styles.searchInput}
               placeholder={
                 activeTab === 'properties'
-                  ? 'Search properties by name...'
+                  ? (language === 'es' ? 'Buscar propiedades por nombre...' : 'Search properties by name...')
                   : activeTab === 'buildings'
-                    ? 'Search buildings by name...'
-                    : 'Search units by number...'
+                    ? (language === 'es' ? 'Buscar edificios por nombre...' : 'Search buildings by name...')
+                    : (language === 'es' ? 'Buscar unidades por número...' : 'Search units by number...')
               }
               placeholderTextColor="#64748b"
               value={searchQuery}
@@ -480,7 +540,11 @@ export const PropertiesScreen = () => {
           >
             <Ionicons name="add" size={18} color="#0f172a" />
             <Text style={styles.addBtnText} allowFontScaling={false}>
-              {activeTab === 'properties' ? 'Property' : activeTab === 'buildings' ? 'Building' : 'Unit'}
+              {activeTab === 'properties'
+                ? (language === 'es' ? 'Propiedad' : 'Property')
+                : activeTab === 'buildings'
+                  ? (language === 'es' ? 'Edificio' : 'Building')
+                  : (language === 'es' ? 'Unidad' : 'Unit')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -491,19 +555,25 @@ export const PropertiesScreen = () => {
             style={[styles.tabBtn, activeTab === 'properties' && styles.tabBtnActive]}
             onPress={() => { setActiveTab('properties'); setSearchQuery(''); }}
           >
-            <Text style={[styles.tabBtnText, activeTab === 'properties' && styles.tabBtnTextActive]} allowFontScaling={false}>Properties</Text>
+            <Text style={[styles.tabBtnText, activeTab === 'properties' && styles.tabBtnTextActive]} allowFontScaling={false}>
+              {language === 'es' ? 'Propiedades' : 'Properties'}
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.tabBtn, activeTab === 'buildings' && styles.tabBtnActive]}
             onPress={() => { setActiveTab('buildings'); setSearchQuery(''); }}
           >
-            <Text style={[styles.tabBtnText, activeTab === 'buildings' && styles.tabBtnTextActive]} allowFontScaling={false}>Buildings</Text>
+            <Text style={[styles.tabBtnText, activeTab === 'buildings' && styles.tabBtnTextActive]} allowFontScaling={false}>
+              {language === 'es' ? 'Edificios' : 'Buildings'}
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.tabBtn, activeTab === 'units' && styles.tabBtnActive]}
             onPress={() => { setActiveTab('units'); setSearchQuery(''); }}
           >
-            <Text style={[styles.tabBtnText, activeTab === 'units' && styles.tabBtnTextActive]} allowFontScaling={false}>Units</Text>
+            <Text style={[styles.tabBtnText, activeTab === 'units' && styles.tabBtnTextActive]} allowFontScaling={false}>
+              {language === 'es' ? 'Unidades' : 'Units'}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -518,17 +588,18 @@ export const PropertiesScreen = () => {
           {/* TAB 1: PROPERTIES */}
           {activeTab === 'properties' && (
             <>
-
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle} allowFontScaling={false}>
-                  PORTFOLIO PROPERTIES ({filteredProperties.length})
+                  {language === 'es' ? `PROPIEDADES DE CARTERA (${filteredProperties.length})` : `PORTFOLIO PROPERTIES (${filteredProperties.length})`}
                 </Text>
               </View>
 
               {filteredProperties.length === 0 ? (
                 <View style={styles.emptyCard}>
                   <Ionicons name="business-outline" size={48} color="#475569" style={{ marginBottom: 10 }} />
-                  <Text style={styles.emptyText} allowFontScaling={false}>No properties found</Text>
+                  <Text style={styles.emptyText} allowFontScaling={false}>
+                    {language === 'es' ? 'No se encontraron propiedades' : 'No properties found'}
+                  </Text>
                 </View>
               ) : (
                 filteredProperties.map((item, idx) => {

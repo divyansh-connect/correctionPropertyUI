@@ -9,10 +9,13 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeColors } from '../theme';
+import { useThemeStore } from '../store/useStore';
 
 export const TenantNotificationsScreen = () => {
   const { colors, isDarkMode } = useThemeColors();
+  const { language } = useThemeStore();
   const styles = getStyles(colors, isDarkMode);
+  const es = language === 'es';
   const [notifications, setNotifications] = useState([
     {
       id: '1',
@@ -42,7 +45,10 @@ export const TenantNotificationsScreen = () => {
 
   const handleMarkAllRead = () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-    Alert.alert('Success', 'All notifications marked as read');
+    Alert.alert(
+      es ? 'Éxito' : 'Success',
+      es ? 'Todas las notificaciones marcadas como leídas' : 'All notifications marked as read'
+    );
   };
 
   const handleClearAll = () => {
@@ -60,10 +66,14 @@ export const TenantNotificationsScreen = () => {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.titleRow}>
-          <Text style={styles.title} allowFontScaling={false}>Notifications</Text>
+          <Text style={styles.title} allowFontScaling={false}>
+          {es ? 'Notificaciones' : 'Notifications'}
+        </Text>
           <TouchableOpacity style={styles.markAllBtn} onPress={handleMarkAllRead}>
             <Ionicons name="checkmark-done-outline" size={16} color="#0f172a" style={{ marginRight: 4 }} />
-            <Text style={styles.markAllBtnText} allowFontScaling={false}>Mark All Read</Text>
+            <Text style={styles.markAllBtnText} allowFontScaling={false}>
+              {es ? 'Marcar Todo Leído' : 'Mark All Read'}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -71,12 +81,14 @@ export const TenantNotificationsScreen = () => {
       {/* Section Subheader */}
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle} allowFontScaling={false}>
-          RECENT ACTIVITY ({notifications.length})
+          {es ? `ACTIVIDAD RECIENTE (${notifications.length})` : `RECENT ACTIVITY (${notifications.length})`}
         </Text>
         {notifications.length > 0 && (
           <TouchableOpacity style={styles.clearAllBtn} onPress={handleClearAll}>
             <Ionicons name="trash-outline" size={14} color="#f87171" style={{ marginRight: 4 }} />
-            <Text style={styles.clearAllText} allowFontScaling={false}>Clear All</Text>
+            <Text style={styles.clearAllText} allowFontScaling={false}>
+              {es ? 'Borrar Todo' : 'Clear All'}
+            </Text>
           </TouchableOpacity>
         )}
       </View>
@@ -85,7 +97,9 @@ export const TenantNotificationsScreen = () => {
       {notifications.length === 0 ? (
         <View style={styles.emptyCard}>
           <Ionicons name="notifications-off-outline" size={48} color="#475569" style={{ marginBottom: 8 }} />
-          <Text style={styles.emptyText} allowFontScaling={false}>No recent notifications found.</Text>
+          <Text style={styles.emptyText} allowFontScaling={false}>
+            {es ? 'No se encontraron notificaciones recientes.' : 'No recent notifications found.'}
+          </Text>
         </View>
       ) : (
         notifications.map((item) => {
@@ -133,7 +147,7 @@ export const TenantNotificationsScreen = () => {
 
                 <TouchableOpacity style={styles.readActionBtn} onPress={() => toggleRead(item.id)}>
                   <Text style={styles.readActionText} allowFontScaling={false}>
-                    {item.read ? 'Unread' : 'Mark read'}
+                    {item.read ? (es ? 'No Leído' : 'Unread') : (es ? 'Marcar Leído' : 'Mark read')}
                   </Text>
                 </TouchableOpacity>
               </View>

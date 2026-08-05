@@ -9,11 +9,12 @@ import {
   SafeAreaView,
   Platform,
 } from 'react-native';
-import { useAuthStore } from '../store/useStore';
+import { useAuthStore, useThemeStore } from '../store/useStore';
 import { useThemeColors } from '../theme';
 
 export const NavigationDrawer = ({ visible, onClose, activeScreen, onSelectScreen }) => {
   const { user, logout } = useAuthStore();
+  const { language } = useThemeStore();
   const { colors, isDarkMode } = useThemeColors();
   const styles = getStyles(colors, isDarkMode);
 
@@ -27,57 +28,55 @@ export const NavigationDrawer = ({ visible, onClose, activeScreen, onSelectScree
 
   if (isSuperAdmin) {
     menuItems = [
-      { id: 'dashboard', label: '📊 Dashboard' },
-      { id: 'companies', label: '🏢 Companies' },
-      { id: 'subscriptions', label: '📅 Subscriptions' },
-      { id: 'platform-users', label: '👥 Platform Users' },
-      { id: 'properties', label: '🏠 Properties' },
-      { id: 'maintenance', label: '🛠️ Maintenance' },
+      { id: 'dashboard', label: language === 'es' ? '📊 Tablero Principal' : '📊 Dashboard' },
+      { id: 'companies', label: language === 'es' ? '🏢 Empresas' : '🏢 Companies' },
+      { id: 'subscriptions', label: language === 'es' ? '📅 Suscripciones' : '📅 Subscriptions' },
+      { id: 'platform-users', label: language === 'es' ? '👥 Usuarios Plataforma' : '👥 Platform Users' },
+      { id: 'properties', label: language === 'es' ? '🏠 Propiedades' : '🏠 Properties' },
+      { id: 'maintenance', label: language === 'es' ? '🛠️ Mantenimiento' : '🛠️ Maintenance' },
     ];
   } else if (isCollectionManager) {
     menuItems = [
-      { id: 'dashboard', label: '📊 Dashboard' },
-      { id: 'invoices', label: '📄 Tenant Invoices' },
-      { id: 'rent', label: '💳 Payment History' },
-      { id: 'financials', label: '📖 Tenant Ledger' },
+      { id: 'dashboard', label: language === 'es' ? '📊 Tablero Principal' : '📊 Dashboard' },
+      { id: 'invoices', label: language === 'es' ? '📄 Facturas de Inquilinos' : '📄 Tenant Invoices' },
+      { id: 'rent', label: language === 'es' ? '💳 Historial de Pagos' : '💳 Payment History' },
+      { id: 'financials', label: language === 'es' ? '📖 Libro Mayor Inquilinos' : '📖 Tenant Ledger' },
     ];
   } else if (isManager) {
     menuItems = [
-      { id: 'dashboard', label: '📊 Dashboard' },
-      { id: 'properties', label: '🏢 Properties' },
-      { id: 'leads', label: '🔑 Leasing' },
-      { id: 'tenants', label: '👥 Tenants' },
-      { id: 'documents', label: '📂 Documents' },
-      { id: 'owners', label: '👔 Owners' },
-      { id: 'rent', label: '💳 Rent & Payments' },
-      { id: 'accounting', label: '📚 Accounting' },
-      { id: 'maintenance', label: '🛠️ Maintenance' },
-      { id: 'reports', label: '📊 Reports' },
-      { id: 'communication', label: '💬 Communication' },
-      { id: 'ai', label: '🤖 AI Assistant' },
+      { id: 'dashboard', label: language === 'es' ? '📊 Tablero Principal' : '📊 Dashboard' },
+      { id: 'properties', label: language === 'es' ? '🏢 Propiedades' : '🏢 Properties' },
+      { id: 'leads', label: language === 'es' ? '🔑 Alquileres' : '🔑 Leasing' },
+      { id: 'tenants', label: language === 'es' ? '👥 Inquilinos' : '👥 Tenants' },
+      { id: 'documents', label: language === 'es' ? '📂 Documentos' : '📂 Documents' },
+      { id: 'owners', label: language === 'es' ? '👔 Propietarios' : '👔 Owners' },
+      { id: 'rent', label: language === 'es' ? '💳 Alquiler y Pagos' : '💳 Rent & Payments' },
+      { id: 'accounting', label: language === 'es' ? '📚 Contabilidad' : '📚 Accounting' },
+      { id: 'maintenance', label: language === 'es' ? '🛠️ Mantenimiento' : '🛠️ Maintenance' },
+      { id: 'reports', label: language === 'es' ? '📊 Informes' : '📊 Reports' },
+      { id: 'communication', label: language === 'es' ? '💬 Comunicación' : '💬 Communication' },
+      { id: 'ai', label: language === 'es' ? '🤖 Asistente IA' : '🤖 AI Assistant' },
     ];
   } else if (isOwner) {
-    // ALL 9 Web Owner Portal Menus strictly matching Web Screenshot
     menuItems = [
-      { id: 'dashboard', label: '📊 Dashboard' },
-      { id: 'properties', label: '🏢 Properties' },
-      { id: 'financials', label: '💳 Financials' },
-      { id: 'statements', label: '📖 Statements' },
-      { id: 'distributions', label: '⚙️ Distributions' },
-      { id: 'maintenance', label: '🛠️ Maintenance' },
-      { id: 'documents', label: '📄 Documents' },
-      { id: 'reports', label: '📊 Reports' },
-      { id: 'communication', label: '💬 Messages' },
+      { id: 'dashboard', label: language === 'es' ? '📊 Tablero Principal' : '📊 Dashboard' },
+      { id: 'properties', label: language === 'es' ? '🏢 Propiedades' : '🏢 Properties' },
+      { id: 'financials', label: language === 'es' ? '💳 Finanzas' : '💳 Financials' },
+      { id: 'statements', label: language === 'es' ? '📖 Estados de Cuenta' : '📖 Statements' },
+      { id: 'distributions', label: language === 'es' ? '⚙️ Distribuciones' : '⚙️ Distributions' },
+      { id: 'maintenance', label: language === 'es' ? '🛠️ Mantenimiento' : '🛠️ Maintenance' },
+      { id: 'documents', label: language === 'es' ? '📄 Documentos' : '📄 Documents' },
+      { id: 'reports', label: language === 'es' ? '📊 Informes' : '📊 Reports' },
+      { id: 'communication', label: language === 'es' ? '💬 Mensajes' : '💬 Messages' },
     ];
   } else {
-    // Tenant Portal Menus (Notifications & Profile accessed via Header Icons)
     menuItems = [
-      { id: 'dashboard', label: '📊 Dashboard' },
-      { id: 'lease', label: '📖 Lease' },
-      { id: 'rent', label: '💳 Payments' },
-      { id: 'maintenance', label: '🛠️ Maintenance' },
-      { id: 'documents', label: '📄 Documents' },
-      { id: 'communication', label: '👤 Messages' },
+      { id: 'dashboard', label: language === 'es' ? '📊 Tablero Principal' : '📊 Dashboard' },
+      { id: 'lease', label: language === 'es' ? '📖 Contrato' : '📖 Lease' },
+      { id: 'rent', label: language === 'es' ? '💳 Pagos' : '💳 Payments' },
+      { id: 'maintenance', label: language === 'es' ? '🛠️ Mantenimiento' : '🛠️ Maintenance' },
+      { id: 'documents', label: language === 'es' ? '📄 Documentos' : '📄 Documents' },
+      { id: 'communication', label: language === 'es' ? '👤 Mensajes' : '👤 Messages' },
     ];
   }
 
@@ -120,7 +119,11 @@ export const NavigationDrawer = ({ visible, onClose, activeScreen, onSelectScree
               nestedScrollEnabled={true}
             >
               <Text style={styles.sectionHeader} allowFontScaling={false}>
-                {user?.role === 'Owner' ? 'OWNER PORTAL MENU' : user?.role === 'Tenant' ? 'TENANT PORTAL MENU' : 'NAVIGATION MENU'}
+                {user?.role === 'Owner'
+                  ? (language === 'es' ? 'MENÚ PROPIETARIO' : 'OWNER PORTAL MENU')
+                  : user?.role === 'Tenant'
+                  ? (language === 'es' ? 'MENÚ INQUILINO' : 'TENANT PORTAL MENU')
+                  : (language === 'es' ? 'MENÚ DE NAVEGACIÓN' : 'NAVIGATION MENU')}
               </Text>
 
               {menuItems.map((item, index) => {
@@ -145,7 +148,9 @@ export const NavigationDrawer = ({ visible, onClose, activeScreen, onSelectScree
               <View style={{ height: 20 }} />
 
               <TouchableOpacity style={styles.logoutButton} onPress={logout}>
-                <Text style={styles.logoutText} allowFontScaling={false}>🚪 Log Out</Text>
+                <Text style={styles.logoutText} allowFontScaling={false}>
+                  {language === 'es' ? '🚪 Cerrar Sesión' : '🚪 Log Out'}
+                </Text>
               </TouchableOpacity>
             </ScrollView>
           </SafeAreaView>

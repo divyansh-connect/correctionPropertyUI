@@ -9,14 +9,16 @@ import {
   Alert,
 } from 'react-native';
 import apiClient from '../api/client';
-import { useAuthStore } from '../store/useStore';
+import { useAuthStore, useThemeStore } from '../store/useStore';
 import { useThemeColors } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
 
 export const TenantLeaseScreen = () => {
   const { logout, refreshAccessToken } = useAuthStore();
+  const { language } = useThemeStore();
   const { colors, isDarkMode } = useThemeColors();
   const styles = getStyles(colors, isDarkMode);
+  const es = language === 'es';
   const [loading, setLoading] = useState(true);
   const [leaseData, setLeaseData] = useState(null);
 
@@ -90,18 +92,26 @@ export const TenantLeaseScreen = () => {
   }, []);
 
   const handleDownloadLease = () => {
-    Alert.alert('Downloading PDF', 'Downloading signed copy of Lease_Agreement_Signed.pdf...');
+    Alert.alert(
+      es ? 'Descargando PDF' : 'Downloading PDF',
+      es ? 'Descargando copia firmada de Contrato_Arrendamiento_Firmado.pdf...' : 'Downloading signed copy of Lease_Agreement_Signed.pdf...'
+    );
   };
 
   const handleRequestRenewal = () => {
-    Alert.alert('Request Sent', 'Lease renewal request form submitted to property management.');
+    Alert.alert(
+      es ? 'Solicitud Enviada' : 'Request Sent',
+      es ? 'Solicitud de renovación de contrato enviada a la administración.' : 'Lease renewal request form submitted to property management.'
+    );
   };
 
   if (loading) {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color="#38bdf8" />
-        <Text style={styles.loadingText} allowFontScaling={false}>Loading Live Lease Data...</Text>
+        <Text style={styles.loadingText} allowFontScaling={false}>
+          {es ? 'Cargando Datos del Contrato...' : 'Loading Live Lease Data...'}
+        </Text>
       </View>
     );
   }
@@ -112,7 +122,9 @@ export const TenantLeaseScreen = () => {
     <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
       {/* Page Header */}
       <View style={styles.header}>
-        <Text style={styles.title} allowFontScaling={false}>My Lease Agreement</Text>
+        <Text style={styles.title} allowFontScaling={false}>
+          {es ? 'Mi Contrato de Arrendamiento' : 'My Lease Agreement'}
+        </Text>
       </View>
 
       {/* 1. Lease Term Details */}
@@ -120,7 +132,9 @@ export const TenantLeaseScreen = () => {
         <View style={styles.cardHeader}>
           <View style={styles.cardHeaderTitleRow}>
             <Ionicons name="document-text-outline" size={18} color="#38bdf8" style={{ marginRight: 8 }} />
-            <Text style={styles.cardTitle} allowFontScaling={false}>LEASE TERM DETAILS</Text>
+            <Text style={styles.cardTitle} allowFontScaling={false}>
+              {es ? 'DETALLES DEL CONTRATO' : 'LEASE TERM DETAILS'}
+            </Text>
           </View>
           <View style={styles.activeBadge}>
             <Text style={styles.activeBadgeText} allowFontScaling={false}>{d.status || 'Active'}</Text>
@@ -133,13 +147,17 @@ export const TenantLeaseScreen = () => {
 
         <View style={styles.metricRow}>
           <View style={styles.metricItem}>
-            <Text style={styles.metricLabel} allowFontScaling={false}>MONTHLY RENT</Text>
+            <Text style={styles.metricLabel} allowFontScaling={false}>
+              {es ? 'RENTA MENSUAL' : 'MONTHLY RENT'}
+            </Text>
             <Text style={styles.rentValue} allowFontScaling={false}>
               ${Number(d.monthlyRent).toLocaleString()}
             </Text>
           </View>
           <View style={styles.metricItem}>
-            <Text style={styles.metricLabel} allowFontScaling={false}>SECURITY DEPOSIT</Text>
+            <Text style={styles.metricLabel} allowFontScaling={false}>
+              {es ? 'DEPÓSITO DE SEGURIDAD' : 'SECURITY DEPOSIT'}
+            </Text>
             <Text style={styles.depositValue} allowFontScaling={false}>
               ${Number(d.securityDeposit).toLocaleString()}
             </Text>
@@ -149,13 +167,21 @@ export const TenantLeaseScreen = () => {
         <View style={styles.infoRowList}>
           <View style={styles.infoRowItem}>
             <Ionicons name="calendar-outline" size={14} color="#94a3b8" style={{ marginRight: 8 }} />
-            <Text style={styles.infoRowLabel} allowFontScaling={false}>Lease Duration:</Text>
-            <Text style={styles.infoRowValue} allowFontScaling={false}>12 Months</Text>
+            <Text style={styles.infoRowLabel} allowFontScaling={false}>
+              {es ? 'Duración del Contrato:' : 'Lease Duration:'}
+            </Text>
+            <Text style={styles.infoRowValue} allowFontScaling={false}>
+              {es ? '12 Meses' : '12 Months'}
+            </Text>
           </View>
           <View style={styles.infoRowItem}>
             <Ionicons name="time-outline" size={14} color="#94a3b8" style={{ marginRight: 8 }} />
-            <Text style={styles.infoRowLabel} allowFontScaling={false}>Next Due Date:</Text>
-            <Text style={[styles.infoRowValue, { color: '#f87171' }]} allowFontScaling={false}>Aug 1, 2026</Text>
+            <Text style={styles.infoRowLabel} allowFontScaling={false}>
+              {es ? 'Próxima Fecha de Vencimiento:' : 'Next Due Date:'}
+            </Text>
+            <Text style={[styles.infoRowValue, { color: '#f87171' }]} allowFontScaling={false}>
+              {es ? 'Ago 1, 2026' : 'Aug 1, 2026'}
+            </Text>
           </View>
         </View>
       </View>
@@ -164,15 +190,17 @@ export const TenantLeaseScreen = () => {
       <View style={styles.card}>
         <View style={styles.cardHeaderTitleRow}>
           <Ionicons name="business-outline" size={18} color="#f59e0b" style={{ marginRight: 8 }} />
-          <Text style={styles.cardTitle} allowFontScaling={false}>PROPERTY & UNIT INFORMATION</Text>
+          <Text style={styles.cardTitle} allowFontScaling={false}>
+            {es ? 'INFORMACIÓN DE PROPIEDAD Y UNIDAD' : 'PROPERTY & UNIT INFORMATION'}
+          </Text>
         </View>
         
         <Text style={styles.unitHeadline} allowFontScaling={false}>
-          {d.propertyName} · Unit {d.unitNumber}
+          {d.propertyName} · {es ? 'Unidad' : 'Unit'} {d.unitNumber}
         </Text>
 
         <Text style={styles.specsTextLine} allowFontScaling={false}>
-          {d.bedrooms} Beds  ·  {d.bathrooms} Baths  ·  {d.squareFootage} Sq Ft  ·  Floor {d.floor}
+          {d.bedrooms} {es ? 'Hab' : 'Beds'}  ·  {d.bathrooms} {es ? 'Baños' : 'Baths'}  ·  {d.squareFootage} {es ? 'Pies²' : 'Sq Ft'}  ·  {es ? 'Piso' : 'Floor'} {d.floor}
         </Text>
 
         <View style={styles.locationContainer}>
@@ -184,8 +212,8 @@ export const TenantLeaseScreen = () => {
         </View>
 
         <View style={styles.propertyMetaRow}>
-          <Text style={styles.metaLabel} allowFontScaling={false}>Type: <Text style={styles.metaVal}>{d.propertyType}</Text></Text>
-          <Text style={styles.metaLabel} allowFontScaling={false}>Built: <Text style={styles.metaVal}>{d.yearBuilt}</Text></Text>
+          <Text style={styles.metaLabel} allowFontScaling={false}>{es ? 'Tipo: ' : 'Type: '}<Text style={styles.metaVal}>{d.propertyType}</Text></Text>
+          <Text style={styles.metaLabel} allowFontScaling={false}>{es ? 'Construido: ' : 'Built: '}<Text style={styles.metaVal}>{d.yearBuilt}</Text></Text>
         </View>
       </View>
 
@@ -193,11 +221,16 @@ export const TenantLeaseScreen = () => {
       <View style={styles.card}>
         <View style={styles.cardHeaderTitleRow}>
           <Ionicons name="flame-outline" size={18} color="#10b981" style={{ marginRight: 8 }} />
-          <Text style={styles.cardTitle} allowFontScaling={false}>INCLUDED UTILITIES</Text>
+          <Text style={styles.cardTitle} allowFontScaling={false}>
+            {es ? 'SERVICIOS INCLUIDOS' : 'INCLUDED UTILITIES'}
+          </Text>
         </View>
         
         <View style={styles.utilitiesGrid}>
-          {['Trash Valet', 'Sewage', 'Pest Control', 'Water & Gas'].map((util, i) => (
+          {(es
+            ? ['Servicio de Basura', 'Alcantarillado', 'Control de Plagas', 'Agua y Gas']
+            : ['Trash Valet', 'Sewage', 'Pest Control', 'Water & Gas']
+          ).map((util, i) => (
             <View key={i} style={styles.utilityItem}>
               <View style={styles.bulletDot} />
               <Text style={styles.utilityText} allowFontScaling={false}>{util}</Text>
@@ -210,11 +243,15 @@ export const TenantLeaseScreen = () => {
       <View style={styles.card}>
         <View style={styles.cardHeaderTitleRow}>
           <Ionicons name="person-outline" size={18} color="#38bdf8" style={{ marginRight: 8 }} />
-          <Text style={styles.cardTitle} allowFontScaling={false}>LANDLORD & MANAGEMENT</Text>
+          <Text style={styles.cardTitle} allowFontScaling={false}>
+            {es ? 'PROPIETARIO Y ADMINISTRACIÓN' : 'LANDLORD & MANAGEMENT'}
+          </Text>
         </View>
 
         <View style={styles.contactSection}>
-          <Text style={styles.contactRole} allowFontScaling={false}>Property Owner</Text>
+          <Text style={styles.contactRole} allowFontScaling={false}>
+            {es ? 'Dueño de la Propiedad' : 'Property Owner'}
+          </Text>
           <Text style={styles.contactName} allowFontScaling={false}>{d.ownerName}</Text>
           <View style={styles.contactDetail}>
             <Ionicons name="mail-outline" size={14} color="#94a3b8" style={{ marginRight: 8 }} />
@@ -227,7 +264,9 @@ export const TenantLeaseScreen = () => {
         </View>
 
         <View style={styles.contactSection}>
-          <Text style={styles.contactRole} allowFontScaling={false}>Management Company</Text>
+          <Text style={styles.contactRole} allowFontScaling={false}>
+            {es ? 'Empresa de Administración' : 'Management Company'}
+          </Text>
           <Text style={styles.contactName} allowFontScaling={false}>{d.managementCompany}</Text>
         </View>
       </View>
@@ -236,11 +275,15 @@ export const TenantLeaseScreen = () => {
       <View style={styles.card}>
         <View style={styles.cardHeaderTitleRow}>
           <Ionicons name="person-circle-outline" size={18} color="#cbd5e1" style={{ marginRight: 8 }} />
-          <Text style={styles.cardTitle} allowFontScaling={false}>TENANT PROFILE</Text>
+          <Text style={styles.cardTitle} allowFontScaling={false}>
+            {es ? 'PERFIL DEL INQUILINO' : 'TENANT PROFILE'}
+          </Text>
         </View>
         
         <View style={styles.contactSection}>
-          <Text style={styles.contactRole} allowFontScaling={false}>Full Name</Text>
+          <Text style={styles.contactRole} allowFontScaling={false}>
+            {es ? 'Nombre Completo' : 'Full Name'}
+          </Text>
           <Text style={styles.contactName} allowFontScaling={false}>{d.tenantName}</Text>
           <View style={styles.contactDetail}>
             <Ionicons name="mail-outline" size={14} color="#94a3b8" style={{ marginRight: 8 }} />
@@ -257,21 +300,23 @@ export const TenantLeaseScreen = () => {
       <View style={styles.card}>
         <View style={styles.cardHeaderTitleRow}>
           <Ionicons name="settings-outline" size={18} color="#cbd5e1" style={{ marginRight: 8 }} />
-          <Text style={styles.cardTitle} allowFontScaling={false}>LEASE ACTIONS</Text>
+          <Text style={styles.cardTitle} allowFontScaling={false}>
+            {es ? 'ACCIONES DEL CONTRATO' : 'LEASE ACTIONS'}
+          </Text>
         </View>
 
         <View style={styles.actionsContainer}>
           <TouchableOpacity style={styles.actionBtnPrimary} onPress={handleDownloadLease} activeOpacity={0.7}>
             <Ionicons name="download-outline" size={16} color="#ffffff" style={{ marginRight: 8 }} />
             <Text style={styles.actionBtnPrimaryText} allowFontScaling={false}>
-              DOWNLOAD AGREEMENT
+              {es ? 'DESCARGAR CONTRATO' : 'DOWNLOAD AGREEMENT'}
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.actionBtnOutline} onPress={handleRequestRenewal} activeOpacity={0.7}>
             <Ionicons name="document-text-outline" size={16} color="#cbd5e1" style={{ marginRight: 8 }} />
             <Text style={styles.actionBtnOutlineText} allowFontScaling={false}>
-              REQUEST RENEWAL
+              {es ? 'SOLICITAR RENOVACIÓN' : 'REQUEST RENEWAL'}
             </Text>
           </TouchableOpacity>
         </View>

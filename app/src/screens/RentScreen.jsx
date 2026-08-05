@@ -16,7 +16,7 @@ import {
   KeyboardAvoidingView,
 } from 'react-native';
 import apiClient from '../api/client';
-import { useAuthStore } from '../store/useStore';
+import { useAuthStore, useThemeStore } from '../store/useStore';
 import { useThemeColors } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -59,8 +59,10 @@ const AnimatedTouchable = ({ children, onPress, style, disabled }) => {
 
 export const RentScreen = () => {
   const { user, logout, refreshAccessToken } = useAuthStore();
+  const { language } = useThemeStore();
   const { colors, isDarkMode } = useThemeColors();
   const styles = getStyles(colors, isDarkMode);
+  const es = language === 'es';
 
   const [ledger, setLedger] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -246,11 +248,11 @@ export const RentScreen = () => {
       );
       fetchLiveFinancials();
       setIsPayModalOpen(false);
-      Alert.alert('Payment Successful', `Rent payment of $${totalCharge.toFixed(2)} via ${paymentMethod} submitted!`);
+      Alert.alert(es ? 'Pago Exitoso' : 'Payment Successful', es ? `Pago de $${totalCharge.toFixed(2)} vía ${paymentMethod} enviado!` : `Rent payment of $${totalCharge.toFixed(2)} via ${paymentMethod} submitted!`);
     } catch (e) {
       console.log('Post payment error:', e.message);
       setIsPayModalOpen(false);
-      Alert.alert('Payment Recorded', `Payment of $${totalCharge.toFixed(2)} submitted.`);
+      Alert.alert(es ? 'Pago Registrado' : 'Payment Recorded', es ? `Pago de $${totalCharge.toFixed(2)} enviado.` : `Payment of $${totalCharge.toFixed(2)} submitted.`);
     } finally {
       setSubmittingPay(false);
     }
@@ -265,7 +267,9 @@ export const RentScreen = () => {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color="#38bdf8" />
-        <Text style={styles.loadingText} allowFontScaling={false}>Loading Ledger & Balance...</Text>
+        <Text style={styles.loadingText} allowFontScaling={false}>
+          {es ? 'Cargando pagos de alquiler...' : 'Loading Rent Payments...'}
+        </Text>
       </View>
     );
   }
@@ -281,12 +285,16 @@ export const RentScreen = () => {
         {/* Page Header */}
         <View style={styles.header}>
           <View style={styles.titleRow}>
-            <Text style={styles.title} allowFontScaling={false}>Rent Payments</Text>
+            <Text style={styles.title} allowFontScaling={false}>
+              {es ? 'Pagos de Alquiler' : 'Rent Payments'}
+            </Text>
             
             {/* Submit Rent Payment Button */}
             <AnimatedTouchable style={styles.submitPayBtn} onPress={() => setIsPayModalOpen(true)}>
               <Ionicons name="card-outline" size={16} color="#0f172a" style={{ marginRight: 6 }} />
-              <Text style={styles.submitPayBtnText} allowFontScaling={false}>Submit Payment</Text>
+              <Text style={styles.submitPayBtnText} allowFontScaling={false}>
+                {es ? 'Enviar Pago' : 'Submit Payment'}
+              </Text>
             </AnimatedTouchable>
           </View>
         </View>
@@ -294,7 +302,9 @@ export const RentScreen = () => {
         {/* Outstanding & Autopay Status Cards Grid */}
         <View style={styles.statsContainer}>
           <View style={styles.outstandingCard}>
-            <Text style={styles.statsLabel} allowFontScaling={false}>OUTSTANDING BALANCE DUE</Text>
+            <Text style={styles.statsLabel} allowFontScaling={false}>
+              {es ? 'SALDO PENDIENTE DE PAGO' : 'OUTSTANDING BALANCE DUE'}
+            </Text>
             <View style={styles.balanceRow}>
               <Text style={[styles.balanceVal, outstandingBalance === 0 ? { color: '#10b981' } : { color: '#f87171' }]} allowFontScaling={false}>
                 ${outstandingBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
@@ -304,20 +314,24 @@ export const RentScreen = () => {
               )}
             </View>
             <Text style={styles.statsSubText} allowFontScaling={false}>
-              {outstandingBalance === 0 ? 'No Balance Due' : 'Next rent period invoices active.'}
+              {outstandingBalance === 0 ? (es ? 'Sin Saldo Pendiente' : 'No Balance Due') : (es ? 'Facturas activas del próximo periodo.' : 'Next rent period invoices active.')}
             </Text>
           </View>
 
           <View style={styles.autopayCard}>
             <View style={styles.autopayHeaderRow}>
               <Ionicons name="settings-outline" size={12} color="#38bdf8" style={{ marginRight: 4 }} />
-              <Text style={styles.statsLabel} allowFontScaling={false}>AUTOPAY SETUP</Text>
+              <Text style={styles.statsLabel} allowFontScaling={false}>
+                {es ? 'PAGO AUTOMÁTICO' : 'AUTOPAY SETUP'}
+              </Text>
             </View>
             <View style={styles.autopayBadge}>
-              <Text style={styles.autopayBadgeText} allowFontScaling={false}>ENABLED</Text>
+              <Text style={styles.autopayBadgeText} allowFontScaling={false}>
+                {es ? 'ACTIVADO' : 'ENABLED'}
+              </Text>
             </View>
             <Text style={styles.statsSubText} allowFontScaling={false} numberOfLines={2}>
-              Automatically pulls from checking ending in XXXX-9822 on 1st of month.
+              {es ? 'Debita automáticamente de la cuenta XXXX-9822 el día 1 del mes.' : 'Automatically pulls from checking ending in XXXX-9822 on 1st of month.'}
             </Text>
           </View>
         </View>
@@ -328,7 +342,7 @@ export const RentScreen = () => {
             <Ionicons name="search-outline" size={20} color="#64748b" style={{ marginRight: 8 }} />
             <TextInput
               style={styles.searchInput}
-              placeholder="Search by reference number or date..."
+              placeholder={es ? 'Buscar por número de referencia o fecha...' : 'Search by reference number or date...'}
               placeholderTextColor="#64748b"
               value={searchQuery}
               onChangeText={(txt) => {

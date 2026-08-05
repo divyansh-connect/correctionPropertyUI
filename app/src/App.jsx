@@ -46,7 +46,7 @@ import { OwnersScreen } from './screens/OwnersScreen';
 
 export default function App() {
   const { user, isAuthenticated, isLoaded, initializeAuth } = useAuthStore();
-  const { theme } = useThemeStore();
+  const { theme, language } = useThemeStore();
   const [showSplash, setShowSplash] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [drawerVisible, setDrawerVisible] = useState(false);
@@ -104,60 +104,60 @@ export default function App() {
   switch (role) {
     case 'Super Admin':
       moduleTabs = [
-        { id: 'dashboard', label: 'Dashboard', icon: 'grid-outline', activeIcon: 'grid' },
-        { id: 'companies', label: 'Companies', icon: 'business-outline', activeIcon: 'business' },
-        { id: 'subscriptions', label: 'Subscriptions', icon: 'card-outline', activeIcon: 'card' },
-        { id: 'platform-users', label: 'Users', icon: 'people-outline', activeIcon: 'people' },
-        { id: 'more', label: 'All Menu', icon: 'menu-outline', activeIcon: 'menu' },
+        { id: 'dashboard', label: language === 'es' ? 'Tablero' : 'Dashboard', icon: 'grid-outline', activeIcon: 'grid' },
+        { id: 'companies', label: language === 'es' ? 'Empresas' : 'Companies', icon: 'business-outline', activeIcon: 'business' },
+        { id: 'subscriptions', label: language === 'es' ? 'Suscripciones' : 'Subscriptions', icon: 'card-outline', activeIcon: 'card' },
+        { id: 'platform-users', label: language === 'es' ? 'Usuarios' : 'Users', icon: 'people-outline', activeIcon: 'people' },
+        { id: 'more', label: language === 'es' ? 'Menú' : 'All Menu', icon: 'menu-outline', activeIcon: 'menu' },
       ];
       break;
 
     case 'Collection Manager':
       moduleTabs = [
-        { id: 'dashboard', label: 'Dashboard', icon: 'grid-outline', activeIcon: 'grid' },
-        { id: 'rent', label: 'Payments', icon: 'card-outline', activeIcon: 'card' },
-        { id: 'profile', label: 'Profile', icon: 'person-outline', activeIcon: 'person' },
+        { id: 'dashboard', label: language === 'es' ? 'Tablero' : 'Dashboard', icon: 'grid-outline', activeIcon: 'grid' },
+        { id: 'rent', label: language === 'es' ? 'Pagos' : 'Payments', icon: 'card-outline', activeIcon: 'card' },
+        { id: 'profile', label: language === 'es' ? 'Perfil' : 'Profile', icon: 'person-outline', activeIcon: 'person' },
       ];
       break;
 
     case 'Maintenance Staff':
       moduleTabs = [
-        { id: 'dashboard', label: 'Dashboard', icon: 'grid-outline', activeIcon: 'grid' },
-        { id: 'mytasks', label: 'My Tasks', icon: 'clipboard-outline', activeIcon: 'clipboard' },
-        { id: 'history', label: 'History', icon: 'time-outline', activeIcon: 'time' },
-        { id: 'profile', label: 'Profile', icon: 'person-outline', activeIcon: 'person' },
+        { id: 'dashboard', label: language === 'es' ? 'Tablero' : 'Dashboard', icon: 'grid-outline', activeIcon: 'grid' },
+        { id: 'mytasks', label: language === 'es' ? 'Mis Tareas' : 'My Tasks', icon: 'clipboard-outline', activeIcon: 'clipboard' },
+        { id: 'history', label: language === 'es' ? 'Historial' : 'History', icon: 'time-outline', activeIcon: 'time' },
+        { id: 'profile', label: language === 'es' ? 'Perfil' : 'Profile', icon: 'person-outline', activeIcon: 'person' },
       ];
       break;
 
     case 'Owner':
       moduleTabs = [
-        { id: 'dashboard', label: 'Dashboard', icon: 'grid-outline', activeIcon: 'grid' },
-        { id: 'properties', label: 'Properties', icon: 'business-outline', activeIcon: 'business' },
-        { id: 'maintenance', label: 'Repairs', icon: 'hammer-outline', activeIcon: 'hammer' },
-        { id: 'messages', label: 'Messages', icon: 'chatbubbles-outline', activeIcon: 'chatbubbles' },
-        { id: 'more', label: 'Services', icon: 'apps-outline', activeIcon: 'apps' },
+        { id: 'dashboard', label: language === 'es' ? 'Tablero' : 'Dashboard', icon: 'grid-outline', activeIcon: 'grid' },
+        { id: 'properties', label: language === 'es' ? 'Propiedades' : 'Properties', icon: 'business-outline', activeIcon: 'business' },
+        { id: 'maintenance', label: language === 'es' ? 'Reparaciones' : 'Repairs', icon: 'hammer-outline', activeIcon: 'hammer' },
+        { id: 'messages', label: language === 'es' ? 'Mensajes' : 'Messages', icon: 'chatbubbles-outline', activeIcon: 'chatbubbles' },
+        { id: 'more', label: language === 'es' ? 'Servicios' : 'Services', icon: 'apps-outline', activeIcon: 'apps' },
       ];
       break;
 
     case 'Tenant':
       moduleTabs = [
-        { id: 'dashboard', label: 'Dashboard', icon: 'grid-outline', activeIcon: 'grid' },
-        { id: 'lease', label: 'Lease', icon: 'document-text-outline', activeIcon: 'document-text' },
-        { id: 'rent', label: 'Payments', icon: 'card-outline', activeIcon: 'card' },
-        { id: 'messages', label: 'Messages', icon: 'chatbubbles-outline', activeIcon: 'chatbubbles' },
-        { id: 'more', label: 'Services', icon: 'apps-outline', activeIcon: 'apps' },
+        { id: 'dashboard', label: language === 'es' ? 'Tablero' : 'Dashboard', icon: 'grid-outline', activeIcon: 'grid' },
+        { id: 'lease', label: language === 'es' ? 'Contrato' : 'Lease', icon: 'document-text-outline', activeIcon: 'document-text' },
+        { id: 'rent', label: language === 'es' ? 'Pagos' : 'Payments', icon: 'card-outline', activeIcon: 'card' },
+        { id: 'messages', label: language === 'es' ? 'Mensajes' : 'Messages', icon: 'chatbubbles-outline', activeIcon: 'chatbubbles' },
+        { id: 'more', label: language === 'es' ? 'Servicios' : 'Services', icon: 'apps-outline', activeIcon: 'apps' },
       ];
       break;
 
     case 'Property Manager':
     default:
       moduleTabs = [
-        { id: 'dashboard', label: 'Dashboard', icon: 'grid-outline', activeIcon: 'grid' },
-        { id: 'properties', label: 'Properties', icon: 'business-outline', activeIcon: 'business' },
-        { id: 'owners', label: 'Owners', icon: 'person-add-outline', activeIcon: 'person-add' },
-        { id: 'tenants', label: 'Tenants', icon: 'people-outline', activeIcon: 'people' },
-        { id: 'rent', label: 'Rent', icon: 'cash-outline', activeIcon: 'cash' },
-        { id: 'more', label: 'Services', icon: 'apps-outline', activeIcon: 'apps' },
+        { id: 'dashboard', label: language === 'es' ? 'Tablero' : 'Dashboard', icon: 'grid-outline', activeIcon: 'grid' },
+        { id: 'properties', label: language === 'es' ? 'Propiedades' : 'Properties', icon: 'business-outline', activeIcon: 'business' },
+        { id: 'owners', label: language === 'es' ? 'Propietarios' : 'Owners', icon: 'person-add-outline', activeIcon: 'person-add' },
+        { id: 'tenants', label: language === 'es' ? 'Inquilinos' : 'Tenants', icon: 'people-outline', activeIcon: 'people' },
+        { id: 'rent', label: language === 'es' ? 'Alquiler' : 'Rent', icon: 'cash-outline', activeIcon: 'cash' },
+        { id: 'more', label: language === 'es' ? 'Servicios' : 'Services', icon: 'apps-outline', activeIcon: 'apps' },
       ];
       break;
   }
@@ -398,7 +398,7 @@ export default function App() {
                   ]} 
                   allowFontScaling={false}
                 >
-                  {(isStaff || isTenant) ? tab.label : (tab.label.split(' ')[1] || tab.label)}
+                  {(isStaff || isTenant || role === 'Collection Manager') ? tab.label : (tab.label.split(' ')[1] || tab.label)}
                 </Text>
               </TouchableOpacity>
             );

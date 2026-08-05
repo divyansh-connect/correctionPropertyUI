@@ -17,8 +17,9 @@ import { Ionicons } from '@expo/vector-icons';
 
 export const TenantDashboard = ({ onNavigate }) => {
   const { user, logout, refreshAccessToken } = useAuthStore();
-  const { theme } = useThemeStore();
+  const { theme, language } = useThemeStore();
   const isDarkMode = theme === 'dark';
+  const es = language === 'es';
 
   const colors = {
     bg: isDarkMode ? '#0f172a' : '#f8fafc',
@@ -87,32 +88,39 @@ export const TenantDashboard = ({ onNavigate }) => {
     if (tenantData.balance <= 0) return;
     setTenantData((prev) => ({ ...prev, balance: 0 }));
     setPayModalVisible(false);
-    Alert.alert('Payment Successful', `Thank you! Your rent payment of $${tenantData.balance.toLocaleString()} has been processed.`);
+    Alert.alert(
+      es ? 'Pago Exitoso' : 'Payment Successful',
+      es
+        ? `¡Gracias! Su pago de renta de $${tenantData.balance.toLocaleString()} fue procesado.`
+        : `Thank you! Your rent payment of $${tenantData.balance.toLocaleString()} has been processed.`
+    );
   };
 
   const handleCreateTicket = () => {
     if (!ticketTitle || !ticketDesc) {
-      Alert.alert('Error', 'Please fill in all fields');
+      Alert.alert(es ? 'Error' : 'Error', es ? 'Por favor complete todos los campos.' : 'Please fill in all fields');
       return;
     }
     setTicketModalVisible(false);
     setTicketTitle('');
     setTicketDesc('');
-    Alert.alert('Success', 'Repair request submitted to management.');
+    Alert.alert(es ? 'Éxito' : 'Success', es ? 'Solicitud de reparación enviada a la administración.' : 'Repair request submitted to management.');
   };
 
   const handleSendMessage = () => {
     if (!messageText) return;
     setContactModalVisible(false);
     setMessageText('');
-    Alert.alert('Message Sent', 'Your message has been sent to Property Management.');
+    Alert.alert(es ? 'Mensaje Enviado' : 'Message Sent', es ? 'Su mensaje fue enviado a la administración.' : 'Your message has been sent to Property Management.');
   };
 
   if (loading) {
     return (
       <View style={[styles.center, { backgroundColor: colors.bg }]}>
         <ActivityIndicator size="large" color="#38bdf8" />
-        <Text style={[styles.loadingText, { color: colors.textSecondary }]} allowFontScaling={false}>Loading Live Tenant Portal...</Text>
+        <Text style={[styles.loadingText, { color: colors.textSecondary }]} allowFontScaling={false}>
+          {es ? 'Cargando Portal de Inquilino...' : 'Loading Live Tenant Portal...'}
+        </Text>
       </View>
     );
   }
@@ -123,11 +131,12 @@ export const TenantDashboard = ({ onNavigate }) => {
       <View style={styles.header}>
         <View style={styles.welcomeRow}>
           <View>
-            <Text style={[styles.welcomeText, { color: colors.textSecondary }]} allowFontScaling={false}>Hello,</Text>
+            <Text style={[styles.welcomeText, { color: colors.textSecondary }]} allowFontScaling={false}>
+              {es ? 'Hola,' : 'Hello,'}
+            </Text>
             <Text style={[styles.title, { color: colors.textPrimary }]} allowFontScaling={false}>{tenantData.name}</Text>
           </View>
           <View style={styles.headerRightActions}>
-            {/* Notification Bell Icon */}
             <TouchableOpacity
               style={styles.bellBtn}
               onPress={() => onNavigate && onNavigate('notifications')}
@@ -152,85 +161,113 @@ export const TenantDashboard = ({ onNavigate }) => {
       </View>
 
       {/* Quick Action Tiles */}
-      <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>QUICK ACTIONS</Text>
+      <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+        {es ? 'ACCIONES RÁPIDAS' : 'QUICK ACTIONS'}
+      </Text>
       <View style={styles.quickActionsGrid}>
         <TouchableOpacity style={[styles.actionCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]} onPress={() => setPayModalVisible(true)}>
           <View style={[styles.actionIconWrapper, { backgroundColor: 'rgba(56, 189, 248, 0.15)' }]}>
             <Ionicons name="card" size={22} color="#38bdf8" />
           </View>
-          <Text style={[styles.actionCardText, { color: colors.textPrimary }]} allowFontScaling={false}>Pay Rent</Text>
+          <Text style={[styles.actionCardText, { color: colors.textPrimary }]} allowFontScaling={false}>
+            {es ? 'Pagar Renta' : 'Pay Rent'}
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={[styles.actionCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]} onPress={() => setTicketModalVisible(true)}>
           <View style={[styles.actionIconWrapper, { backgroundColor: 'rgba(239, 68, 68, 0.15)' }]}>
             <Ionicons name="hammer" size={22} color="#ef4444" />
           </View>
-          <Text style={[styles.actionCardText, { color: colors.textPrimary }]} allowFontScaling={false}>Submit Repair</Text>
+          <Text style={[styles.actionCardText, { color: colors.textPrimary }]} allowFontScaling={false}>
+            {es ? 'Reparación' : 'Submit Repair'}
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={[styles.actionCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]} onPress={() => setContactModalVisible(true)}>
           <View style={[styles.actionIconWrapper, { backgroundColor: 'rgba(16, 185, 129, 0.15)' }]}>
             <Ionicons name="chatbubbles" size={22} color="#10b981" />
           </View>
-          <Text style={[styles.actionCardText, { color: colors.textPrimary }]} allowFontScaling={false}>Messages</Text>
+          <Text style={[styles.actionCardText, { color: colors.textPrimary }]} allowFontScaling={false}>
+            {es ? 'Mensajes' : 'Messages'}
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={[styles.actionCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]} onPress={() => setLeaseModalVisible(true)}>
           <View style={[styles.actionIconWrapper, { backgroundColor: 'rgba(245, 158, 11, 0.15)' }]}>
             <Ionicons name="document-text" size={22} color="#f59e0b" />
           </View>
-          <Text style={[styles.actionCardText, { color: colors.textPrimary }]} allowFontScaling={false}>Lease Terms</Text>
+          <Text style={[styles.actionCardText, { color: colors.textPrimary }]} allowFontScaling={false}>
+            {es ? 'Contrato' : 'Lease Terms'}
+          </Text>
         </TouchableOpacity>
       </View>
 
       {/* Metric Cards Grid */}
-      <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>OVERVIEW & STATS</Text>
-      
+      <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+        {es ? 'RESUMEN Y ESTADÍSTICAS' : 'OVERVIEW & STATS'}
+      </Text>
+
       <View style={styles.metricGrid}>
         <View style={[styles.metricCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
           <View style={styles.metricHeaderRow}>
-            <Text style={[styles.metricLabel, { color: colors.textSecondary }]} allowFontScaling={false}>CURRENT RENT DUE</Text>
+            <Text style={[styles.metricLabel, { color: colors.textSecondary }]} allowFontScaling={false}>
+              {es ? 'RENTA PENDIENTE' : 'CURRENT RENT DUE'}
+            </Text>
             <Ionicons name="wallet-outline" size={16} color={colors.textSecondary} />
           </View>
           <Text style={[styles.metricVal, { color: '#38bdf8' }]} allowFontScaling={false}>
             ${tenantData.balance.toLocaleString()}
           </Text>
-          <Text style={[styles.metricSub, { color: colors.textMuted }]} allowFontScaling={false}>Due Date: {tenantData.dueDate}</Text>
+          <Text style={[styles.metricSub, { color: colors.textMuted }]} allowFontScaling={false}>
+            {es ? 'Fecha de Vencimiento:' : 'Due Date:'} {tenantData.dueDate}
+          </Text>
         </View>
 
         <View style={[styles.metricCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
           <View style={styles.metricHeaderRow}>
-            <Text style={[styles.metricLabel, { color: colors.textSecondary }]} allowFontScaling={false}>OUTSTANDING</Text>
+            <Text style={[styles.metricLabel, { color: colors.textSecondary }]} allowFontScaling={false}>
+              {es ? 'SALDO PENDIENTE' : 'OUTSTANDING'}
+            </Text>
             <Ionicons name="checkmark-circle-outline" size={16} color="#10b981" />
           </View>
           <Text style={[styles.metricVal, { color: '#10b981' }]} allowFontScaling={false}>
             ${tenantData.outstandingBalance}
           </Text>
-          <Text style={[styles.metricSub, { color: colors.textMuted }]} allowFontScaling={false}>Status: Paid in Full</Text>
+          <Text style={[styles.metricSub, { color: colors.textMuted }]} allowFontScaling={false}>
+            {es ? 'Estado: Pagado en su Totalidad' : 'Status: Paid in Full'}
+          </Text>
         </View>
       </View>
 
       <View style={styles.metricGrid}>
         <View style={[styles.metricCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
           <View style={styles.metricHeaderRow}>
-            <Text style={[styles.metricLabel, { color: colors.textSecondary }]} allowFontScaling={false}>ACTIVE VISITORS</Text>
+            <Text style={[styles.metricLabel, { color: colors.textSecondary }]} allowFontScaling={false}>
+              {es ? 'VISITANTES ACTIVOS' : 'ACTIVE VISITORS'}
+            </Text>
             <Ionicons name="people-outline" size={16} color={colors.textSecondary} />
           </View>
           <Text style={[styles.metricVal, { color: '#818cf8' }]} allowFontScaling={false}>
             {tenantData.activeVisitors}
           </Text>
-          <Text style={[styles.metricSub, { color: colors.textMuted }]} allowFontScaling={false}>Registered guest logs</Text>
+          <Text style={[styles.metricSub, { color: colors.textMuted }]} allowFontScaling={false}>
+            {es ? 'Registros de invitados' : 'Registered guest logs'}
+          </Text>
         </View>
 
         <View style={[styles.metricCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
           <View style={styles.metricHeaderRow}>
-            <Text style={[styles.metricLabel, { color: colors.textSecondary }]} allowFontScaling={false}>WAITING PACKAGES</Text>
+            <Text style={[styles.metricLabel, { color: colors.textSecondary }]} allowFontScaling={false}>
+              {es ? 'PAQUETES EN ESPERA' : 'WAITING PACKAGES'}
+            </Text>
             <Ionicons name="cube-outline" size={16} color={colors.textSecondary} />
           </View>
           <Text style={[styles.metricVal, { color: '#f59e0b' }]} allowFontScaling={false}>
             {tenantData.packagesWaiting}
           </Text>
-          <Text style={[styles.metricSub, { color: colors.textMuted }]} allowFontScaling={false}>Awaiting pickup</Text>
+          <Text style={[styles.metricSub, { color: colors.textMuted }]} allowFontScaling={false}>
+            {es ? 'Esperando retiro' : 'Awaiting pickup'}
+          </Text>
         </View>
       </View>
 
@@ -240,13 +277,17 @@ export const TenantDashboard = ({ onNavigate }) => {
           <Ionicons name="time" size={24} color="#38bdf8" />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={styles.leaseBannerTitle} allowFontScaling={false}>LEASE RENEWAL OPTION</Text>
+          <Text style={styles.leaseBannerTitle} allowFontScaling={false}>
+            {es ? 'OPCIÓN DE RENOVACIÓN DE CONTRATO' : 'LEASE RENEWAL OPTION'}
+          </Text>
           <Text style={[styles.leaseBannerSub, { color: colors.textSecondary }]} allowFontScaling={false}>
-            Expires: {tenantData.leaseExpiration}. Lock your rate now.
+            {es ? `Vence: ${tenantData.leaseExpiration}. Asegure su tarifa ahora.` : `Expires: ${tenantData.leaseExpiration}. Lock your rate now.`}
           </Text>
         </View>
         <TouchableOpacity style={styles.reviewBtn} onPress={() => setLeaseModalVisible(true)}>
-          <Text style={styles.reviewBtnText} allowFontScaling={false}>Review</Text>
+          <Text style={styles.reviewBtnText} allowFontScaling={false}>
+            {es ? 'Revisar' : 'Review'}
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -257,16 +298,20 @@ export const TenantDashboard = ({ onNavigate }) => {
             <View style={styles.modalIconCenter}>
               <Ionicons name="card-outline" size={42} color="#38bdf8" />
             </View>
-            <Text style={[styles.modalTitle, { color: colors.textPrimary }]} allowFontScaling={false}>Confirm Rent Payment</Text>
+            <Text style={[styles.modalTitle, { color: colors.textPrimary }]} allowFontScaling={false}>
+              {es ? 'Confirmar Pago de Renta' : 'Confirm Rent Payment'}
+            </Text>
             <Text style={[styles.confirmText, { color: colors.textSecondary }]} allowFontScaling={false}>
-              Are you sure you want to pay the outstanding balance of ${tenantData.balance.toLocaleString()} online?
+              {es
+                ? `¿Está seguro de que desea pagar el saldo pendiente de $${tenantData.balance.toLocaleString()} en línea?`
+                : `Are you sure you want to pay the outstanding balance of $${tenantData.balance.toLocaleString()} online?`}
             </Text>
             <View style={styles.modalButtons}>
               <TouchableOpacity style={[styles.modalButton, styles.cancelBtn]} onPress={() => setPayModalVisible(false)}>
-                <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
+                <Text style={styles.cancelBtnText} allowFontScaling={false}>{es ? 'Cancelar' : 'Cancel'}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.modalButton, styles.submitBtn]} onPress={handlePayRent}>
-                <Text style={styles.submitBtnText} allowFontScaling={false}>Confirm Pay</Text>
+                <Text style={styles.submitBtnText} allowFontScaling={false}>{es ? 'Confirmar Pago' : 'Confirm Pay'}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -277,17 +322,19 @@ export const TenantDashboard = ({ onNavigate }) => {
       <Modal visible={ticketModalVisible} animationType="slide" transparent>
         <View style={styles.modalBg}>
           <View style={[styles.modalCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
-            <Text style={[styles.modalTitle, { color: colors.textPrimary }]} allowFontScaling={false}>Submit Repair Request</Text>
+            <Text style={[styles.modalTitle, { color: colors.textPrimary }]} allowFontScaling={false}>
+              {es ? 'Enviar Solicitud de Reparación' : 'Submit Repair Request'}
+            </Text>
             <TextInput
               style={[styles.input, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.textPrimary }]}
-              placeholder="Issue Subject (e.g. AC leaking)"
+              placeholder={es ? 'Asunto (ej. AC con fuga)' : 'Issue Subject (e.g. AC leaking)'}
               placeholderTextColor="#64748b"
               value={ticketTitle}
               onChangeText={setTicketTitle}
             />
             <TextInput
               style={[styles.input, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.textPrimary, height: 100, textAlignVertical: 'top' }]}
-              placeholder="Detailed description of repair issue..."
+              placeholder={es ? 'Descripción detallada del problema...' : 'Detailed description of repair issue...'}
               placeholderTextColor="#64748b"
               multiline
               value={ticketDesc}
@@ -295,10 +342,10 @@ export const TenantDashboard = ({ onNavigate }) => {
             />
             <View style={styles.modalButtons}>
               <TouchableOpacity style={[styles.modalButton, styles.cancelBtn]} onPress={() => setTicketModalVisible(false)}>
-                <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
+                <Text style={styles.cancelBtnText} allowFontScaling={false}>{es ? 'Cancelar' : 'Cancel'}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.modalButton, styles.submitBtn, { backgroundColor: '#ef4444' }]} onPress={handleCreateTicket}>
-                <Text style={styles.submitBtnText} allowFontScaling={false}>Submit Request</Text>
+                <Text style={styles.submitBtnText} allowFontScaling={false}>{es ? 'Enviar Solicitud' : 'Submit Request'}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -309,10 +356,12 @@ export const TenantDashboard = ({ onNavigate }) => {
       <Modal visible={contactModalVisible} animationType="slide" transparent>
         <View style={styles.modalBg}>
           <View style={[styles.modalCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
-            <Text style={[styles.modalTitle, { color: colors.textPrimary }]} allowFontScaling={false}>Contact Management</Text>
+            <Text style={[styles.modalTitle, { color: colors.textPrimary }]} allowFontScaling={false}>
+              {es ? 'Contactar a la Administración' : 'Contact Management'}
+            </Text>
             <TextInput
               style={[styles.input, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.textPrimary, height: 120, textAlignVertical: 'top' }]}
-              placeholder="Type your message to Property Manager..."
+              placeholder={es ? 'Escriba su mensaje al Administrador de la Propiedad...' : 'Type your message to Property Manager...'}
               placeholderTextColor="#64748b"
               multiline
               value={messageText}
@@ -320,10 +369,10 @@ export const TenantDashboard = ({ onNavigate }) => {
             />
             <View style={styles.modalButtons}>
               <TouchableOpacity style={[styles.modalButton, styles.cancelBtn]} onPress={() => setContactModalVisible(false)}>
-                <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
+                <Text style={styles.cancelBtnText} allowFontScaling={false}>{es ? 'Cancelar' : 'Cancel'}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.modalButton, styles.submitBtn, { backgroundColor: '#10b981' }]} onPress={handleSendMessage}>
-                <Text style={styles.submitBtnText} allowFontScaling={false}>Send Message</Text>
+                <Text style={styles.submitBtnText} allowFontScaling={false}>{es ? 'Enviar Mensaje' : 'Send Message'}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -337,29 +386,43 @@ export const TenantDashboard = ({ onNavigate }) => {
             <View style={styles.modalIconCenter}>
               <Ionicons name="document-text-outline" size={42} color="#f59e0b" />
             </View>
-            <Text style={[styles.modalTitle, { color: colors.textPrimary }]} allowFontScaling={false}>Active Lease Terms</Text>
-            
+            <Text style={[styles.modalTitle, { color: colors.textPrimary }]} allowFontScaling={false}>
+              {es ? 'Términos del Contrato Activo' : 'Active Lease Terms'}
+            </Text>
+
             <View style={[styles.detailCard, { backgroundColor: colors.inputBg, borderColor: colors.cardBorder }]}>
               <View style={[styles.detailRow, { borderBottomColor: colors.cardBorder }]}>
-                <Text style={[styles.detailLabel, { color: colors.textSecondary }]} allowFontScaling={false}>Unit Number</Text>
-                <Text style={[styles.detailVal, { color: colors.textPrimary }]} allowFontScaling={false}>{tenantData.unitName.split('·')[1]?.trim() || tenantData.unitName}</Text>
+                <Text style={[styles.detailLabel, { color: colors.textSecondary }]} allowFontScaling={false}>
+                  {es ? 'Número de Unidad' : 'Unit Number'}
+                </Text>
+                <Text style={[styles.detailVal, { color: colors.textPrimary }]} allowFontScaling={false}>
+                  {tenantData.unitName.split('·')[1]?.trim() || tenantData.unitName}
+                </Text>
               </View>
               <View style={[styles.detailRow, { borderBottomColor: colors.cardBorder }]}>
-                <Text style={[styles.detailLabel, { color: colors.textSecondary }]} allowFontScaling={false}>Monthly Rent</Text>
-                <Text style={[styles.detailVal, { color: '#38bdf8' }]} allowFontScaling={false}>${tenantData.balance.toLocaleString()} / month</Text>
+                <Text style={[styles.detailLabel, { color: colors.textSecondary }]} allowFontScaling={false}>
+                  {es ? 'Renta Mensual' : 'Monthly Rent'}
+                </Text>
+                <Text style={[styles.detailVal, { color: '#38bdf8' }]} allowFontScaling={false}>
+                  ${tenantData.balance.toLocaleString()} / {es ? 'mes' : 'month'}
+                </Text>
               </View>
               <View style={[styles.detailRow, { borderBottomColor: colors.cardBorder }]}>
-                <Text style={[styles.detailLabel, { color: colors.textSecondary }]} allowFontScaling={false}>Lease Start</Text>
+                <Text style={[styles.detailLabel, { color: colors.textSecondary }]} allowFontScaling={false}>
+                  {es ? 'Inicio del Contrato' : 'Lease Start'}
+                </Text>
                 <Text style={[styles.detailVal, { color: colors.textPrimary }]} allowFontScaling={false}>2026-08-01</Text>
               </View>
               <View style={[styles.detailRow, { borderBottomColor: colors.cardBorder }]}>
-                <Text style={[styles.detailLabel, { color: colors.textSecondary }]} allowFontScaling={false}>Lease Expiration</Text>
+                <Text style={[styles.detailLabel, { color: colors.textSecondary }]} allowFontScaling={false}>
+                  {es ? 'Vencimiento del Contrato' : 'Lease Expiration'}
+                </Text>
                 <Text style={[styles.detailVal, { color: '#f59e0b' }]} allowFontScaling={false}>{tenantData.leaseExpiration}</Text>
               </View>
             </View>
 
             <TouchableOpacity style={styles.closeBtn} onPress={() => setLeaseModalVisible(false)}>
-              <Text style={styles.closeBtnText} allowFontScaling={false}>Close</Text>
+              <Text style={styles.closeBtnText} allowFontScaling={false}>{es ? 'Cerrar' : 'Close'}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -498,4 +561,3 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 });
-

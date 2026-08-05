@@ -18,7 +18,7 @@ import {
   Keyboard,
 } from 'react-native';
 import apiClient from '../api/client';
-import { useAuthStore } from '../store/useStore';
+import { useAuthStore, useThemeStore } from '../store/useStore';
 import { useThemeColors } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -61,8 +61,10 @@ const AnimatedTouchable = ({ children, onPress, style, disabled }) => {
 
 export const TenantDocumentsScreen = () => {
   const { user, logout, refreshAccessToken } = useAuthStore();
+  const { language } = useThemeStore();
   const { colors, isDarkMode } = useThemeColors();
   const styles = getStyles(colors, isDarkMode);
+  const es = language === 'es';
   
   // App role evaluation
   const isOwnerPortal = user?.role === 'Owner';
@@ -288,7 +290,9 @@ export const TenantDocumentsScreen = () => {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color="#38bdf8" />
-        <Text style={styles.loadingText} allowFontScaling={false}>Loading documents library...</Text>
+        <Text style={styles.loadingText} allowFontScaling={false}>
+          {es ? 'Cargando biblioteca de documentos...' : 'Loading documents library...'}
+        </Text>
       </View>
     );
   }
@@ -300,12 +304,16 @@ export const TenantDocumentsScreen = () => {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title} allowFontScaling={false}>
-            {isManager ? 'All Documents Library' : isOwnerPortal ? 'Owner Documents' : 'My Documents'}
+            {isManager 
+              ? (es ? 'Biblioteca de Todos los Documentos' : 'All Documents Library')
+              : isOwnerPortal 
+                ? (es ? 'Documentos del Propietario' : 'Owner Documents')
+                : (es ? 'Mis Documentos' : 'My Documents')}
           </Text>
           <Text style={styles.subtitle} allowFontScaling={false}>
             {isManager 
-              ? 'Browse, search, filter, and manage all uploaded files across properties, tenants, and leases.'
-              : 'Access active lease agreements, notices, invoices statements and tax files.'}
+              ? (es ? 'Examine, busque, filtre y gestione todos los archivos cargados de propiedades, inquilinos y contratos.' : 'Browse, search, filter, and manage all uploaded files across properties, tenants, and leases.')
+              : (es ? 'Acceda a contratos de arrendamiento activos, avisos, estados de cuenta e informes fiscales.' : 'Access active lease agreements, notices, invoices statements and tax files.')}
           </Text>
         </View>
 
@@ -315,7 +323,7 @@ export const TenantDocumentsScreen = () => {
             <Ionicons name="search-outline" size={18} color="#64748b" style={{ marginRight: 6 }} />
             <TextInput
               style={styles.searchInput}
-              placeholder="Search documents by name..."
+              placeholder={es ? 'Buscar documentos por nombre...' : 'Search documents by name...'}
               placeholderTextColor="#64748b"
               value={searchTerm}
               onChangeText={setSearchTerm}

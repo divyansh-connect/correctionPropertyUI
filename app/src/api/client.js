@@ -78,8 +78,11 @@ export const apiClient = {
   getHeaders: async () => {
     const userStr = await safeStorage.getItem('user');
     const token = userStr ? JSON.parse(userStr).token : null;
+    const language = (await safeStorage.getItem('language')) || 'en';
     return {
       'Content-Type': 'application/json',
+      'Accept-Language': language,
+      'x-language': language,
       ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
     };
   },
@@ -87,7 +90,12 @@ export const apiClient = {
   getAuthHeaders: async () => {
     const userStr = await safeStorage.getItem('user');
     const token = userStr ? JSON.parse(userStr).token : null;
-    return token ? { 'Authorization': `Bearer ${token}` } : {};
+    const language = (await safeStorage.getItem('language')) || 'en';
+    return {
+      'Accept-Language': language,
+      'x-language': language,
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    };
   },
 
   get: async (url, logoutFn, refreshFn) => {

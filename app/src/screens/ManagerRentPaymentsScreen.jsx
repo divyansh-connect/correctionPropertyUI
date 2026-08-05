@@ -18,11 +18,12 @@ import {
   Keyboard,
 } from 'react-native';
 import apiClient from '../api/client';
-import { useAuthStore } from '../store/useStore';
+import { useAuthStore, useThemeStore } from '../store/useStore';
 import { Ionicons } from '@expo/vector-icons';
 
 export const ManagerRentPaymentsScreen = () => {
   const { logout, refreshAccessToken } = useAuthStore();
+  const { language } = useThemeStore();
 
   // Sub-tab: 'payments' | 'invoices' | 'ledger'
   const [activeTab, setActiveTab] = useState('payments');
@@ -538,26 +539,36 @@ export const ManagerRentPaymentsScreen = () => {
       {/* FIXED HEADER (No Breadcrumbs) */}
       <View style={[styles.fixedHeader, { paddingTop: 16 }]}>
         <Text style={styles.title} allowFontScaling={false}>
-          {activeTab === 'payments' ? 'Rent Payments' : activeTab === 'invoices' ? 'Invoices Manager' : 'Rent Ledger'}
+          {activeTab === 'payments'
+            ? (language === 'es' ? 'Pagos de Alquiler' : 'Rent Payments')
+            : activeTab === 'invoices'
+              ? (language === 'es' ? 'Gestor de Facturas' : 'Invoices Manager')
+              : (language === 'es' ? 'Libro Mayor de Alquiler' : 'Rent Ledger')}
         </Text>
         <Text style={styles.subtitle} allowFontScaling={false}>
           {activeTab === 'payments'
-            ? 'Verify individual cleared transaction logs, receipt ledger details, and voided charges.'
+            ? (language === 'es' ? 'Verifique registros de transacciones aprobadas, detalles de recibos y cargos anulados.' : 'Verify individual cleared transaction logs, receipt ledger details, and voided charges.')
             : activeTab === 'invoices'
-              ? 'Verify resident monthly invoices billing distributions, itemized charges, and overdue alerts.'
-              : 'Verify chronological credit payments, billing assessments, and running balance totals.'}
+              ? (language === 'es' ? 'Verifique distribuciones de facturación mensual de residentes, cargos desglosados y alertas de vencimiento.' : 'Verify resident monthly invoices billing distributions, itemized charges, and overdue alerts.')
+              : (language === 'es' ? 'Verifique pagos de crédito cronológicos, evaluaciones de facturación y saldos totales.' : 'Verify chronological credit payments, billing assessments, and running balance totals.')}
         </Text>
 
         {/* Tab Switcher */}
         <View style={styles.tabRow}>
           <TouchableOpacity style={[styles.tabItem, activeTab === 'payments' && styles.tabItemActive]} onPress={() => setActiveTab('payments')}>
-            <Text style={[styles.tabItemText, activeTab === 'payments' && styles.tabItemTextActive]} allowFontScaling={false}>Payments</Text>
+            <Text style={[styles.tabItemText, activeTab === 'payments' && styles.tabItemTextActive]} allowFontScaling={false}>
+              {language === 'es' ? 'Pagos' : 'Payments'}
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.tabItem, activeTab === 'invoices' && styles.tabItemActive]} onPress={() => setActiveTab('invoices')}>
-            <Text style={[styles.tabItemText, activeTab === 'invoices' && styles.tabItemTextActive]} allowFontScaling={false}>Invoices</Text>
+            <Text style={[styles.tabItemText, activeTab === 'invoices' && styles.tabItemTextActive]} allowFontScaling={false}>
+              {language === 'es' ? 'Facturas' : 'Invoices'}
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.tabItem, activeTab === 'ledger' && styles.tabItemActive]} onPress={() => setActiveTab('ledger')}>
-            <Text style={[styles.tabItemText, activeTab === 'ledger' && styles.tabItemTextActive]} allowFontScaling={false}>Ledger</Text>
+            <Text style={[styles.tabItemText, activeTab === 'ledger' && styles.tabItemTextActive]} allowFontScaling={false}>
+              {language === 'es' ? 'Libro Mayor' : 'Ledger'}
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -567,7 +578,11 @@ export const ManagerRentPaymentsScreen = () => {
             <Ionicons name="search-outline" size={16} color="#64748b" style={{ marginRight: 6 }} />
             <TextInput
               style={styles.searchInput}
-              placeholder={activeTab === 'payments' ? "Search payments..." : activeTab === 'invoices' ? "Search invoices..." : "Search ledger by resident..."}
+              placeholder={activeTab === 'payments'
+                ? (language === 'es' ? 'Buscar pagos...' : 'Search payments...')
+                : activeTab === 'invoices'
+                  ? (language === 'es' ? 'Buscar facturas...' : 'Search invoices...')
+                  : (language === 'es' ? 'Buscar en libro por residente...' : 'Search ledger by resident...')}
               placeholderTextColor="#64748b"
               value={searchQuery}
               onChangeText={setSearchQuery}
@@ -577,13 +592,17 @@ export const ManagerRentPaymentsScreen = () => {
           {activeTab === 'payments' && (
             <TouchableOpacity style={styles.addBtn} onPress={() => setRecordPaymentOpen(true)}>
               <Ionicons name="add" size={16} color="#0f172a" />
-              <Text style={styles.addBtnText} allowFontScaling={false}>Payment</Text>
+              <Text style={styles.addBtnText} allowFontScaling={false}>
+                {language === 'es' ? 'Pago' : 'Payment'}
+              </Text>
             </TouchableOpacity>
           )}
           {activeTab === 'invoices' && (
             <TouchableOpacity style={styles.addBtn} onPress={() => setCreateInvoiceOpen(true)}>
               <Ionicons name="add" size={16} color="#0f172a" />
-              <Text style={styles.addBtnText} allowFontScaling={false}>Invoice</Text>
+              <Text style={styles.addBtnText} allowFontScaling={false}>
+                {language === 'es' ? 'Factura' : 'Invoice'}
+              </Text>
             </TouchableOpacity>
           )}
         </View>
@@ -599,7 +618,9 @@ export const ManagerRentPaymentsScreen = () => {
         {loading ? (
           <View style={styles.centerLoading}>
             <ActivityIndicator size="large" color="#38bdf8" />
-            <Text style={styles.loadingText} allowFontScaling={false}>Processing rent accounts...</Text>
+            <Text style={styles.loadingText} allowFontScaling={false}>
+              {language === 'es' ? 'Procesando cuentas de alquiler...' : 'Processing rent accounts...'}
+            </Text>
           </View>
         ) : (
           <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
@@ -609,7 +630,9 @@ export const ManagerRentPaymentsScreen = () => {
               <View>
                 {filteredPayments.length === 0 ? (
                   <View style={styles.emptyView}>
-                    <Text style={styles.emptyText} allowFontScaling={false}>No payment receipts recorded</Text>
+                    <Text style={styles.emptyText} allowFontScaling={false}>
+                      {language === 'es' ? 'No hay recibos de pago registrados' : 'No payment receipts recorded'}
+                    </Text>
                   </View>
                 ) : (
                   filteredPayments.map((item) => (
@@ -626,11 +649,15 @@ export const ManagerRentPaymentsScreen = () => {
                       </View>
                       <View style={styles.divider} />
                       <View style={styles.rowBetween}>
-                        <Text style={styles.recordSubText} allowFontScaling={false}>Date Cleared</Text>
+                        <Text style={styles.recordSubText} allowFontScaling={false}>
+                          {language === 'es' ? 'Fecha de Cobro' : 'Date Cleared'}
+                        </Text>
                         <Text style={styles.recordSubTextVal} allowFontScaling={false}>{item.paidDate}</Text>
                       </View>
                       <View style={styles.rowBetween}>
-                        <Text style={styles.recordSubText} allowFontScaling={false}>Amount Received</Text>
+                        <Text style={styles.recordSubText} allowFontScaling={false}>
+                          {language === 'es' ? 'Monto Recibido' : 'Amount Received'}
+                        </Text>
                         <Text style={[styles.recordValue, { color: '#10b981' }]} allowFontScaling={false}>
                           ${Number(item.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                         </Text>
@@ -646,7 +673,9 @@ export const ManagerRentPaymentsScreen = () => {
               <View>
                 {filteredInvoices.length === 0 ? (
                   <View style={styles.emptyView}>
-                    <Text style={styles.emptyText} allowFontScaling={false}>No monthly invoices recorded</Text>
+                    <Text style={styles.emptyText} allowFontScaling={false}>
+                      {language === 'es' ? 'No hay facturas mensuales registradas' : 'No monthly invoices recorded'}
+                    </Text>
                   </View>
                 ) : (
                   filteredInvoices.map((item) => {
@@ -656,6 +685,9 @@ export const ManagerRentPaymentsScreen = () => {
                       : item.invoiceNumber;
                     const isPaid = item.status?.toLowerCase() === 'paid';
                     const outstanding = isPaid ? 0 : item.outstandingBalance;
+                    const displayStatus = language === 'es'
+                      ? (item.status === 'Paid' ? 'Pagado' : item.status === 'Partially Paid' ? 'Parcialmente Pagado' : item.status === 'Draft' ? 'Borrador' : 'Vencido')
+                      : item.status;
                     return (
                       <View key={item.id} style={styles.recordsCard}>
                         <View style={styles.rowBetween}>
@@ -665,20 +697,26 @@ export const ManagerRentPaymentsScreen = () => {
                             <Text style={styles.recordSubText} allowFontScaling={false}>{item.propertyName}</Text>
                           </View>
                           <View style={[styles.badge, { borderColor: statusColor, backgroundColor: `${statusColor}12` }]}>
-                            <Text style={[styles.badgeText, { color: statusColor }]} allowFontScaling={false}>{item.status}</Text>
+                            <Text style={[styles.badgeText, { color: statusColor }]} allowFontScaling={false}>{displayStatus}</Text>
                           </View>
                         </View>
                         <View style={styles.divider} />
                         <View style={styles.rowBetween}>
-                          <Text style={styles.recordSubText} allowFontScaling={false}>Due Date Limit</Text>
+                          <Text style={styles.recordSubText} allowFontScaling={false}>
+                            {language === 'es' ? 'Fecha de Vencimiento' : 'Due Date Limit'}
+                          </Text>
                           <Text style={styles.recordSubTextVal} allowFontScaling={false}>{item.dueDate}</Text>
                         </View>
                         <View style={styles.rowBetween}>
-                          <Text style={styles.recordSubText} allowFontScaling={false}>Invoice Amount</Text>
+                          <Text style={styles.recordSubText} allowFontScaling={false}>
+                            {language === 'es' ? 'Monto de Factura' : 'Invoice Amount'}
+                          </Text>
                           <Text style={styles.recordSubTextVal} allowFontScaling={false}>${Number(item.amount).toLocaleString()}</Text>
                         </View>
                         <View style={styles.rowBetween}>
-                          <Text style={styles.recordSubText} allowFontScaling={false}>Outstanding Balance</Text>
+                          <Text style={styles.recordSubText} allowFontScaling={false}>
+                            {language === 'es' ? 'Saldo Pendiente' : 'Outstanding Balance'}
+                          </Text>
                           <Text style={[styles.recordValue, { color: outstanding > 0 ? '#f87171' : '#cbd5e1' }]} allowFontScaling={false}>
                             ${Number(outstanding).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                           </Text>
@@ -695,11 +733,16 @@ export const ManagerRentPaymentsScreen = () => {
               <View>
                 {filteredLedger.length === 0 ? (
                   <View style={styles.emptyView}>
-                    <Text style={styles.emptyText} allowFontScaling={false}>No rent ledger items found</Text>
+                    <Text style={styles.emptyText} allowFontScaling={false}>
+                      {language === 'es' ? 'No se encontraron registros de libro mayor' : 'No rent ledger items found'}
+                    </Text>
                   </View>
                 ) : (
                   filteredLedger.map((item, idx) => {
                     const isPayment = item.debit === null;
+                    const displayTxType = language === 'es'
+                      ? (item.transactionType === 'Rent Charge' ? 'Cargo Alquiler' : item.transactionType === 'Payment' ? 'Pago' : item.transactionType)
+                      : item.transactionType;
                     return (
                       <TouchableOpacity
                         key={item.id || idx}
@@ -718,7 +761,7 @@ export const ManagerRentPaymentsScreen = () => {
                           </View>
                           <View style={[styles.badge, { borderColor: isPayment ? '#10b981' : '#38bdf8', backgroundColor: isPayment ? 'rgba(16, 185, 129, 0.12)' : 'rgba(56, 189, 248, 0.12)' }]}>
                             <Text style={[styles.badgeText, { color: isPayment ? '#10b981' : '#38bdf8' }]} allowFontScaling={false}>
-                              {item.transactionType}
+                              {displayTxType}
                             </Text>
                           </View>
                         </View>
@@ -729,19 +772,25 @@ export const ManagerRentPaymentsScreen = () => {
                         
                         <View style={styles.ledgerGrid}>
                           <View style={styles.ledgerGridItem}>
-                            <Text style={styles.ledgerGridLabel} allowFontScaling={false}>DEBIT (+)</Text>
+                            <Text style={styles.ledgerGridLabel} allowFontScaling={false}>
+                              {language === 'es' ? 'DÉBITO (+)' : 'DEBIT (+)'}
+                            </Text>
                             <Text style={[styles.ledgerGridVal, { color: '#cbd5e1' }]} allowFontScaling={false}>
                               {item.debit ? `+$${item.debit.toLocaleString()}` : '-'}
                             </Text>
                           </View>
                           <View style={styles.ledgerGridItem}>
-                            <Text style={styles.ledgerGridLabel} allowFontScaling={false}>CREDIT (-)</Text>
+                            <Text style={styles.ledgerGridLabel} allowFontScaling={false}>
+                              {language === 'es' ? 'CRÉDITO (-)' : 'CREDIT (-)'}
+                            </Text>
                             <Text style={[styles.ledgerGridVal, { color: '#10b981' }]} allowFontScaling={false}>
                               {item.credit ? `-$${item.credit.toLocaleString()}` : '-'}
                             </Text>
                           </View>
                           <View style={styles.ledgerGridItem}>
-                            <Text style={styles.ledgerGridLabel} allowFontScaling={false}>RUNNING BAL</Text>
+                            <Text style={styles.ledgerGridLabel} allowFontScaling={false}>
+                              {language === 'es' ? 'SALDO ACTUAL' : 'RUNNING BAL'}
+                            </Text>
                             <Text style={[styles.ledgerGridVal, { color: '#38bdf8' }]} allowFontScaling={false}>
                               ${item.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                             </Text>

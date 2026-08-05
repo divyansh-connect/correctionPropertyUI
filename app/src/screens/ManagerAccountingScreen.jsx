@@ -18,11 +18,12 @@ import {
   Keyboard,
 } from 'react-native';
 import apiClient from '../api/client';
-import { useAuthStore } from '../store/useStore';
+import { useAuthStore, useThemeStore } from '../store/useStore';
 import { Ionicons } from '@expo/vector-icons';
 
 export const ManagerAccountingScreen = () => {
   const { logout, refreshAccessToken } = useAuthStore();
+  const { language } = useThemeStore();
 
   // Sub-tab: 'coa' | 'income' | 'expenses'
   const [activeTab, setActiveTab] = useState('coa');
@@ -576,26 +577,36 @@ export const ManagerAccountingScreen = () => {
       {/* FIXED HEADER WITH SWITCHER */}
       <View style={[styles.fixedHeader, { paddingTop: 16 }]}>
         <Text style={styles.title} allowFontScaling={false}>
-          {activeTab === 'coa' ? 'Chart of Accounts (CoA)' : activeTab === 'income' ? 'Income Transactions' : 'Expense Tracker'}
+          {activeTab === 'coa'
+            ? (language === 'es' ? 'Plan de Cuentas (CoA)' : 'Chart of Accounts (CoA)')
+            : activeTab === 'income'
+              ? (language === 'es' ? 'Transacciones de Ingresos' : 'Income Transactions')
+              : (language === 'es' ? 'Rastreador de Gastos' : 'Expense Tracker')}
         </Text>
         <Text style={styles.subtitle} allowFontScaling={false}>
           {activeTab === 'coa'
-            ? 'Verify property portfolios asset categories, liability reserves, and equity subdivisions.'
+            ? (language === 'es' ? 'Verifique las categorías de activos, reservas de pasivos y subdivisiones de patrimonio.' : 'Verify property portfolios asset categories, liability reserves, and equity subdivisions.')
             : activeTab === 'income'
-              ? 'Verify utility disbursements, late fees payments, pet assessments, and rental revenue.'
-              : 'Verify property business landscaping bills, utility invoices, repairs, and payroll distributions.'}
+              ? (language === 'es' ? 'Verifique desembolsos de servicios, pagos de mora, evaluaciones de mascotas e ingresos de alquiler.' : 'Verify utility disbursements, late fees payments, pet assessments, and rental revenue.')
+              : (language === 'es' ? 'Verifique facturas de jardinería, facturas de servicios, reparaciones y distribución de nómina.' : 'Verify property business landscaping bills, utility invoices, repairs, and payroll distributions.')}
         </Text>
 
         {/* Tab Selection Row */}
         <View style={styles.tabRow}>
           <TouchableOpacity style={[styles.tabItem, activeTab === 'coa' && styles.tabItemActive]} onPress={() => setActiveTab('coa')}>
-            <Text style={[styles.tabItemText, activeTab === 'coa' && styles.tabItemTextActive]} allowFontScaling={false}>Accounts</Text>
+            <Text style={[styles.tabItemText, activeTab === 'coa' && styles.tabItemTextActive]} allowFontScaling={false}>
+              {language === 'es' ? 'Cuentas' : 'Accounts'}
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.tabItem, activeTab === 'income' && styles.tabItemActive]} onPress={() => setActiveTab('income')}>
-            <Text style={[styles.tabItemText, activeTab === 'income' && styles.tabItemTextActive]} allowFontScaling={false}>Income</Text>
+            <Text style={[styles.tabItemText, activeTab === 'income' && styles.tabItemTextActive]} allowFontScaling={false}>
+              {language === 'es' ? 'Ingresos' : 'Income'}
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.tabItem, activeTab === 'expenses' && styles.tabItemActive]} onPress={() => setActiveTab('expenses')}>
-            <Text style={[styles.tabItemText, activeTab === 'expenses' && styles.tabItemTextActive]} allowFontScaling={false}>Expenses</Text>
+            <Text style={[styles.tabItemText, activeTab === 'expenses' && styles.tabItemTextActive]} allowFontScaling={false}>
+              {language === 'es' ? 'Gastos' : 'Expenses'}
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -605,7 +616,11 @@ export const ManagerAccountingScreen = () => {
             <Ionicons name="search-outline" size={16} color="#64748b" style={{ marginRight: 6 }} />
             <TextInput
               style={styles.searchInput}
-              placeholder={activeTab === 'coa' ? "Search accounts name or number..." : activeTab === 'income' ? "Search income by resident..." : "Search expenses by vendor..."}
+              placeholder={activeTab === 'coa'
+                ? (language === 'es' ? 'Buscar nombre o número de cuenta...' : 'Search accounts name or number...')
+                : activeTab === 'income'
+                  ? (language === 'es' ? 'Buscar ingresos por residente...' : 'Search income by resident...')
+                  : (language === 'es' ? 'Buscar gastos por proveedor...' : 'Search expenses by vendor...')}
               placeholderTextColor="#64748b"
               value={searchQuery}
               onChangeText={setSearchQuery}
@@ -615,13 +630,17 @@ export const ManagerAccountingScreen = () => {
           {activeTab === 'income' && (
             <TouchableOpacity style={styles.addBtn} onPress={() => setCreateIncomeOpen(true)}>
               <Ionicons name="add" size={16} color="#0f172a" />
-              <Text style={styles.addBtnText} allowFontScaling={false}>Income</Text>
+              <Text style={styles.addBtnText} allowFontScaling={false}>
+                {language === 'es' ? 'Ingreso' : 'Income'}
+              </Text>
             </TouchableOpacity>
           )}
           {activeTab === 'expenses' && (
             <TouchableOpacity style={styles.addBtn} onPress={() => setCreateExpenseOpen(true)}>
               <Ionicons name="add" size={16} color="#0f172a" />
-              <Text style={styles.addBtnText} allowFontScaling={false}>Expense</Text>
+              <Text style={styles.addBtnText} allowFontScaling={false}>
+                {language === 'es' ? 'Gasto' : 'Expense'}
+              </Text>
             </TouchableOpacity>
           )}
         </View>
@@ -637,7 +656,9 @@ export const ManagerAccountingScreen = () => {
         {loading ? (
           <View style={styles.centerLoading}>
             <ActivityIndicator size="large" color="#38bdf8" />
-            <Text style={styles.loadingText} allowFontScaling={false}>Processing ledger journals...</Text>
+            <Text style={styles.loadingText} allowFontScaling={false}>
+              {language === 'es' ? 'Procesando diarios del libro mayor...' : 'Processing ledger journals...'}
+            </Text>
           </View>
         ) : (
           <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
@@ -647,7 +668,9 @@ export const ManagerAccountingScreen = () => {
               <View>
                 {filteredCoA.length === 0 ? (
                   <View style={styles.emptyView}>
-                    <Text style={styles.emptyText} allowFontScaling={false}>No Chart of Account records match</Text>
+                    <Text style={styles.emptyText} allowFontScaling={false}>
+                      {language === 'es' ? 'No coinciden registros del Plan de Cuentas' : 'No Chart of Account records match'}
+                    </Text>
                   </View>
                 ) : (
                   filteredCoA.map((item) => (
@@ -663,11 +686,15 @@ export const ManagerAccountingScreen = () => {
                       </View>
                       <View style={styles.divider} />
                       <View style={styles.rowBetween}>
-                        <Text style={styles.recordSubText} allowFontScaling={false}>Type / Class Alignment</Text>
+                        <Text style={styles.recordSubText} allowFontScaling={false}>
+                          {language === 'es' ? 'Tipo / Alineación de Clase' : 'Type / Class Alignment'}
+                        </Text>
                         <Text style={styles.recordSubTextVal} allowFontScaling={false}>{item.type}</Text>
                       </View>
                       <View style={styles.rowBetween}>
-                        <Text style={styles.recordSubText} allowFontScaling={false}>Current Balance Ledger</Text>
+                        <Text style={styles.recordSubText} allowFontScaling={false}>
+                          {language === 'es' ? 'Saldo Actual del Libro Mayor' : 'Current Balance Ledger'}
+                        </Text>
                         <Text style={[styles.recordValue, { color: '#38bdf8' }]} allowFontScaling={false}>
                           ${Number(item.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                         </Text>
@@ -683,7 +710,9 @@ export const ManagerAccountingScreen = () => {
               <View>
                 {filteredIncome.length === 0 ? (
                   <View style={styles.emptyView}>
-                    <Text style={styles.emptyText} allowFontScaling={false}>No miscellaneous income ledger entries found</Text>
+                    <Text style={styles.emptyText} allowFontScaling={false}>
+                      {language === 'es' ? 'No se encontraron entradas de ingresos misceláneos' : 'No miscellaneous income ledger entries found'}
+                    </Text>
                   </View>
                 ) : (
                   filteredIncome.map((item) => (
@@ -699,11 +728,15 @@ export const ManagerAccountingScreen = () => {
                       </View>
                       <View style={styles.divider} />
                       <View style={styles.rowBetween}>
-                        <Text style={styles.recordSubText} allowFontScaling={false}>Clearing Timestamp</Text>
+                        <Text style={styles.recordSubText} allowFontScaling={false}>
+                          {language === 'es' ? 'Fecha de Liquidación' : 'Clearing Timestamp'}
+                        </Text>
                         <Text style={styles.recordSubTextVal} allowFontScaling={false}>{item.clearingDate}</Text>
                       </View>
                       <View style={styles.rowBetween}>
-                        <Text style={styles.recordSubText} allowFontScaling={false}>Payment Value Received</Text>
+                        <Text style={styles.recordSubText} allowFontScaling={false}>
+                          {language === 'es' ? 'Valor Recibido de Pago' : 'Payment Value Received'}
+                        </Text>
                         <Text style={[styles.recordValue, { color: '#10b981' }]} allowFontScaling={false}>
                           +${Number(item.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                         </Text>
@@ -719,7 +752,9 @@ export const ManagerAccountingScreen = () => {
               <View>
                 {filteredExpense.length === 0 ? (
                   <View style={styles.emptyView}>
-                    <Text style={styles.emptyText} allowFontScaling={false}>No business expense items audited</Text>
+                    <Text style={styles.emptyText} allowFontScaling={false}>
+                      {language === 'es' ? 'No hay artículos de gastos auditar' : 'No business expense items audited'}
+                    </Text>
                   </View>
                 ) : (
                   filteredExpense.map((item) => (
@@ -735,11 +770,15 @@ export const ManagerAccountingScreen = () => {
                       </View>
                       <View style={styles.divider} />
                       <View style={styles.rowBetween}>
-                        <Text style={styles.recordSubText} allowFontScaling={false}>Expense Clearing Date</Text>
+                        <Text style={styles.recordSubText} allowFontScaling={false}>
+                          {language === 'es' ? 'Fecha de Gasto' : 'Expense Clearing Date'}
+                        </Text>
                         <Text style={styles.recordSubTextVal} allowFontScaling={false}>{item.expenseDate}</Text>
                       </View>
                       <View style={styles.rowBetween}>
-                        <Text style={styles.recordSubText} allowFontScaling={false}>Payment Dispatched</Text>
+                        <Text style={styles.recordSubText} allowFontScaling={false}>
+                          {language === 'es' ? 'Pago Despachado' : 'Payment Dispatched'}
+                        </Text>
                         <Text style={[styles.recordValue, { color: '#ef4444' }]} allowFontScaling={false}>
                           -${Number(item.amountPaid || item.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                         </Text>

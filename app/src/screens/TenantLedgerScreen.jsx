@@ -13,7 +13,7 @@ import {
   Easing,
 } from 'react-native';
 import apiClient from '../api/client';
-import { useAuthStore } from '../store/useStore';
+import { useAuthStore, useThemeStore } from '../store/useStore';
 import { useThemeColors } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -56,8 +56,28 @@ const AnimatedTouchable = ({ children, onPress, style, disabled }) => {
 
 export const TenantLedgerScreen = () => {
   const { logout, refreshAccessToken } = useAuthStore();
+  const { language } = useThemeStore();
   const { colors, isDarkMode } = useThemeColors();
   const styles = getStyles(colors, isDarkMode);
+  const es = language === 'es';
+  
+  const translateType = (type) => {
+    if (!es) return type;
+    if (type === 'Rent Charge') return 'Cargo de Renta';
+    if (type === 'Payment') return 'Pago';
+    return type;
+  };
+
+  const translateDescription = (desc) => {
+    if (!es) return desc;
+    if (desc === 'Rent Charge & Utilities') return 'Cargo de Renta y Servicios';
+    if (desc === 'Payment via ACH Bank Transfer') return 'Pago vía Transferencia Bancaria ACH';
+    if (desc === 'Payment via Credit Card') return 'Pago con Tarjeta de Crédito';
+    if (desc === 'Rent Charge') return 'Cargo de Renta';
+    if (desc === 'Payment') return 'Pago';
+    return desc;
+  };
+
   const [ledgerEntries, setLedgerEntries] = useState([]);
   const [, setInvoices] = useState([]);
   const [, setPayments] = useState([]);
@@ -195,7 +215,9 @@ export const TenantLedgerScreen = () => {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color="#38bdf8" />
-        <Text style={styles.loadingText} allowFontScaling={false}>Loading Rent Ledger...</Text>
+        <Text style={styles.loadingText} allowFontScaling={false}>
+          {es ? 'Cargando Libro Mayor...' : 'Loading Rent Ledger...'}
+        </Text>
       </View>
     );
   }
@@ -210,7 +232,9 @@ export const TenantLedgerScreen = () => {
       <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
         {/* Page Header */}
         <View style={styles.header}>
-          <Text style={styles.title} allowFontScaling={false}>Rent Ledger</Text>
+          <Text style={styles.title} allowFontScaling={false}>
+            {es ? 'Libro Mayor de Renta' : 'Rent Ledger'}
+          </Text>
         </View>
 
         {/* Search Bar */}
@@ -219,7 +243,7 @@ export const TenantLedgerScreen = () => {
             <Ionicons name="search-outline" size={20} color="#64748b" style={{ marginRight: 8 }} />
             <TextInput
               style={styles.searchInput}
-              placeholder="Search ledger entries..."
+              placeholder={es ? 'Buscar en el libro mayor...' : 'Search ledger entries...'}
               placeholderTextColor="#64748b"
               value={searchQuery}
               onChangeText={(txt) => {
@@ -231,18 +255,22 @@ export const TenantLedgerScreen = () => {
 
         {/* Type Filter Pills */}
         <View style={styles.typePillsRow}>
-          {['All Types', 'Rent Charge', 'Payment'].map((t) => {
-            const isSelected = typeFilter === t;
+          {[
+            { key: 'All Types', label: es ? 'Todos' : 'All Types' },
+            { key: 'Rent Charge', label: es ? 'Cargo de Renta' : 'Rent Charge' },
+            { key: 'Payment', label: es ? 'Pago' : 'Payment' },
+          ].map(({ key, label }) => {
+            const isSelected = typeFilter === key;
             return (
               <TouchableOpacity
-                key={t}
+                key={key}
                 style={[styles.typeChip, isSelected && styles.typeChipActive]}
                 onPress={() => {
-                  setTypeFilter(t);
+                  setTypeFilter(key);
                 }}
               >
                 <Text style={[styles.typeChipText, isSelected && styles.typeChipTextActive]} allowFontScaling={false}>
-                  {t}
+                  {label}
                 </Text>
               </TouchableOpacity>
             );
@@ -252,7 +280,7 @@ export const TenantLedgerScreen = () => {
         {/* Section Header */}
         <View style={styles.showingRow}>
           <Text style={styles.showingText} allowFontScaling={false}>
-            LEDGER TRANSACTIONS ({filteredEntries.length})
+            {es ? `TRANSACCIONES DEL LIBRO MAYOR (${filteredEntries.length})` : `LEDGER TRANSACTIONS (${filteredEntries.length})`}
           </Text>
         </View>
 
@@ -260,7 +288,9 @@ export const TenantLedgerScreen = () => {
         {filteredEntries.length === 0 ? (
           <View style={styles.emptyCard}>
             <Ionicons name="receipt-outline" size={48} color="#475569" style={{ marginBottom: 8 }} />
-            <Text style={styles.emptyText} allowFontScaling={false}>No transactions found</Text>
+            <Text style={styles.emptyText} allowFontScaling={false}>
+              {es ? 'No se encontraron transacciones' : 'No transactions found'}
+            </Text>
           </View>
         ) : (
           filteredEntries.map((item, idx) => {
@@ -282,18 +312,18 @@ export const TenantLedgerScreen = () => {
                     <View style={styles.infoLine}>
                       <Ionicons name="business-outline" size={13} color="#94a3b8" style={{ marginRight: 6 }} />
                       <Text style={styles.propText} allowFontScaling={false}>
-                        {item.propertyName} (Unit {item.unitNumber})
+                        {item.propertyName} ({es ? 'Unidad' : 'Unit'} {item.unitNumber})
                       </Text>
                     </View>
                     <Text style={styles.descText} allowFontScaling={false}>
-                      {item.description} · Date: {item.date}
+                      {translateDescription(item.description)} · {es ? 'Fecha:' : 'Date:'} {item.date}
                     </Text>
                   </View>
 
                   <View style={styles.rightGroup}>
                     <View style={[styles.typeBadge, isCharge ? styles.badgeRed : styles.badgeGreen]}>
                       <Text style={[styles.typeBadgeText, isCharge ? styles.textRed : styles.textGreen]} allowFontScaling={false}>
-                        {item.transactionType}
+                        {translateType(item.transactionType)}
                       </Text>
                     </View>
 
@@ -308,21 +338,27 @@ export const TenantLedgerScreen = () => {
                 {/* Debit, Credit & Running Balance Metrics Row */}
                 <View style={styles.metricsRow}>
                   <View style={styles.metricCol}>
-                    <Text style={styles.metricLabel} allowFontScaling={false}>DEBIT (+CHARGE)</Text>
+                    <Text style={styles.metricLabel} allowFontScaling={false}>
+                      {es ? 'DÉBITO (+CARGO)' : 'DEBIT (+CHARGE)'}
+                    </Text>
                     <Text style={[styles.metricVal, item.debit > 0 ? { color: '#f87171' } : { color: '#cbd5e1' }]} allowFontScaling={false}>
                       {item.debit > 0 ? `+$${item.debit.toLocaleString()}` : '-'}
                     </Text>
                   </View>
 
                   <View style={styles.metricCol}>
-                    <Text style={styles.metricLabel} allowFontScaling={false}>CREDIT (-PAYMENT)</Text>
+                    <Text style={styles.metricLabel} allowFontScaling={false}>
+                      {es ? 'CRÉDITO (-PAGO)' : 'CREDIT (-PAYMENT)'}
+                    </Text>
                     <Text style={[styles.metricVal, item.credit > 0 ? { color: '#10b981' } : { color: '#cbd5e1' }]} allowFontScaling={false}>
                       {item.credit > 0 ? `-$${item.credit.toLocaleString()}` : '-'}
                     </Text>
                   </View>
 
                   <View style={styles.metricColRight}>
-                    <Text style={styles.metricLabel} allowFontScaling={false}>RUNNING BALANCE</Text>
+                    <Text style={styles.metricLabel} allowFontScaling={false}>
+                      {es ? 'SALDO ACTUAL' : 'RUNNING BALANCE'}
+                    </Text>
                     <Text style={[styles.metricVal, item.balance > 0 ? { color: '#f87171', fontWeight: '900' } : { color: '#10b981', fontWeight: '900' }]} allowFontScaling={false}>
                       ${item.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </Text>
@@ -342,7 +378,7 @@ export const TenantLedgerScreen = () => {
               <View style={styles.modalHeaderTitleRow}>
                 <Ionicons name="receipt-outline" size={20} color="#38bdf8" style={{ marginRight: 6 }} />
                 <Text style={styles.modalTitle} allowFontScaling={false}>
-                  Ledger Statement
+                  {es ? 'Estado del Libro Mayor' : 'Ledger Statement'}
                 </Text>
               </View>
               <TouchableOpacity onPress={() => setSelectedEntry(null)}>
@@ -352,46 +388,68 @@ export const TenantLedgerScreen = () => {
 
             <View style={styles.detailCard}>
               <View style={styles.detailRow}>
-                <Text style={styles.detailLabel} allowFontScaling={false}>Resident Name</Text>
+                <Text style={styles.detailLabel} allowFontScaling={false}>
+                  {es ? 'Nombre del Residente' : 'Resident Name'}
+                </Text>
                 <Text style={styles.detailVal} allowFontScaling={false}>{selectedEntry?.tenantName}</Text>
               </View>
 
               <View style={styles.detailRow}>
-                <Text style={styles.detailLabel} allowFontScaling={false}>Property & Unit</Text>
-                <Text style={styles.detailVal} allowFontScaling={false}>{selectedEntry?.propertyName} (Unit {selectedEntry?.unitNumber})</Text>
+                <Text style={styles.detailLabel} allowFontScaling={false}>
+                  {es ? 'Propiedad y Unidad' : 'Property & Unit'}
+                </Text>
+                <Text style={styles.detailVal} allowFontScaling={false}>
+                  {selectedEntry?.propertyName} ({es ? 'Unidad' : 'Unit'} {selectedEntry?.unitNumber})
+                </Text>
               </View>
 
               <View style={styles.detailRow}>
-                <Text style={styles.detailLabel} allowFontScaling={false}>Transaction Date</Text>
+                <Text style={styles.detailLabel} allowFontScaling={false}>
+                  {es ? 'Fecha de Transacción' : 'Transaction Date'}
+                </Text>
                 <Text style={styles.detailVal} allowFontScaling={false}>{selectedEntry?.date}</Text>
               </View>
 
               <View style={styles.detailRow}>
-                <Text style={styles.detailLabel} allowFontScaling={false}>Description</Text>
-                <Text style={styles.detailVal} allowFontScaling={false}>{selectedEntry?.description}</Text>
+                <Text style={styles.detailLabel} allowFontScaling={false}>
+                  {es ? 'Descripción' : 'Description'}
+                </Text>
+                <Text style={styles.detailVal} allowFontScaling={false}>
+                  {translateDescription(selectedEntry?.description)}
+                </Text>
               </View>
 
               <View style={styles.detailRow}>
-                <Text style={styles.detailLabel} allowFontScaling={false}>Type</Text>
-                <Text style={styles.detailVal} allowFontScaling={false}>{selectedEntry?.transactionType}</Text>
+                <Text style={styles.detailLabel} allowFontScaling={false}>
+                  {es ? 'Tipo' : 'Type'}
+                </Text>
+                <Text style={styles.detailVal} allowFontScaling={false}>
+                  {translateType(selectedEntry?.transactionType)}
+                </Text>
               </View>
 
               <View style={styles.detailRow}>
-                <Text style={styles.detailLabel} allowFontScaling={false}>Debit Amount (+)</Text>
+                <Text style={styles.detailLabel} allowFontScaling={false}>
+                  {es ? 'Monto de Débito (+)' : 'Debit Amount (+)'}
+                </Text>
                 <Text style={[styles.detailVal, { color: '#f87171' }]} allowFontScaling={false}>
                   {selectedEntry?.debit > 0 ? `+$${selectedEntry.debit.toLocaleString()}` : '$0.00'}
                 </Text>
               </View>
 
               <View style={styles.detailRow}>
-                <Text style={styles.detailLabel} allowFontScaling={false}>Credit Amount (-)</Text>
+                <Text style={styles.detailLabel} allowFontScaling={false}>
+                  {es ? 'Monto de Crédito (-)' : 'Credit Amount (-)'}
+                </Text>
                 <Text style={[styles.detailVal, { color: '#10b981' }]} allowFontScaling={false}>
                   {selectedEntry?.credit > 0 ? `-$${selectedEntry.credit.toLocaleString()}` : '$0.00'}
                 </Text>
               </View>
 
               <View style={[styles.detailRow, { borderBottomWidth: 0 }]}>
-                <Text style={styles.detailLabel} allowFontScaling={false}>Running Balance</Text>
+                <Text style={styles.detailLabel} allowFontScaling={false}>
+                  {es ? 'Saldo Actual' : 'Running Balance'}
+                </Text>
                 <Text style={[styles.detailVal, { color: '#f87171', fontWeight: '900' }]} allowFontScaling={false}>
                   ${(selectedEntry?.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                 </Text>
@@ -399,7 +457,9 @@ export const TenantLedgerScreen = () => {
             </View>
 
             <TouchableOpacity style={styles.closeModalBtn} onPress={() => setSelectedEntry(null)}>
-              <Text style={styles.closeModalBtnText} allowFontScaling={false}>Close Statement</Text>
+              <Text style={styles.closeModalBtnText} allowFontScaling={false}>
+                {es ? 'Cerrar Declaración' : 'Close Statement'}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
