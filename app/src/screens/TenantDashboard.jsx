@@ -12,11 +12,13 @@ import {
   Platform,
 } from 'react-native';
 import apiClient from '../api/client';
-import { useAuthStore, useThemeStore } from '../store/useStore';
+import { useAuthStore } from '../store/useStore';
+import { useThemeColors } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
 
 export const TenantDashboard = ({ onNavigate }) => {
   const { user, logout, refreshAccessToken } = useAuthStore();
+<<<<<<< HEAD
   const { theme, language } = useThemeStore();
   const isDarkMode = theme === 'dark';
   const es = language === 'es';
@@ -31,6 +33,10 @@ export const TenantDashboard = ({ onNavigate }) => {
     inputBg: isDarkMode ? '#0f172a' : '#f1f5f9',
     inputBorder: isDarkMode ? '#334155' : '#cbd5e1',
   };
+=======
+  const { colors, isDarkMode } = useThemeColors();
+  const styles = getStyles(colors, isDarkMode);
+>>>>>>> b1be112c872b2a2154a973a4ff044bc20e05ee8d
 
   const [loading, setLoading] = useState(true);
   const [tenantData, setTenantData] = useState({
@@ -431,22 +437,22 @@ export const TenantDashboard = ({ onNavigate }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f172a' },
+const getStyles = (colors, isDarkMode) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   scrollContent: { padding: 16 },
-  center: { flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center' },
-  loadingText: { color: '#94a3b8', marginTop: 8 },
+  center: { flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { color: colors.textSecondary, marginTop: 8 },
   header: { marginBottom: 20 },
   welcomeRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  welcomeText: { fontSize: 14, color: '#94a3b8', fontWeight: '500' },
-  title: { fontSize: 26, fontWeight: '800', color: '#f8fafc' },
-  avatarContainer: { width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(56, 189, 248, 0.15)', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#334155' },
-  subtitle: { fontSize: 13, color: '#cbd5e1', marginTop: 6, fontWeight: '500' },
+  welcomeText: { fontSize: 14, color: colors.textSecondary, fontWeight: '500' },
+  title: { fontSize: 26, fontWeight: '800', color: colors.textPrimary },
+  avatarContainer: { width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(56, 189, 248, 0.15)', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: colors.cardBorder },
+  subtitle: { fontSize: 13, color: colors.textSecondary, marginTop: 6, fontWeight: '500' },
 
   sectionTitle: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#94a3b8',
+    color: colors.textMuted,
     marginBottom: 10,
     marginTop: 10,
     letterSpacing: 1,
@@ -459,13 +465,13 @@ const styles = StyleSheet.create({
   },
   actionCard: {
     width: '23%',
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     paddingVertical: 12,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.cardBorder,
   },
   actionIconWrapper: {
     width: 42,
@@ -476,7 +482,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   actionCardText: {
-    color: '#cbd5e1',
+    color: colors.textSecondary,
     fontSize: 10,
     fontWeight: '600',
     textAlign: 'center',
@@ -485,21 +491,21 @@ const styles = StyleSheet.create({
   metricGrid: { flexDirection: 'row', gap: 12, marginBottom: 12 },
   metricCard: {
     flex: 1,
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.surface,
     borderRadius: 14,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.cardBorder,
   },
   metricHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  metricLabel: { fontSize: 9.5, color: '#94a3b8', fontWeight: '800', letterSpacing: 0.5 },
+  metricLabel: { fontSize: 9.5, color: colors.textSecondary, fontWeight: '800', letterSpacing: 0.5 },
   metricVal: { fontSize: 24, fontWeight: '800', marginVertical: 4 },
-  metricSub: { fontSize: 11, color: '#94a3b8' },
+  metricSub: { fontSize: 11, color: colors.textSecondary },
 
   leaseRenewalBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.surface,
     borderRadius: 14,
     padding: 14,
     marginVertical: 14,
@@ -507,28 +513,28 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(56, 189, 248, 0.3)',
   },
   leaseBannerTitle: { fontSize: 11, color: '#38bdf8', fontWeight: '800', letterSpacing: 0.5 },
-  leaseBannerSub: { fontSize: 11, color: '#94a3b8', marginTop: 2 },
+  leaseBannerSub: { fontSize: 11, color: colors.textSecondary, marginTop: 2 },
   reviewBtn: { backgroundColor: '#38bdf8', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
   reviewBtnText: { color: '#0f172a', fontSize: 11, fontWeight: '800' },
 
   modalBg: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.85)', justifyContent: 'center', padding: 20 },
-  modalCard: { backgroundColor: '#1e293b', borderRadius: 20, padding: 22, borderWidth: 1, borderColor: '#334155' },
+  modalCard: { backgroundColor: colors.surface, borderRadius: 20, padding: 22, borderWidth: 1, borderColor: colors.cardBorder },
   modalIconCenter: { alignItems: 'center', marginBottom: 12 },
-  modalTitle: { fontSize: 18, fontWeight: '800', color: '#f8fafc', marginBottom: 12, textAlign: 'center' },
-  confirmText: { color: '#94a3b8', fontSize: 13, textAlign: 'center', lineHeight: 18, marginBottom: 18 },
+  modalTitle: { fontSize: 18, fontWeight: '800', color: colors.textPrimary, marginBottom: 12, textAlign: 'center' },
+  confirmText: { color: colors.textSecondary, fontSize: 13, textAlign: 'center', lineHeight: 18, marginBottom: 18 },
   modalButtons: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 },
   modalButton: { width: '48%', paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
-  cancelBtn: { backgroundColor: '#334155' },
-  cancelBtnText: { color: '#cbd5e1', fontWeight: '700', fontSize: 13 },
+  cancelBtn: { backgroundColor: colors.buttonSecondary },
+  cancelBtnText: { color: colors.textSecondary, fontWeight: '700', fontSize: 13 },
   submitBtn: { backgroundColor: '#0284c7' },
   submitBtnText: { color: '#ffffff', fontWeight: '700', fontSize: 13 },
-  input: { backgroundColor: '#0f172a', borderWidth: 1, borderColor: '#334155', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, color: '#f8fafc', marginBottom: 14, fontSize: 13 },
-  detailCard: { backgroundColor: '#0f172a', borderRadius: 12, padding: 14, marginBottom: 16, borderWidth: 1, borderColor: '#334155' },
-  detailRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#1e293b' },
-  detailLabel: { color: '#94a3b8', fontSize: 13, fontWeight: '500' },
-  detailVal: { color: '#f8fafc', fontSize: 13, fontWeight: '700' },
-  closeBtn: { backgroundColor: '#334155', borderRadius: 10, paddingVertical: 12, alignItems: 'center' },
-  closeBtnText: { color: '#cbd5e1', fontSize: 13, fontWeight: '700' },
+  input: { backgroundColor: colors.inputBackground, borderWidth: 1, borderColor: colors.inputBorder, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, color: colors.textPrimary, marginBottom: 14, fontSize: 13 },
+  detailCard: { backgroundColor: colors.inputBackground, borderRadius: 12, padding: 14, marginBottom: 16, borderWidth: 1, borderColor: colors.cardBorder },
+  detailRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.surface },
+  detailLabel: { color: colors.textSecondary, fontSize: 13, fontWeight: '500' },
+  detailVal: { color: colors.textPrimary, fontSize: 13, fontWeight: '700' },
+  closeBtn: { backgroundColor: colors.buttonSecondary, borderRadius: 10, paddingVertical: 12, alignItems: 'center' },
+  closeBtnText: { color: colors.textSecondary, fontSize: 13, fontWeight: '700' },
   headerRightActions: {
     flexDirection: 'row',
     alignItems: 'center',

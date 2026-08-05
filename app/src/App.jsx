@@ -104,11 +104,11 @@ export default function App() {
   switch (role) {
     case 'Super Admin':
       moduleTabs = [
-        { id: 'dashboard', label: language === 'es' ? 'Tablero' : 'Dashboard', icon: 'grid-outline', activeIcon: 'grid' },
-        { id: 'companies', label: language === 'es' ? 'Empresas' : 'Companies', icon: 'business-outline', activeIcon: 'business' },
-        { id: 'subscriptions', label: language === 'es' ? 'Suscripciones' : 'Subscriptions', icon: 'card-outline', activeIcon: 'card' },
-        { id: 'platform-users', label: language === 'es' ? 'Usuarios' : 'Users', icon: 'people-outline', activeIcon: 'people' },
-        { id: 'more', label: language === 'es' ? 'Menú' : 'All Menu', icon: 'menu-outline', activeIcon: 'menu' },
+        { id: 'dashboard', label: 'Dashboard', icon: 'grid-outline', activeIcon: 'grid' },
+        { id: 'companies', label: 'Companies', icon: 'business-outline', activeIcon: 'business' },
+        { id: 'subscriptions', label: 'Subscriptions', icon: 'card-outline', activeIcon: 'card' },
+        { id: 'platform-users', label: 'Users', icon: 'people-outline', activeIcon: 'people' },
+        { id: 'profile', label: 'Profile', icon: 'person-outline', activeIcon: 'person' },
       ];
       break;
 
@@ -166,7 +166,7 @@ export default function App() {
   const renderDashboardByRole = () => {
     switch (role) {
       case 'Super Admin':
-        return <AdminDashboard />;
+        return <AdminDashboard onNavigate={(screenId) => setActiveTab(screenId)} />;
       case 'Property Manager':
         return <ManagerDashboard onNavigate={(screenId) => setActiveTab(screenId)} />;
       case 'Collection Manager':
@@ -244,40 +244,40 @@ export default function App() {
       case 'more':
         if (role === 'Tenant') {
           return (
-            <TenantServicesScreen 
+            <TenantServicesScreen
               onNavigate={(screenId) => {
                 if (screenId === 'logout') {
                   useAuthStore.getState().logout();
                 } else {
                   setActiveTab(screenId);
                 }
-              }} 
+              }}
             />
           );
         }
         if (role === 'Owner') {
           return (
-            <OwnerServicesScreen 
+            <OwnerServicesScreen
               onNavigate={(screenId) => {
                 if (screenId === 'logout') {
                   useAuthStore.getState().logout();
                 } else {
                   setActiveTab(screenId);
                 }
-              }} 
+              }}
             />
           );
         }
         if (role === 'Property Manager') {
           return (
-            <ManagerServicesScreen 
+            <ManagerServicesScreen
               onNavigate={(screenId) => {
                 if (screenId === 'logout') {
                   useAuthStore.getState().logout();
                 } else {
                   setActiveTab(screenId);
                 }
-              }} 
+              }}
             />
           );
         }
@@ -301,45 +301,7 @@ export default function App() {
     <View style={[styles.container, { backgroundColor: isDarkMode ? '#0f172a' : '#f8fafc' }]}>
       <StatusBar style={isDarkMode ? "light" : "dark"} />
 
-      {/* Top Header Bar with Hamburger Drawer, Notification Bell Icon & Profile Badge */}
-      {(role !== 'Maintenance Staff' && role !== 'Tenant' && role !== 'Owner' && role !== 'Property Manager' && role !== 'Collection Manager') && (
-        <View style={[styles.topHeader, { backgroundColor: isDarkMode ? '#1e293b' : '#ffffff', borderBottomColor: isDarkMode ? '#334155' : '#e2e8f0' }]}>
-          <View style={styles.brandContainer}>
-            <TouchableOpacity style={styles.hamburgerBtn} onPress={() => setDrawerVisible(true)}>
-              <Ionicons name="menu-outline" size={24} color="#38bdf8" />
-            </TouchableOpacity>
-            <Ionicons name="business" size={20} color="#38bdf8" style={{ marginRight: 2 }} />
-            <Text style={[styles.headerTitle, { color: isDarkMode ? '#f8fafc' : '#0f172a' }]} allowFontScaling={false}>
-              {role === 'Tenant' ? 'Tenant Portal' : 'Zentrol Property'}
-            </Text>
-          </View>
 
-          <View style={styles.headerRightActions}>
-            {/* Notification Bell Icon */}
-            <TouchableOpacity
-              style={styles.bellBtn}
-              onPress={() => setActiveTab('notifications')}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="notifications-outline" size={22} color={isDarkMode ? '#f8fafc' : '#475569'} />
-              <View style={styles.bellBadge}>
-                <Text style={styles.bellBadgeText} allowFontScaling={false}>3</Text>
-              </View>
-            </TouchableOpacity>
-
-            {/* Profile Avatar Badge */}
-            <TouchableOpacity
-              style={styles.profileBadge}
-              onPress={() => setActiveTab('profile')}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.profileBadgeText} allowFontScaling={false}>
-                {user?.firstName?.charAt(0) || user?.email?.charAt(0) || 'P'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
 
       {/* Navigation Drawer Component */}
       <NavigationDrawer
@@ -356,7 +318,7 @@ export default function App() {
 
       {/* Fixed Bottom Navigation Bar */}
       <View style={[
-        styles.bottomBarContainer, 
+        styles.bottomBarContainer,
         (role === 'Maintenance Staff' || role === 'Tenant') && { paddingBottom: Platform.OS === 'ios' ? 24 : 16, paddingTop: 10 },
         { backgroundColor: isDarkMode ? '#1e293b' : '#ffffff', borderTopColor: isDarkMode ? '#334155' : '#e2e8f0' }
       ]}>
@@ -370,7 +332,7 @@ export default function App() {
               <TouchableOpacity
                 key={`bottom-${tab.id}`}
                 style={[
-                  styles.bottomTabItem, 
+                  styles.bottomTabItem,
                   (isActive && !useIonicon) && styles.bottomTabItemActive,
                   (isActive && !useIonicon && !isDarkMode) && { backgroundColor: 'rgba(56, 189, 248, 0.08)' }
                 ]}
@@ -381,21 +343,21 @@ export default function App() {
                   <View style={{ height: 2.5, backgroundColor: '#38bdf8', position: 'absolute', top: -6, left: 16, right: 16, borderRadius: 1 }} />
                 )}
                 {useIonicon ? (
-                  <Ionicons 
-                    name={isActive ? tab.activeIcon : tab.icon} 
-                    size={20} 
-                    color={isActive ? '#38bdf8' : (isDarkMode ? '#cbd5e1' : '#64748b')} 
+                  <Ionicons
+                    name={isActive ? tab.activeIcon : tab.icon}
+                    size={20}
+                    color={isActive ? '#38bdf8' : (isDarkMode ? '#cbd5e1' : '#64748b')}
                     style={{ marginBottom: 2 }}
                   />
                 ) : (
                   <Text style={[styles.bottomTabIcon, { color: isActive ? '#38bdf8' : (isDarkMode ? '#cbd5e1' : '#64748b') }]} allowFontScaling={false}>{tab.icon}</Text>
                 )}
-                <Text 
+                <Text
                   style={[
-                    styles.bottomTabText, 
+                    styles.bottomTabText,
                     isActive && styles.bottomTabTextActive,
                     { color: isActive ? '#38bdf8' : (isDarkMode ? '#94a3b8' : '#475569') }
-                  ]} 
+                  ]}
                   allowFontScaling={false}
                 >
                   {(isStaff || isTenant || role === 'Collection Manager') ? tab.label : (tab.label.split(' ')[1] || tab.label)}
@@ -502,6 +464,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    paddingTop: Platform.OS === 'ios' ? 22 : 0,
   },
   bottomBarContainer: {
     backgroundColor: '#1e293b',

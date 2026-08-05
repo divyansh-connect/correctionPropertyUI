@@ -12,7 +12,8 @@ import {
   Easing,
 } from 'react-native';
 import apiClient from '../api/client';
-import { useAuthStore, useThemeStore } from '../store/useStore';
+import { useAuthStore } from '../store/useStore';
+import { useThemeColors } from '../theme';
 
 // Animated Touchable Wrapper Component
 const AnimatedTouchable = ({ children, onPress, style, disabled }) => {
@@ -53,6 +54,7 @@ const AnimatedTouchable = ({ children, onPress, style, disabled }) => {
 
 export const CollectionDashboard = () => {
   const { logout, refreshAccessToken } = useAuthStore();
+<<<<<<< HEAD
   const { theme, language } = useThemeStore();
   const isDarkMode = theme === 'dark';
 
@@ -66,6 +68,10 @@ export const CollectionDashboard = () => {
     inputBg: isDarkMode ? '#0f172a' : '#f1f5f9',
     inputBorder: isDarkMode ? '#334155' : '#cbd5e1',
   };
+=======
+  const { colors, isDarkMode } = useThemeColors();
+  const styles = getStyles(colors, isDarkMode);
+>>>>>>> b1be112c872b2a2154a973a4ff044bc20e05ee8d
 
   const [metrics, setMetrics] = useState(null);
   const [charts, setCharts] = useState(null);
@@ -327,58 +333,58 @@ export const CollectionDashboard = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  mainWrapper: { flex: 1, backgroundColor: '#0f172a' },
+const getStyles = (colors, isDarkMode) => StyleSheet.create({
+  mainWrapper: { flex: 1, backgroundColor: colors.background },
   outerContentContainer: { padding: 16, paddingBottom: 60 },
-  center: { flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center' },
-  loadingText: { color: '#94a3b8', marginTop: 8 },
+  center: { flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { color: colors.textSecondary, marginTop: 8 },
 
   header: { marginBottom: 14, paddingTop: 16 },
   breadcrumb: { color: '#38bdf8', fontSize: 11, fontWeight: '700', marginBottom: 4 },
   titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
-  title: { fontSize: 20, fontWeight: '800', color: '#f8fafc', flex: 1 },
-  subtitle: { fontSize: 11.5, color: '#94a3b8', marginTop: 4, lineHeight: 16 },
+  title: { fontSize: 20, fontWeight: '800', color: colors.textPrimary, flex: 1 },
+  subtitle: { fontSize: 11.5, color: colors.textSecondary, marginTop: 4, lineHeight: 16 },
 
-  refreshBtn: { backgroundColor: '#1e293b', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6, borderWidth: 1, borderColor: '#334155' },
-  refreshBtnText: { color: '#cbd5e1', fontSize: 11, fontWeight: '700' },
+  refreshBtn: { backgroundColor: colors.surface, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6, borderWidth: 1, borderColor: colors.cardBorder },
+  refreshBtnText: { color: colors.textSecondary, fontSize: 11, fontWeight: '700' },
 
   kpiGrid: { flexDirection: 'row', gap: 10, marginBottom: 10 },
   kpiCard: {
     flex: 1,
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.surface,
     borderRadius: 14,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.cardBorder,
   },
   kpiHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  kpiLabel: { fontSize: 9.5, color: '#94a3b8', fontWeight: '800', letterSpacing: 0.5 },
+  kpiLabel: { fontSize: 9.5, color: colors.textSecondary, fontWeight: '800', letterSpacing: 0.5 },
   iconCircleGreen: { width: 22, height: 22, borderRadius: 11, backgroundColor: 'rgba(74, 222, 128, 0.15)', alignItems: 'center', justifyContent: 'center' },
   iconCircleRed: { width: 22, height: 22, borderRadius: 11, backgroundColor: 'rgba(248, 113, 113, 0.15)', alignItems: 'center', justifyContent: 'center' },
   iconCircleBlue: { width: 22, height: 22, borderRadius: 11, backgroundColor: 'rgba(56, 189, 248, 0.15)', alignItems: 'center', justifyContent: 'center' },
   iconCircleYellow: { width: 22, height: 22, borderRadius: 11, backgroundColor: 'rgba(250, 204, 21, 0.15)', alignItems: 'center', justifyContent: 'center' },
 
-  kpiVal: { fontSize: 22, fontWeight: '800', color: '#f8fafc', marginVertical: 6 },
+  kpiVal: { fontSize: 22, fontWeight: '800', color: colors.textPrimary, marginVertical: 6 },
   kpiFooterRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   badgeGreen: { backgroundColor: 'rgba(74, 222, 128, 0.15)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
   badgeGreenText: { color: '#4ade80', fontSize: 9.5, fontWeight: '800' },
   badgeRed: { backgroundColor: 'rgba(248, 113, 113, 0.15)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
   badgeRedText: { color: '#f87171', fontSize: 9.5, fontWeight: '800' },
-  kpiSubText: { fontSize: 10, color: '#94a3b8' },
+  kpiSubText: { fontSize: 10, color: colors.textSecondary },
 
-  chartCard: { backgroundColor: '#1e293b', borderRadius: 14, padding: 16, marginBottom: 14, borderWidth: 1, borderColor: '#334155' },
-  chartTitle: { fontSize: 15, fontWeight: '800', color: '#f8fafc' },
-  chartSubtitle: { fontSize: 11, color: '#94a3b8', marginTop: 2, marginBottom: 12 },
+  chartCard: { backgroundColor: colors.surface, borderRadius: 14, padding: 16, marginBottom: 14, borderWidth: 1, borderColor: colors.cardBorder },
+  chartTitle: { fontSize: 15, fontWeight: '800', color: colors.textPrimary },
+  chartSubtitle: { fontSize: 11, color: colors.textSecondary, marginTop: 2, marginBottom: 12 },
   legendRow: { flexDirection: 'row', gap: 14, marginBottom: 12 },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   legendDot: { width: 8, height: 8, borderRadius: 4 },
-  legendText: { fontSize: 10.5, color: '#cbd5e1', fontWeight: '600' },
+  legendText: { fontSize: 10.5, color: colors.textSecondary, fontWeight: '600' },
 
   graphContainer: { height: 120, flexDirection: 'row', alignItems: 'flex-end', paddingTop: 10 },
   yAxis: { width: 35, justifyContent: 'space-between', height: '100%', paddingBottom: 6 },
-  yAxisText: { color: '#94a3b8', fontSize: 9.5, fontWeight: '700' },
+  yAxisText: { color: colors.textSecondary, fontSize: 9.5, fontWeight: '700' },
   graphArea: { flex: 1, height: '100%', justifyContent: 'space-between', position: 'relative' },
-  gridLine: { height: 1, backgroundColor: '#334155', width: '100%' },
+  gridLine: { height: 1, backgroundColor: colors.divider, width: '100%' },
   inflowCurve: {
     position: 'absolute',
     bottom: 10,
@@ -392,13 +398,13 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 40,
   },
 
-  followUpCard: { backgroundColor: '#1e293b', borderRadius: 14, padding: 16, marginBottom: 14, borderWidth: 1, borderColor: '#334155' },
-  followUpTitle: { fontSize: 15, fontWeight: '800', color: '#f8fafc' },
-  followUpSubtitle: { fontSize: 11, color: '#94a3b8', marginTop: 2, marginBottom: 12 },
+  followUpCard: { backgroundColor: colors.surface, borderRadius: 14, padding: 16, marginBottom: 14, borderWidth: 1, borderColor: colors.cardBorder },
+  followUpTitle: { fontSize: 15, fontWeight: '800', color: colors.textPrimary },
+  followUpSubtitle: { fontSize: 11, color: colors.textSecondary, marginTop: 2, marginBottom: 12 },
 
-  tenantRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#334155' },
-  tenantNameText: { fontSize: 13.5, fontWeight: '800', color: '#f8fafc' },
-  tenantMetaText: { fontSize: 10.5, color: '#94a3b8', marginTop: 2 },
+  tenantRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.divider },
+  tenantNameText: { fontSize: 13.5, fontWeight: '800', color: colors.textPrimary },
+  tenantMetaText: { fontSize: 10.5, color: colors.textSecondary, marginTop: 2 },
   tenantRightGroup: { alignItems: 'flex-end', gap: 4 },
   tenantBalanceText: { fontSize: 14, fontWeight: '800', color: '#f87171' },
   alertBtn: { backgroundColor: 'rgba(2, 132, 199, 0.2)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, borderWidth: 1, borderColor: '#0284c7' },
