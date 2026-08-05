@@ -22,11 +22,11 @@ export const ManagerServicesScreen = ({ onNavigate }) => {
       color: '#38bdf8',
     },
     {
-      id: 'owners',
-      label: 'Property Owners',
-      subtitle: 'Investor profiles, payout configurations & logs',
-      icon: 'people-outline',
-      color: '#10b981',
+      id: 'leads',
+      label: 'Leasing',
+      subtitle: 'Manage tenant applications, background checks & leads',
+      icon: 'key-outline',
+      color: '#f43f5e',
     },
     {
       id: 'accounting',
@@ -58,8 +58,8 @@ export const ManagerServicesScreen = ({ onNavigate }) => {
     },
     {
       id: 'profile',
-      label: 'Profile Settings',
-      subtitle: 'Manage account credentials and configurations',
+      label: 'Company Settings',
+      subtitle: 'Configure default branding logo assets, regional date format templates, timezone offsets, and currency types.',
       icon: 'settings-outline',
       color: '#64748b',
     },

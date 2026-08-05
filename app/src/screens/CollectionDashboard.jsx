@@ -154,7 +154,6 @@ export const CollectionDashboard = () => {
       <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
         {/* Page Header matching Web Screenshot 1-to-1 */}
         <View style={styles.header}>
-          <Text style={styles.breadcrumb} allowFontScaling={false}>Home › Collections</Text>
           <View style={styles.titleRow}>
             <Text style={styles.title} allowFontScaling={false}>Cashflow & Collections</Text>
             
@@ -208,35 +207,7 @@ export const CollectionDashboard = () => {
           </AnimatedTouchable>
         </View>
 
-        <View style={styles.kpiGrid}>
-          {/* Card 3: OWNER PAYOUTS */}
-          <AnimatedTouchable style={styles.kpiCard}>
-            <View style={styles.kpiHeaderRow}>
-              <Text style={styles.kpiLabel} allowFontScaling={false}>OWNER PAYOUTS</Text>
-              <View style={styles.iconCircleBlue}>
-                <Text style={{ color: '#38bdf8', fontSize: 11, fontWeight: '900' }}>💸</Text>
-              </View>
-            </View>
-            <Text style={styles.kpiVal} allowFontScaling={false}>
-              ${(metrics?.payouts || 4320).toLocaleString()}
-            </Text>
-            <Text style={styles.kpiSubText} allowFontScaling={false}>Distributions processed</Text>
-          </AnimatedTouchable>
 
-          {/* Card 4: MAINTENANCE EXPENSES */}
-          <AnimatedTouchable style={styles.kpiCard}>
-            <View style={styles.kpiHeaderRow}>
-              <Text style={styles.kpiLabel} allowFontScaling={false}>MAINTENANCE EXPENSES</Text>
-              <View style={styles.iconCircleYellow}>
-                <Text style={{ color: '#facc15', fontSize: 11, fontWeight: '900' }}>↘</Text>
-              </View>
-            </View>
-            <Text style={styles.kpiVal} allowFontScaling={false}>
-              ${(metrics?.expenses || 3000).toLocaleString()}
-            </Text>
-            <Text style={styles.kpiSubText} allowFontScaling={false}>Invoices paid to vendors</Text>
-          </AnimatedTouchable>
-        </View>
 
         {/* CASHFLOW INFLOW VS OUTFLOW CHART WIDGET matching Web Screenshot 1-to-1 */}
         <View style={styles.chartCard}>
@@ -316,7 +287,7 @@ const styles = StyleSheet.create({
   center: { flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center' },
   loadingText: { color: '#94a3b8', marginTop: 8 },
 
-  header: { marginBottom: 14 },
+  header: { marginBottom: 14, paddingTop: 16 },
   breadcrumb: { color: '#38bdf8', fontSize: 11, fontWeight: '700', marginBottom: 4 },
   titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
   title: { fontSize: 20, fontWeight: '800', color: '#f8fafc', flex: 1 },
