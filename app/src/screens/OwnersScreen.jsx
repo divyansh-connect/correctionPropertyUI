@@ -19,6 +19,7 @@ import {
 } from 'react-native';
 import apiClient from '../api/client';
 import { useAuthStore } from '../store/useStore';
+import { useThemeColors } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
 
 // Animated Touchable Wrapper Component
@@ -60,6 +61,8 @@ const AnimatedTouchable = ({ children, onPress, style, disabled }) => {
 
 export const OwnersScreen = () => {
   const { logout, refreshAccessToken } = useAuthStore();
+  const { colors, isDarkMode } = useThemeColors();
+  const styles = getStyles(colors, isDarkMode);
   const [owners, setOwners] = useState([]);
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -495,30 +498,30 @@ export const OwnersScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  mainWrapper: { flex: 1, backgroundColor: '#0f172a' },
+const getStyles = (colors, isDarkMode) => StyleSheet.create({
+  mainWrapper: { flex: 1, backgroundColor: colors.background },
   container: { flex: 1 },
   scrollContent: { padding: 16, paddingBottom: 60 },
-  center: { flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center' },
-  loadingText: { color: '#94a3b8', marginTop: 8 },
+  center: { flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { color: colors.textSecondary, marginTop: 8 },
 
   header: { marginBottom: 16 },
-  title: { fontSize: 22, fontWeight: '800', color: '#f8fafc' },
-  subtitle: { fontSize: 11.5, color: '#94a3b8', marginTop: 4, lineHeight: 16 },
+  title: { fontSize: 22, fontWeight: '800', color: colors.textPrimary },
+  subtitle: { fontSize: 11.5, color: colors.textSecondary, marginTop: 4, lineHeight: 16 },
 
   searchBarRow: { flexDirection: 'row', gap: 10, marginBottom: 16 },
   searchContainer: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.cardBorder,
     borderRadius: 10,
     paddingHorizontal: 10,
   },
   searchInput: {
-    color: '#f8fafc',
+    color: colors.textPrimary,
     fontSize: 12,
     flex: 1,
     height: 40,
@@ -537,19 +540,19 @@ const styles = StyleSheet.create({
   addBtnText: { color: '#0f172a', fontSize: 12, fontWeight: '800' },
 
   sectionHeader: { marginBottom: 12 },
-  sectionTitle: { fontSize: 10, fontWeight: '800', color: '#94a3b8', letterSpacing: 0.8 },
+  sectionTitle: { fontSize: 10, fontWeight: '800', color: colors.textMuted, letterSpacing: 0.8 },
 
-  emptyCard: { backgroundColor: '#1e293b', padding: 32, borderRadius: 16, alignItems: 'center', borderWidth: 1, borderColor: '#334155' },
-  emptyText: { color: '#f8fafc', fontSize: 15, fontWeight: '700' },
-  emptySubText: { color: '#94a3b8', fontSize: 12, marginTop: 4, textAlign: 'center' },
+  emptyCard: { backgroundColor: colors.surface, padding: 32, borderRadius: 16, alignItems: 'center', borderWidth: 1, borderColor: colors.cardBorder },
+  emptyText: { color: colors.textPrimary, fontSize: 15, fontWeight: '700' },
+  emptySubText: { color: colors.textMuted, fontSize: 12, marginTop: 4, textAlign: 'center' },
 
   card: {
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.cardBorder,
   },
   cardHeader: { flexDirection: 'row', alignItems: 'center' },
   avatar: {
@@ -563,33 +566,33 @@ const styles = StyleSheet.create({
   },
   avatarText: { color: '#0f172a', fontSize: 16, fontWeight: '800' },
   ownerInfo: { flex: 1 },
-  ownerName: { fontSize: 15, fontWeight: '800', color: '#f8fafc' },
-  ownerSubText: { fontSize: 11.5, color: '#94a3b8', marginTop: 2 },
+  ownerName: { fontSize: 15, fontWeight: '800', color: colors.textPrimary },
+  ownerSubText: { fontSize: 11.5, color: colors.textSecondary, marginTop: 2 },
   deleteBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(239, 68, 68, 0.12)', alignItems: 'center', justifyContent: 'center' },
 
-  divider: { height: 1, backgroundColor: '#334155', marginVertical: 12 },
+  divider: { height: 1, backgroundColor: colors.divider, marginVertical: 12 },
 
   metaRow: { flexDirection: 'row', justifyContent: 'space-between' },
   metaCol: { flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8 },
-  metaText: { fontSize: 12, color: '#cbd5e1' },
+  metaText: { fontSize: 12, color: colors.textSecondary },
 
   // MODAL STYLING
   modalBg: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.85)', justifyContent: 'center', padding: 20 },
-  modalCard: { backgroundColor: '#1e293b', borderRadius: 20, padding: 20, borderWidth: 1, borderColor: '#334155', maxHeight: '85%' },
+  modalCard: { backgroundColor: colors.surface, borderRadius: 20, padding: 20, borderWidth: 1, borderColor: colors.cardBorder, maxHeight: '85%' },
   modalHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  modalTitle: { fontSize: 16, fontWeight: '800', color: '#f8fafc' },
+  modalTitle: { fontSize: 16, fontWeight: '800', color: colors.textPrimary },
 
   modalScroll: { marginBottom: 16 },
   formGroup: { marginBottom: 14 },
-  formLabel: { fontSize: 9.5, fontWeight: '800', color: '#94a3b8', letterSpacing: 0.5, marginBottom: 6 },
+  formLabel: { fontSize: 9.5, fontWeight: '800', color: colors.textMuted, letterSpacing: 0.5, marginBottom: 6 },
   formInput: {
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.inputBackground,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.inputBorder,
     borderRadius: 10,
     paddingHorizontal: 12,
     height: 44,
-    color: '#f8fafc',
+    color: colors.textPrimary,
     fontSize: 13,
   },
 
@@ -597,22 +600,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.inputBackground,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.inputBorder,
     borderRadius: 10,
     paddingHorizontal: 12,
     height: 44,
   },
-  dropdownTriggerText: { color: '#f8fafc', fontSize: 13 },
+  dropdownTriggerText: { color: colors.textPrimary, fontSize: 13 },
   dropdownContainer: {
     position: 'absolute',
     top: 68,
     left: 0,
     right: 0,
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.inputBackground,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.inputBorder,
     borderRadius: 10,
     zIndex: 9999,
     elevation: 5,
@@ -625,25 +628,25 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#1e293b',
+    borderBottomColor: colors.surface,
   },
-  dropdownItemText: { color: '#cbd5e1', fontSize: 12.5 },
+  dropdownItemText: { color: colors.textSecondary, fontSize: 12.5 },
 
   checkboxContainer: {
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.inputBackground,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.inputBorder,
     padding: 10,
   },
-  noPropertiesText: { color: '#64748b', fontSize: 12, fontStyle: 'italic' },
+  noPropertiesText: { color: colors.textMuted, fontSize: 12, fontStyle: 'italic' },
   checkboxRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 6 },
   checkboxBox: {
     width: 18,
     height: 18,
     borderRadius: 4,
     borderWidth: 1.5,
-    borderColor: '#64748b',
+    borderColor: colors.textMuted,
     marginRight: 10,
     alignItems: 'center',
     justifyContent: 'center',
@@ -652,11 +655,11 @@ const styles = StyleSheet.create({
     borderColor: '#38bdf8',
     backgroundColor: '#38bdf8',
   },
-  checkboxLabel: { color: '#cbd5e1', fontSize: 12.5 },
+  checkboxLabel: { color: colors.textSecondary, fontSize: 12.5 },
 
-  modalActions: { flexDirection: 'row', gap: 10, justifyContent: 'flex-end', borderTopWidth: 1, borderTopColor: '#334155', paddingTop: 14 },
-  cancelBtn: { paddingVertical: 10, paddingHorizontal: 16, borderRadius: 10, borderWidth: 1, borderColor: '#334155' },
-  cancelBtnText: { color: '#cbd5e1', fontSize: 12.5, fontWeight: '700' },
+  modalActions: { flexDirection: 'row', gap: 10, justifyContent: 'flex-end', borderTopWidth: 1, borderTopColor: colors.divider, paddingTop: 14 },
+  cancelBtn: { paddingVertical: 10, paddingHorizontal: 16, borderRadius: 10, borderWidth: 1, borderColor: colors.inputBorder },
+  cancelBtnText: { color: colors.textSecondary, fontSize: 12.5, fontWeight: '700' },
   submitBtn: { backgroundColor: '#38bdf8', paddingVertical: 10, paddingHorizontal: 16, borderRadius: 10, minWidth: 100, alignItems: 'center', justifyContent: 'center' },
   submitBtnDisabled: { opacity: 0.5 },
   submitBtnText: { color: '#0f172a', fontSize: 12.5, fontWeight: '800' },

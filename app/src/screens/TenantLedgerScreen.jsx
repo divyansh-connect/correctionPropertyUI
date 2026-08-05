@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import apiClient from '../api/client';
 import { useAuthStore } from '../store/useStore';
+import { useThemeColors } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
 
 // Animated Touchable Component
@@ -55,6 +56,8 @@ const AnimatedTouchable = ({ children, onPress, style, disabled }) => {
 
 export const TenantLedgerScreen = () => {
   const { logout, refreshAccessToken } = useAuthStore();
+  const { colors, isDarkMode } = useThemeColors();
+  const styles = getStyles(colors, isDarkMode);
   const [ledgerEntries, setLedgerEntries] = useState([]);
   const [, setInvoices] = useState([]);
   const [, setPayments] = useState([]);
@@ -407,52 +410,52 @@ export const TenantLedgerScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  mainWrapper: { flex: 1, backgroundColor: '#0f172a' },
+const getStyles = (colors, isDarkMode) => StyleSheet.create({
+  mainWrapper: { flex: 1, backgroundColor: colors.background },
   outerContentContainer: { padding: 16, paddingBottom: 60 },
-  center: { flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center' },
-  loadingText: { color: '#94a3b8', marginTop: 8 },
+  center: { flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { color: colors.textSecondary, marginTop: 8 },
 
   header: { marginBottom: 16 },
-  title: { fontSize: 24, fontWeight: '800', color: '#f8fafc' },
+  title: { fontSize: 24, fontWeight: '800', color: colors.textPrimary },
 
   showingRow: { marginBottom: 10 },
-  showingText: { fontSize: 10, fontWeight: '800', color: '#64748b', letterSpacing: 1 },
+  showingText: { fontSize: 10, fontWeight: '800', color: colors.textMuted, letterSpacing: 1 },
 
   searchBarRow: { flexDirection: 'row', marginBottom: 16 },
   searchContainer: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.cardBorder,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
   searchInput: {
-    color: '#f8fafc',
+    color: colors.textPrimary,
     fontSize: 12,
     flex: 1,
     padding: 0,
   },
 
   typePillsRow: { flexDirection: 'row', gap: 6, marginBottom: 16 },
-  typeChip: { backgroundColor: '#1e293b', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: '#334155' },
+  typeChip: { backgroundColor: colors.surface, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: colors.cardBorder },
   typeChipActive: { backgroundColor: '#0284c7', borderColor: '#38bdf8' },
-  typeChipText: { color: '#cbd5e1', fontSize: 11, fontWeight: '600' },
+  typeChipText: { color: colors.textSecondary, fontSize: 11, fontWeight: '600' },
   typeChipTextActive: { color: '#ffffff', fontWeight: '800' },
 
-  emptyCard: { backgroundColor: '#1e293b', padding: 32, borderRadius: 16, alignItems: 'center', borderWidth: 1, borderColor: '#334155' },
-  emptyText: { color: '#f8fafc', fontSize: 15, fontWeight: '700' },
+  emptyCard: { backgroundColor: colors.surface, padding: 32, borderRadius: 16, alignItems: 'center', borderWidth: 1, borderColor: colors.cardBorder },
+  emptyText: { color: colors.textPrimary, fontSize: 15, fontWeight: '700' },
 
-  card: { backgroundColor: '#1e293b', borderRadius: 16, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: '#334155' },
+  card: { backgroundColor: colors.surface, borderRadius: 16, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: colors.cardBorder },
   cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   infoLine: { flexDirection: 'row', alignItems: 'center', marginVertical: 1 },
-  tenantNameText: { fontSize: 15, fontWeight: '800', color: '#f8fafc' },
-  propText: { fontSize: 12, color: '#cbd5e1' },
-  descText: { fontSize: 11, color: '#94a3b8', marginTop: 3 },
+  tenantNameText: { fontSize: 15, fontWeight: '800', color: colors.textPrimary },
+  propText: { fontSize: 12, color: colors.textSecondary },
+  descText: { fontSize: 11, color: colors.textMuted, marginTop: 3 },
 
   rightGroup: { alignItems: 'flex-end', gap: 8 },
   typeBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, borderWidth: 1 },
@@ -461,26 +464,26 @@ const styles = StyleSheet.create({
   typeBadgeText: { fontSize: 9.5, fontWeight: '800' },
   textRed: { color: '#ef4444' },
   textGreen: { color: '#10b981' },
-  eyeBtn: { backgroundColor: '#0f172a', width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#334155' },
+  eyeBtn: { backgroundColor: colors.inputBackground, width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.cardBorder },
 
-  divider: { height: 1, backgroundColor: '#334155', marginVertical: 12 },
+  divider: { height: 1, backgroundColor: colors.divider, marginVertical: 12 },
 
   metricsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   metricCol: { flex: 1 },
   metricColRight: { alignItems: 'flex-end' },
-  metricLabel: { fontSize: 8.5, color: '#94a3b8', fontWeight: '800', letterSpacing: 0.5, marginBottom: 2 },
-  metricVal: { fontSize: 12.5, fontWeight: '700', color: '#f8fafc' },
+  metricLabel: { fontSize: 8.5, color: colors.textMuted, fontWeight: '800', letterSpacing: 0.5, marginBottom: 2 },
+  metricVal: { fontSize: 12.5, fontWeight: '700', color: colors.textPrimary },
 
   modalBg: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.85)', justifyContent: 'center', padding: 20 },
-  modalCard: { backgroundColor: '#1e293b', borderRadius: 20, padding: 20, borderWidth: 1, borderColor: '#334155' },
+  modalCard: { backgroundColor: colors.surface, borderRadius: 20, padding: 20, borderWidth: 1, borderColor: colors.cardBorder },
   modalHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
   modalHeaderTitleRow: { flexDirection: 'row', alignItems: 'center' },
-  modalTitle: { fontSize: 16, fontWeight: '800', color: '#f8fafc' },
+  modalTitle: { fontSize: 16, fontWeight: '800', color: colors.textPrimary },
 
-  detailCard: { backgroundColor: '#0f172a', borderRadius: 12, padding: 14, marginBottom: 16, borderWidth: 1, borderColor: '#334155' },
-  detailRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#1e293b' },
-  detailLabel: { color: '#94a3b8', fontSize: 13, fontWeight: '500' },
-  detailVal: { color: '#f8fafc', fontSize: 13, fontWeight: '700' },
-  closeModalBtn: { backgroundColor: '#334155', paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
-  closeModalBtnText: { color: '#cbd5e1', fontSize: 13, fontWeight: '700' },
+  detailCard: { backgroundColor: colors.inputBackground, borderRadius: 12, padding: 14, marginBottom: 16, borderWidth: 1, borderColor: colors.cardBorder },
+  detailRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.surface },
+  detailLabel: { color: colors.textSecondary, fontSize: 13, fontWeight: '500' },
+  detailVal: { color: colors.textPrimary, fontSize: 13, fontWeight: '700' },
+  closeModalBtn: { backgroundColor: colors.buttonSecondary, paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
+  closeModalBtnText: { color: colors.textSecondary, fontSize: 13, fontWeight: '700' },
 });

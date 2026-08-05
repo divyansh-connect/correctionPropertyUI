@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import apiClient from '../api/client';
 import { useAuthStore } from '../store/useStore';
+import { useThemeColors } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
 
 // Animated Touchable Component
@@ -58,6 +59,8 @@ const AnimatedTouchable = ({ children, onPress, style, disabled }) => {
 
 export const RentScreen = () => {
   const { user, logout, refreshAccessToken } = useAuthStore();
+  const { colors, isDarkMode } = useThemeColors();
+  const styles = getStyles(colors, isDarkMode);
 
   const [ledger, setLedger] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -682,26 +685,26 @@ export const RentScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  mainWrapper: { flex: 1, backgroundColor: '#0f172a' },
+const getStyles = (colors, isDarkMode) => StyleSheet.create({
+  mainWrapper: { flex: 1, backgroundColor: colors.background },
   outerContentContainer: { padding: 16, paddingBottom: 60 },
-  center: { flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center' },
-  loadingText: { color: '#94a3b8', marginTop: 8 },
+  center: { flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { color: colors.textSecondary, marginTop: 8 },
 
   header: { marginBottom: 16 },
   titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
-  title: { fontSize: 24, fontWeight: '800', color: '#f8fafc', flex: 1 },
+  title: { fontSize: 24, fontWeight: '800', color: colors.textPrimary, flex: 1 },
 
   submitPayBtn: { backgroundColor: '#38bdf8', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 8, flexDirection: 'row', alignItems: 'center' },
   submitPayBtnText: { color: '#0f172a', fontSize: 13, fontWeight: '800' },
 
   statsContainer: { flexDirection: 'row', gap: 12, marginBottom: 16 },
-  outstandingCard: { flex: 1.2, backgroundColor: '#1e293b', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: '#334155' },
-  autopayCard: { flex: 1, backgroundColor: '#1e293b', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: '#334155' },
-  statsLabel: { fontSize: 9.5, color: '#94a3b8', fontWeight: '800', letterSpacing: 0.5 },
+  outstandingCard: { flex: 1.2, backgroundColor: colors.surface, borderRadius: 16, padding: 14, borderWidth: 1, borderColor: colors.cardBorder },
+  autopayCard: { flex: 1, backgroundColor: colors.surface, borderRadius: 16, padding: 14, borderWidth: 1, borderColor: colors.cardBorder },
+  statsLabel: { fontSize: 9.5, color: colors.textMuted, fontWeight: '800', letterSpacing: 0.5 },
   balanceRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 4 },
   balanceVal: { fontSize: 24, fontWeight: '800' },
-  statsSubText: { fontSize: 10.5, color: '#94a3b8', lineHeight: 14 },
+  statsSubText: { fontSize: 10.5, color: colors.textMuted, lineHeight: 14 },
   autopayHeaderRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
   autopayBadge: { backgroundColor: 'rgba(16, 185, 129, 0.15)', paddingHorizontal: 8, paddingVertical: 2.5, borderRadius: 6, borderWidth: 1, borderColor: '#10b981', alignSelf: 'flex-start', marginVertical: 4 },
   autopayBadgeText: { color: '#10b981', fontSize: 9, fontWeight: '800' },
@@ -711,48 +714,48 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.cardBorder,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
   searchInput: {
-    color: '#f8fafc',
+    color: colors.textPrimary,
     fontSize: 13,
     flex: 1,
     padding: 0,
   },
 
-  sectionHeader: { fontSize: 11, fontWeight: '800', color: '#64748b', marginBottom: 10, letterSpacing: 1 },
+  sectionHeader: { fontSize: 11, fontWeight: '800', color: colors.textMuted, marginBottom: 10, letterSpacing: 1 },
 
-  emptyCard: { backgroundColor: '#1e293b', padding: 32, borderRadius: 16, alignItems: 'center', borderWidth: 1, borderColor: '#334155' },
-  emptyText: { color: '#f8fafc', fontSize: 15, fontWeight: '700' },
+  emptyCard: { backgroundColor: colors.surface, padding: 32, borderRadius: 16, alignItems: 'center', borderWidth: 1, borderColor: colors.cardBorder },
+  emptyText: { color: colors.textPrimary, fontSize: 15, fontWeight: '700' },
 
   ledgerCard: {
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 14,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.cardBorder,
   },
   cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   nameRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 2 },
-  refText: { fontSize: 15, fontWeight: '800', color: '#f8fafc' },
-  descText: { fontSize: 12, color: '#cbd5e1', marginTop: 2 },
-  dateText: { fontSize: 11, color: '#94a3b8', marginTop: 2 },
+  refText: { fontSize: 15, fontWeight: '800', color: colors.textPrimary },
+  descText: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
+  dateText: { fontSize: 11, color: colors.textMuted, marginTop: 2 },
 
   rightGroup: { alignItems: 'flex-end', gap: 6 },
-  amountText: { fontSize: 15, fontWeight: '800', color: '#f8fafc' },
+  amountText: { fontSize: 15, fontWeight: '800', color: colors.textPrimary },
   badgesRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   statusBadge: { paddingHorizontal: 6, paddingVertical: 2.5, borderRadius: 4, borderWidth: 1 },
   badgeGreen: { backgroundColor: 'rgba(16, 185, 129, 0.15)', borderColor: '#10b981' },
   badgeGreenText: { color: '#10b981', fontSize: 9, fontWeight: '800' },
   badgeRed: { backgroundColor: 'rgba(239, 68, 68, 0.15)', borderColor: '#ef4444' },
   badgeRedText: { color: '#ef4444', fontSize: 9, fontWeight: '800' },
-  eyeBtn: { backgroundColor: '#0f172a', width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#334155' },
+  eyeBtn: { backgroundColor: colors.inputBackground, width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.cardBorder },
 
   modalBg: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.85)', justifyContent: 'center', padding: 20 },
   modalScrollContent: {
@@ -762,50 +765,50 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'ios' ? 40 : 16,
     paddingBottom: Platform.OS === 'ios' ? 60 : 30,
   },
-  modalCard: { backgroundColor: '#1e293b', borderRadius: 20, padding: 20, borderWidth: 1, borderColor: '#334155' },
+  modalCard: { backgroundColor: colors.surface, borderRadius: 20, padding: 20, borderWidth: 1, borderColor: colors.cardBorder },
   modalHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
   modalHeaderTitleRow: { flexDirection: 'row', alignItems: 'center' },
-  modalTitle: { fontSize: 16, fontWeight: '800', color: '#f8fafc' },
+  modalTitle: { fontSize: 16, fontWeight: '800', color: colors.textPrimary },
 
-  detailCard: { backgroundColor: '#0f172a', borderRadius: 12, padding: 14, marginBottom: 16, borderWidth: 1, borderColor: '#334155' },
-  detailRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#1e293b' },
-  detailLabel: { color: '#94a3b8', fontSize: 13, fontWeight: '500' },
-  detailVal: { color: '#f8fafc', fontSize: 13, fontWeight: '700' },
-  closeModalBtn: { backgroundColor: '#334155', paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
-  closeModalBtnText: { color: '#cbd5e1', fontSize: 13, fontWeight: '700' },
+  detailCard: { backgroundColor: colors.inputBackground, borderRadius: 12, padding: 14, marginBottom: 16, borderWidth: 1, borderColor: colors.cardBorder },
+  detailRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.surface },
+  detailLabel: { color: colors.textSecondary, fontSize: 13, fontWeight: '500' },
+  detailVal: { color: colors.textPrimary, fontSize: 13, fontWeight: '700' },
+  closeModalBtn: { backgroundColor: colors.buttonSecondary, paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
+  closeModalBtnText: { color: colors.textSecondary, fontSize: 13, fontWeight: '700' },
 
-  inputLabel: { fontSize: 10, color: '#94a3b8', fontWeight: '700', marginBottom: 6, marginTop: 10, letterSpacing: 0.5 },
-  input: { backgroundColor: '#0f172a', borderWidth: 1, borderColor: '#334155', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, color: '#f8fafc', fontSize: 13, marginBottom: 4 },
+  inputLabel: { fontSize: 10, color: colors.textMuted, fontWeight: '700', marginBottom: 6, marginTop: 10, letterSpacing: 0.5 },
+  input: { backgroundColor: colors.inputBackground, borderWidth: 1, borderColor: colors.inputBorder, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, color: colors.textPrimary, fontSize: 13, marginBottom: 4 },
 
   paymentOptionRow: { flexDirection: 'row', gap: 10, marginBottom: 8 },
-  optionCard: { flex: 1, backgroundColor: '#0f172a', borderWidth: 1, borderColor: '#334155', borderRadius: 12, padding: 12, alignItems: 'center' },
+  optionCard: { flex: 1, backgroundColor: colors.inputBackground, borderWidth: 1, borderColor: colors.inputBorder, borderRadius: 12, padding: 12, alignItems: 'center' },
   optionCardActive: { borderColor: '#38bdf8', backgroundColor: 'rgba(56, 189, 248, 0.1)' },
-  optionCardTitle: { fontSize: 11, fontWeight: '800', color: '#94a3b8' },
+  optionCardTitle: { fontSize: 11, fontWeight: '800', color: colors.textMuted },
   optionCardTitleActive: { color: '#38bdf8' },
-  optionCardSub: { fontSize: 12, fontWeight: '700', color: '#f8fafc', marginTop: 4 },
+  optionCardSub: { fontSize: 12, fontWeight: '700', color: colors.textPrimary, marginTop: 4 },
 
   methodSelectorRow: { flexDirection: 'row', gap: 8, marginBottom: 8 },
-  methodChip: { flex: 1, backgroundColor: '#0f172a', paddingVertical: 10, borderRadius: 10, alignItems: 'center', borderWidth: 1, borderColor: '#334155' },
+  methodChip: { flex: 1, backgroundColor: colors.inputBackground, paddingVertical: 10, borderRadius: 10, alignItems: 'center', borderWidth: 1, borderColor: colors.inputBorder },
   methodChipActive: { backgroundColor: '#38bdf8', borderColor: '#38bdf8' },
-  methodChipText: { color: '#94a3b8', fontSize: 10, fontWeight: '800' },
+  methodChipText: { color: colors.textSecondary, fontSize: 10, fontWeight: '800' },
   methodChipTextActive: { color: '#0f172a' },
-  methodChipFee: { fontSize: 9, color: '#cbd5e1', marginTop: 2 },
+  methodChipFee: { fontSize: 9, color: colors.textSecondary, marginTop: 2 },
 
-  bankForm: { backgroundColor: '#0f172a', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#334155', marginVertical: 10 },
+  bankForm: { backgroundColor: colors.inputBackground, borderRadius: 12, padding: 12, borderWidth: 1, borderColor: colors.inputBorder, marginVertical: 10 },
   bankFormHeader: { fontSize: 10.5, fontWeight: '800', color: '#38bdf8', letterSpacing: 0.5, marginBottom: 4 },
 
-  summaryCard: { backgroundColor: '#0f172a', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#334155', marginVertical: 10 },
+  summaryCard: { backgroundColor: colors.inputBackground, borderRadius: 12, padding: 12, borderWidth: 1, borderColor: colors.inputBorder, marginVertical: 10 },
   summaryRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 },
-  summaryLabel: { color: '#94a3b8', fontSize: 12, fontWeight: '500' },
-  summaryVal: { color: '#cbd5e1', fontSize: 12, fontWeight: '700' },
+  summaryLabel: { color: colors.textSecondary, fontSize: 12, fontWeight: '500' },
+  summaryVal: { color: colors.textSecondary, fontSize: 12, fontWeight: '700' },
 
   secureTextRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginVertical: 8 },
   secureText: { fontSize: 10, color: '#10b981', fontWeight: '800', letterSpacing: 0.5 },
 
   modalButtons: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 },
   modalBtn: { width: '48%', paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
-  cancelBtn: { backgroundColor: '#334155' },
-  cancelBtnText: { color: '#cbd5e1', fontWeight: '700', fontSize: 13 },
+  cancelBtn: { backgroundColor: colors.buttonSecondary },
+  cancelBtnText: { color: colors.textSecondary, fontWeight: '700', fontSize: 13 },
   saveBtn: { backgroundColor: '#38bdf8' },
   saveBtnText: { color: '#0f172a', fontWeight: '800', fontSize: 13 },
 });

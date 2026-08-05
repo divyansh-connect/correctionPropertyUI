@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import apiClient from '../api/client';
 import { useAuthStore } from '../store/useStore';
+import { useThemeColors } from '../theme';
 
 // Animated Touchable Wrapper Component
 const AnimatedTouchable = ({ children, onPress, style, disabled }) => {
@@ -55,6 +56,8 @@ const AnimatedTouchable = ({ children, onPress, style, disabled }) => {
 
 export const InvoicesScreen = () => {
   const { user, logout, refreshAccessToken } = useAuthStore();
+  const { colors, isDarkMode } = useThemeColors();
+  const styles = getStyles(colors, isDarkMode);
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -542,48 +545,48 @@ export const InvoicesScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  mainWrapper: { flex: 1, backgroundColor: '#0f172a' },
+const getStyles = (colors, isDarkMode) => StyleSheet.create({
+  mainWrapper: { flex: 1, backgroundColor: colors.background },
   outerContentContainer: { padding: 16, paddingBottom: 60 },
-  center: { flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center' },
-  loadingText: { color: '#94a3b8', marginTop: 8 },
+  center: { flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { color: colors.textSecondary, marginTop: 8 },
 
   header: { marginBottom: 14 },
   breadcrumb: { color: '#38bdf8', fontSize: 11, fontWeight: '700', marginBottom: 4 },
   titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
-  title: { fontSize: 18, fontWeight: '800', color: '#f8fafc', flex: 1 },
-  subtitle: { fontSize: 11.5, color: '#94a3b8', marginTop: 4, lineHeight: 16 },
+  title: { fontSize: 18, fontWeight: '800', color: colors.textPrimary, flex: 1 },
+  subtitle: { fontSize: 11.5, color: colors.textSecondary, marginTop: 4, lineHeight: 16 },
 
   createBtn: { backgroundColor: '#0284c7', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6 },
   createBtnText: { color: '#ffffff', fontSize: 11, fontWeight: '700' },
 
   showingRow: { marginBottom: 6 },
-  showingText: { fontSize: 10, fontWeight: '800', color: '#94a3b8', letterSpacing: 0.8 },
+  showingText: { fontSize: 10, fontWeight: '800', color: colors.textMuted, letterSpacing: 0.8 },
 
   searchBarRow: { flexDirection: 'row', gap: 8, marginBottom: 14 },
   searchInput: {
     flex: 1,
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.surface,
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    color: '#f8fafc',
+    color: colors.textPrimary,
     fontSize: 12,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.cardBorder,
   },
-  resetBtn: { backgroundColor: '#334155', paddingHorizontal: 10, justifyContent: 'center', borderRadius: 8 },
-  resetBtnText: { color: '#cbd5e1', fontSize: 11, fontWeight: '700' },
+  resetBtn: { backgroundColor: colors.buttonSecondary, paddingHorizontal: 10, justifyContent: 'center', borderRadius: 8 },
+  resetBtnText: { color: colors.textSecondary, fontSize: 11, fontWeight: '700' },
 
-  emptyCard: { backgroundColor: '#1e293b', padding: 24, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: '#334155' },
-  emptyText: { color: '#f8fafc', fontSize: 14, fontWeight: '700' },
-  emptySubText: { color: '#94a3b8', fontSize: 12, marginTop: 4 },
+  emptyCard: { backgroundColor: colors.surface, padding: 24, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: colors.cardBorder },
+  emptyText: { color: colors.textPrimary, fontSize: 14, fontWeight: '700' },
+  emptySubText: { color: colors.textMuted, fontSize: 12, marginTop: 4 },
 
-  card: { backgroundColor: '#1e293b', borderRadius: 14, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: '#334155' },
+  card: { backgroundColor: colors.surface, borderRadius: 14, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: colors.cardBorder },
   cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  tenantNameText: { fontSize: 15, fontWeight: '800', color: '#f8fafc' },
-  propText: { fontSize: 11, color: '#cbd5e1', marginTop: 2 },
-  dateText: { fontSize: 10.5, color: '#94a3b8', marginTop: 2 },
+  tenantNameText: { fontSize: 15, fontWeight: '800', color: colors.textPrimary },
+  propText: { fontSize: 11, color: colors.textSecondary, marginTop: 2 },
+  dateText: { fontSize: 10.5, color: colors.textMuted, marginTop: 2 },
 
   rightGroup: { alignItems: 'flex-end', gap: 6 },
   statusBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, borderWidth: 1 },
@@ -595,16 +598,16 @@ const styles = StyleSheet.create({
   textYellow: { color: '#facc15' },
   textBlue: { color: '#38bdf8' },
 
-  eyeBtn: { backgroundColor: '#0f172a', width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#334155' },
-  eyeBtnText: { color: '#cbd5e1', fontSize: 12 },
+  eyeBtn: { backgroundColor: colors.inputBackground, width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.cardBorder },
+  eyeBtnText: { color: colors.textSecondary, fontSize: 12 },
 
-  divider: { height: 1, backgroundColor: '#334155', marginVertical: 10 },
+  divider: { height: 1, backgroundColor: colors.divider, marginVertical: 10 },
 
   metricsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   metricCol: { flex: 1 },
   metricColRight: { alignItems: 'flex-end' },
-  metricLabel: { fontSize: 8.5, color: '#94a3b8', fontWeight: '800', letterSpacing: 0.5, marginBottom: 2 },
-  metricVal: { fontSize: 12.5, fontWeight: '700', color: '#f8fafc' },
+  metricLabel: { fontSize: 8.5, color: colors.textMuted, fontWeight: '800', letterSpacing: 0.5, marginBottom: 2 },
+  metricVal: { fontSize: 12.5, fontWeight: '700', color: colors.textPrimary },
 
   paginationRow: {
     flexDirection: 'row',
@@ -613,33 +616,33 @@ const styles = StyleSheet.create({
     marginTop: 10,
     paddingTop: 10,
     borderTopWidth: 1,
-    borderTopColor: '#334155',
+    borderTopColor: colors.divider,
   },
-  paginationEntriesText: { color: '#94a3b8', fontSize: 11 },
+  paginationEntriesText: { color: colors.textMuted, fontSize: 11 },
   paginationControls: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  pageIndicatorText: { color: '#94a3b8', fontSize: 11 },
-  pageBtn: { backgroundColor: '#1e293b', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 6, borderWidth: 1, borderColor: '#334155' },
+  pageIndicatorText: { color: colors.textMuted, fontSize: 11 },
+  pageBtn: { backgroundColor: colors.surface, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 6, borderWidth: 1, borderColor: colors.cardBorder },
   pageBtnDisabled: { opacity: 0.4 },
-  pageBtnText: { color: '#cbd5e1', fontSize: 11, fontWeight: '700' },
+  pageBtnText: { color: colors.textSecondary, fontSize: 11, fontWeight: '700' },
 
   modalBg: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', padding: 20 },
-  modalCard: { backgroundColor: '#1e293b', borderRadius: 16, padding: 20, borderWidth: 1, borderColor: '#334155' },
+  modalCard: { backgroundColor: colors.surface, borderRadius: 16, padding: 20, borderWidth: 1, borderColor: colors.cardBorder },
   modalHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   modalTitle: { fontSize: 16, fontWeight: '800', color: '#38bdf8', flex: 1 },
 
-  inputLabel: { fontSize: 10, color: '#94a3b8', fontWeight: '700', marginBottom: 4, marginTop: 4 },
-  input: { backgroundColor: '#0f172a', borderWidth: 1, borderColor: '#334155', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, color: '#f8fafc', fontSize: 13, marginBottom: 10 },
+  inputLabel: { fontSize: 10, color: colors.textMuted, fontWeight: '700', marginBottom: 4, marginTop: 4 },
+  input: { backgroundColor: colors.inputBackground, borderWidth: 1, borderColor: colors.inputBorder, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, color: colors.textPrimary, fontSize: 13, marginBottom: 10 },
 
   modalButtons: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 },
   modalBtn: { width: '48%', paddingVertical: 10, borderRadius: 8, alignItems: 'center' },
-  cancelBtn: { backgroundColor: '#334155' },
-  cancelBtnText: { color: '#cbd5e1', fontWeight: '600' },
+  cancelBtn: { backgroundColor: colors.buttonSecondary },
+  cancelBtnText: { color: colors.textSecondary, fontWeight: '600' },
   saveBtn: { backgroundColor: '#0284c7' },
   saveBtnText: { color: '#ffffff', fontWeight: '700' },
 
-  detailRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: '#334155' },
-  detailLabel: { color: '#94a3b8', fontSize: 12, fontWeight: '600' },
-  detailVal: { color: '#f8fafc', fontSize: 12.5, fontWeight: '700' },
-  closeModalBtn: { backgroundColor: '#334155', paddingVertical: 10, borderRadius: 8, alignItems: 'center', marginTop: 14 },
+  detailRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: colors.divider },
+  detailLabel: { color: colors.textSecondary, fontSize: 12, fontWeight: '600' },
+  detailVal: { color: colors.textPrimary, fontSize: 12.5, fontWeight: '700' },
+  closeModalBtn: { backgroundColor: colors.buttonSecondary, paddingVertical: 10, borderRadius: 8, alignItems: 'center', marginTop: 14 },
   closeModalBtnText: { color: '#ffffff', fontSize: 12, fontWeight: '700' },
 });

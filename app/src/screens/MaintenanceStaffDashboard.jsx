@@ -15,12 +15,16 @@ import {
   TouchableWithoutFeedback,
   RefreshControl,
 } from 'react-native';
-import { useAuthStore } from '../store/useStore';
+import { useAuthStore, useThemeStore } from '../store/useStore';
 import apiClient from '../api/client';
 import { Ionicons } from '@expo/vector-icons';
 
 export const MaintenanceStaffDashboard = ({ activeSubTab }) => {
   const { logout, refreshAccessToken } = useAuthStore();
+  const { theme } = useThemeStore();
+  const isDarkMode = theme === 'dark';
+  const styles = getStyles(isDarkMode);
+
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -564,10 +568,10 @@ export const MaintenanceStaffDashboard = ({ activeSubTab }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (isDarkMode) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: isDarkMode ? '#0f172a' : '#f8fafc',
   },
   tabContent: {
     padding: 12,
@@ -582,7 +586,7 @@ const styles = StyleSheet.create({
   },
   welcomeSub: {
     fontSize: 12,
-    color: '#94a3b8',
+    color: isDarkMode ? '#94a3b8' : '#64748b',
     marginTop: 4,
     lineHeight: 16,
   },
@@ -593,9 +597,9 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   statCard: {
-    backgroundColor: '#1e293b',
+    backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: isDarkMode ? '#334155' : '#cbd5e1',
     borderRadius: 8,
     padding: 10,
     width: '48%',
@@ -617,22 +621,22 @@ const styles = StyleSheet.create({
   statVal: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#f8fafc',
+    color: isDarkMode ? '#f8fafc' : '#0f172a',
     marginTop: 2,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1e293b',
+    backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: isDarkMode ? '#334155' : '#cbd5e1',
     borderRadius: 6,
     paddingHorizontal: 10,
     paddingVertical: 8,
     marginBottom: 14,
   },
   searchInput: {
-    color: '#f8fafc',
+    color: isDarkMode ? '#f8fafc' : '#0f172a',
     fontSize: 12,
     flex: 1,
     padding: 0,
@@ -640,14 +644,14 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#cbd5e1',
+    color: isDarkMode ? '#cbd5e1' : '#475569',
     marginBottom: 10,
     letterSpacing: 0.5,
   },
   taskCard: {
-    backgroundColor: '#1e293b',
+    backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: isDarkMode ? '#334155' : '#cbd5e1',
     borderRadius: 8,
     padding: 12,
     marginBottom: 10,
@@ -694,7 +698,7 @@ const styles = StyleSheet.create({
   taskIssue: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#f8fafc',
+    color: isDarkMode ? '#f8fafc' : '#0f172a',
     flex: 1,
     paddingRight: 10,
   },
@@ -716,7 +720,7 @@ const styles = StyleSheet.create({
   },
   taskLocation: {
     fontSize: 11,
-    color: '#94a3b8',
+    color: isDarkMode ? '#94a3b8' : '#64748b',
   },
   taskDescriptionText: {
     color: '#64748b',
@@ -726,12 +730,12 @@ const styles = StyleSheet.create({
   metadataGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: '#0f172a30',
+    backgroundColor: isDarkMode ? '#0f172a30' : '#f1f5f9',
     borderRadius: 6,
     padding: 8,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#33415540',
+    borderColor: isDarkMode ? '#33415540' : '#cbd5e1',
   },
   metaCol: {
     width: '48%',
@@ -743,7 +747,7 @@ const styles = StyleSheet.create({
   },
   metaVal: {
     fontSize: 11,
-    color: '#f8fafc',
+    color: isDarkMode ? '#f8fafc' : '#0f172a',
     fontWeight: '700',
     marginTop: 1,
   },
@@ -782,11 +786,11 @@ const styles = StyleSheet.create({
   },
   detailsBtn: {
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: isDarkMode ? '#334155' : '#cbd5e1',
     flexDirection: 'row',
   },
   detailsBtnText: {
-    color: '#cbd5e1',
+    color: isDarkMode ? '#cbd5e1' : '#475569',
     fontSize: 11,
     fontWeight: '600',
   },
@@ -804,7 +808,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   emptyCard: {
-    backgroundColor: '#1e293b',
+    backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
     borderRadius: 8,
     padding: 20,
     alignItems: 'center',
@@ -824,11 +828,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   modalCard: {
-    backgroundColor: '#1e293b',
+    backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: isDarkMode ? '#334155' : '#cbd5e1',
     width: '100%',
   },
   modalHeaderRow: {
@@ -836,7 +840,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: '#334155',
+    borderBottomColor: isDarkMode ? '#334155' : '#e2e8f0',
     paddingBottom: 8,
     marginBottom: 8,
   },
@@ -856,17 +860,17 @@ const styles = StyleSheet.create({
   detailValBold: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#f8fafc',
+    color: isDarkMode ? '#f8fafc' : '#0f172a',
     marginTop: 2,
   },
   detailVal: {
     fontSize: 12,
-    color: '#cbd5e1',
+    color: isDarkMode ? '#cbd5e1' : '#475569',
     marginTop: 2,
   },
   detailValSmall: {
     fontSize: 11,
-    color: '#cbd5e1',
+    color: isDarkMode ? '#cbd5e1' : '#475569',
     fontWeight: '600',
     marginTop: 2,
   },
@@ -879,12 +883,12 @@ const styles = StyleSheet.create({
     width: '48%',
   },
   timelineContainer: {
-    backgroundColor: '#0f172a50',
+    backgroundColor: isDarkMode ? '#0f172a50' : '#f1f5f9',
     borderRadius: 6,
     padding: 8,
     marginTop: 4,
     borderWidth: 1,
-    borderColor: '#33415550',
+    borderColor: isDarkMode ? '#33415550' : '#cbd5e1',
   },
   timelineItem: {
     flexDirection: 'row',
@@ -908,14 +912,14 @@ const styles = StyleSheet.create({
   },
   timelineText: {
     fontSize: 10,
-    color: '#94a3b8',
+    color: isDarkMode ? '#94a3b8' : '#64748b',
   },
   modalButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 16,
     borderTopWidth: 1,
-    borderTopColor: '#334155',
+    borderTopColor: isDarkMode ? '#334155' : '#e2e8f0',
     paddingTop: 12,
   },
   modalActionBtn: {
@@ -946,13 +950,13 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   modalInput: {
-    backgroundColor: '#0f172a',
+    backgroundColor: isDarkMode ? '#0f172a' : '#f1f5f9',
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: isDarkMode ? '#334155' : '#cbd5e1',
     borderRadius: 6,
     paddingHorizontal: 10,
     paddingVertical: 6,
-    color: '#f8fafc',
+    color: isDarkMode ? '#f8fafc' : '#0f172a',
     fontSize: 12,
     marginBottom: 6,
   },

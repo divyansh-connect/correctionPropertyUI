@@ -1,27 +1,76 @@
-// Centralized Theme tokens for native mobile app feel
+import { useThemeStore } from './store/useStore';
 
-export const theme = {
-  colors: {
+export const useThemeColors = () => {
+  const { theme } = useThemeStore();
+  const isDarkMode = theme === 'dark';
+
+  const colors = {
+    // Brand
     primary: '#38bdf8', // Vibrant Cyan/Sky blue
     primaryDark: '#0284c7',
     primaryLight: '#7dd3fc',
     secondary: '#818cf8', // Indigo/Purple accent
     accent: '#f59e0b', // Amber/Orange accent
-    success: '#10b981', // Emerald green
-    danger: '#ef4444', // Red
+
+    // Base layout
+    background: isDarkMode ? '#0f172a' : '#f8fafc',
+    surface: isDarkMode ? '#1e293b' : '#ffffff',
+    card: isDarkMode ? '#1e293b' : '#ffffff',
+    cardBorder: isDarkMode ? '#334155' : '#e2e8f0',
+    divider: isDarkMode ? '#334155' : '#cbd5e1',
+
+    // Feedback
+    success: '#10b981',
     warning: '#f59e0b',
-    background: '#0f172a', // Dark navy background
-    surface: '#1e293b', // Elevated surface background
-    surfaceHighlight: '#334155', // Card highlight / borders
-    cardBg: '#1e293b',
-    textPrimary: '#f8fafc',
-    textSecondary: '#94a3b8',
-    textMuted: '#64748b',
+    danger: '#ef4444',
+    info: '#38bdf8',
+
+    // Typography
+    textPrimary: isDarkMode ? '#f8fafc' : '#0f172a',
+    textSecondary: isDarkMode ? '#94a3b8' : '#475569',
+    textMuted: isDarkMode ? '#64748b' : '#94a3b8',
+
+    // UI elements
+    icon: isDarkMode ? '#cbd5e1' : '#475569',
+    placeholder: isDarkMode ? '#64748b' : '#94a3b8',
+    inputBackground: isDarkMode ? '#0f172a' : '#f1f5f9',
+    inputBorder: isDarkMode ? '#334155' : '#cbd5e1',
+    buttonPrimary: '#38bdf8',
+    buttonSecondary: isDarkMode ? '#1e293b' : '#e2e8f0',
+
+    // Navigation/Shell
+    tabBar: isDarkMode ? '#1e293b' : '#ffffff',
+    drawer: isDarkMode ? '#1e293b' : '#ffffff',
+    header: isDarkMode ? '#1e293b' : '#ffffff',
+
+    // Shared overlays / badges
+    shadow: isDarkMode ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.05)',
+    overlay: isDarkMode ? 'rgba(15, 23, 42, 0.75)' : 'rgba(15, 23, 42, 0.45)',
+    badge: isDarkMode ? 'rgba(56, 189, 248, 0.15)' : 'rgba(56, 189, 248, 0.1)',
+    modalBackground: isDarkMode ? '#1e293b' : '#ffffff',
+    statusBar: isDarkMode ? 'light' : 'dark',
+
+    // Charts
+    chartPrimary: '#10b981',
+    chartSecondary: '#ef4444',
+    chartGrid: isDarkMode ? '#334155' : '#cbd5e1',
+
+    // Other UI utils
+    loader: '#38bdf8',
+    skeleton: isDarkMode ? '#334155' : '#cbd5e1',
+    focusBorder: '#38bdf8',
+    disabled: isDarkMode ? '#334155' : '#cbd5e1',
     white: '#ffffff',
     black: '#000000',
-    glassBg: 'rgba(30, 41, 59, 0.85)',
-    overlay: 'rgba(15, 23, 42, 0.75)',
-  },
+  };
+
+  return {
+    isDarkMode,
+    colors,
+  };
+};
+
+export const theme = {
   spacing: {
     xs: 4,
     sm: 8,
@@ -39,54 +88,12 @@ export const theme = {
     round: 9999,
   },
   typography: {
-    header: {
-      fontSize: 22,
-      fontWeight: '700',
-      letterSpacing: 0.3,
-    },
-    title: {
-      fontSize: 18,
-      fontWeight: '700',
-    },
-    subtitle: {
-      fontSize: 14,
-      fontWeight: '600',
-    },
-    body: {
-      fontSize: 14,
-      fontWeight: '400',
-    },
-    caption: {
-      fontSize: 12,
-      fontWeight: '500',
-    },
-    small: {
-      fontSize: 10,
-      fontWeight: '600',
-    },
-  },
-  shadows: {
-    sm: {
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 3,
-      elevation: 2,
-    },
-    md: {
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.25,
-      shadowRadius: 8,
-      elevation: 4,
-    },
-    lg: {
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.35,
-      shadowRadius: 16,
-      elevation: 8,
-    },
+    header: { fontSize: 22, fontWeight: '700', letterSpacing: 0.3 },
+    title: { fontSize: 18, fontWeight: '700' },
+    subtitle: { fontSize: 14, fontWeight: '600' },
+    body: { fontSize: 14, fontWeight: '400' },
+    caption: { fontSize: 12, fontWeight: '500' },
+    small: { fontSize: 10, fontWeight: '600' },
   },
 };
 

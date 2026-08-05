@@ -8,9 +8,12 @@ import {
   RefreshControl,
 } from 'react-native';
 import { useAuthStore } from '../store/useStore';
+import { useThemeColors } from '../theme';
 
 export const StaffDashboard = () => {
   const { user } = useAuthStore();
+  const { colors, isDarkMode } = useThemeColors();
+  const styles = getStyles(colors, isDarkMode);
   const [refreshing, setRefreshing] = useState(false);
 
   const workOrders = [
@@ -81,8 +84,8 @@ export const StaffDashboard = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f172a' },
+const getStyles = (colors, isDarkMode) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   scrollContent: { padding: 16 },
   header: { marginBottom: 16 },
   roleBadge: {
@@ -94,30 +97,30 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   roleBadgeText: { color: '#f87171', fontSize: 12, fontWeight: '700' },
-  title: { fontSize: 20, fontWeight: '800', color: '#f8fafc' },
-  subtitle: { fontSize: 12, color: '#94a3b8', marginTop: 2 },
+  title: { fontSize: 20, fontWeight: '800', color: colors.textPrimary },
+  subtitle: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
   kpiGrid: { flexDirection: 'row', gap: 8, marginBottom: 16 },
   kpiCard: {
     flex: 1,
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 12,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.cardBorder,
   },
-  kpiLabel: { fontSize: 9.5, color: '#94a3b8', fontWeight: '700', letterSpacing: 0.5 },
+  kpiLabel: { fontSize: 9.5, color: colors.textSecondary, fontWeight: '700', letterSpacing: 0.5 },
   kpiVal: { fontSize: 18, fontWeight: '800', marginVertical: 2 },
-  kpiSub: { fontSize: 9.5, color: '#94a3b8', textAlign: 'center' },
+  kpiSub: { fontSize: 9.5, color: colors.textSecondary, textAlign: 'center' },
   sectionHeader: { marginBottom: 10 },
-  sectionTitle: { fontSize: 15, fontWeight: '700', color: '#f8fafc' },
+  sectionTitle: { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
   card: {
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 14,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.cardBorder,
   },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   woId: { color: '#38bdf8', fontSize: 12, fontWeight: '700' },
@@ -125,10 +128,10 @@ const styles = StyleSheet.create({
   priorityHigh: { backgroundColor: 'rgba(239, 68, 68, 0.2)' },
   priorityMed: { backgroundColor: 'rgba(245, 158, 11, 0.2)' },
   priorityText: { color: '#f87171', fontSize: 11, fontWeight: '700' },
-  woTitle: { fontSize: 15, fontWeight: '700', color: '#f8fafc', marginVertical: 6 },
-  woLocation: { color: '#94a3b8', fontSize: 12 },
-  cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10, paddingTop: 8, borderTopWidth: 1, borderTopColor: '#334155' },
-  statusText: { color: '#cbd5e1', fontSize: 12, fontWeight: '600' },
+  woTitle: { fontSize: 15, fontWeight: '700', color: colors.textPrimary, marginVertical: 6 },
+  woLocation: { color: colors.textSecondary, fontSize: 12 },
+  cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10, paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.divider },
+  statusText: { color: colors.textSecondary, fontSize: 12, fontWeight: '600' },
   updateBtn: { padding: 4 },
   updateBtnText: { color: '#38bdf8', fontSize: 12, fontWeight: '700' },
 });

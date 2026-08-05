@@ -8,8 +8,11 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useThemeColors } from '../theme';
 
 export const TenantNotificationsScreen = () => {
+  const { colors, isDarkMode } = useThemeColors();
+  const styles = getStyles(colors, isDarkMode);
   const [notifications, setNotifications] = useState([
     {
       id: '1',
@@ -142,32 +145,32 @@ export const TenantNotificationsScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f172a' },
+const getStyles = (colors, isDarkMode) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   contentContainer: { padding: 16, paddingBottom: 60 },
 
   header: { marginBottom: 20 },
   titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
-  title: { fontSize: 24, fontWeight: '800', color: '#f8fafc', flex: 1 },
+  title: { fontSize: 24, fontWeight: '800', color: colors.textPrimary, flex: 1 },
 
   markAllBtn: { backgroundColor: '#38bdf8', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, flexDirection: 'row', alignItems: 'center' },
   markAllBtnText: { color: '#0f172a', fontSize: 11, fontWeight: '800' },
 
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
-  sectionTitle: { fontSize: 11, fontWeight: '800', color: '#64748b', letterSpacing: 1 },
+  sectionTitle: { fontSize: 11, fontWeight: '800', color: colors.textMuted, letterSpacing: 1 },
   clearAllBtn: { flexDirection: 'row', alignItems: 'center' },
   clearAllText: { color: '#f87171', fontSize: 12, fontWeight: '700' },
 
-  emptyCard: { backgroundColor: '#1e293b', padding: 32, borderRadius: 16, alignItems: 'center', borderWidth: 1, borderColor: '#334155' },
-  emptyText: { color: '#94a3b8', fontSize: 13, fontWeight: '600' },
+  emptyCard: { backgroundColor: colors.surface, padding: 32, borderRadius: 16, alignItems: 'center', borderWidth: 1, borderColor: colors.cardBorder },
+  emptyText: { color: colors.textSecondary, fontSize: 13, fontWeight: '600' },
 
   card: {
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 14,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.cardBorder,
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
@@ -178,10 +181,10 @@ const styles = StyleSheet.create({
   },
   cardMain: { flex: 1, paddingRight: 10 },
   cardTitleRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' },
-  cardTitle: { fontSize: 14, fontWeight: '800', color: '#f8fafc' },
+  cardTitle: { fontSize: 14, fontWeight: '800', color: colors.textPrimary },
   unreadDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#38bdf8', marginLeft: 6, alignSelf: 'center' },
-  cardDesc: { fontSize: 12, color: '#cbd5e1', marginTop: 4, lineHeight: 17 },
-  cardTime: { fontSize: 10.5, color: '#94a3b8', marginTop: 6 },
+  cardDesc: { fontSize: 12, color: colors.textSecondary, marginTop: 4, lineHeight: 17 },
+  cardTime: { fontSize: 10.5, color: colors.textMuted, marginTop: 6 },
 
   cardRight: { alignItems: 'flex-end', justifyContent: 'space-between' },
   tagBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },

@@ -8,9 +8,12 @@ import {
 } from 'react-native';
 import apiClient from '../api/client';
 import { useAuthStore } from '../store/useStore';
+import { useThemeColors } from '../theme';
 
 export const CompaniesScreen = () => {
   const { logout, refreshAccessToken } = useAuthStore();
+  const { colors, isDarkMode } = useThemeColors();
+  const styles = getStyles(colors, isDarkMode);
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -80,18 +83,18 @@ export const CompaniesScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f172a' },
+const getStyles = (colors, isDarkMode) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   contentContainer: { padding: 16 },
-  center: { flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center' },
-  loadingText: { color: '#94a3b8', marginTop: 8 },
+  center: { flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { color: colors.textSecondary, marginTop: 8 },
   header: { marginBottom: 16 },
-  title: { fontSize: 18, fontWeight: '700', color: '#f8fafc' },
-  subtitle: { fontSize: 12, color: '#94a3b8', marginTop: 4 },
-  card: { backgroundColor: '#1e293b', borderRadius: 12, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: '#334155' },
+  title: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
+  subtitle: { fontSize: 12, color: colors.textSecondary, marginTop: 4 },
+  card: { backgroundColor: colors.surface, borderRadius: 12, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: colors.cardBorder },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  name: { fontSize: 15, fontWeight: '700', color: '#f8fafc', flex: 1 },
+  name: { fontSize: 15, fontWeight: '700', color: colors.textPrimary, flex: 1 },
   badge: { backgroundColor: 'rgba(56, 189, 248, 0.2)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
   badgeText: { color: '#38bdf8', fontSize: 11, fontWeight: '700' },
-  detail: { color: '#94a3b8', fontSize: 12, marginTop: 4 },
+  detail: { color: colors.textSecondary, fontSize: 12, marginTop: 4 },
 });

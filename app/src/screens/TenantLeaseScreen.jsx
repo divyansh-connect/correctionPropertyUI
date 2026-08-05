@@ -10,10 +10,13 @@ import {
 } from 'react-native';
 import apiClient from '../api/client';
 import { useAuthStore } from '../store/useStore';
+import { useThemeColors } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
 
 export const TenantLeaseScreen = () => {
   const { logout, refreshAccessToken } = useAuthStore();
+  const { colors, isDarkMode } = useThemeColors();
+  const styles = getStyles(colors, isDarkMode);
   const [loading, setLoading] = useState(true);
   const [leaseData, setLeaseData] = useState(null);
 
@@ -279,61 +282,61 @@ export const TenantLeaseScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f172a' },
+const getStyles = (colors, isDarkMode) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   scrollContent: { padding: 16, paddingBottom: 60 },
-  center: { flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center' },
-  loadingText: { color: '#94a3b8', marginTop: 8 },
+  center: { flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { color: colors.textSecondary, marginTop: 8 },
   header: { marginBottom: 16 },
-  title: { fontSize: 24, fontWeight: '800', color: '#f8fafc' },
+  title: { fontSize: 24, fontWeight: '800', color: colors.textPrimary },
 
   card: {
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 20,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.cardBorder,
   },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   cardHeaderTitleRow: { flexDirection: 'row', alignItems: 'center' },
-  cardTitle: { fontSize: 11, fontWeight: '800', color: '#64748b', letterSpacing: 1 },
+  cardTitle: { fontSize: 11, fontWeight: '800', color: colors.textMuted, letterSpacing: 1 },
   activeBadge: { backgroundColor: 'rgba(16, 185, 129, 0.15)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, borderWidth: 1, borderColor: '#10b981' },
   activeBadgeText: { color: '#10b981', fontSize: 10.5, fontWeight: '800' },
-  termRange: { color: '#f8fafc', fontSize: 18, fontWeight: '800', marginBottom: 16 },
+  termRange: { color: colors.textPrimary, fontSize: 18, fontWeight: '800', marginBottom: 16 },
 
   metricRow: { flexDirection: 'row', gap: 12, marginBottom: 16 },
   metricItem: { flex: 1 },
-  metricLabel: { fontSize: 9, color: '#94a3b8', fontWeight: '800', letterSpacing: 0.5, marginBottom: 4 },
+  metricLabel: { fontSize: 9, color: colors.textMuted, fontWeight: '800', letterSpacing: 0.5, marginBottom: 4 },
   rentValue: { fontSize: 22, fontWeight: '800', color: '#38bdf8' },
-  depositValue: { fontSize: 22, fontWeight: '800', color: '#f8fafc' },
+  depositValue: { fontSize: 22, fontWeight: '800', color: colors.textPrimary },
 
-  infoRowList: { borderTopWidth: 1, borderTopColor: '#334155', paddingTop: 14, gap: 10 },
+  infoRowList: { borderTopWidth: 1, borderTopColor: colors.divider, paddingTop: 14, gap: 10 },
   infoRowItem: { flexDirection: 'row', alignItems: 'center' },
-  infoRowLabel: { fontSize: 12, color: '#cbd5e1', fontWeight: '500', marginRight: 4 },
-  infoRowValue: { fontSize: 12, color: '#f8fafc', fontWeight: '700' },
+  infoRowLabel: { fontSize: 12, color: colors.textSecondary, fontWeight: '500', marginRight: 4 },
+  infoRowValue: { fontSize: 12, color: colors.textPrimary, fontWeight: '700' },
 
   unitHeadline: { fontSize: 18, fontWeight: '800', color: '#38bdf8', marginTop: 10, marginBottom: 6 },
-  specsTextLine: { fontSize: 12.5, color: '#cbd5e1', fontWeight: '600', marginBottom: 16 },
+  specsTextLine: { fontSize: 12.5, color: colors.textSecondary, fontWeight: '600', marginBottom: 16 },
 
   locationContainer: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 14 },
-  addressText: { color: '#f8fafc', fontSize: 14, fontWeight: '700' },
-  addressSub: { color: '#94a3b8', fontSize: 12, marginTop: 2 },
+  addressText: { color: colors.textPrimary, fontSize: 14, fontWeight: '700' },
+  addressSub: { color: colors.textMuted, fontSize: 12, marginTop: 2 },
 
-  propertyMetaRow: { flexDirection: 'row', gap: 16, borderTopWidth: 1, borderTopColor: '#334155', paddingTop: 12 },
-  metaLabel: { fontSize: 12, color: '#94a3b8', fontWeight: '600' },
-  metaVal: { color: '#cbd5e1', fontWeight: '700' },
+  propertyMetaRow: { flexDirection: 'row', gap: 16, borderTopWidth: 1, borderTopColor: colors.divider, paddingTop: 12 },
+  metaLabel: { fontSize: 12, color: colors.textMuted, fontWeight: '600' },
+  metaVal: { color: colors.textSecondary, fontWeight: '700' },
 
   utilitiesGrid: { marginTop: 12, flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   utilityItem: { width: '47%', flexDirection: 'row', alignItems: 'center' },
   bulletDot: { width: 5, height: 5, borderRadius: 2.5, backgroundColor: '#10b981', marginRight: 8 },
-  utilityText: { color: '#cbd5e1', fontSize: 13, fontWeight: '600' },
+  utilityText: { color: colors.textSecondary, fontSize: 13, fontWeight: '600' },
 
   contactSection: { marginTop: 14 },
-  contactRole: { fontSize: 9.5, color: '#94a3b8', fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 },
-  contactName: { fontSize: 15, fontWeight: '800', color: '#f8fafc', marginBottom: 6 },
+  contactRole: { fontSize: 9.5, color: colors.textMuted, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 },
+  contactName: { fontSize: 15, fontWeight: '800', color: colors.textPrimary, marginBottom: 6 },
   contactDetail: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
-  contactText: { color: '#cbd5e1', fontSize: 12.5, fontWeight: '600' },
+  contactText: { color: colors.textSecondary, fontSize: 12.5, fontWeight: '600' },
 
   actionsContainer: { gap: 10, marginTop: 12 },
   actionBtnPrimary: {
@@ -350,17 +353,17 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   actionBtnOutline: {
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.inputBackground,
     paddingVertical: 12,
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.inputBorder,
     flexDirection: 'row',
   },
   actionBtnOutlineText: {
-    color: '#cbd5e1',
+    color: colors.textSecondary,
     fontSize: 12,
     fontWeight: '800',
   },

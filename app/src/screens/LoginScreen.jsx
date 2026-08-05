@@ -13,8 +13,12 @@ import {
   Image,
 } from 'react-native';
 import { useAuthStore } from '../store/useStore';
+import { useThemeColors } from '../theme';
 
 export const LoginScreen = () => {
+  const { colors, isDarkMode } = useThemeColors();
+  const styles = getStyles(colors, isDarkMode);
+  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -145,7 +149,7 @@ export const LoginScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors, isDarkMode) => StyleSheet.create({
   bgImage: {
     flex: 1,
     width: '100%',
@@ -153,7 +157,7 @@ const styles = StyleSheet.create({
   },
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.72)',
+    backgroundColor: isDarkMode ? 'rgba(15, 23, 42, 0.72)' : 'rgba(255, 255, 255, 0.45)',
   },
   centerContainer: {
     flex: 1,
@@ -190,7 +194,7 @@ const styles = StyleSheet.create({
   brandTitle: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#f8fafc',
+    color: isDarkMode ? '#f8fafc' : '#0f172a',
     letterSpacing: 0.5,
   },
   subtitle: {
@@ -200,14 +204,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   card: {
-    backgroundColor: 'rgba(30, 41, 59, 0.82)',
+    backgroundColor: isDarkMode ? 'rgba(30, 41, 59, 0.82)' : 'rgba(255, 255, 255, 0.92)',
     borderRadius: 14,
     padding: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.15)' : '#cbd5e1',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
+    shadowOpacity: isDarkMode ? 0.35 : 0.1,
     shadowRadius: 8,
     elevation: 8,
   },
@@ -222,20 +226,20 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   label: {
-    color: '#cbd5e1',
+    color: isDarkMode ? '#cbd5e1' : '#475569',
     fontSize: 11,
     fontWeight: '600',
     marginBottom: 4,
     textTransform: 'uppercase',
   },
   input: {
-    backgroundColor: 'rgba(15, 23, 42, 0.85)',
+    backgroundColor: isDarkMode ? 'rgba(15, 23, 42, 0.85)' : '#ffffff',
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: isDarkMode ? '#334155' : '#cbd5e1',
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 9,
-    color: '#f8fafc',
+    color: isDarkMode ? '#f8fafc' : '#0f172a',
     fontSize: 13.5,
   },
   button: {
@@ -255,7 +259,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   mockSectionTitle: {
-    color: '#94a3b8',
+    color: isDarkMode ? '#94a3b8' : '#64748b',
     fontSize: 10.5,
     fontWeight: '700',
     letterSpacing: 1,
@@ -270,9 +274,9 @@ const styles = StyleSheet.create({
   compactChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(30, 41, 59, 0.85)',
+    backgroundColor: isDarkMode ? 'rgba(30, 41, 59, 0.85)' : '#ffffff',
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: isDarkMode ? '#334155' : '#cbd5e1',
     borderRadius: 20,
     paddingHorizontal: 10,
     paddingVertical: 6,

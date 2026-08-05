@@ -1,7 +1,10 @@
 import React, { useEffect, useRef } from 'react';
 import { StyleSheet, View, Text, Animated, Easing, Image } from 'react-native';
+import { useThemeColors } from '../theme';
 
 export const SplashScreen = ({ onFinish }) => {
+  const { colors, isDarkMode } = useThemeColors();
+  const styles = getStyles(colors, isDarkMode);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.85)).current;
 
@@ -46,10 +49,10 @@ export const SplashScreen = ({ onFinish }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors, isDarkMode) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -77,7 +80,7 @@ const styles = StyleSheet.create({
   brandTitle: {
     fontSize: 26,
     fontWeight: '800',
-    color: '#f8fafc',
+    color: colors.textPrimary,
     letterSpacing: 0.5,
   },
   brandSubtitle: {

@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import apiClient from '../api/client';
 import { useAuthStore } from '../store/useStore';
+import { useThemeColors } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
 
 // Animated Touchable Wrapper Component
@@ -58,6 +59,8 @@ const AnimatedTouchable = ({ children, onPress, style, disabled }) => {
 
 export const TenantMessagesScreen = () => {
   const { user, logout, refreshAccessToken } = useAuthStore();
+  const { colors, isDarkMode } = useThemeColors();
+  const styles = getStyles(colors, isDarkMode);
   const isOwner = user?.role === 'Owner';
 
   const defaultContact = isOwner ? 'Property Manager' : 'Property Manager Office';
@@ -473,15 +476,15 @@ export const TenantMessagesScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  mainWrapper: { flex: 1, backgroundColor: '#0f172a' },
-  chatRoomContainer: { flex: 1, backgroundColor: '#0f172a' },
-  center: { flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center' },
-  loadingText: { color: '#94a3b8', marginTop: 8 },
+const getStyles = (colors, isDarkMode) => StyleSheet.create({
+  mainWrapper: { flex: 1, backgroundColor: colors.background },
+  chatRoomContainer: { flex: 1, backgroundColor: colors.background },
+  center: { flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { color: colors.textSecondary, marginTop: 8 },
 
   header: { padding: 16, paddingBottom: 6 },
   titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
-  title: { fontSize: 24, fontWeight: '800', color: '#f8fafc', flex: 1 },
+  title: { fontSize: 24, fontWeight: '800', color: colors.textPrimary, flex: 1 },
 
   composeBtn: { backgroundColor: '#0284c7', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, flexDirection: 'row', alignItems: 'center' },
   composeBtnText: { color: '#ffffff', fontSize: 11, fontWeight: '700' },
@@ -491,12 +494,12 @@ const styles = StyleSheet.create({
   conversationItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.surface,
     padding: 14,
     borderRadius: 16,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.cardBorder,
   },
   avatarBox: {
     width: 44,
@@ -513,18 +516,18 @@ const styles = StyleSheet.create({
   },
   convoInfo: { flex: 1 },
   convoHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  convoName: { fontSize: 14, fontWeight: '800', color: '#f8fafc', flex: 1, marginRight: 8 },
+  convoName: { fontSize: 14, fontWeight: '800', color: colors.textPrimary, flex: 1, marginRight: 8 },
   convoTime: { fontSize: 10.5, color: '#64748b' },
-  convoSnippet: { fontSize: 12, color: '#cbd5e1', marginTop: 3 },
+  convoSnippet: { fontSize: 12, color: colors.textSecondary, marginTop: 3 },
 
   chatRoomHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.surface,
     paddingHorizontal: 12,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#334155',
+    borderBottomColor: colors.cardBorder,
     paddingTop: Platform.OS === 'ios' ? 12 : 14,
   },
   backBtn: { padding: 4, marginRight: 6 },
@@ -539,27 +542,27 @@ const styles = StyleSheet.create({
   },
   chatHeaderAvatarText: { color: '#0f172a', fontWeight: '800', fontSize: 15 },
   chatHeaderInfo: { flex: 1 },
-  chatHeaderTitle: { fontSize: 14, fontWeight: '800', color: '#f8fafc' },
+  chatHeaderTitle: { fontSize: 14, fontWeight: '800', color: colors.textPrimary },
   chatHeaderSubtitle: { fontSize: 10.5, color: '#10b981', marginTop: 1 },
 
-  emptyThreadCard: { backgroundColor: '#1e293b', padding: 32, borderRadius: 16, alignItems: 'center', borderWidth: 1, borderColor: '#334155', marginTop: 24, marginHorizontal: 16 },
-  emptyThreadText: { color: '#f8fafc', fontSize: 15, fontWeight: '700' },
+  emptyThreadCard: { backgroundColor: colors.surface, padding: 32, borderRadius: 16, alignItems: 'center', borderWidth: 1, borderColor: colors.cardBorder, marginTop: 24, marginHorizontal: 16 },
+  emptyThreadText: { color: colors.textPrimary, fontSize: 15, fontWeight: '700' },
 
   bubbleWrapper: { marginBottom: 12, flexDirection: 'row' },
   bubbleLeft: { justifyContent: 'flex-start' },
   bubbleRight: { justifyContent: 'flex-end' },
   bubble: { maxWidth: '80%', padding: 12, borderRadius: 16 },
-  bubbleManager: { backgroundColor: '#1e293b', borderWidth: 1, borderColor: '#334155' },
+  bubbleManager: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.cardBorder },
   bubbleUser: { backgroundColor: '#0284c7' },
   bubbleText: { fontSize: 13, lineHeight: 18 },
-  textManager: { color: '#f8fafc' },
+  textManager: { color: colors.textPrimary },
   textUser: { color: '#ffffff' },
   bubbleTime: { fontSize: 9.5, marginTop: 4, textAlign: 'right' },
-  timeManager: { color: '#94a3b8' },
+  timeManager: { color: colors.textMuted },
   timeUser: { color: 'rgba(255,255,255,0.75)' },
 
-  replyBar: { flexDirection: 'row', padding: 12, backgroundColor: '#1e293b', borderTopWidth: 1, borderColor: '#334155', gap: 8, paddingBottom: Platform.OS === 'ios' ? 24 : 12 },
-  replyInput: { flex: 1, backgroundColor: '#0f172a', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, color: '#f8fafc', fontSize: 13, borderWidth: 1, borderColor: '#334155' },
+  replyBar: { flexDirection: 'row', padding: 12, backgroundColor: colors.surface, borderTopWidth: 1, borderColor: colors.cardBorder, gap: 8, paddingBottom: Platform.OS === 'ios' ? 24 : 12 },
+  replyInput: { flex: 1, backgroundColor: colors.inputBackground, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, color: colors.textPrimary, fontSize: 13, borderWidth: 1, borderColor: colors.inputBorder },
   sendBtn: { backgroundColor: '#0284c7', width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
 
   modalBg: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.85)', justifyContent: 'center', padding: 20 },
@@ -570,22 +573,22 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'ios' ? 40 : 16,
     paddingBottom: Platform.OS === 'ios' ? 60 : 30,
   },
-  modalCard: { backgroundColor: '#1e293b', borderRadius: 20, padding: 20, borderWidth: 1, borderColor: '#334155' },
+  modalCard: { backgroundColor: colors.surface, borderRadius: 20, padding: 20, borderWidth: 1, borderColor: colors.cardBorder },
   modalHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
-  modalTitle: { fontSize: 16, fontWeight: '800', color: '#f8fafc' },
-  inputLabel: { fontSize: 10, color: '#94a3b8', fontWeight: '700', marginBottom: 6, marginTop: 10, letterSpacing: 0.5 },
-  input: { backgroundColor: '#0f172a', borderWidth: 1, borderColor: '#334155', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, color: '#f8fafc', fontSize: 13, marginBottom: 4 },
+  modalTitle: { fontSize: 16, fontWeight: '800', color: colors.textPrimary },
+  inputLabel: { fontSize: 10, color: colors.textMuted, fontWeight: '700', marginBottom: 6, marginTop: 10, letterSpacing: 0.5 },
+  input: { backgroundColor: colors.inputBackground, borderWidth: 1, borderColor: colors.inputBorder, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, color: colors.textPrimary, fontSize: 13, marginBottom: 4 },
 
   recipientRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 14 },
-  recChip: { backgroundColor: '#0f172a', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: '#334155' },
+  recChip: { backgroundColor: colors.inputBackground, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: colors.inputBorder },
   recChipActive: { backgroundColor: '#0284c7', borderColor: '#38bdf8' },
-  recChipText: { color: '#94a3b8', fontSize: 11, fontWeight: '600' },
+  recChipText: { color: colors.textSecondary, fontSize: 11, fontWeight: '600' },
   recChipTextActive: { color: '#ffffff', fontWeight: '800' },
 
   modalButtons: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 16 },
   modalBtn: { width: '48%', paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
-  cancelBtn: { backgroundColor: '#334155' },
-  cancelBtnText: { color: '#cbd5e1', fontWeight: '700', fontSize: 13 },
+  cancelBtn: { backgroundColor: colors.buttonSecondary },
+  cancelBtnText: { color: colors.textSecondary, fontWeight: '700', fontSize: 13 },
   saveBtn: { backgroundColor: '#0284c7' },
   saveBtnText: { color: '#ffffff', fontWeight: '700', fontSize: 13 },
 });

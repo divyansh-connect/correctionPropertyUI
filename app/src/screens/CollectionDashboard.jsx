@@ -12,7 +12,7 @@ import {
   Easing,
 } from 'react-native';
 import apiClient from '../api/client';
-import { useAuthStore } from '../store/useStore';
+import { useAuthStore, useThemeStore } from '../store/useStore';
 
 // Animated Touchable Wrapper Component
 const AnimatedTouchable = ({ children, onPress, style, disabled }) => {
@@ -53,6 +53,20 @@ const AnimatedTouchable = ({ children, onPress, style, disabled }) => {
 
 export const CollectionDashboard = () => {
   const { logout, refreshAccessToken } = useAuthStore();
+  const { theme } = useThemeStore();
+  const isDarkMode = theme === 'dark';
+
+  const colors = {
+    bg: isDarkMode ? '#0f172a' : '#f8fafc',
+    cardBg: isDarkMode ? '#1e293b' : '#ffffff',
+    cardBorder: isDarkMode ? '#334155' : '#e2e8f0',
+    textPrimary: isDarkMode ? '#f8fafc' : '#0f172a',
+    textSecondary: isDarkMode ? '#94a3b8' : '#475569',
+    textMuted: isDarkMode ? '#64748b' : '#94a3b8',
+    inputBg: isDarkMode ? '#0f172a' : '#f1f5f9',
+    inputBorder: isDarkMode ? '#334155' : '#cbd5e1',
+  };
+
   const [metrics, setMetrics] = useState(null);
   const [charts, setCharts] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -137,16 +151,16 @@ export const CollectionDashboard = () => {
 
   if (loading && !refreshing) {
     return (
-      <View style={styles.center}>
+      <View style={[styles.center, { backgroundColor: colors.bg }]}>
         <ActivityIndicator size="large" color="#38bdf8" />
-        <Text style={styles.loadingText} allowFontScaling={false}>Loading Collection Manager Dashboard...</Text>
+        <Text style={[styles.loadingText, { color: colors.textSecondary }]} allowFontScaling={false}>Loading Collection Manager Dashboard...</Text>
       </View>
     );
   }
 
   return (
     <ScrollView
-      style={styles.mainWrapper}
+      style={[styles.mainWrapper, { backgroundColor: colors.bg }]}
       contentContainerStyle={styles.outerContentContainer}
       showsVerticalScrollIndicator={true}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchDashboardData} tintColor="#38bdf8" />}
@@ -155,13 +169,13 @@ export const CollectionDashboard = () => {
         {/* Page Header matching Web Screenshot 1-to-1 */}
         <View style={styles.header}>
           <View style={styles.titleRow}>
-            <Text style={styles.title} allowFontScaling={false}>Cashflow & Collections</Text>
+            <Text style={[styles.title, { color: colors.textPrimary }]} allowFontScaling={false}>Cashflow & Collections</Text>
             
-            <AnimatedTouchable style={styles.refreshBtn} onPress={fetchDashboardData}>
-              <Text style={styles.refreshBtnText} allowFontScaling={false}>🔄 Refresh Ledger</Text>
+            <AnimatedTouchable style={[styles.refreshBtn, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]} onPress={fetchDashboardData}>
+              <Text style={[styles.refreshBtnText, { color: colors.textPrimary }]} allowFontScaling={false}>🔄 Refresh Ledger</Text>
             </AnimatedTouchable>
           </View>
-          <Text style={styles.subtitle} allowFontScaling={false}>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]} allowFontScaling={false}>
             Monitor tenant rent receipts, owner distribution payouts, and vendor repair payments.
           </Text>
         </View>
@@ -169,40 +183,40 @@ export const CollectionDashboard = () => {
         {/* 4 Financial Metric Cards matching Web Screenshot 1-to-1 */}
         <View style={styles.kpiGrid}>
           {/* Card 1: TENANT COLLECTIONS */}
-          <AnimatedTouchable style={styles.kpiCard}>
+          <AnimatedTouchable style={[styles.kpiCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
             <View style={styles.kpiHeaderRow}>
-              <Text style={styles.kpiLabel} allowFontScaling={false}>TENANT COLLECTIONS</Text>
+              <Text style={[styles.kpiLabel, { color: colors.textSecondary }]} allowFontScaling={false}>TENANT COLLECTIONS</Text>
               <View style={styles.iconCircleGreen}>
                 <Text style={{ color: '#4ade80', fontSize: 11, fontWeight: '900' }}>↗</Text>
               </View>
             </View>
-            <Text style={styles.kpiVal} allowFontScaling={false}>
+            <Text style={[styles.kpiVal, { color: colors.textPrimary }]} allowFontScaling={false}>
               ${(metrics?.collections || 6000).toLocaleString()}
             </Text>
             <View style={styles.kpiFooterRow}>
               <View style={styles.badgeGreen}>
                 <Text style={styles.badgeGreenText} allowFontScaling={false}>↗ +12.4%</Text>
               </View>
-              <Text style={styles.kpiSubText} allowFontScaling={false}>Gross r...</Text>
+              <Text style={[styles.kpiSubText, { color: colors.textMuted }]} allowFontScaling={false}>Gross r...</Text>
             </View>
           </AnimatedTouchable>
 
           {/* Card 2: TENANT OVERDUE BALANCE */}
-          <AnimatedTouchable style={styles.kpiCard}>
+          <AnimatedTouchable style={[styles.kpiCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
             <View style={styles.kpiHeaderRow}>
-              <Text style={styles.kpiLabel} allowFontScaling={false}>TENANT OVERDUE</Text>
+              <Text style={[styles.kpiLabel, { color: colors.textSecondary }]} allowFontScaling={false}>TENANT OVERDUE</Text>
               <View style={styles.iconCircleRed}>
                 <Text style={{ color: '#f87171', fontSize: 11, fontWeight: '900' }}>!</Text>
               </View>
             </View>
-            <Text style={styles.kpiVal} allowFontScaling={false}>
+            <Text style={[styles.kpiVal, { color: colors.textPrimary }]} allowFontScaling={false}>
               ${(metrics?.overdue || 0).toLocaleString()}
             </Text>
             <View style={styles.kpiFooterRow}>
               <View style={styles.badgeRed}>
                 <Text style={styles.badgeRedText} allowFontScaling={false}>↘ -8.5%</Text>
               </View>
-              <Text style={styles.kpiSubText} allowFontScaling={false}>Pending f...</Text>
+              <Text style={[styles.kpiSubText, { color: colors.textMuted }]} allowFontScaling={false}>Pending f...</Text>
             </View>
           </AnimatedTouchable>
         </View>
@@ -210,59 +224,59 @@ export const CollectionDashboard = () => {
 
 
         {/* CASHFLOW INFLOW VS OUTFLOW CHART WIDGET matching Web Screenshot 1-to-1 */}
-        <View style={styles.chartCard}>
-          <Text style={styles.chartTitle} allowFontScaling={false}>Cashflow Inflow vs Outflow</Text>
-          <Text style={styles.chartSubtitle} allowFontScaling={false}>
+        <View style={[styles.chartCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
+          <Text style={[styles.chartTitle, { color: colors.textPrimary }]} allowFontScaling={false}>Cashflow Inflow vs Outflow</Text>
+          <Text style={[styles.chartSubtitle, { color: colors.textSecondary }]} allowFontScaling={false}>
             Comparison of monthly rent collected vs payouts and expenses
           </Text>
 
           <View style={styles.legendRow}>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: '#4ade80' }]} />
-              <Text style={styles.legendText} allowFontScaling={false}>Inflow (Rent)</Text>
+              <Text style={[styles.legendText, { color: colors.textSecondary }]} allowFontScaling={false}>Inflow (Rent)</Text>
             </View>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: '#f87171' }]} />
-              <Text style={styles.legendText} allowFontScaling={false}>Outflow (Payouts)</Text>
+              <Text style={[styles.legendText, { color: colors.textSecondary }]} allowFontScaling={false}>Outflow (Payouts)</Text>
             </View>
           </View>
 
           {/* Visual Cashflow Graph Component */}
           <View style={styles.graphContainer}>
             <View style={styles.yAxis}>
-              <Text style={styles.yAxisText} allowFontScaling={false}>$20k</Text>
-              <Text style={styles.yAxisText} allowFontScaling={false}>$9k</Text>
-              <Text style={styles.yAxisText} allowFontScaling={false}>$6k</Text>
-              <Text style={styles.yAxisText} allowFontScaling={false}>$0</Text>
+              <Text style={[styles.yAxisText, { color: colors.textMuted }]} allowFontScaling={false}>$20k</Text>
+              <Text style={[styles.yAxisText, { color: colors.textMuted }]} allowFontScaling={false}>$9k</Text>
+              <Text style={[styles.yAxisText, { color: colors.textMuted }]} allowFontScaling={false}>$6k</Text>
+              <Text style={[styles.yAxisText, { color: colors.textMuted }]} allowFontScaling={false}>$0</Text>
             </View>
 
-            <View style={styles.graphArea}>
-              <View style={styles.gridLine} />
-              <View style={styles.gridLine} />
-              <View style={styles.gridLine} />
+            <View style={[styles.graphArea, { borderColor: colors.cardBorder }]}>
+              <View style={[styles.gridLine, { borderBottomColor: colors.cardBorder }]} />
+              <View style={[styles.gridLine, { borderBottomColor: colors.cardBorder }]} />
+              <View style={[styles.gridLine, { borderBottomColor: colors.cardBorder }]} />
               <View style={styles.inflowCurve} />
             </View>
           </View>
         </View>
 
         {/* FOLLOW-UP REQUIRED WIDGET matching Web Screenshot 1-to-1 */}
-        <View style={styles.followUpCard}>
-          <Text style={styles.followUpTitle} allowFontScaling={false}>Follow-Up Required</Text>
-          <Text style={styles.followUpSubtitle} allowFontScaling={false}>
+        <View style={[styles.followUpCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
+          <Text style={[styles.followUpTitle, { color: colors.textPrimary }]} allowFontScaling={false}>Follow-Up Required</Text>
+          <Text style={[styles.followUpSubtitle, { color: colors.textSecondary }]} allowFontScaling={false}>
             Tenants with outstanding balances requiring contact
           </Text>
 
           {followUpTenants.map((t) => (
-            <View key={t.id} style={styles.tenantRow}>
+            <View key={t.id} style={[styles.tenantRow, { borderBottomColor: colors.cardBorder }]}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.tenantNameText} allowFontScaling={false}>{t.name}</Text>
-                <Text style={styles.tenantMetaText} allowFontScaling={false}>
+                <Text style={[styles.tenantNameText, { color: colors.textPrimary }]} allowFontScaling={false}>{t.name}</Text>
+                <Text style={[styles.tenantMetaText, { color: colors.textSecondary }]} allowFontScaling={false}>
                   {t.unit} • <Text style={{ color: '#f87171', fontWeight: '800' }}>{t.daysLate}</Text>
                 </Text>
               </View>
 
               <View style={styles.tenantRightGroup}>
-                <Text style={styles.tenantBalanceText} allowFontScaling={false}>{t.balance}</Text>
+                <Text style={[styles.tenantBalanceText, { color: colors.textPrimary }]} allowFontScaling={false}>{t.balance}</Text>
                 <TouchableOpacity
                   style={styles.alertBtn}
                   onPress={() => handleSendAlert(t.name, t.balance)}

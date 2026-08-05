@@ -39,6 +39,8 @@ export const ProfileScreen = () => {
     headerBtnDarkText: isDarkMode ? '#cbd5e1' : '#334155',
   };
 
+  const styles = getStyles(colors);
+
   // Normalize role
   const getNormalizedRole = (r) => {
     if (!r) return 'Property Manager';
@@ -194,6 +196,7 @@ export const ProfileScreen = () => {
   useEffect(() => {
     if (role === 'Property Manager' || role === 'Super Admin') {
       loadCompanyData();
+      loadPersonalProfile();
     } else {
       loadPersonalProfile();
     }
@@ -203,6 +206,7 @@ export const ProfileScreen = () => {
     setRefreshing(true);
     if (role === 'Property Manager' || role === 'Super Admin') {
       loadCompanyData(false);
+      loadPersonalProfile(false);
     } else {
       loadPersonalProfile(false);
     }
@@ -480,26 +484,58 @@ export const ProfileScreen = () => {
   // ----------------------------------------------------
   if (role === 'Property Manager' || role === 'Super Admin') {
     return (
-      <View style={styles.mainWrapper}>
-        <View style={styles.fixedHeader}>
-          <Text style={styles.title} allowFontScaling={false}>Company Settings</Text>
-          <Text style={styles.subtitle} allowFontScaling={false}>
-            Configure default branding logo assets, regional date format templates, timezone offsets, and currency types.
+      <View style={[styles.mainWrapper, { backgroundColor: colors.bg }]}>
+        <View style={[styles.fixedHeader, { backgroundColor: colors.bg, borderBottomColor: colors.cardBorder }]}>
+          <Text style={[styles.title, { color: colors.textPrimary }]} allowFontScaling={false}>
+            {language === 'es' ? 'Configuración de la Empresa' : 'Company Settings'}
+          </Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]} allowFontScaling={false}>
+            {language === 'es'
+              ? 'Configure default branding logo assets, regional date format templates, timezone offsets, and currency types.'
+              : 'Configure default branding logo assets, regional date format templates, timezone offsets, and currency types.'}
           </Text>
 
           {/* Sub-tabs row */}
-          <View style={styles.tabRow}>
-            <TouchableOpacity style={[styles.tabItem, companyTab === 'profile' && styles.tabItemActive]} onPress={() => setCompanyTab('profile')}>
-              <Text style={[styles.tabItemText, companyTab === 'profile' && styles.tabItemTextActive]} allowFontScaling={false}>Company Profile</Text>
+          <View style={[styles.tabRow, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
+            <TouchableOpacity
+              style={[
+                styles.tabItem,
+                companyTab === 'profile' && { backgroundColor: isDarkMode ? '#38bdf8' : '#3b82f6' }
+              ]}
+              onPress={() => setCompanyTab('profile')}
+            >
+              <Text
+                style={[
+                  styles.tabItemText,
+                  companyTab === 'profile' && { color: isDarkMode ? '#0f172a' : '#ffffff', fontWeight: '800' }
+                ]}
+                allowFontScaling={false}
+              >
+                {language === 'es' ? 'Perfil de la Empresa' : 'Company Profile'}
+              </Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.tabItem, companyTab === 'users' && styles.tabItemActive]} onPress={() => setCompanyTab('users')}>
-              <Text style={[styles.tabItemText, companyTab === 'users' && styles.tabItemTextActive]} allowFontScaling={false}>Users & Roles</Text>
+            <TouchableOpacity
+              style={[
+                styles.tabItem,
+                companyTab === 'users' && { backgroundColor: isDarkMode ? '#38bdf8' : '#3b82f6' }
+              ]}
+              onPress={() => setCompanyTab('users')}
+            >
+              <Text
+                style={[
+                  styles.tabItemText,
+                  companyTab === 'users' && { color: isDarkMode ? '#0f172a' : '#ffffff', fontWeight: '800' }
+                ]}
+                allowFontScaling={false}
+              >
+                {language === 'es' ? 'Usuarios y Roles' : 'Users & Roles'}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
 
         <ScrollView
-          style={styles.container}
+          style={[styles.container, { backgroundColor: colors.bg }]}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#38bdf8" />}
@@ -507,56 +543,56 @@ export const ProfileScreen = () => {
           {/* A.1. COMPANY PROFILE TAB */}
           {companyTab === 'profile' && (
             <View style={styles.tabContentContainer}>
-              <View style={styles.settingsCard}>
-                <View style={styles.cardHeaderRow}>
+              <View style={[styles.settingsCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
+                <View style={[styles.cardHeaderRow, { borderBottomColor: colors.cardBorder }]}>
                   <Ionicons name="sparkles" size={16} color="#38bdf8" style={{ marginRight: 6 }} />
-                  <Text style={styles.cardTitle} allowFontScaling={false}>Corporate Settings & Profile</Text>
+                  <Text style={[styles.cardTitle, { color: colors.textPrimary }]} allowFontScaling={false}>Corporate Settings & Profile</Text>
                 </View>
 
-                <Text style={styles.formLabel} allowFontScaling={false}>COMPANY NAME</Text>
+                <Text style={[styles.formLabel, { color: colors.textSecondary }]} allowFontScaling={false}>COMPANY NAME</Text>
                 <TextInput
-                  style={styles.formInput}
+                  style={[styles.formInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.textPrimary }]}
                   placeholder="Apex Properties Inc."
                   placeholderTextColor="#64748b"
                   value={companyName}
                   onChangeText={setCompanyName}
                 />
 
-                <Text style={styles.formLabel} allowFontScaling={false}>CORPORATE HEADQUARTERS ADDRESS</Text>
+                <Text style={[styles.formLabel, { color: colors.textSecondary }]} allowFontScaling={false}>CORPORATE HEADQUARTERS ADDRESS</Text>
                 <TextInput
-                  style={styles.formInput}
-                  placeholder="100 Pine Street, San San Francisco, CA"
+                  style={[styles.formInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.textPrimary }]}
+                  placeholder="100 Pine Street, San Francisco, CA"
                   placeholderTextColor="#64748b"
                   value={companyAddress}
                   onChangeText={setCompanyAddress}
                 />
 
-                <Text style={styles.formLabel} allowFontScaling={false}>SYSTEM TIMEZONE</Text>
+                <Text style={[styles.formLabel, { color: colors.textSecondary }]} allowFontScaling={false}>SYSTEM TIMEZONE</Text>
                 <TouchableOpacity
-                  style={styles.formPickerSelector}
+                  style={[styles.formPickerSelector, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
                   onPress={() => setActivePicker(activePicker === 'timezone' ? null : 'timezone')}
                 >
-                  <Text style={styles.formPickerText} allowFontScaling={false}>
-                    {systemTimezone === 'EST' ? 'EST (Eastern Standard Time)' : systemTimezone === 'PST' ? 'PST (Pacific Standard Time)' : 'GMT (Greenwich Mean Time)'}
+                  <Text style={[styles.formPickerText, { color: colors.textPrimary }]} allowFontScaling={false}>
+                    {systemTimezone === 'EST' ? 'EST (Eastern Time)' : systemTimezone === 'PST' ? 'PST (Pacific Time)' : 'GMT (Greenwich Time)'}
                   </Text>
-                  <Ionicons name={activePicker === 'timezone' ? "chevron-up" : "chevron-down"} size={16} color="#cbd5e1" />
+                  <Ionicons name={activePicker === 'timezone' ? "chevron-up" : "chevron-down"} size={16} color={colors.textSecondary} />
                 </TouchableOpacity>
                 {activePicker === 'timezone' && (
-                  <View style={styles.inlineDropdownCard}>
+                  <View style={[styles.inlineDropdownCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
                     {[
-                      { value: 'EST', label: 'EST (Eastern Standard Time)' },
-                      { value: 'PST', label: 'PST (Pacific Standard Time)' },
-                      { value: 'GMT', label: 'GMT (Greenwich Mean Time)' }
+                      { value: 'EST', label: 'EST (Eastern Time)' },
+                      { value: 'PST', label: 'PST (Pacific Time)' },
+                      { value: 'GMT', label: 'GMT (Greenwich Time)' }
                     ].map((opt) => (
                       <TouchableOpacity
                         key={opt.value}
-                        style={[styles.inlineDropdownRow, systemTimezone === opt.value && styles.inlineDropdownRowActive]}
+                        style={[styles.inlineDropdownRow, systemTimezone === opt.value && { backgroundColor: 'rgba(56, 189, 248, 0.15)' }]}
                         onPress={() => {
                           setSystemTimezone(opt.value);
                           setActivePicker(null);
                         }}
                       >
-                        <Text style={[styles.inlineDropdownText, systemTimezone === opt.value && styles.inlineDropdownTextActive]} allowFontScaling={false}>
+                        <Text style={[styles.inlineDropdownText, { color: colors.textPrimary, fontWeight: systemTimezone === opt.value ? '800' : '500' }]} allowFontScaling={false}>
                           {opt.label}
                         </Text>
                         {systemTimezone === opt.value && <Ionicons name="checkmark" size={16} color="#38bdf8" />}
@@ -565,18 +601,18 @@ export const ProfileScreen = () => {
                   </View>
                 )}
 
-                <Text style={styles.formLabel} allowFontScaling={false}>BASE CURRENCY</Text>
+                <Text style={[styles.formLabel, { color: colors.textSecondary }]} allowFontScaling={false}>BASE CURRENCY</Text>
                 <TouchableOpacity
-                  style={styles.formPickerSelector}
+                  style={[styles.formPickerSelector, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}
                   onPress={() => setActivePicker(activePicker === 'currency' ? null : 'currency')}
                 >
-                  <Text style={styles.formPickerText} allowFontScaling={false}>
+                  <Text style={[styles.formPickerText, { color: colors.textPrimary }]} allowFontScaling={false}>
                     {baseCurrency === 'USD' ? 'USD ($)' : baseCurrency === 'EUR' ? 'EUR (€)' : 'GBP (£)'}
                   </Text>
-                  <Ionicons name={activePicker === 'currency' ? "chevron-up" : "chevron-down"} size={16} color="#cbd5e1" />
+                  <Ionicons name={activePicker === 'currency' ? "chevron-up" : "chevron-down"} size={16} color={colors.textSecondary} />
                 </TouchableOpacity>
                 {activePicker === 'currency' && (
-                  <View style={styles.inlineDropdownCard}>
+                  <View style={[styles.inlineDropdownCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
                     {[
                       { value: 'USD', label: 'USD ($)' },
                       { value: 'EUR', label: 'EUR (€)' },
@@ -584,13 +620,13 @@ export const ProfileScreen = () => {
                     ].map((opt) => (
                       <TouchableOpacity
                         key={opt.value}
-                        style={[styles.inlineDropdownRow, baseCurrency === opt.value && styles.inlineDropdownRowActive]}
+                        style={[styles.inlineDropdownRow, baseCurrency === opt.value && { backgroundColor: 'rgba(56, 189, 248, 0.15)' }]}
                         onPress={() => {
                           setBaseCurrency(opt.value);
                           setActivePicker(null);
                         }}
                       >
-                        <Text style={[styles.inlineDropdownText, baseCurrency === opt.value && styles.inlineDropdownTextActive]} allowFontScaling={false}>
+                        <Text style={[styles.inlineDropdownText, { color: colors.textPrimary, fontWeight: baseCurrency === opt.value ? '800' : '500' }]} allowFontScaling={false}>
                           {opt.label}
                         </Text>
                         {baseCurrency === opt.value && <Ionicons name="checkmark" size={16} color="#38bdf8" />}
@@ -611,16 +647,115 @@ export const ProfileScreen = () => {
                 </TouchableOpacity>
               </View>
 
-              {/* Account Settings / Logout */}
-              <View style={[styles.settingsCard, { marginTop: 16 }]}>
-                <Text style={[styles.cardTitle, { marginBottom: 12 }]} allowFontScaling={false}>Theme preferences</Text>
+              {/* 4. App Preferences Section (Dark Mode & Language Option) */}
+              <View style={[styles.infoSectionCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder, marginTop: 16 }]}>
+                <View style={styles.sectionHeaderRow}>
+                  <Ionicons name="settings-outline" size={16} color="#38bdf8" style={{ marginRight: 6 }} />
+                  <Text style={[styles.sectionHeaderTitle, { color: colors.textSecondary }]} allowFontScaling={false}>
+                    {language === 'es' ? 'PREFERENCIAS DE LA APP' : 'APP PREFERENCES'}
+                  </Text>
+                </View>
+                <View style={[styles.cardDivider, { backgroundColor: colors.cardBorder }]} />
+
+                {/* Row 1: Dark Mode Toggle */}
                 <View style={styles.rowBetween}>
-                  <Text style={styles.profileText} allowFontScaling={false}>Dark Appearance Theme</Text>
-                  <Switch value={isDarkMode} onValueChange={toggleTheme} trackColor={{ false: '#334155', true: '#38bdf8' }} thumbColor="#f8fafc" />
+                  <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, paddingRight: 8 }}>
+                    <Ionicons name="moon-outline" size={18} color={colors.textSecondary} style={{ marginRight: 8 }} />
+                    <View>
+                      <Text style={[styles.prefTitle, { color: colors.textPrimary }]} allowFontScaling={false}>
+                        {language === 'es' ? 'Modo Oscuro' : 'Dark Mode'}
+                      </Text>
+                      <Text style={[styles.prefSubtitle, { color: colors.textMuted }]} allowFontScaling={false}>
+                        {language === 'es' ? 'Cambiar entre interfaz clara y oscura' : 'Toggle between Dark and Light interface'}
+                      </Text>
+                    </View>
+                  </View>
+                  <Switch value={isDarkMode} onValueChange={toggleTheme} trackColor={{ false: '#cbd5e1', true: '#38bdf8' }} thumbColor="#f8fafc" />
                 </View>
 
-                <View style={styles.divider} />
+                <View style={[styles.cardDivider, { backgroundColor: colors.cardBorder, marginVertical: 12 }]} />
 
+                {/* Row 2: App Language Option (Dropdown Select UI) */}
+                <View style={{ gap: 8 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Ionicons name="globe-outline" size={18} color={colors.textSecondary} style={{ marginRight: 8 }} />
+                    <View>
+                      <Text style={[styles.prefTitle, { color: colors.textPrimary }]} allowFontScaling={false}>
+                        {language === 'es' ? 'Idioma de la App' : 'App Language'}
+                      </Text>
+                      <Text style={[styles.prefSubtitle, { color: colors.textMuted }]} allowFontScaling={false}>
+                        {language === 'es' ? 'Seleccionar idioma (Inglés / Español)' : 'Select system language (English / Spanish)'}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Dropdown Select Selector Button */}
+                  <TouchableOpacity
+                    style={[
+                      styles.formPickerSelector,
+                      {
+                        backgroundColor: colors.inputBg,
+                        borderColor: isLanguageDropdownOpen ? '#38bdf8' : colors.inputBorder,
+                        marginTop: 6,
+                      }
+                    ]}
+                    onPress={() => setIsLanguageDropdownOpen(!isLanguageDropdownOpen)}
+                    activeOpacity={0.8}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <Text style={{ fontSize: 16, marginRight: 8 }}>{language === 'es' ? '🇪🇸' : '🇺🇸'}</Text>
+                      <Text style={[styles.formPickerText, { color: colors.textPrimary }]} allowFontScaling={false}>
+                        {preferredLanguage || (language === 'es' ? 'Spanish (Español)' : 'English (US)')}
+                      </Text>
+                    </View>
+                    <Ionicons
+                      name={isLanguageDropdownOpen ? "chevron-up" : "chevron-down"}
+                      size={18}
+                      color={colors.textSecondary}
+                    />
+                  </TouchableOpacity>
+
+                  {/* Dropdown Options List */}
+                  {isLanguageDropdownOpen && (
+                    <View style={[styles.inlineDropdownCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder, marginTop: 4 }]}>
+                      {[
+                        { code: 'en', label: 'English (US)', flag: '🇺🇸' },
+                        { code: 'es', label: 'Spanish (Español)', flag: '🇪🇸' }
+                      ].map((opt) => (
+                        <TouchableOpacity
+                          key={opt.code}
+                          style={[
+                            styles.inlineDropdownRow,
+                            language === opt.code && { backgroundColor: 'rgba(56, 189, 248, 0.15)' }
+                          ]}
+                          onPress={() => {
+                            handleSelectLanguage(opt.code, opt.label);
+                            setIsLanguageDropdownOpen(false);
+                          }}
+                          activeOpacity={0.8}
+                        >
+                          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <Text style={{ fontSize: 16, marginRight: 8 }}>{opt.flag}</Text>
+                            <Text
+                              style={[
+                                styles.inlineDropdownText,
+                                { color: colors.textPrimary, fontWeight: language === opt.code ? '800' : '500' }
+                              ]}
+                              allowFontScaling={false}
+                            >
+                              {opt.label}
+                            </Text>
+                          </View>
+                          {language === opt.code && <Ionicons name="checkmark" size={16} color="#38bdf8" />}
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              </View>
+
+              {/* Account Settings / Logout */}
+              <View style={[styles.settingsCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder, marginTop: 16 }]}>
                 <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
                   <Ionicons name="log-out-outline" size={18} color="#ef4444" style={{ marginRight: 6 }} />
                   <Text style={styles.logoutBtnText} allowFontScaling={false}>Log Out of Zentrol Staff</Text>
@@ -1299,58 +1434,58 @@ export const ProfileScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  mainWrapper: { flex: 1, backgroundColor: '#0f172a' },
-  container: { flex: 1, backgroundColor: '#0f172a' },
+const getStyles = (colors) => StyleSheet.create({
+  mainWrapper: { flex: 1, backgroundColor: colors.bg },
+  container: { flex: 1, backgroundColor: colors.bg },
   scrollContent: { paddingHorizontal: 16, paddingBottom: 60, paddingTop: 12 },
 
   fixedHeader: {
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.bg,
     paddingHorizontal: 16,
     paddingBottom: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#1e293b',
+    borderBottomColor: colors.cardBorder,
     zIndex: 10,
     paddingTop: 16,
   },
-  title: { fontSize: 20, fontWeight: '800', color: '#f8fafc' },
-  subtitle: { fontSize: 11.5, color: '#94a3b8', marginTop: 4, lineHeight: 15 },
+  title: { fontSize: 20, fontWeight: '800', color: colors.textPrimary },
+  subtitle: { fontSize: 11.5, color: colors.textSecondary, marginTop: 4, lineHeight: 15 },
 
   // Sub-tabs row
-  tabRow: { flexDirection: 'row', backgroundColor: '#1e293b', borderRadius: 10, padding: 4, marginTop: 12 },
+  tabRow: { flexDirection: 'row', backgroundColor: colors.cardBg, borderRadius: 10, padding: 4, marginTop: 12 },
   tabItem: { flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 8 },
   tabItemActive: { backgroundColor: '#38bdf8' },
-  tabItemText: { color: '#94a3b8', fontSize: 12.5, fontWeight: '700' },
+  tabItemText: { color: colors.textSecondary, fontSize: 12.5, fontWeight: '700' },
   tabItemTextActive: { color: '#0f172a', fontWeight: '800' },
 
   tabContentContainer: { paddingTop: 8 },
 
   // Cards
   settingsCard: {
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.cardBg,
     borderRadius: 14,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.cardBorder,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
   },
-  cardHeaderRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16, borderBottomWidth: 1, borderBottomColor: '#334155', paddingBottom: 10 },
-  cardTitle: { fontSize: 14.5, fontWeight: '800', color: '#f8fafc' },
+  cardHeaderRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16, borderBottomWidth: 1, borderBottomColor: colors.cardBorder, paddingBottom: 10 },
+  cardTitle: { fontSize: 14.5, fontWeight: '800', color: colors.textPrimary },
 
   // Forms
-  formLabel: { fontSize: 9.5, fontWeight: '800', color: '#94a3b8', letterSpacing: 0.8, marginTop: 12, marginBottom: 6 },
+  formLabel: { fontSize: 9.5, fontWeight: '800', color: colors.textSecondary, letterSpacing: 0.8, marginTop: 12, marginBottom: 6 },
   formInput: {
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.inputBg,
     borderRadius: 10,
     padding: 10,
-    color: '#f8fafc',
+    color: colors.textPrimary,
     fontSize: 13,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.inputBorder,
     fontWeight: '700',
     marginBottom: 10,
   },
@@ -1358,14 +1493,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.inputBg,
     borderRadius: 10,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.inputBorder,
     marginBottom: 10,
   },
-  formPickerText: { color: '#f8fafc', fontSize: 13, fontWeight: '700' },
+  formPickerText: { color: colors.textPrimary, fontSize: 13, fontWeight: '700' },
 
   saveConfigBtn: {
     flexDirection: 'row',
@@ -1380,8 +1515,8 @@ const styles = StyleSheet.create({
 
   // Users Hub Layouts
   usersHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  hubTitle: { fontSize: 15.5, fontWeight: '850', color: '#f8fafc' },
-  hubSubtitle: { fontSize: 11, color: '#94a3b8', marginTop: 3 },
+  hubTitle: { fontSize: 15.5, fontWeight: '850', color: colors.textPrimary },
+  hubSubtitle: { fontSize: 11, color: colors.textSecondary, marginTop: 3 },
   provisionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1398,38 +1533,38 @@ const styles = StyleSheet.create({
     flex: 1.5,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.cardBg,
     borderRadius: 10,
     paddingHorizontal: 10,
     height: 36,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.cardBorder,
   },
-  userSearchInput: { flex: 1, color: '#f8fafc', fontSize: 12.5, height: '100%', padding: 0 },
+  userSearchInput: { flex: 1, color: colors.textPrimary, fontSize: 12.5, height: '100%', padding: 0 },
   roleFilterBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.cardBg,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.cardBorder,
     borderRadius: 10,
     paddingHorizontal: 10,
     height: 36,
   },
-  roleFilterText: { color: '#cbd5e1', fontSize: 12, fontWeight: '700' },
+  roleFilterText: { color: colors.textSecondary, fontSize: 12, fontWeight: '700' },
 
   // Accounts List
   accountsContainerCard: {
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.cardBg,
     borderRadius: 14,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.cardBorder,
   },
-  accountsCardTitle: { fontSize: 13.5, fontWeight: '800', color: '#f8fafc' },
+  accountsCardTitle: { fontSize: 13.5, fontWeight: '800', color: colors.textPrimary },
   emptyAccountsView: { paddingVertical: 40, alignItems: 'center' },
-  emptyAccountsText: { color: '#64748b', fontSize: 12.5 },
+  emptyAccountsText: { color: colors.textMuted, fontSize: 12.5 },
 
   // User List Row
   userListItemRow: {
@@ -1438,10 +1573,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#334155',
+    borderBottomColor: colors.cardBorder,
   },
-  uNameText: { fontSize: 14, fontWeight: '800', color: '#f8fafc' },
-  uEmailText: { fontSize: 11.5, color: '#94a3b8', marginTop: 1 },
+  uNameText: { fontSize: 14, fontWeight: '800', color: colors.textPrimary },
+  uEmailText: { fontSize: 11.5, color: colors.textSecondary, marginTop: 1 },
   roleMiniBadge: { backgroundColor: 'rgba(56, 189, 248, 0.1)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
   roleMiniText: { color: '#38bdf8', fontSize: 9, fontWeight: '900', textTransform: 'uppercase' },
   statusMiniBadge: { borderWidth: 1, paddingHorizontal: 5, paddingVertical: 1, borderRadius: 4 },
@@ -1461,12 +1596,12 @@ const styles = StyleSheet.create({
   profileHeader: { alignItems: 'center', paddingVertical: 24 },
   avatarLarge: { width: 70, height: 70, borderRadius: 35, backgroundColor: '#38bdf8', alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
   avatarTextLarge: { fontSize: 28, color: '#0f172a', fontWeight: '800' },
-  profileNameText: { fontSize: 18, fontWeight: '850', color: '#f8fafc' },
-  profileSubText: { fontSize: 12.5, color: '#94a3b8', marginTop: 4 },
+  profileNameText: { fontSize: 18, fontWeight: '850', color: colors.textPrimary },
+  profileSubText: { fontSize: 12.5, color: colors.textSecondary, marginTop: 4 },
 
-  profileRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#334155' },
-  profileLabel: { fontSize: 13, color: '#cbd5e1', fontWeight: '650' },
-  profileText: { fontSize: 13, color: '#94a3b8' },
+  profileRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.cardBorder },
+  profileLabel: { fontSize: 13, color: colors.textSecondary, fontWeight: '650' },
+  profileText: { fontSize: 13, color: colors.textSecondary },
 
   editBtn: {
     flexDirection: 'row',
@@ -1479,12 +1614,12 @@ const styles = StyleSheet.create({
   },
   editBtnText: { color: '#0f172a', fontSize: 12.5, fontWeight: '800' },
 
-  actionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#334155' },
-  actionText: { fontSize: 13, color: '#cbd5e1', fontWeight: '650' },
+  actionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.cardBorder },
+  actionText: { fontSize: 13, color: colors.textSecondary, fontWeight: '650' },
   logoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, marginTop: 12 },
   logoutBtnText: { color: '#ef4444', fontSize: 13, fontWeight: '800' },
 
-  divider: { height: 1, backgroundColor: '#334155', marginVertical: 10 },
+  divider: { height: 1, backgroundColor: colors.cardBorder, marginVertical: 10 },
   rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
 
   // Modals
@@ -1496,42 +1631,42 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalContent: {
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.cardBg,
     borderRadius: 20,
     width: '100%',
     maxHeight: '85%',
     padding: 20,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.cardBorder,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: '#334155',
+    borderBottomColor: colors.cardBorder,
     paddingBottom: 12,
     marginBottom: 16,
   },
-  modalTitle: { fontSize: 14.5, fontWeight: '800', color: '#f8fafc' },
+  modalTitle: { fontSize: 14.5, fontWeight: '800', color: colors.textPrimary },
   modalForm: { marginBottom: 16 },
   modalActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     borderTopWidth: 1,
-    borderTopColor: '#334155',
+    borderTopColor: colors.cardBorder,
     paddingTop: 16,
     marginTop: 16,
   },
   cancelBtn: {
     flex: 1,
-    backgroundColor: '#334155',
+    backgroundColor: colors.headerBtnDark,
     borderRadius: 10,
     paddingVertical: 12,
     alignItems: 'center',
     marginRight: 8,
   },
-  cancelBtnText: { color: '#cbd5e1', fontSize: 13, fontWeight: '800' },
+  cancelBtnText: { color: colors.headerBtnDarkText, fontSize: 13, fontWeight: '800' },
   submitBtn: {
     flex: 1.5,
     backgroundColor: '#38bdf8',
@@ -1542,10 +1677,10 @@ const styles = StyleSheet.create({
   submitBtnText: { color: '#0f172a', fontSize: 13, fontWeight: '800' },
 
   buildingChecklistContainer: {
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.inputBg,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.inputBorder,
     padding: 10,
     marginTop: 4,
   },
@@ -1555,27 +1690,27 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   scopeCheckText: {
-    color: '#cbd5e1',
+    color: colors.textSecondary,
     fontSize: 12.5,
     fontWeight: '700',
   },
 
   // Picker modal styling
   pickerModalContent: {
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.cardBg,
     borderRadius: 16,
     width: '80%',
     padding: 16,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.cardBorder,
   },
-  pickerModalTitle: { fontSize: 14.5, fontWeight: '800', color: '#f8fafc', marginBottom: 12, textAlign: 'center' },
+  pickerModalTitle: { fontSize: 14.5, fontWeight: '800', color: colors.textPrimary, marginBottom: 12, textAlign: 'center' },
   pickerOptionRow: {
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#334155',
+    borderBottomColor: colors.cardBorder,
   },
-  pickerOptionText: { color: '#cbd5e1', fontSize: 13, fontWeight: '700' },
+  pickerOptionText: { color: colors.textSecondary, fontSize: 13, fontWeight: '700' },
   closePickerBtn: {
     marginTop: 14,
     paddingVertical: 10,
@@ -1585,12 +1720,12 @@ const styles = StyleSheet.create({
   },
   closePickerBtnText: { color: '#ffffff', fontSize: 13, fontWeight: '800' },
 
-  centerLoading: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0f172a' },
-  loadingText: { color: '#94a3b8', fontSize: 13, marginTop: 8 },
+  centerLoading: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.bg },
+  loadingText: { color: colors.textSecondary, fontSize: 13, marginTop: 8 },
 
   // Inline dropdown cards
   inlineDropdownCard: {
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.inputBg,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: '#38bdf8',
@@ -1605,13 +1740,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#1e293b',
+    borderBottomColor: colors.cardBorder,
   },
   inlineDropdownRowActive: {
     backgroundColor: 'rgba(56, 189, 248, 0.12)',
   },
   inlineDropdownText: {
-    color: '#cbd5e1',
+    color: colors.textSecondary,
     fontSize: 12.5,
     fontWeight: '600',
   },
@@ -1622,13 +1757,13 @@ const styles = StyleSheet.create({
 
   // High Fidelity Profile View Cards styling
   profileHeaderCard: {
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.cardBg,
     borderRadius: 16,
     padding: 20,
     alignItems: 'center',
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.cardBorder,
   },
   avatarLargeCircle: {
     width: 90,
@@ -1647,7 +1782,7 @@ const styles = StyleSheet.create({
   profileNameTextMain: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#f8fafc',
+    color: colors.textPrimary,
     marginBottom: 6,
   },
   roleBadgeContainer: {
@@ -1688,24 +1823,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#334155',
+    backgroundColor: colors.headerBtnDark,
     borderRadius: 8,
     paddingVertical: 10,
     borderWidth: 1,
-    borderColor: '#475569',
+    borderColor: colors.cardBorder,
   },
   headerButtonDarkText: {
-    color: '#cbd5e1',
+    color: colors.headerBtnDarkText,
     fontSize: 12.5,
     fontWeight: '800',
   },
   infoSectionCard: {
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.cardBg,
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.cardBorder,
   },
   sectionHeaderRow: {
     flexDirection: 'row',
@@ -1715,12 +1850,12 @@ const styles = StyleSheet.create({
   sectionHeaderTitle: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#94a3b8',
+    color: colors.textSecondary,
     letterSpacing: 0.6,
   },
   cardDivider: {
     height: 1,
-    backgroundColor: '#334155',
+    backgroundColor: colors.cardBorder,
     marginBottom: 12,
   },
   formGrid: {
@@ -1733,22 +1868,22 @@ const styles = StyleSheet.create({
   },
   formGridLabel: {
     fontSize: 9.5,
-    color: '#cbd5e1',
+    color: colors.textSecondary,
     fontWeight: '700',
     marginBottom: 6,
   },
   formGridInputBox: {
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.inputBg,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.inputBorder,
     minHeight: 40,
     justifyContent: 'center',
   },
   formGridInputText: {
-    color: '#f8fafc',
+    color: colors.textPrimary,
     fontSize: 13,
     fontWeight: '700',
   },
@@ -1757,22 +1892,22 @@ const styles = StyleSheet.create({
   },
   recordsLabel: {
     fontSize: 9.5,
-    color: '#cbd5e1',
+    color: colors.textSecondary,
     fontWeight: '700',
     marginBottom: 4,
   },
   recordsValue: {
-    color: '#f8fafc',
+    color: colors.textPrimary,
     fontSize: 13.5,
     fontWeight: '800',
   },
   prefTitle: {
-    color: '#cbd5e1',
+    color: colors.textSecondary,
     fontSize: 13,
     fontWeight: '700',
   },
   prefSubtitle: {
-    color: '#64748b',
+    color: colors.textMuted,
     fontSize: 10.5,
     marginTop: 2,
   },
@@ -1781,19 +1916,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.inputBg,
     borderRadius: 10,
     paddingVertical: 10,
     paddingHorizontal: 10,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.inputBorder,
   },
   langBtnActive: {
     backgroundColor: '#38bdf8',
     borderColor: '#38bdf8',
   },
   langBtnText: {
-    color: '#cbd5e1',
+    color: colors.textSecondary,
     fontSize: 12,
     fontWeight: '700',
   },

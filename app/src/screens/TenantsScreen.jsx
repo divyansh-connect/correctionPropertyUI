@@ -19,6 +19,7 @@ import {
 } from 'react-native';
 import apiClient from '../api/client';
 import { useAuthStore } from '../store/useStore';
+import { useThemeColors } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
 
 // Animated Touchable Wrapper Component
@@ -60,6 +61,8 @@ const AnimatedTouchable = ({ children, onPress, style, disabled }) => {
 
 export const TenantsScreen = () => {
   const { logout, refreshAccessToken } = useAuthStore();
+  const { colors, isDarkMode } = useThemeColors();
+  const styles = getStyles(colors, isDarkMode);
   const [tenants, setTenants] = useState([]);
   const [units, setUnits] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -677,30 +680,30 @@ export const TenantsScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  mainWrapper: { flex: 1, backgroundColor: '#0f172a' },
+const getStyles = (colors, isDarkMode) => StyleSheet.create({
+  mainWrapper: { flex: 1, backgroundColor: colors.background },
   container: { flex: 1 },
   scrollContent: { padding: 16, paddingBottom: 60 },
-  center: { flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center' },
-  loadingText: { color: '#94a3b8', marginTop: 8 },
+  center: { flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { color: colors.textSecondary, marginTop: 8 },
 
   header: { marginBottom: 16 },
-  title: { fontSize: 22, fontWeight: '800', color: '#f8fafc' },
-  subtitle: { fontSize: 11.5, color: '#94a3b8', marginTop: 4, lineHeight: 16 },
+  title: { fontSize: 22, fontWeight: '800', color: colors.textPrimary },
+  subtitle: { fontSize: 11.5, color: colors.textSecondary, marginTop: 4, lineHeight: 16 },
 
   searchBarRow: { flexDirection: 'row', gap: 10, marginBottom: 16, alignItems: 'center' },
   searchContainer: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.cardBorder,
     borderRadius: 10,
     paddingHorizontal: 10,
     height: 40,
   },
-  searchInput: { color: '#f8fafc', fontSize: 12, flex: 1, padding: 0 },
+  searchInput: { color: colors.textPrimary, fontSize: 12, flex: 1, padding: 0 },
   addBtn: {
     backgroundColor: '#38bdf8',
     paddingHorizontal: 12,
@@ -714,12 +717,12 @@ const styles = StyleSheet.create({
   addBtnText: { color: '#0f172a', fontSize: 12, fontWeight: '800' },
 
   sectionHeader: { marginBottom: 12 },
-  sectionTitle: { fontSize: 10, fontWeight: '800', color: '#94a3b8', letterSpacing: 0.8 },
+  sectionTitle: { fontSize: 10, fontWeight: '800', color: colors.textMuted, letterSpacing: 0.8 },
 
-  emptyCard: { backgroundColor: '#1e293b', padding: 32, borderRadius: 16, alignItems: 'center', borderWidth: 1, borderColor: '#334155' },
-  emptyText: { color: '#f8fafc', fontSize: 15, fontWeight: '700' },
+  emptyCard: { backgroundColor: colors.surface, padding: 32, borderRadius: 16, alignItems: 'center', borderWidth: 1, borderColor: colors.cardBorder },
+  emptyText: { color: colors.textPrimary, fontSize: 15, fontWeight: '700' },
 
-  card: { backgroundColor: '#1e293b', borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: '#334155' },
+  card: { backgroundColor: colors.surface, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: colors.cardBorder },
   cardHeader: { flexDirection: 'row', alignItems: 'center' },
   avatar: {
     width: 40,
@@ -732,39 +735,39 @@ const styles = StyleSheet.create({
   },
   avatarText: { color: '#0f172a', fontSize: 16, fontWeight: '800' },
   tenantInfo: { flex: 1 },
-  tenantName: { fontSize: 15, fontWeight: '800', color: '#f8fafc' },
-  tenantSubText: { fontSize: 11.5, color: '#94a3b8', marginTop: 2 },
+  tenantName: { fontSize: 15, fontWeight: '800', color: colors.textPrimary },
+  tenantSubText: { fontSize: 11.5, color: colors.textSecondary, marginTop: 2 },
   badgesRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   deleteBtn: { width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(239, 68, 68, 0.12)', alignItems: 'center', justifyContent: 'center' },
   eyeBtn: { width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(56, 189, 248, 0.12)', alignItems: 'center', justifyContent: 'center' },
 
-  divider: { height: 1, backgroundColor: '#334155', marginVertical: 12 },
+  divider: { height: 1, backgroundColor: colors.divider, marginVertical: 12 },
 
   metaRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   metaCol: { flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8 },
-  metaText: { fontSize: 12, color: '#cbd5e1' },
+  metaText: { fontSize: 12, color: colors.textSecondary },
   activeBadge: { backgroundColor: 'rgba(16, 185, 129, 0.12)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, borderWidth: 1, borderColor: '#10b981' },
   activeBadgeText: { color: '#10b981', fontSize: 10, fontWeight: '800' },
 
   // Modal styling
   modalBg: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.85)', justifyContent: 'center', padding: 20 },
-  modalCard: { backgroundColor: '#1e293b', borderRadius: 20, padding: 20, borderWidth: 1, borderColor: '#334155', maxHeight: '85%' },
+  modalCard: { backgroundColor: colors.surface, borderRadius: 20, padding: 20, borderWidth: 1, borderColor: colors.cardBorder, maxHeight: '85%' },
   modalHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  modalTitle: { fontSize: 16, fontWeight: '800', color: '#f8fafc' },
+  modalTitle: { fontSize: 16, fontWeight: '800', color: colors.textPrimary },
   modalSubHeader: { fontSize: 9, fontWeight: '850', color: '#38bdf8', letterSpacing: 0.8, marginTop: 10, marginBottom: 10 },
   modalScroll: { marginBottom: 16 },
 
   formGroup: { marginBottom: 14 },
   formRow: { flexDirection: 'row', gap: 10 },
-  formLabel: { fontSize: 9.5, fontWeight: '800', color: '#94a3b8', letterSpacing: 0.5, marginBottom: 6 },
+  formLabel: { fontSize: 9.5, fontWeight: '800', color: colors.textMuted, letterSpacing: 0.5, marginBottom: 6 },
   formInput: {
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.inputBackground,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.inputBorder,
     borderRadius: 10,
     paddingHorizontal: 12,
     height: 44,
-    color: '#f8fafc',
+    color: colors.textPrimary,
     fontSize: 13,
   },
 
@@ -772,22 +775,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.inputBackground,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.inputBorder,
     borderRadius: 10,
     paddingHorizontal: 12,
     height: 44,
   },
-  dropdownTriggerText: { color: '#cbd5e1', fontSize: 13 },
+  dropdownTriggerText: { color: colors.textSecondary, fontSize: 13 },
   dropdownContainer: {
     position: 'absolute',
     top: 68,
     left: 0,
     right: 0,
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.inputBackground,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.inputBorder,
     borderRadius: 10,
     zIndex: 9999,
     elevation: 5,
@@ -800,23 +803,23 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#1e293b',
+    borderBottomColor: colors.surface,
   },
-  dropdownItemText: { color: '#cbd5e1', fontSize: 12.5 },
+  dropdownItemText: { color: colors.textSecondary, fontSize: 12.5 },
 
-  modalActions: { flexDirection: 'row', gap: 10, justifyContent: 'flex-end', borderTopWidth: 1, borderTopColor: '#334155', paddingTop: 14, marginTop: 10 },
-  cancelBtn: { paddingVertical: 10, paddingHorizontal: 16, borderRadius: 10, borderWidth: 1, borderColor: '#334155' },
-  cancelBtnText: { color: '#cbd5e1', fontSize: 12.5, fontWeight: '700' },
+  modalActions: { flexDirection: 'row', gap: 10, justifyContent: 'flex-end', borderTopWidth: 1, borderTopColor: colors.divider, paddingTop: 14, marginTop: 10 },
+  cancelBtn: { paddingVertical: 10, paddingHorizontal: 16, borderRadius: 10, borderWidth: 1, borderColor: colors.inputBorder },
+  cancelBtnText: { color: colors.textSecondary, fontSize: 12.5, fontWeight: '700' },
   submitBtn: { backgroundColor: '#38bdf8', paddingVertical: 10, paddingHorizontal: 16, borderRadius: 10, minWidth: 110, alignItems: 'center', justifyContent: 'center' },
   submitBtnDisabled: { opacity: 0.5 },
   submitBtnText: { color: '#0f172a', fontSize: 12.5, fontWeight: '800' },
 
   // Detail Specs Modal
   modalTitleRow: { flexDirection: 'row', alignItems: 'center' },
-  detailContainer: { backgroundColor: '#0f172a', borderRadius: 12, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: '#334155' },
-  detailRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#1e293b' },
-  detailLabel: { color: '#94a3b8', fontSize: 12.5, fontWeight: '600' },
-  detailVal: { color: '#f8fafc', fontSize: 12.5, fontWeight: '700', textAlign: 'right', flex: 1, marginLeft: 16 },
-  closeModalBtn: { backgroundColor: '#334155', paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
-  closeModalBtnText: { color: '#cbd5e1', fontSize: 13, fontWeight: '700' },
+  detailContainer: { backgroundColor: colors.inputBackground, borderRadius: 12, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: colors.cardBorder },
+  detailRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.surface },
+  detailLabel: { color: colors.textSecondary, fontSize: 12.5, fontWeight: '600' },
+  detailVal: { color: colors.textPrimary, fontSize: 12.5, fontWeight: '700', textAlign: 'right', flex: 1, marginLeft: 16 },
+  closeModalBtn: { backgroundColor: colors.buttonSecondary, paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
+  closeModalBtnText: { color: colors.textSecondary, fontSize: 13, fontWeight: '700' },
 });

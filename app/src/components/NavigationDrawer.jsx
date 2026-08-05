@@ -10,9 +10,12 @@ import {
   Platform,
 } from 'react-native';
 import { useAuthStore } from '../store/useStore';
+import { useThemeColors } from '../theme';
 
 export const NavigationDrawer = ({ visible, onClose, activeScreen, onSelectScreen }) => {
   const { user, logout } = useAuthStore();
+  const { colors, isDarkMode } = useThemeColors();
+  const styles = getStyles(colors, isDarkMode);
 
   const roleLower = String(user?.role || '').toLowerCase();
   const isSuperAdmin = roleLower.includes('super');
@@ -152,11 +155,11 @@ export const NavigationDrawer = ({ visible, onClose, activeScreen, onSelectScree
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors, isDarkMode) => StyleSheet.create({
   overlay: {
     flex: 1,
     flexDirection: 'row',
-    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    backgroundColor: isDarkMode ? 'rgba(0, 0, 0, 0.65)' : 'rgba(0, 0, 0, 0.45)',
   },
   backdrop: {
     flex: 1,
@@ -164,11 +167,11 @@ const styles = StyleSheet.create({
   drawerContainer: {
     width: '80%',
     maxWidth: 310,
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.surface,
     height: '100%',
     shadowColor: '#000',
     shadowOffset: { width: -2, height: 0 },
-    shadowOpacity: 0.5,
+    shadowOpacity: isDarkMode ? 0.5 : 0.08,
     shadowRadius: 8,
     elevation: 10,
   },
@@ -199,7 +202,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   userName: {
-    color: '#f8fafc',
+    color: colors.textPrimary,
     fontSize: 15,
     fontWeight: '700',
   },
@@ -211,7 +214,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: '#334155',
+    backgroundColor: colors.divider,
     marginVertical: 4,
   },
   menuList: {
@@ -223,7 +226,7 @@ const styles = StyleSheet.create({
     paddingBottom: 60,
   },
   sectionHeader: {
-    color: '#64748b',
+    color: colors.textMuted,
     fontSize: 10.5,
     fontWeight: '700',
     letterSpacing: 1,
@@ -235,16 +238,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: 8,
     marginBottom: 4,
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.inputBackground,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.cardBorder,
   },
   menuItemActive: {
     backgroundColor: 'rgba(56, 189, 248, 0.15)',
     borderColor: '#38bdf8',
   },
   menuItemText: {
-    color: '#cbd5e1',
+    color: colors.textSecondary,
     fontSize: 14,
     fontWeight: '600',
   },

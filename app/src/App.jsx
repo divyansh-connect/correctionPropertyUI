@@ -46,6 +46,7 @@ import { OwnersScreen } from './screens/OwnersScreen';
 
 export default function App() {
   const { user, isAuthenticated, isLoaded, initializeAuth } = useAuthStore();
+  const { theme } = useThemeStore();
   const [showSplash, setShowSplash] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [drawerVisible, setDrawerVisible] = useState(false);
@@ -294,19 +295,21 @@ export default function App() {
     }
   };
 
+  const isDarkMode = theme === 'dark';
+
   return (
-    <View style={styles.container}>
-      <StatusBar style="light" />
+    <View style={[styles.container, { backgroundColor: isDarkMode ? '#0f172a' : '#f8fafc' }]}>
+      <StatusBar style={isDarkMode ? "light" : "dark"} />
 
       {/* Top Header Bar with Hamburger Drawer, Notification Bell Icon & Profile Badge */}
       {(role !== 'Maintenance Staff' && role !== 'Tenant' && role !== 'Owner' && role !== 'Property Manager' && role !== 'Collection Manager') && (
-        <View style={styles.topHeader}>
+        <View style={[styles.topHeader, { backgroundColor: isDarkMode ? '#1e293b' : '#ffffff', borderBottomColor: isDarkMode ? '#334155' : '#e2e8f0' }]}>
           <View style={styles.brandContainer}>
             <TouchableOpacity style={styles.hamburgerBtn} onPress={() => setDrawerVisible(true)}>
               <Ionicons name="menu-outline" size={24} color="#38bdf8" />
             </TouchableOpacity>
             <Ionicons name="business" size={20} color="#38bdf8" style={{ marginRight: 2 }} />
-            <Text style={styles.headerTitle} allowFontScaling={false}>
+            <Text style={[styles.headerTitle, { color: isDarkMode ? '#f8fafc' : '#0f172a' }]} allowFontScaling={false}>
               {role === 'Tenant' ? 'Tenant Portal' : 'Zentrol Property'}
             </Text>
           </View>
@@ -318,7 +321,7 @@ export default function App() {
               onPress={() => setActiveTab('notifications')}
               activeOpacity={0.7}
             >
-              <Ionicons name="notifications-outline" size={22} color="#f8fafc" />
+              <Ionicons name="notifications-outline" size={22} color={isDarkMode ? '#f8fafc' : '#475569'} />
               <View style={styles.bellBadge}>
                 <Text style={styles.bellBadgeText} allowFontScaling={false}>3</Text>
               </View>
@@ -352,7 +355,11 @@ export default function App() {
       </View>
 
       {/* Fixed Bottom Navigation Bar */}
-      <View style={[styles.bottomBarContainer, (role === 'Maintenance Staff' || role === 'Tenant') && { paddingBottom: Platform.OS === 'ios' ? 24 : 16, paddingTop: 10 }]}>
+      <View style={[
+        styles.bottomBarContainer, 
+        (role === 'Maintenance Staff' || role === 'Tenant') && { paddingBottom: Platform.OS === 'ios' ? 24 : 16, paddingTop: 10 },
+        { backgroundColor: isDarkMode ? '#1e293b' : '#ffffff', borderTopColor: isDarkMode ? '#334155' : '#e2e8f0' }
+      ]}>
         <View style={styles.fixedBottomBar}>
           {moduleTabs.map((tab) => {
             const isActive = activeTab === tab.id;
@@ -362,7 +369,11 @@ export default function App() {
             return (
               <TouchableOpacity
                 key={`bottom-${tab.id}`}
-                style={[styles.bottomTabItem, (isActive && !useIonicon) && styles.bottomTabItemActive]}
+                style={[
+                  styles.bottomTabItem, 
+                  (isActive && !useIonicon) && styles.bottomTabItemActive,
+                  (isActive && !useIonicon && !isDarkMode) && { backgroundColor: 'rgba(56, 189, 248, 0.08)' }
+                ]}
                 onPress={() => handleTabPress(tab.id)}
                 activeOpacity={0.7}
               >
@@ -373,13 +384,20 @@ export default function App() {
                   <Ionicons 
                     name={isActive ? tab.activeIcon : tab.icon} 
                     size={20} 
-                    color={isActive ? '#38bdf8' : '#94a3b8'} 
+                    color={isActive ? '#38bdf8' : (isDarkMode ? '#cbd5e1' : '#64748b')} 
                     style={{ marginBottom: 2 }}
                   />
                 ) : (
-                  <Text style={styles.bottomTabIcon} allowFontScaling={false}>{tab.icon}</Text>
+                  <Text style={[styles.bottomTabIcon, { color: isActive ? '#38bdf8' : (isDarkMode ? '#cbd5e1' : '#64748b') }]} allowFontScaling={false}>{tab.icon}</Text>
                 )}
-                <Text style={[styles.bottomTabText, isActive && styles.bottomTabTextActive]} allowFontScaling={false}>
+                <Text 
+                  style={[
+                    styles.bottomTabText, 
+                    isActive && styles.bottomTabTextActive,
+                    { color: isActive ? '#38bdf8' : (isDarkMode ? '#94a3b8' : '#475569') }
+                  ]} 
+                  allowFontScaling={false}
+                >
                   {(isStaff || isTenant) ? tab.label : (tab.label.split(' ')[1] || tab.label)}
                 </Text>
               </TouchableOpacity>

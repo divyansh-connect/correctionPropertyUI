@@ -10,9 +10,12 @@ import {
 } from 'react-native';
 import apiClient from '../api/client';
 import { useAuthStore } from '../store/useStore';
+import { useThemeColors } from '../theme';
 
 export const PlatformUsersScreen = () => {
   const { logout, refreshAccessToken } = useAuthStore();
+  const { colors, isDarkMode } = useThemeColors();
+  const styles = getStyles(colors, isDarkMode);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [users, setUsers] = useState([]);
@@ -105,33 +108,33 @@ export const PlatformUsersScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f172a' },
+const getStyles = (colors, isDarkMode) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   scrollContent: { padding: 16 },
-  center: { flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center' },
-  loadingText: { color: '#94a3b8', marginTop: 8 },
+  center: { flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { color: colors.textSecondary, marginTop: 8 },
   header: { marginBottom: 14 },
-  title: { fontSize: 18, fontWeight: '700', color: '#f8fafc' },
-  subtitle: { fontSize: 12, color: '#94a3b8', marginTop: 4 },
+  title: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
+  subtitle: { fontSize: 12, color: colors.textSecondary, marginTop: 4 },
 
   card: {
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 14,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.cardBorder,
   },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  userName: { fontSize: 15, fontWeight: '700', color: '#f8fafc' },
+  userName: { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
   activeBadge: { backgroundColor: 'rgba(34, 197, 94, 0.2)', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4 },
   activeBadgeText: { color: '#4ade80', fontSize: 11, fontWeight: '700' },
   emailText: { color: '#38bdf8', fontSize: 12.5, fontWeight: '600', marginVertical: 6 },
   infoRow: { flexDirection: 'row', justifyContent: 'space-between', marginVertical: 4 },
-  roleText: { color: '#cbd5e1', fontSize: 12, fontWeight: '600' },
-  companyText: { color: '#94a3b8', fontSize: 12 },
-  cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: '#334155' },
-  lastLogin: { color: '#94a3b8', fontSize: 11 },
-  suspendBtn: { backgroundColor: 'rgba(239, 68, 68, 0.15)', borderPaddingHorizontal: 8, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6, borderWidth: 1, borderColor: 'rgba(239, 68, 68, 0.3)' },
+  roleText: { color: colors.textSecondary, fontSize: 12, fontWeight: '600' },
+  companyText: { color: colors.textMuted, fontSize: 12 },
+  cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.divider },
+  lastLogin: { color: colors.textMuted, fontSize: 11 },
+  suspendBtn: { backgroundColor: 'rgba(239, 68, 68, 0.15)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6, borderWidth: 1, borderColor: 'rgba(239, 68, 68, 0.3)' },
   suspendBtnText: { color: '#f87171', fontSize: 11, fontWeight: '700' },
 });

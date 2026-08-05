@@ -19,6 +19,7 @@ import {
 } from 'react-native';
 import apiClient from '../api/client';
 import { useAuthStore } from '../store/useStore';
+import { useThemeColors } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
 
 // Animated Touchable Component
@@ -60,6 +61,8 @@ const AnimatedTouchable = ({ children, onPress, style, disabled }) => {
 
 export const MaintenanceScreen = () => {
   const { user, logout, refreshAccessToken } = useAuthStore();
+  const { colors, isDarkMode } = useThemeColors();
+  const styles = getStyles(colors, isDarkMode);
 
   const isOwner = user?.role === 'Owner';
   const isTenant = user?.role === 'Tenant';
@@ -1063,32 +1066,32 @@ export const MaintenanceScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  mainWrapper: { flex: 1, backgroundColor: '#0f172a' },
+const getStyles = (colors, isDarkMode) => StyleSheet.create({
+  mainWrapper: { flex: 1, backgroundColor: colors.background },
   container: { flex: 1 },
   scrollContent: { padding: 16, paddingBottom: 60 },
-  center: { flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center' },
-  loadingText: { color: '#94a3b8', marginTop: 8 },
+  center: { flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { color: colors.textSecondary, marginTop: 8 },
 
   // Tabs
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     margin: 16,
     marginBottom: 0,
     padding: 4,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.cardBorder,
   },
   tabBtn: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 8 },
-  tabBtnActive: { backgroundColor: '#0f172a' },
-  tabBtnText: { color: '#94a3b8', fontSize: 12, fontWeight: '700' },
+  tabBtnActive: { backgroundColor: colors.background },
+  tabBtnText: { color: colors.textSecondary, fontSize: 12, fontWeight: '700' },
   tabBtnTextActive: { color: '#38bdf8' },
 
   header: { marginBottom: 16 },
-  title: { fontSize: 20, fontWeight: '800', color: '#f8fafc' },
-  subtitle: { fontSize: 11, color: '#94a3b8', marginTop: 4, lineHeight: 16 },
+  title: { fontSize: 20, fontWeight: '800', color: colors.textPrimary },
+  subtitle: { fontSize: 11, color: colors.textSecondary, marginTop: 4, lineHeight: 16 },
 
   // Search Controls
   searchBarRow: { flexDirection: 'row', gap: 10, marginBottom: 16, alignItems: 'center' },
@@ -1096,14 +1099,14 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.cardBorder,
     borderRadius: 10,
     paddingHorizontal: 10,
     height: 40,
   },
-  searchInput: { color: '#f8fafc', fontSize: 12, flex: 1, padding: 0 },
+  searchInput: { color: colors.textPrimary, fontSize: 12, flex: 1, padding: 0 },
   addBtn: {
     backgroundColor: '#38bdf8',
     paddingHorizontal: 10,
@@ -1117,28 +1120,28 @@ const styles = StyleSheet.create({
   addBtnText: { color: '#0f172a', fontSize: 11, fontWeight: '800' },
 
   sectionHeader: { marginBottom: 12 },
-  sectionTitle: { fontSize: 10, fontWeight: '800', color: '#94a3b8', letterSpacing: 0.8 },
+  sectionTitle: { fontSize: 10, fontWeight: '800', color: colors.textMuted, letterSpacing: 0.8 },
 
-  emptyCard: { backgroundColor: '#1e293b', padding: 32, borderRadius: 16, alignItems: 'center', borderWidth: 1, borderColor: '#334155' },
-  emptyText: { color: '#f8fafc', fontSize: 15, fontWeight: '700' },
+  emptyCard: { backgroundColor: colors.surface, padding: 32, borderRadius: 16, alignItems: 'center', borderWidth: 1, borderColor: colors.cardBorder },
+  emptyText: { color: colors.textPrimary, fontSize: 15, fontWeight: '700' },
 
   // Card layouts
-  card: { backgroundColor: '#1e293b', borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: '#334155' },
+  card: { backgroundColor: colors.surface, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: colors.cardBorder },
   cardHeader: { flexDirection: 'row', alignItems: 'center' },
-  ticketNoText: { fontSize: 11.5, color: '#cbd5e1', fontWeight: '700' },
-  ticketTitle: { fontSize: 15, fontWeight: '800', color: '#f8fafc', marginTop: 2 },
+  ticketNoText: { fontSize: 11.5, color: colors.textSecondary, fontWeight: '700' },
+  ticketTitle: { fontSize: 15, fontWeight: '800', color: colors.textPrimary, marginTop: 2 },
   badgesRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   deleteBtn: { width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(239, 68, 68, 0.12)', alignItems: 'center', justifyContent: 'center' },
   eyeBtn: { width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(56, 189, 248, 0.12)', alignItems: 'center', justifyContent: 'center' },
 
-  divider: { height: 1, backgroundColor: '#334155', marginVertical: 12 },
+  divider: { height: 1, backgroundColor: colors.divider, marginVertical: 12 },
 
   metaRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   metaCol: { flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8 },
   metaColRight: { flexDirection: 'row', alignItems: 'center', flex: 1, justifyContent: 'flex-end' },
-  metaText: { fontSize: 12, color: '#cbd5e1' },
-  metaLabel: { fontSize: 8.5, color: '#94a3b8', fontWeight: '850', letterSpacing: 0.5, marginBottom: 4 },
-  metaValText: { fontSize: 13, color: '#f8fafc', fontWeight: '700' },
+  metaText: { fontSize: 12, color: colors.textSecondary },
+  metaLabel: { fontSize: 8.5, color: colors.textMuted, fontWeight: '850', letterSpacing: 0.5, marginBottom: 4 },
+  metaValText: { fontSize: 13, color: colors.textPrimary, fontWeight: '700' },
 
   priorityBadge: { backgroundColor: 'rgba(56, 189, 248, 0.12)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, borderWidth: 1, borderColor: '#38bdf8' },
   priorityBadgeText: { color: '#38bdf8', fontSize: 9.5, fontWeight: '800' },
@@ -1155,31 +1158,31 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 12,
   },
-  tenantName: { fontSize: 14.5, fontWeight: '800', color: '#f8fafc' },
-  tenantSubText: { fontSize: 11, color: '#94a3b8', marginTop: 2 },
+  tenantName: { fontSize: 14.5, fontWeight: '800', color: colors.textPrimary },
+  tenantSubText: { fontSize: 11, color: colors.textMuted, marginTop: 2 },
   ratingBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(245, 158, 11, 0.12)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
   ratingText: { color: '#f59e0b', fontSize: 11.5, fontWeight: '800' },
 
   // Modal styling
   modalBg: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.85)', justifyContent: 'center', padding: 20 },
-  modalCard: { backgroundColor: '#1e293b', borderRadius: 20, padding: 20, borderWidth: 1, borderColor: '#334155', maxHeight: '85%' },
+  modalCard: { backgroundColor: colors.surface, borderRadius: 20, padding: 20, borderWidth: 1, borderColor: colors.cardBorder, maxHeight: '85%' },
   modalHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   modalTitleRow: { flexDirection: 'row', alignItems: 'center' },
-  modalTitle: { fontSize: 15.5, fontWeight: '800', color: '#f8fafc' },
-  modalSubHeader: { fontSize: 11, color: '#cbd5e1', lineHeight: 16, marginTop: 4, marginBottom: 14 },
+  modalTitle: { fontSize: 15.5, fontWeight: '800', color: colors.textPrimary },
+  modalSubHeader: { fontSize: 11, color: colors.textSecondary, lineHeight: 16, marginTop: 4, marginBottom: 14 },
   modalScroll: { marginBottom: 16 },
 
   formGroup: { marginBottom: 14 },
   formRow: { flexDirection: 'row', gap: 10, alignItems: 'center' },
-  formLabel: { fontSize: 9.5, fontWeight: '800', color: '#94a3b8', letterSpacing: 0.5, marginBottom: 6 },
+  formLabel: { fontSize: 9.5, fontWeight: '800', color: colors.textMuted, letterSpacing: 0.5, marginBottom: 6 },
   formInput: {
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.inputBackground,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.inputBorder,
     borderRadius: 10,
     paddingHorizontal: 12,
     height: 44,
-    color: '#f8fafc',
+    color: colors.textPrimary,
     fontSize: 13,
   },
 
@@ -1187,22 +1190,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.inputBackground,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.inputBorder,
     borderRadius: 10,
     paddingHorizontal: 12,
     height: 44,
   },
-  dropdownTriggerText: { color: '#cbd5e1', fontSize: 13 },
+  dropdownTriggerText: { color: colors.textSecondary, fontSize: 13 },
   dropdownContainer: {
     position: 'absolute',
     top: 68,
     left: 0,
     right: 0,
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.inputBackground,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.inputBorder,
     borderRadius: 10,
     zIndex: 9999,
     elevation: 5,
@@ -1215,41 +1218,41 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#1e293b',
+    borderBottomColor: colors.surface,
   },
-  dropdownItemText: { color: '#cbd5e1', fontSize: 12.5 },
+  dropdownItemText: { color: colors.textSecondary, fontSize: 12.5 },
 
   checkboxContainer: { flexDirection: 'row', alignItems: 'center', marginTop: 14 },
-  checkbox: { width: 18, height: 18, borderRadius: 4, borderWidth: 1.5, borderColor: '#334155', alignItems: 'center', justifyContent: 'center', marginRight: 8, backgroundColor: '#0f172a' },
+  checkbox: { width: 18, height: 18, borderRadius: 4, borderWidth: 1.5, borderColor: colors.inputBorder, alignItems: 'center', justifyContent: 'center', marginRight: 8, backgroundColor: colors.inputBackground },
   checkboxChecked: { backgroundColor: '#38bdf8', borderColor: '#38bdf8' },
-  checkboxLabel: { color: '#cbd5e1', fontSize: 8.5, fontWeight: '800' },
+  checkboxLabel: { color: colors.textSecondary, fontSize: 8.5, fontWeight: '800' },
 
-  modalActions: { flexDirection: 'row', gap: 10, justifyContent: 'flex-end', borderTopWidth: 1, borderTopColor: '#334155', paddingTop: 14, marginTop: 10 },
-  cancelBtn: { paddingVertical: 10, paddingHorizontal: 16, borderRadius: 10, borderWidth: 1, borderColor: '#334155' },
-  cancelBtnText: { color: '#cbd5e1', fontSize: 12.5, fontWeight: '700' },
+  modalActions: { flexDirection: 'row', gap: 10, justifyContent: 'flex-end', borderTopWidth: 1, borderTopColor: colors.divider, paddingTop: 14, marginTop: 10 },
+  cancelBtn: { paddingVertical: 10, paddingHorizontal: 16, borderRadius: 10, borderWidth: 1, borderColor: colors.inputBorder },
+  cancelBtnText: { color: colors.textSecondary, fontSize: 12.5, fontWeight: '700' },
   submitBtn: { backgroundColor: '#38bdf8', paddingVertical: 10, paddingHorizontal: 16, borderRadius: 10, minWidth: 110, alignItems: 'center', justifyContent: 'center' },
   submitBtnDisabled: { opacity: 0.5 },
   submitBtnText: { color: '#0f172a', fontSize: 12.5, fontWeight: '800' },
 
   // Details specifications elements
-  detailContainer: { backgroundColor: '#0f172a', borderRadius: 12, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: '#334155' },
-  ticketDetailTitle: { color: '#f8fafc', fontSize: 16, fontWeight: '800', flex: 1, marginRight: 8 },
-  ticketDescText: { color: '#94a3b8', fontSize: 12.5, lineHeight: 18, marginTop: 4 },
+  detailContainer: { backgroundColor: colors.inputBackground, borderRadius: 12, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: colors.cardBorder },
+  ticketDetailTitle: { color: colors.textPrimary, fontSize: 16, fontWeight: '800', flex: 1, marginRight: 8 },
+  ticketDescText: { color: colors.textMuted, fontSize: 12.5, lineHeight: 18, marginTop: 4 },
   modalSectionTitle: { fontSize: 9.5, fontWeight: '850', color: '#38bdf8', letterSpacing: 0.8, marginBottom: 10 },
-  detailRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#1e293b' },
-  detailLabel: { color: '#94a3b8', fontSize: 12.5, fontWeight: '600' },
-  detailVal: { color: '#cbd5e1', fontSize: 12.5, fontWeight: '700' },
+  detailRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.surface },
+  detailLabel: { color: colors.textMuted, fontSize: 12.5, fontWeight: '600' },
+  detailVal: { color: colors.textSecondary, fontSize: 12.5, fontWeight: '700' },
 
   // Chat/Messaging Thread
   chatThreadWrapper: { maxHeight: 150, paddingBottom: 10 },
   noChatText: { color: '#64748b', fontSize: 12.5, fontStyle: 'italic', marginTop: 4 },
   chatBubble: { borderRadius: 10, padding: 8, marginBottom: 8, maxWidth: '85%' },
-  chatBubbleMe: { backgroundColor: '#1e293b', alignSelf: 'flex-end', borderWidth: 1, borderColor: '#334155' },
-  chatBubbleOther: { backgroundColor: '#0f172a', alignSelf: 'flex-start', borderWidth: 1, borderColor: '#1e293b' },
+  chatBubbleMe: { backgroundColor: colors.surface, alignSelf: 'flex-end', borderWidth: 1, borderColor: colors.cardBorder },
+  chatBubbleOther: { backgroundColor: colors.inputBackground, alignSelf: 'flex-start', borderWidth: 1, borderColor: colors.surface },
   chatSender: { fontSize: 9.5, color: '#38bdf8', fontWeight: '800', marginBottom: 2 },
-  chatText: { color: '#f8fafc', fontSize: 12 },
+  chatText: { color: colors.textPrimary, fontSize: 12 },
   chatTime: { fontSize: 8, color: '#64748b', textAlign: 'right', marginTop: 4 },
   chatInputRow: { flexDirection: 'row', gap: 6, marginTop: 10, alignItems: 'center' },
-  chatInput: { flex: 1, backgroundColor: '#0f172a', borderWidth: 1, borderColor: '#334155', borderRadius: 8, height: 36, paddingHorizontal: 10, color: '#f8fafc', fontSize: 12 },
+  chatInput: { flex: 1, backgroundColor: colors.inputBackground, borderWidth: 1, borderColor: colors.inputBorder, borderRadius: 8, height: 36, paddingHorizontal: 10, color: colors.textPrimary, fontSize: 12 },
   chatSendBtn: { backgroundColor: '#38bdf8', width: 36, height: 36, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
 });

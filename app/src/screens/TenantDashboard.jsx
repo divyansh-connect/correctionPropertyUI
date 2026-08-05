@@ -12,11 +12,25 @@ import {
   Platform,
 } from 'react-native';
 import apiClient from '../api/client';
-import { useAuthStore } from '../store/useStore';
+import { useAuthStore, useThemeStore } from '../store/useStore';
 import { Ionicons } from '@expo/vector-icons';
 
 export const TenantDashboard = ({ onNavigate }) => {
   const { user, logout, refreshAccessToken } = useAuthStore();
+  const { theme } = useThemeStore();
+  const isDarkMode = theme === 'dark';
+
+  const colors = {
+    bg: isDarkMode ? '#0f172a' : '#f8fafc',
+    cardBg: isDarkMode ? '#1e293b' : '#ffffff',
+    cardBorder: isDarkMode ? '#334155' : '#e2e8f0',
+    textPrimary: isDarkMode ? '#f8fafc' : '#0f172a',
+    textSecondary: isDarkMode ? '#94a3b8' : '#475569',
+    textMuted: isDarkMode ? '#64748b' : '#94a3b8',
+    inputBg: isDarkMode ? '#0f172a' : '#f1f5f9',
+    inputBorder: isDarkMode ? '#334155' : '#cbd5e1',
+  };
+
   const [loading, setLoading] = useState(true);
   const [tenantData, setTenantData] = useState({
     name: 'person 1',
@@ -96,21 +110,21 @@ export const TenantDashboard = ({ onNavigate }) => {
 
   if (loading) {
     return (
-      <View style={styles.center}>
+      <View style={[styles.center, { backgroundColor: colors.bg }]}>
         <ActivityIndicator size="large" color="#38bdf8" />
-        <Text style={styles.loadingText} allowFontScaling={false}>Loading Live Tenant Portal...</Text>
+        <Text style={[styles.loadingText, { color: colors.textSecondary }]} allowFontScaling={false}>Loading Live Tenant Portal...</Text>
       </View>
     );
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.bg }]} contentContainerStyle={styles.scrollContent}>
       {/* Header welcome banner */}
       <View style={styles.header}>
         <View style={styles.welcomeRow}>
           <View>
-            <Text style={styles.welcomeText} allowFontScaling={false}>Hello,</Text>
-            <Text style={styles.title} allowFontScaling={false}>{tenantData.name}</Text>
+            <Text style={[styles.welcomeText, { color: colors.textSecondary }]} allowFontScaling={false}>Hello,</Text>
+            <Text style={[styles.title, { color: colors.textPrimary }]} allowFontScaling={false}>{tenantData.name}</Text>
           </View>
           <View style={styles.headerRightActions}>
             {/* Notification Bell Icon */}
@@ -119,115 +133,115 @@ export const TenantDashboard = ({ onNavigate }) => {
               onPress={() => onNavigate && onNavigate('notifications')}
               activeOpacity={0.7}
             >
-              <Ionicons name="notifications-outline" size={24} color="#f8fafc" />
+              <Ionicons name="notifications-outline" size={24} color={colors.textPrimary} />
               <View style={styles.bellBadge}>
                 <Text style={styles.bellBadgeText} allowFontScaling={false}>3</Text>
               </View>
             </TouchableOpacity>
 
-            <View style={styles.avatarContainer}>
+            <View style={[styles.avatarContainer, { backgroundColor: 'rgba(56, 189, 248, 0.15)', borderColor: colors.cardBorder }]}>
               <Text style={styles.avatarText} allowFontScaling={false}>
                 {tenantData.name.charAt(0).toUpperCase()}
               </Text>
             </View>
           </View>
         </View>
-        <Text style={styles.subtitle} allowFontScaling={false}>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]} allowFontScaling={false}>
           📍 {tenantData.unitName}
         </Text>
       </View>
 
       {/* Quick Action Tiles */}
-      <Text style={styles.sectionTitle}>QUICK ACTIONS</Text>
+      <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>QUICK ACTIONS</Text>
       <View style={styles.quickActionsGrid}>
-        <TouchableOpacity style={styles.actionCard} onPress={() => setPayModalVisible(true)}>
+        <TouchableOpacity style={[styles.actionCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]} onPress={() => setPayModalVisible(true)}>
           <View style={[styles.actionIconWrapper, { backgroundColor: 'rgba(56, 189, 248, 0.15)' }]}>
             <Ionicons name="card" size={22} color="#38bdf8" />
           </View>
-          <Text style={styles.actionCardText} allowFontScaling={false}>Pay Rent</Text>
+          <Text style={[styles.actionCardText, { color: colors.textPrimary }]} allowFontScaling={false}>Pay Rent</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.actionCard} onPress={() => setTicketModalVisible(true)}>
+        <TouchableOpacity style={[styles.actionCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]} onPress={() => setTicketModalVisible(true)}>
           <View style={[styles.actionIconWrapper, { backgroundColor: 'rgba(239, 68, 68, 0.15)' }]}>
             <Ionicons name="hammer" size={22} color="#ef4444" />
           </View>
-          <Text style={styles.actionCardText} allowFontScaling={false}>Submit Repair</Text>
+          <Text style={[styles.actionCardText, { color: colors.textPrimary }]} allowFontScaling={false}>Submit Repair</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.actionCard} onPress={() => setContactModalVisible(true)}>
+        <TouchableOpacity style={[styles.actionCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]} onPress={() => setContactModalVisible(true)}>
           <View style={[styles.actionIconWrapper, { backgroundColor: 'rgba(16, 185, 129, 0.15)' }]}>
             <Ionicons name="chatbubbles" size={22} color="#10b981" />
           </View>
-          <Text style={styles.actionCardText} allowFontScaling={false}>Messages</Text>
+          <Text style={[styles.actionCardText, { color: colors.textPrimary }]} allowFontScaling={false}>Messages</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.actionCard} onPress={() => setLeaseModalVisible(true)}>
+        <TouchableOpacity style={[styles.actionCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]} onPress={() => setLeaseModalVisible(true)}>
           <View style={[styles.actionIconWrapper, { backgroundColor: 'rgba(245, 158, 11, 0.15)' }]}>
             <Ionicons name="document-text" size={22} color="#f59e0b" />
           </View>
-          <Text style={styles.actionCardText} allowFontScaling={false}>Lease Terms</Text>
+          <Text style={[styles.actionCardText, { color: colors.textPrimary }]} allowFontScaling={false}>Lease Terms</Text>
         </TouchableOpacity>
       </View>
 
       {/* Metric Cards Grid */}
-      <Text style={styles.sectionTitle}>OVERVIEW & STATS</Text>
+      <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>OVERVIEW & STATS</Text>
       
       <View style={styles.metricGrid}>
-        <View style={styles.metricCard}>
+        <View style={[styles.metricCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
           <View style={styles.metricHeaderRow}>
-            <Text style={styles.metricLabel} allowFontScaling={false}>CURRENT RENT DUE</Text>
-            <Ionicons name="wallet-outline" size={16} color="#94a3b8" />
+            <Text style={[styles.metricLabel, { color: colors.textSecondary }]} allowFontScaling={false}>CURRENT RENT DUE</Text>
+            <Ionicons name="wallet-outline" size={16} color={colors.textSecondary} />
           </View>
           <Text style={[styles.metricVal, { color: '#38bdf8' }]} allowFontScaling={false}>
             ${tenantData.balance.toLocaleString()}
           </Text>
-          <Text style={styles.metricSub} allowFontScaling={false}>Due Date: {tenantData.dueDate}</Text>
+          <Text style={[styles.metricSub, { color: colors.textMuted }]} allowFontScaling={false}>Due Date: {tenantData.dueDate}</Text>
         </View>
 
-        <View style={styles.metricCard}>
+        <View style={[styles.metricCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
           <View style={styles.metricHeaderRow}>
-            <Text style={styles.metricLabel} allowFontScaling={false}>OUTSTANDING</Text>
+            <Text style={[styles.metricLabel, { color: colors.textSecondary }]} allowFontScaling={false}>OUTSTANDING</Text>
             <Ionicons name="checkmark-circle-outline" size={16} color="#10b981" />
           </View>
           <Text style={[styles.metricVal, { color: '#10b981' }]} allowFontScaling={false}>
             ${tenantData.outstandingBalance}
           </Text>
-          <Text style={styles.metricSub} allowFontScaling={false}>Status: Paid in Full</Text>
+          <Text style={[styles.metricSub, { color: colors.textMuted }]} allowFontScaling={false}>Status: Paid in Full</Text>
         </View>
       </View>
 
       <View style={styles.metricGrid}>
-        <View style={styles.metricCard}>
+        <View style={[styles.metricCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
           <View style={styles.metricHeaderRow}>
-            <Text style={styles.metricLabel} allowFontScaling={false}>ACTIVE VISITORS</Text>
-            <Ionicons name="people-outline" size={16} color="#94a3b8" />
+            <Text style={[styles.metricLabel, { color: colors.textSecondary }]} allowFontScaling={false}>ACTIVE VISITORS</Text>
+            <Ionicons name="people-outline" size={16} color={colors.textSecondary} />
           </View>
           <Text style={[styles.metricVal, { color: '#818cf8' }]} allowFontScaling={false}>
             {tenantData.activeVisitors}
           </Text>
-          <Text style={styles.metricSub} allowFontScaling={false}>Registered guest logs</Text>
+          <Text style={[styles.metricSub, { color: colors.textMuted }]} allowFontScaling={false}>Registered guest logs</Text>
         </View>
 
-        <View style={styles.metricCard}>
+        <View style={[styles.metricCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
           <View style={styles.metricHeaderRow}>
-            <Text style={styles.metricLabel} allowFontScaling={false}>WAITING PACKAGES</Text>
-            <Ionicons name="cube-outline" size={16} color="#94a3b8" />
+            <Text style={[styles.metricLabel, { color: colors.textSecondary }]} allowFontScaling={false}>WAITING PACKAGES</Text>
+            <Ionicons name="cube-outline" size={16} color={colors.textSecondary} />
           </View>
           <Text style={[styles.metricVal, { color: '#f59e0b' }]} allowFontScaling={false}>
             {tenantData.packagesWaiting}
           </Text>
-          <Text style={styles.metricSub} allowFontScaling={false}>Awaiting pickup</Text>
+          <Text style={[styles.metricSub, { color: colors.textMuted }]} allowFontScaling={false}>Awaiting pickup</Text>
         </View>
       </View>
 
       {/* Lease Renewal Banner */}
-      <View style={styles.leaseRenewalBanner}>
+      <View style={[styles.leaseRenewalBanner, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
         <View style={[styles.actionIconWrapper, { backgroundColor: 'rgba(56, 189, 248, 0.15)', marginRight: 12 }]}>
           <Ionicons name="time" size={24} color="#38bdf8" />
         </View>
         <View style={{ flex: 1 }}>
           <Text style={styles.leaseBannerTitle} allowFontScaling={false}>LEASE RENEWAL OPTION</Text>
-          <Text style={styles.leaseBannerSub} allowFontScaling={false}>
+          <Text style={[styles.leaseBannerSub, { color: colors.textSecondary }]} allowFontScaling={false}>
             Expires: {tenantData.leaseExpiration}. Lock your rate now.
           </Text>
         </View>
@@ -239,12 +253,12 @@ export const TenantDashboard = ({ onNavigate }) => {
       {/* Pay Rent Modal */}
       <Modal visible={payModalVisible} animationType="fade" transparent>
         <View style={styles.modalBg}>
-          <View style={styles.modalCard}>
+          <View style={[styles.modalCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
             <View style={styles.modalIconCenter}>
               <Ionicons name="card-outline" size={42} color="#38bdf8" />
             </View>
-            <Text style={styles.modalTitle} allowFontScaling={false}>Confirm Rent Payment</Text>
-            <Text style={styles.confirmText} allowFontScaling={false}>
+            <Text style={[styles.modalTitle, { color: colors.textPrimary }]} allowFontScaling={false}>Confirm Rent Payment</Text>
+            <Text style={[styles.confirmText, { color: colors.textSecondary }]} allowFontScaling={false}>
               Are you sure you want to pay the outstanding balance of ${tenantData.balance.toLocaleString()} online?
             </Text>
             <View style={styles.modalButtons}>
@@ -262,17 +276,17 @@ export const TenantDashboard = ({ onNavigate }) => {
       {/* Submit Repair Request Modal */}
       <Modal visible={ticketModalVisible} animationType="slide" transparent>
         <View style={styles.modalBg}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle} allowFontScaling={false}>Submit Repair Request</Text>
+          <View style={[styles.modalCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
+            <Text style={[styles.modalTitle, { color: colors.textPrimary }]} allowFontScaling={false}>Submit Repair Request</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.textPrimary }]}
               placeholder="Issue Subject (e.g. AC leaking)"
               placeholderTextColor="#64748b"
               value={ticketTitle}
               onChangeText={setTicketTitle}
             />
             <TextInput
-              style={[styles.input, { height: 100, textAlignVertical: 'top' }]}
+              style={[styles.input, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.textPrimary, height: 100, textAlignVertical: 'top' }]}
               placeholder="Detailed description of repair issue..."
               placeholderTextColor="#64748b"
               multiline
@@ -294,10 +308,10 @@ export const TenantDashboard = ({ onNavigate }) => {
       {/* Contact Management Modal */}
       <Modal visible={contactModalVisible} animationType="slide" transparent>
         <View style={styles.modalBg}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle} allowFontScaling={false}>Contact Management</Text>
+          <View style={[styles.modalCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
+            <Text style={[styles.modalTitle, { color: colors.textPrimary }]} allowFontScaling={false}>Contact Management</Text>
             <TextInput
-              style={[styles.input, { height: 120, textAlignVertical: 'top' }]}
+              style={[styles.input, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.textPrimary, height: 120, textAlignVertical: 'top' }]}
               placeholder="Type your message to Property Manager..."
               placeholderTextColor="#64748b"
               multiline
@@ -319,27 +333,27 @@ export const TenantDashboard = ({ onNavigate }) => {
       {/* View Lease Terms Modal */}
       <Modal visible={leaseModalVisible} animationType="slide" transparent>
         <View style={styles.modalBg}>
-          <View style={styles.modalCard}>
+          <View style={[styles.modalCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
             <View style={styles.modalIconCenter}>
               <Ionicons name="document-text-outline" size={42} color="#f59e0b" />
             </View>
-            <Text style={styles.modalTitle} allowFontScaling={false}>Active Lease Terms</Text>
+            <Text style={[styles.modalTitle, { color: colors.textPrimary }]} allowFontScaling={false}>Active Lease Terms</Text>
             
-            <View style={styles.detailCard}>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel} allowFontScaling={false}>Unit Number</Text>
-                <Text style={styles.detailVal} allowFontScaling={false}>{tenantData.unitName.split('·')[1]?.trim() || tenantData.unitName}</Text>
+            <View style={[styles.detailCard, { backgroundColor: colors.inputBg, borderColor: colors.cardBorder }]}>
+              <View style={[styles.detailRow, { borderBottomColor: colors.cardBorder }]}>
+                <Text style={[styles.detailLabel, { color: colors.textSecondary }]} allowFontScaling={false}>Unit Number</Text>
+                <Text style={[styles.detailVal, { color: colors.textPrimary }]} allowFontScaling={false}>{tenantData.unitName.split('·')[1]?.trim() || tenantData.unitName}</Text>
               </View>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel} allowFontScaling={false}>Monthly Rent</Text>
+              <View style={[styles.detailRow, { borderBottomColor: colors.cardBorder }]}>
+                <Text style={[styles.detailLabel, { color: colors.textSecondary }]} allowFontScaling={false}>Monthly Rent</Text>
                 <Text style={[styles.detailVal, { color: '#38bdf8' }]} allowFontScaling={false}>${tenantData.balance.toLocaleString()} / month</Text>
               </View>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel} allowFontScaling={false}>Lease Start</Text>
-                <Text style={styles.detailVal} allowFontScaling={false}>2026-08-01</Text>
+              <View style={[styles.detailRow, { borderBottomColor: colors.cardBorder }]}>
+                <Text style={[styles.detailLabel, { color: colors.textSecondary }]} allowFontScaling={false}>Lease Start</Text>
+                <Text style={[styles.detailVal, { color: colors.textPrimary }]} allowFontScaling={false}>2026-08-01</Text>
               </View>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel} allowFontScaling={false}>Lease Expiration</Text>
+              <View style={[styles.detailRow, { borderBottomColor: colors.cardBorder }]}>
+                <Text style={[styles.detailLabel, { color: colors.textSecondary }]} allowFontScaling={false}>Lease Expiration</Text>
                 <Text style={[styles.detailVal, { color: '#f59e0b' }]} allowFontScaling={false}>{tenantData.leaseExpiration}</Text>
               </View>
             </View>

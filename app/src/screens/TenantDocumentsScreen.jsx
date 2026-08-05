@@ -19,6 +19,7 @@ import {
 } from 'react-native';
 import apiClient from '../api/client';
 import { useAuthStore } from '../store/useStore';
+import { useThemeColors } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
 
 // Animated Touchable Component
@@ -60,6 +61,8 @@ const AnimatedTouchable = ({ children, onPress, style, disabled }) => {
 
 export const TenantDocumentsScreen = () => {
   const { user, logout, refreshAccessToken } = useAuthStore();
+  const { colors, isDarkMode } = useThemeColors();
+  const styles = getStyles(colors, isDarkMode);
   
   // App role evaluation
   const isOwnerPortal = user?.role === 'Owner';
@@ -671,32 +674,32 @@ export const TenantDocumentsScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  mainWrapper: { flex: 1, backgroundColor: '#0f172a' },
+const getStyles = (colors, isDarkMode) => StyleSheet.create({
+  mainWrapper: { flex: 1, backgroundColor: colors.background },
   container: { flex: 1 },
   scrollContent: { padding: 16, paddingBottom: 60 },
-  center: { flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center' },
-  loadingText: { color: '#94a3b8', marginTop: 8 },
+  center: { flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { color: colors.textSecondary, marginTop: 8 },
 
   // Tabs for Manager
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     margin: 16,
     marginBottom: 0,
     padding: 4,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.cardBorder,
   },
   tabBtn: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 8 },
-  tabBtnActive: { backgroundColor: '#0f172a' },
-  tabBtnText: { color: '#94a3b8', fontSize: 12, fontWeight: '700' },
+  tabBtnActive: { backgroundColor: colors.background },
+  tabBtnText: { color: colors.textSecondary, fontSize: 12, fontWeight: '700' },
   tabBtnTextActive: { color: '#38bdf8' },
 
   header: { marginBottom: 16 },
-  title: { fontSize: 22, fontWeight: '800', color: '#f8fafc' },
-  subtitle: { fontSize: 11.5, color: '#94a3b8', marginTop: 4, lineHeight: 16 },
+  title: { fontSize: 22, fontWeight: '800', color: colors.textPrimary },
+  subtitle: { fontSize: 11.5, color: colors.textSecondary, marginTop: 4, lineHeight: 16 },
 
   // Search Controls
   searchBarRow: { flexDirection: 'row', gap: 10, marginBottom: 16, alignItems: 'center' },
@@ -704,14 +707,14 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.cardBorder,
     borderRadius: 10,
     paddingHorizontal: 10,
     height: 40,
   },
-  searchInput: { color: '#f8fafc', fontSize: 12, flex: 1, padding: 0 },
+  searchInput: { color: colors.textPrimary, fontSize: 12, flex: 1, padding: 0 },
   uploadBtn: {
     backgroundColor: '#38bdf8',
     paddingHorizontal: 12,
@@ -730,9 +733,9 @@ const styles = StyleSheet.create({
     top: 45,
     right: 0,
     width: 160,
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.cardBorder,
     borderRadius: 10,
     zIndex: 9999,
     overflow: 'hidden',
@@ -743,64 +746,64 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#334155',
+    borderBottomColor: colors.cardBorder,
   },
-  uploadDropdownItemText: { color: '#f8fafc', fontSize: 12, fontWeight: '600' },
+  uploadDropdownItemText: { color: colors.textPrimary, fontSize: 12, fontWeight: '600' },
 
   sectionHeader: { marginBottom: 12 },
-  sectionTitle: { fontSize: 10, fontWeight: '800', color: '#94a3b8', letterSpacing: 0.8 },
+  sectionTitle: { fontSize: 10, fontWeight: '800', color: colors.textMuted, letterSpacing: 0.8 },
 
-  emptyCard: { backgroundColor: '#1e293b', padding: 32, borderRadius: 16, alignItems: 'center', borderWidth: 1, borderColor: '#334155' },
-  emptyText: { color: '#f8fafc', fontSize: 15, fontWeight: '700' },
+  emptyCard: { backgroundColor: colors.surface, padding: 32, borderRadius: 16, alignItems: 'center', borderWidth: 1, borderColor: colors.cardBorder },
+  emptyText: { color: colors.textPrimary, fontSize: 15, fontWeight: '700' },
 
   // Cards
-  card: { backgroundColor: '#1e293b', borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: '#334155' },
+  card: { backgroundColor: colors.surface, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: colors.cardBorder },
   cardHeader: { flexDirection: 'row', alignItems: 'center' },
   docIconWrapper: {
     width: 38,
     height: 38,
     borderRadius: 8,
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.inputBackground,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.cardBorder,
   },
   docInfo: { flex: 1 },
-  docName: { fontSize: 14.5, fontWeight: '800', color: '#f8fafc' },
-  docSubText: { fontSize: 11, color: '#94a3b8', marginTop: 2 },
+  docName: { fontSize: 14.5, fontWeight: '800', color: colors.textPrimary },
+  docSubText: { fontSize: 11, color: colors.textMuted, marginTop: 2 },
   downloadBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255, 255, 255, 0.05)', alignItems: 'center', justifyContent: 'center' },
 
-  divider: { height: 1, backgroundColor: '#334155', marginVertical: 12 },
+  divider: { height: 1, backgroundColor: colors.divider, marginVertical: 12 },
 
   metaRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   metaCol: { flex: 1, marginRight: 8 },
   metaColRight: { flex: 1, alignItems: 'flex-end' },
-  metaLabel: { fontSize: 8.5, color: '#94a3b8', fontWeight: '850', letterSpacing: 0.5, marginBottom: 4 },
-  metaValText: { fontSize: 12, color: '#cbd5e1', fontWeight: '700' },
+  metaLabel: { fontSize: 8.5, color: colors.textMuted, fontWeight: '850', letterSpacing: 0.5, marginBottom: 4 },
+  metaValText: { fontSize: 12, color: colors.textSecondary, fontWeight: '700' },
   catBadge: { backgroundColor: 'rgba(56, 189, 248, 0.12)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, borderWidth: 1, borderColor: '#38bdf8', alignSelf: 'flex-start' },
   catBadgeText: { color: '#38bdf8', fontSize: 9, fontWeight: '800' },
 
   // Modal styling
   modalBg: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.85)', justifyContent: 'center', padding: 20 },
-  modalCard: { backgroundColor: '#1e293b', borderRadius: 20, padding: 20, borderWidth: 1, borderColor: '#334155', maxHeight: '85%' },
+  modalCard: { backgroundColor: colors.surface, borderRadius: 20, padding: 20, borderWidth: 1, borderColor: colors.cardBorder, maxHeight: '85%' },
   modalHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  modalTitle: { fontSize: 16, fontWeight: '800', color: '#f8fafc' },
-  modalSubHeader: { fontSize: 11, color: '#cbd5e1', lineHeight: 16, marginTop: 4, marginBottom: 14 },
+  modalTitle: { fontSize: 16, fontWeight: '800', color: colors.textPrimary },
+  modalSubHeader: { fontSize: 11, color: colors.textSecondary, lineHeight: 16, marginTop: 4, marginBottom: 14 },
   modalScroll: { marginBottom: 16 },
 
   formGroup: { marginBottom: 14 },
   formRow: { flexDirection: 'row', gap: 10 },
-  formLabel: { fontSize: 9.5, fontWeight: '800', color: '#94a3b8', letterSpacing: 0.5, marginBottom: 6 },
+  formLabel: { fontSize: 9.5, fontWeight: '800', color: colors.textMuted, letterSpacing: 0.5, marginBottom: 6 },
   formInput: {
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.inputBackground,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.inputBorder,
     borderRadius: 10,
     paddingHorizontal: 12,
     height: 44,
-    color: '#f8fafc',
+    color: colors.textPrimary,
     fontSize: 13,
   },
 
@@ -808,22 +811,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.inputBackground,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.inputBorder,
     borderRadius: 10,
     paddingHorizontal: 12,
     height: 44,
   },
-  dropdownTriggerText: { color: '#cbd5e1', fontSize: 13 },
+  dropdownTriggerText: { color: colors.textSecondary, fontSize: 13 },
   dropdownContainer: {
     position: 'absolute',
     top: 68,
     left: 0,
     right: 0,
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.inputBackground,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.inputBorder,
     borderRadius: 10,
     zIndex: 9999,
     elevation: 5,
@@ -836,14 +839,14 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#1e293b',
+    borderBottomColor: colors.surface,
   },
-  dropdownItemText: { color: '#cbd5e1', fontSize: 12.5 },
+  dropdownItemText: { color: colors.textSecondary, fontSize: 12.5 },
 
   dragDropBox: {
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.inputBackground,
     borderWidth: 1.5,
-    borderColor: '#334155',
+    borderColor: colors.inputBorder,
     borderStyle: 'dashed',
     borderRadius: 12,
     padding: 24,
@@ -851,12 +854,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginVertical: 12,
   },
-  dragDropTitle: { color: '#f8fafc', fontSize: 13, fontWeight: '800', marginTop: 8 },
-  dragDropSub: { color: '#64748b', fontSize: 11, marginTop: 4 },
+  dragDropTitle: { color: colors.textPrimary, fontSize: 13, fontWeight: '800', marginTop: 8 },
+  dragDropSub: { color: colors.textMuted, fontSize: 11, marginTop: 4 },
 
-  modalActions: { flexDirection: 'row', gap: 10, justifyContent: 'flex-end', borderTopWidth: 1, borderTopColor: '#334155', paddingTop: 14, marginTop: 10 },
-  cancelBtn: { paddingVertical: 10, paddingHorizontal: 16, borderRadius: 10, borderWidth: 1, borderColor: '#334155' },
-  cancelBtnText: { color: '#cbd5e1', fontSize: 12.5, fontWeight: '700' },
+  modalActions: { flexDirection: 'row', gap: 10, justifyContent: 'flex-end', borderTopWidth: 1, borderTopColor: colors.divider, paddingTop: 14, marginTop: 10 },
+  cancelBtn: { paddingVertical: 10, paddingHorizontal: 16, borderRadius: 10, borderWidth: 1, borderColor: colors.inputBorder },
+  cancelBtnText: { color: colors.textSecondary, fontSize: 12.5, fontWeight: '700' },
   submitBtn: { backgroundColor: '#38bdf8', paddingVertical: 10, paddingHorizontal: 16, borderRadius: 10, minWidth: 110, alignItems: 'center', justifyContent: 'center' },
   submitBtnDisabled: { opacity: 0.5 },
   submitBtnText: { color: '#0f172a', fontSize: 12.5, fontWeight: '800' },

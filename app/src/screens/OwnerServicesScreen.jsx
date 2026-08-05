@@ -8,10 +8,13 @@ import {
   Platform,
 } from 'react-native';
 import { useAuthStore } from '../store/useStore';
+import { useThemeColors } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
 
 export const OwnerServicesScreen = ({ onNavigate }) => {
   const { user } = useAuthStore();
+  const { colors, isDarkMode } = useThemeColors();
+  const styles = getStyles(colors, isDarkMode);
 
   const menuItems = [
     {
@@ -115,20 +118,20 @@ export const OwnerServicesScreen = ({ onNavigate }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  mainContainer: { flex: 1, backgroundColor: '#0f172a' },
+const getStyles = (colors, isDarkMode) => StyleSheet.create({
+  mainContainer: { flex: 1, backgroundColor: colors.background },
   container: { flex: 1 },
   scrollContent: { padding: 16, paddingBottom: 20 },
 
   profileCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 16,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.cardBorder,
   },
   avatar: {
     width: 48,
@@ -146,20 +149,20 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   profileInfo: { flex: 1 },
-  profileName: { fontSize: 18, fontWeight: '800', color: '#f8fafc' },
-  profileRole: { fontSize: 12, color: '#94a3b8', marginTop: 2 },
+  profileName: { fontSize: 18, fontWeight: '800', color: colors.textPrimary },
+  profileRole: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
 
-  sectionHeader: { fontSize: 10, fontWeight: '800', color: '#64748b', marginBottom: 10, letterSpacing: 1 },
+  sectionHeader: { fontSize: 10, fontWeight: '800', color: colors.textMuted, marginBottom: 10, letterSpacing: 1 },
 
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1e293b',
+    backgroundColor: colors.surface,
     padding: 14,
     borderRadius: 12,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.cardBorder,
   },
   iconContainer: {
     width: 38,
@@ -170,15 +173,15 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   menuTextContainer: { flex: 1 },
-  menuLabel: { fontSize: 14, fontWeight: '800', color: '#f8fafc' },
-  menuSubtitle: { fontSize: 11.5, color: '#94a3b8', marginTop: 2 },
+  menuLabel: { fontSize: 14, fontWeight: '800', color: colors.textPrimary },
+  menuSubtitle: { fontSize: 11.5, color: colors.textSecondary, marginTop: 2 },
 
   bottomButtonContainer: {
     padding: 16,
     paddingBottom: Platform.OS === 'ios' ? 30 : 16,
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.background,
     borderTopWidth: 1,
-    borderTopColor: '#1e293b',
+    borderTopColor: colors.divider,
   },
   logoutBtn: { 
     backgroundColor: '#ef4444', 

@@ -11,13 +11,17 @@ import {
   Dimensions,
 } from 'react-native';
 import apiClient from '../api/client';
-import { useAuthStore } from '../store/useStore';
+import { useAuthStore, useThemeStore } from '../store/useStore';
 import { Ionicons } from '@expo/vector-icons';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
 export const OwnerDashboard = ({ onNavigate }) => {
   const { user, logout, refreshAccessToken } = useAuthStore();
+  const { theme } = useThemeStore();
+  const isDarkMode = theme === 'dark';
+  const styles = getStyles(isDarkMode);
+
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [metrics, setMetrics] = useState({
@@ -289,11 +293,11 @@ export const OwnerDashboard = ({ onNavigate }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f172a' },
+const getStyles = (isDarkMode) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: isDarkMode ? '#0f172a' : '#f8fafc' },
   scrollContent: { padding: 16, paddingBottom: 60 },
-  center: { flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center' },
-  loadingText: { color: '#94a3b8', marginTop: 8 },
+  center: { flex: 1, backgroundColor: isDarkMode ? '#0f172a' : '#f8fafc', justifyContent: 'center', alignItems: 'center' },
+  loadingText: { color: isDarkMode ? '#94a3b8' : '#64748b', marginTop: 8 },
 
   welcomeContainer: {
     flexDirection: 'row',
@@ -303,16 +307,16 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   welcomeLeft: { flex: 1 },
-  title: { fontSize: 22, fontWeight: '800', color: '#f8fafc' },
-  subtitle: { fontSize: 11.5, color: '#94a3b8', marginTop: 4, lineHeight: 16 },
+  title: { fontSize: 22, fontWeight: '800', color: isDarkMode ? '#f8fafc' : '#0f172a' },
+  subtitle: { fontSize: 11.5, color: isDarkMode ? '#94a3b8' : '#64748b', marginTop: 4, lineHeight: 16 },
 
   bellBtn: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#1e293b',
+    backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: isDarkMode ? '#334155' : '#cbd5e1',
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -333,29 +337,29 @@ const styles = StyleSheet.create({
   bellBadgeText: { color: '#ffffff', fontSize: 9.5, fontWeight: '800' },
 
   quickActionsCard: {
-    backgroundColor: '#1e293b',
+    backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
     borderRadius: 16,
     padding: 14,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: isDarkMode ? '#334155' : '#e2e8f0',
     gap: 10,
   },
   actionRow: { flexDirection: 'row', gap: 10 },
   actionBtnPrimary: { flex: 1, backgroundColor: '#0284c7', paddingVertical: 10, borderRadius: 10, alignItems: 'center', flexDirection: 'row', justifyContent: 'center' },
   actionBtnPrimaryText: { color: '#ffffff', fontSize: 12.5, fontWeight: '800' },
-  actionBtnOutline: { flex: 1, backgroundColor: '#0f172a', paddingVertical: 10, borderRadius: 10, alignItems: 'center', borderWidth: 1, borderColor: '#334155', flexDirection: 'row', justifyContent: 'center' },
-  actionBtnOutlineText: { color: '#cbd5e1', fontSize: 12.5, fontWeight: '800' },
+  actionBtnOutline: { flex: 1, backgroundColor: isDarkMode ? '#0f172a' : '#f1f5f9', paddingVertical: 10, borderRadius: 10, alignItems: 'center', borderWidth: 1, borderColor: isDarkMode ? '#334155' : '#cbd5e1', flexDirection: 'row', justifyContent: 'center' },
+  actionBtnOutlineText: { color: isDarkMode ? '#cbd5e1' : '#475569', fontSize: 12.5, fontWeight: '800' },
 
   kpiGrid: { flexDirection: 'row', gap: 10, marginBottom: 10 },
-  kpiCard: { flex: 1, backgroundColor: '#1e293b', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: '#334155' },
-  kpiLabel: { fontSize: 8.5, color: '#94a3b8', fontWeight: '800', letterSpacing: 0.5 },
-  kpiVal: { fontSize: 20, fontWeight: '800', color: '#f8fafc', marginVertical: 4 },
-  kpiSub: { fontSize: 11, color: '#64748b' },
+  kpiCard: { flex: 1, backgroundColor: isDarkMode ? '#1e293b' : '#ffffff', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: isDarkMode ? '#334155' : '#e2e8f0' },
+  kpiLabel: { fontSize: 8.5, color: isDarkMode ? '#94a3b8' : '#64748b', fontWeight: '800', letterSpacing: 0.5 },
+  kpiVal: { fontSize: 20, fontWeight: '800', color: isDarkMode ? '#f8fafc' : '#0f172a', marginVertical: 4 },
+  kpiSub: { fontSize: 11, color: isDarkMode ? '#64748b' : '#94a3b8' },
 
-  chartCard: { backgroundColor: '#1e293b', borderRadius: 16, padding: 16, marginBottom: 20, borderWidth: 1, borderColor: '#334155' },
-  chartTitle: { fontSize: 10.5, fontWeight: '800', color: '#cbd5e1', letterSpacing: 1 },
-  divider: { height: 1, backgroundColor: '#334155', marginVertical: 12 },
+  chartCard: { backgroundColor: isDarkMode ? '#1e293b' : '#ffffff', borderRadius: 16, padding: 16, marginBottom: 20, borderWidth: 1, borderColor: isDarkMode ? '#334155' : '#cbd5e1' },
+  chartTitle: { fontSize: 10.5, fontWeight: '800', color: isDarkMode ? '#cbd5e1' : '#475569', letterSpacing: 1 },
+  divider: { height: 1, backgroundColor: isDarkMode ? '#334155' : '#cbd5e1', marginVertical: 12 },
   
   chartContainer: { flexDirection: 'row', height: 150, alignItems: 'flex-end', paddingTop: 10 },
   yAxis: { justifyContent: 'space-between', height: 120, paddingRight: 8, paddingBottom: 16 },
@@ -372,14 +376,14 @@ const styles = StyleSheet.create({
   legendRow: { flexDirection: 'row', justifyContent: 'center', gap: 20, marginTop: 12 },
   legendItem: { flexDirection: 'row', alignItems: 'center' },
   legendColor: { width: 10, height: 10, borderRadius: 3, marginRight: 6 },
-  legendText: { color: '#cbd5e1', fontSize: 11, fontWeight: '600' },
+  legendText: { color: isDarkMode ? '#cbd5e1' : '#475569', fontSize: 11, fontWeight: '600' },
 
   sectionHeader: { flexDirection: 'row', alignItems: 'center', marginTop: 10, marginBottom: 12 },
-  sectionTitle: { fontSize: 14, fontWeight: '800', color: '#cbd5e1', letterSpacing: 0.5 },
+  sectionTitle: { fontSize: 14, fontWeight: '800', color: isDarkMode ? '#cbd5e1' : '#475569', letterSpacing: 0.5 },
 
-  propCard: { backgroundColor: '#1e293b', borderRadius: 16, padding: 16, marginBottom: 10, borderWidth: 1, borderColor: '#334155' },
+  propCard: { backgroundColor: isDarkMode ? '#1e293b' : '#ffffff', borderRadius: 16, padding: 16, marginBottom: 10, borderWidth: 1, borderColor: isDarkMode ? '#334155' : '#cbd5e1' },
   propHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
-  propName: { color: '#f8fafc', fontSize: 15, fontWeight: '800' },
+  propName: { color: isDarkMode ? '#f8fafc' : '#0f172a', fontSize: 15, fontWeight: '800' },
   propDetailLine: { flexDirection: 'row', alignItems: 'center' },
-  propSub: { color: '#94a3b8', fontSize: 12.5 },
+  propSub: { color: isDarkMode ? '#94a3b8' : '#64748b', fontSize: 12.5 },
 });

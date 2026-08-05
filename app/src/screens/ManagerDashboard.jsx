@@ -11,7 +11,7 @@ import {
   Animated,
 } from 'react-native';
 import apiClient from '../api/client';
-import { useAuthStore } from '../store/useStore';
+import { useAuthStore, useThemeStore } from '../store/useStore';
 import { Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
@@ -19,6 +19,10 @@ const CARD_WIDTH = width - 48; // full-width card minus margin
 
 export const ManagerDashboard = ({ onNavigate }) => {
   const { user, logout, refreshAccessToken } = useAuthStore();
+  const { theme } = useThemeStore();
+  const isDarkMode = theme === 'dark';
+  const styles = getStyles(isDarkMode);
+
   const [metrics, setMetrics] = useState({
     totalProperties: 3,
     totalUnits: 4,
@@ -364,11 +368,11 @@ export const ManagerDashboard = ({ onNavigate }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f172a' },
+const getStyles = (isDarkMode) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: isDarkMode ? '#0f172a' : '#f8fafc' },
   scrollContent: { padding: 16 },
-  center: { flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center' },
-  loadingText: { color: '#94a3b8', marginTop: 8 },
+  center: { flex: 1, backgroundColor: isDarkMode ? '#0f172a' : '#f8fafc', justifyContent: 'center', alignItems: 'center' },
+  loadingText: { color: isDarkMode ? '#94a3b8' : '#64748b', marginTop: 8 },
 
   // Welcome Header Layout
   welcomeContainer: {
@@ -390,17 +394,17 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   companyBadgeText: { color: '#38bdf8', fontSize: 10.5, fontWeight: '700', textTransform: 'uppercase' },
-  title: { fontSize: 22, fontWeight: '800', color: '#f8fafc' },
-  subtitle: { fontSize: 12, color: '#94a3b8', marginTop: 3 },
+  title: { fontSize: 22, fontWeight: '800', color: isDarkMode ? '#f8fafc' : '#0f172a' },
+  subtitle: { fontSize: 12, color: isDarkMode ? '#94a3b8' : '#64748b', marginTop: 3 },
   roleHighlight: { color: '#38bdf8', fontWeight: '700' },
 
   bellBtn: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#1e293b',
+    backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: isDarkMode ? '#334155' : '#cbd5e1',
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -424,39 +428,39 @@ const styles = StyleSheet.create({
   sliderContainer: { marginBottom: 20 },
   horizontalScrollContent: { paddingRight: 16 },
   slideCard: {
-    backgroundColor: '#1e293b',
+    backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
     width: CARD_WIDTH,
     borderRadius: 16,
     padding: 16,
     marginRight: 12,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: isDarkMode ? '#334155' : '#cbd5e1',
   },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  cardHeaderTitle: { fontSize: 9, fontWeight: '850', color: '#94a3b8', letterSpacing: 0.8 },
+  cardHeaderTitle: { fontSize: 9, fontWeight: '850', color: isDarkMode ? '#94a3b8' : '#64748b', letterSpacing: 0.8 },
   cardMetricsRow: { flexDirection: 'row', justifyContent: 'space-between' },
   cardMetricItem: { flex: 1, marginRight: 8 },
   cardMetricLabel: { fontSize: 7.5, color: '#64748b', fontWeight: '800', letterSpacing: 0.5, marginBottom: 4 },
-  cardMetricValue: { fontSize: 18, fontWeight: '900', color: '#f8fafc', marginBottom: 2 },
+  cardMetricValue: { fontSize: 18, fontWeight: '900', color: isDarkMode ? '#f8fafc' : '#0f172a', marginBottom: 2 },
   cardMetricTrend: { fontSize: 9, fontWeight: '700' },
   cardMetricSubText: { fontSize: 9, color: '#64748b' },
 
   dotsRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 10, gap: 6 },
-  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#334155' },
+  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: isDarkMode ? '#334155' : '#cbd5e1' },
   dotActive: { width: 14, backgroundColor: '#38bdf8' },
 
   // Interactive Double-Bar Chart Styling
   chartCard: {
-    backgroundColor: '#1e293b',
+    backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
     borderRadius: 16,
     padding: 16,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: isDarkMode ? '#334155' : '#cbd5e1',
   },
-  chartTitle: { fontSize: 13, fontWeight: '800', color: '#f8fafc' },
-  chartSubtitle: { fontSize: 10, color: '#94a3b8', marginTop: 2, marginBottom: 12 },
-  divider: { height: 1, backgroundColor: '#334155', marginBottom: 16 },
+  chartTitle: { fontSize: 13, fontWeight: '800', color: isDarkMode ? '#f8fafc' : '#0f172a' },
+  chartSubtitle: { fontSize: 10, color: isDarkMode ? '#94a3b8' : '#64748b', marginTop: 2, marginBottom: 12 },
+  divider: { height: 1, backgroundColor: isDarkMode ? '#334155' : '#cbd5e1', marginBottom: 16 },
   chartContainer: { flexDirection: 'row', height: 150, alignItems: 'flex-end', paddingBottom: 10 },
   yAxis: { justifyContent: 'space-between', height: 120, paddingRight: 10, paddingBottom: 18 },
   yAxisText: { color: '#64748b', fontSize: 8.5, fontWeight: '600', textAlign: 'right', width: 40 },
@@ -471,20 +475,20 @@ const styles = StyleSheet.create({
   legendRow: { flexDirection: 'row', justifyContent: 'center', gap: 16, marginTop: 12 },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   legendColor: { width: 10, height: 10, borderRadius: 2 },
-  legendText: { color: '#94a3b8', fontSize: 10.5, fontWeight: '600' },
+  legendText: { color: isDarkMode ? '#cbd5e1' : '#64748b', fontSize: 10.5, fontWeight: '600' },
 
   // Services Directory Styles
   sectionHeader: { marginBottom: 12, marginTop: 6 },
-  sectionTitle: { fontSize: 15, fontWeight: '800', color: '#f8fafc' },
+  sectionTitle: { fontSize: 15, fontWeight: '800', color: isDarkMode ? '#f8fafc' : '#0f172a' },
   modulesGrid: { gap: 10 },
   moduleTile: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1e293b',
+    backgroundColor: isDarkMode ? '#1e293b' : '#ffffff',
     padding: 12,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: isDarkMode ? '#334155' : '#cbd5e1',
   },
   moduleIconBox: {
     width: 38,
@@ -494,5 +498,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 12,
   },
-  moduleTileLabel: { flex: 1, color: '#f8fafc', fontSize: 13.5, fontWeight: '800' },
+  moduleTileLabel: { flex: 1, color: isDarkMode ? '#f8fafc' : '#0f172a', fontSize: 13.5, fontWeight: '800' },
 });

@@ -2,9 +2,12 @@ import React from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import theme from '../theme';
+import { useThemeColors, theme } from '../theme';
 
 export const TenantHeader = ({ user, onDrawerOpen, onNotifications, onProfile }) => {
+  const { colors, isDarkMode } = useThemeColors();
+  const styles = getStyles(colors, isDarkMode);
+  
   const handlePress = (callback) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (callback) callback();
@@ -20,7 +23,7 @@ export const TenantHeader = ({ user, onDrawerOpen, onNotifications, onProfile })
           onPress={() => handlePress(onDrawerOpen)}
           activeOpacity={0.7}
         >
-          <Ionicons name="menu-outline" size={24} color={theme.colors.primary} />
+          <Ionicons name="menu-outline" size={24} color={colors.primary} />
         </TouchableOpacity>
         
         <View style={styles.titleContainer}>
@@ -40,7 +43,7 @@ export const TenantHeader = ({ user, onDrawerOpen, onNotifications, onProfile })
           onPress={() => handlePress(onNotifications)}
           activeOpacity={0.7}
         >
-          <Ionicons name="notifications-outline" size={22} color={theme.colors.textPrimary} />
+          <Ionicons name="notifications-outline" size={22} color={colors.textPrimary} />
           <View style={styles.notificationDot}>
             <Text style={styles.dotText} allowFontScaling={false}>3</Text>
           </View>
@@ -61,16 +64,16 @@ export const TenantHeader = ({ user, onDrawerOpen, onNotifications, onProfile })
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors, isDarkMode) => StyleSheet.create({
   headerContainer: {
     height: 56,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: theme.spacing.md,
-    backgroundColor: theme.colors.surface,
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.surfaceHighlight,
+    borderBottomColor: colors.cardBorder,
     ...theme.shadows.sm,
   },
   leftSection: {
@@ -93,13 +96,13 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
   },
   brandTitle: {
-    color: theme.colors.textPrimary,
+    color: colors.textPrimary,
     fontSize: 16,
     fontWeight: '700',
     letterSpacing: 0.2,
   },
   subTitle: {
-    color: theme.colors.textSecondary,
+    color: colors.textSecondary,
     fontSize: 11,
     fontWeight: '500',
   },
@@ -107,7 +110,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 2,
     right: 2,
-    backgroundColor: theme.colors.danger,
+    backgroundColor: colors.danger,
     borderRadius: 8,
     minWidth: 16,
     height: 16,
@@ -116,7 +119,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 3,
   },
   dotText: {
-    color: theme.colors.white,
+    color: colors.white,
     fontSize: 9,
     fontWeight: '800',
   },
@@ -124,14 +127,14 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: theme.colors.primary,
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,
-    borderColor: theme.colors.primaryLight,
+    borderColor: colors.primaryLight,
   },
   avatarText: {
-    color: theme.colors.background,
+    color: colors.background,
     fontSize: 14,
     fontWeight: '800',
   },
