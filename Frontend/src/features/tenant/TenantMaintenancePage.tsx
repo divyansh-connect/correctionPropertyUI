@@ -150,7 +150,7 @@ export const TenantMaintenancePage: React.FC = () => {
               </div>
               <div>
                 <p className="text-muted-foreground text-[10px] uppercase font-bold">Property & Unit</p>
-                <p className="font-bold text-foreground mt-0.5">{selectedRequest.propertyName || 'property 1'} • {selectedRequest.unitName || selectedRequest.unitNumber || 'Unit room 1b'}</p>
+                <p className="font-bold text-foreground mt-0.5">{selectedRequest.propertyName || 'property 1'} • {(selectedRequest as any).unitName || selectedRequest.unitNumber || 'Unit room 1b'}</p>
               </div>
             </div>
 

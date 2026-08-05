@@ -75,11 +75,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         { title: t('nav.securityAndLogs'), path: '/platform-security/audit' },
       ],
     },
-    {
-      title: t('nav.profile'),
-      icon: <User className="w-5 h-5" />,
-      path: '/profile',
-    },
   ];
 
   // --- PROPERTY MANAGER MENU ITEMS ---
@@ -195,11 +190,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         { title: t('nav.integrationsMarketplace'), path: '/admin/integrations' },
         { title: t('nav.connectedApps'), path: '/platform-integrations/connected' },
       ],
-    },
-    {
-      title: t('nav.profile'),
-      icon: <User className="w-5 h-5" />,
-      path: '/profile',
     },
   ];
 

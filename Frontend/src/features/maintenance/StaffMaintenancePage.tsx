@@ -112,8 +112,7 @@ export const StaffMaintenancePage: React.FC = () => {
       {
         id: completeTaskId,
         status: 'Completed',
-        labourCost: actual,
-        extraExpenses: extra,
+        actualCost: actual + extra,
         resolutionNotes: resolutionNotesVal || 'Repairs completed.',
       },
       {
