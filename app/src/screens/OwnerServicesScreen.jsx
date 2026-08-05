@@ -10,56 +10,70 @@ import {
 import { useAuthStore } from '../store/useStore';
 import { Ionicons } from '@expo/vector-icons';
 
-export const TenantServicesScreen = ({ onNavigate }) => {
+export const OwnerServicesScreen = ({ onNavigate }) => {
   const { user } = useAuthStore();
 
   const menuItems = [
     {
-      id: 'maintenance',
-      label: 'Repairs & Maintenance',
-      subtitle: 'Track and file maintenance tickets',
-      icon: 'hammer-outline',
-      color: '#f59e0b',
+      id: 'rent',
+      label: 'Financials & Ledger',
+      subtitle: 'Portfolio ledger statements and postings',
+      icon: 'cash-outline',
+      color: '#10b981',
     },
     {
-      id: 'documents',
-      label: 'Documents',
-      subtitle: 'Leases, receipts, and community files',
+      id: 'statements',
+      label: 'Statements',
+      subtitle: 'Monthly owner statement archives',
       icon: 'document-text-outline',
       color: '#38bdf8',
     },
     {
-      id: 'notifications',
-      label: 'Notifications',
-      subtitle: 'View recent updates and announcements',
-      icon: 'notifications-outline',
-      color: '#10b981',
+      id: 'distributions',
+      label: 'Distributions',
+      subtitle: 'Track owner payouts and transfers',
+      icon: 'wallet-outline',
+      color: '#ec4899',
+    },
+    {
+      id: 'documents',
+      label: 'Documents',
+      subtitle: 'Tax forms and property contracts',
+      icon: 'folder-open-outline',
+      color: '#3b82f6',
+    },
+    {
+      id: 'reports',
+      label: 'Reports',
+      subtitle: 'Occupancy and cash flow statistics',
+      icon: 'bar-chart-outline',
+      color: '#f59e0b',
     },
     {
       id: 'profile',
       label: 'Profile Settings',
       subtitle: 'Manage your contact details and account',
       icon: 'person-outline',
-      color: '#ec4899',
+      color: '#8b5cf6',
     },
   ];
 
   return (
     <View style={styles.mainContainer}>
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* User profile header card */}
+        {/* Owner profile header card */}
         <View style={styles.profileCard}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText} allowFontScaling={false}>
-              {user?.firstName?.charAt(0) || user?.email?.charAt(0) || 'P'}
+              {user?.firstName?.charAt(0) || user?.email?.charAt(0) || 'O'}
             </Text>
           </View>
           <View style={styles.profileInfo}>
             <Text style={styles.profileName} allowFontScaling={false}>
-              {user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'person 1'}
+              {user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'owner 1'}
             </Text>
             <Text style={styles.profileRole} allowFontScaling={false}>
-              Tenant · Active Resident
+              Owner · Portfolio Investor
             </Text>
           </View>
         </View>

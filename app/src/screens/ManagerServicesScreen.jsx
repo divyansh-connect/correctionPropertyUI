@@ -10,44 +10,65 @@ import {
 import { useAuthStore } from '../store/useStore';
 import { Ionicons } from '@expo/vector-icons';
 
-export const TenantServicesScreen = ({ onNavigate }) => {
+export const ManagerServicesScreen = ({ onNavigate }) => {
   const { user } = useAuthStore();
 
   const menuItems = [
     {
+      id: 'documents',
+      label: 'Documents & Files',
+      subtitle: 'Manage lease agreements and portfolios files',
+      icon: 'folder-open-outline',
+      color: '#38bdf8',
+    },
+    {
+      id: 'owners',
+      label: 'Property Owners',
+      subtitle: 'Investor profiles, payout configurations & logs',
+      icon: 'people-outline',
+      color: '#10b981',
+    },
+    {
+      id: 'accounting',
+      label: 'Accounting & Ledgers',
+      subtitle: 'General double-entry bookkeeping journal entries',
+      icon: 'journal-outline',
+      color: '#a855f7',
+    },
+    {
       id: 'maintenance',
       label: 'Repairs & Maintenance',
-      subtitle: 'Track and file maintenance tickets',
+      subtitle: 'Verify service requests and dispatch work orders',
       icon: 'hammer-outline',
       color: '#f59e0b',
     },
     {
-      id: 'documents',
-      label: 'Documents',
-      subtitle: 'Leases, receipts, and community files',
-      icon: 'document-text-outline',
-      color: '#38bdf8',
+      id: 'reports',
+      label: 'Reports & Analytics',
+      subtitle: 'Track property metrics and cash flow analytics',
+      icon: 'analytics-outline',
+      color: '#ec4899',
     },
     {
-      id: 'notifications',
-      label: 'Notifications',
-      subtitle: 'View recent updates and announcements',
-      icon: 'notifications-outline',
-      color: '#10b981',
+      id: 'communication',
+      label: 'Communication',
+      subtitle: 'Broadcasting messages, alerts & tenant chat logs',
+      icon: 'chatbubbles-outline',
+      color: '#06b6d4',
     },
     {
       id: 'profile',
       label: 'Profile Settings',
-      subtitle: 'Manage your contact details and account',
-      icon: 'person-outline',
-      color: '#ec4899',
+      subtitle: 'Manage account credentials and configurations',
+      icon: 'settings-outline',
+      color: '#64748b',
     },
   ];
 
   return (
     <View style={styles.mainContainer}>
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* User profile header card */}
+        {/* Profile Card */}
         <View style={styles.profileCard}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText} allowFontScaling={false}>
@@ -56,10 +77,10 @@ export const TenantServicesScreen = ({ onNavigate }) => {
           </View>
           <View style={styles.profileInfo}>
             <Text style={styles.profileName} allowFontScaling={false}>
-              {user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'person 1'}
+              {user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'Property Manager'}
             </Text>
             <Text style={styles.profileRole} allowFontScaling={false}>
-              Tenant · Active Resident
+              Property Manager · Zentrol Staff
             </Text>
           </View>
         </View>
@@ -86,7 +107,7 @@ export const TenantServicesScreen = ({ onNavigate }) => {
         ))}
       </ScrollView>
 
-      {/* Log Out Button docked at the absolute bottom */}
+      {/* Log Out Button docked at the bottom */}
       <View style={styles.bottomButtonContainer}>
         <TouchableOpacity
           style={styles.logoutBtn}
