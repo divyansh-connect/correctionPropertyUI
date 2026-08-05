@@ -39,6 +39,9 @@ import { OwnerFinancialsScreen } from './screens/OwnerFinancialsScreen';
 import { OwnerMaintenanceScreen } from './screens/OwnerMaintenanceScreen';
 import { OwnerServicesScreen } from './screens/OwnerServicesScreen';
 import { ManagerServicesScreen } from './screens/ManagerServicesScreen';
+import { ManagerCommunicationScreen } from './screens/ManagerCommunicationScreen';
+import { ManagerAccountingScreen } from './screens/ManagerAccountingScreen';
+import { ManagerRentPaymentsScreen } from './screens/ManagerRentPaymentsScreen';
 import { OwnersScreen } from './screens/OwnersScreen';
 
 export default function App() {
@@ -110,9 +113,8 @@ export default function App() {
     case 'Collection Manager':
       moduleTabs = [
         { id: 'dashboard', label: 'Dashboard', icon: 'grid-outline', activeIcon: 'grid' },
-        { id: 'rent', label: 'Rent', icon: 'cash-outline', activeIcon: 'cash' },
-        { id: 'tenants', label: 'Tenants', icon: 'people-outline', activeIcon: 'people' },
-        { id: 'profile', label: 'Settings', icon: 'settings-outline', activeIcon: 'settings' },
+        { id: 'rent', label: 'Payments', icon: 'card-outline', activeIcon: 'card' },
+        { id: 'profile', label: 'Profile', icon: 'person-outline', activeIcon: 'person' },
       ];
       break;
 
@@ -150,10 +152,10 @@ export default function App() {
       moduleTabs = [
         { id: 'dashboard', label: 'Dashboard', icon: 'grid-outline', activeIcon: 'grid' },
         { id: 'properties', label: 'Properties', icon: 'business-outline', activeIcon: 'business' },
-        { id: 'leads', label: 'Leasing', icon: 'key-outline', activeIcon: 'key' },
+        { id: 'owners', label: 'Owners', icon: 'person-add-outline', activeIcon: 'person-add' },
         { id: 'tenants', label: 'Tenants', icon: 'people-outline', activeIcon: 'people' },
         { id: 'rent', label: 'Rent', icon: 'cash-outline', activeIcon: 'cash' },
-        { id: 'more', label: 'All 13', icon: 'menu-outline', activeIcon: 'menu' },
+        { id: 'more', label: 'Services', icon: 'apps-outline', activeIcon: 'apps' },
       ];
       break;
   }
@@ -210,7 +212,7 @@ export default function App() {
         return <InvoicesScreen />;
       case 'communication':
       case 'messages':
-        return <TenantMessagesScreen />;
+        return role === 'Property Manager' ? <ManagerCommunicationScreen /> : <TenantMessagesScreen />;
       case 'notifications':
         return <TenantNotificationsScreen />;
       case 'statements':
@@ -218,11 +220,15 @@ export default function App() {
       case 'reports':
         return <ReportsScreen />;
       case 'rent':
-        return role === 'Owner' ? <OwnerFinancialsScreen /> : <RentScreen />;
+        if (role === 'Owner') return <OwnerFinancialsScreen />;
+        if (role === 'Property Manager' || role === 'Collection Manager') return <ManagerRentPaymentsScreen />;
+        return <RentScreen />;
       case 'financials':
       case 'ledger':
       case 'accounting':
-        return role === 'Owner' ? <OwnerFinancialsScreen /> : <TenantLedgerScreen />;
+        if (role === 'Owner') return <OwnerFinancialsScreen />;
+        if (role === 'Property Manager' || role === 'Collection Manager') return <ManagerAccountingScreen />;
+        return <TenantLedgerScreen />;
       case 'maintenance':
         return role === 'Owner' ? <OwnerMaintenanceScreen /> : <MaintenanceScreen />;
       case 'companies':
@@ -292,7 +298,7 @@ export default function App() {
       <StatusBar style="light" />
 
       {/* Top Header Bar with Hamburger Drawer, Notification Bell Icon & Profile Badge */}
-      {(role !== 'Maintenance Staff' && role !== 'Tenant' && role !== 'Owner' && role !== 'Property Manager') && (
+      {(role !== 'Maintenance Staff' && role !== 'Tenant' && role !== 'Owner' && role !== 'Property Manager' && role !== 'Collection Manager') && (
         <View style={styles.topHeader}>
           <View style={styles.brandContainer}>
             <TouchableOpacity style={styles.hamburgerBtn} onPress={() => setDrawerVisible(true)}>
