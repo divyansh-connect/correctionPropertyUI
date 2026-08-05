@@ -18,8 +18,9 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 
 export const OwnerDashboard = ({ onNavigate }) => {
   const { user, logout, refreshAccessToken } = useAuthStore();
-  const { theme } = useThemeStore();
+  const { theme, language } = useThemeStore();
   const isDarkMode = theme === 'dark';
+  const es = language === 'es';
   const styles = getStyles(isDarkMode);
 
   const [loading, setLoading] = useState(true);

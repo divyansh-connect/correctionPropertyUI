@@ -21,8 +21,9 @@ import { Ionicons } from '@expo/vector-icons';
 
 export const MaintenanceStaffDashboard = ({ activeSubTab }) => {
   const { logout, refreshAccessToken } = useAuthStore();
-  const { theme } = useThemeStore();
+  const { theme, language } = useThemeStore();
   const isDarkMode = theme === 'dark';
+  const es = language === 'es';
   const styles = getStyles(isDarkMode);
 
   const [tasks, setTasks] = useState([]);
@@ -137,9 +138,9 @@ export const MaintenanceStaffDashboard = ({ activeSubTab }) => {
         refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchTasks} tintColor="#38bdf8" />}
       >
         <View style={styles.headerBanner}>
-          <Text style={styles.welcomeTitle}>Maintenance Staff Portal</Text>
+          <Text style={styles.welcomeTitle}>{es ? 'Portal de Personal de Mantenimiento' : 'Maintenance Staff Portal'}</Text>
           <Text style={styles.welcomeSub}>
-            View your workload summary, accept assignments, and update task progress.
+            {es ? 'Vea su resumen de carga de trabajo, acepte asignaciones y actualice el progreso de las tareas.' : 'View your workload summary, accept assignments, and update task progress.'}
           </Text>
         </View>
 
@@ -149,7 +150,7 @@ export const MaintenanceStaffDashboard = ({ activeSubTab }) => {
             <View style={[styles.statIconContainer, { backgroundColor: '#3b82f615' }]}>
               <Ionicons name="briefcase" size={18} color="#3b82f6" />
             </View>
-            <Text style={styles.statLabel}>ASSIGNED TASKS</Text>
+            <Text style={styles.statLabel}>{es ? 'TAREAS ASIGNADAS' : 'ASSIGNED TASKS'}</Text>
             <Text style={styles.statVal}>{assignedCount}</Text>
           </View>
 
@@ -157,7 +158,7 @@ export const MaintenanceStaffDashboard = ({ activeSubTab }) => {
             <View style={[styles.statIconContainer, { backgroundColor: '#eab30815' }]}>
               <Ionicons name="time" size={18} color="#eab308" />
             </View>
-            <Text style={styles.statLabel}>IN PROGRESS</Text>
+            <Text style={styles.statLabel}>{es ? 'EN PROGRESO' : 'IN PROGRESS'}</Text>
             <Text style={styles.statVal}>{inProgressCount}</Text>
           </View>
 
@@ -165,7 +166,7 @@ export const MaintenanceStaffDashboard = ({ activeSubTab }) => {
             <View style={[styles.statIconContainer, { backgroundColor: '#10b98115' }]}>
               <Ionicons name="checkmark-circle" size={18} color="#10b981" />
             </View>
-            <Text style={styles.statLabel}>COMPLETED</Text>
+            <Text style={styles.statLabel}>{es ? 'COMPLETADAS' : 'COMPLETED'}</Text>
             <Text style={styles.statVal}>{completedCount}</Text>
           </View>
 
@@ -173,7 +174,7 @@ export const MaintenanceStaffDashboard = ({ activeSubTab }) => {
             <View style={[styles.statIconContainer, { backgroundColor: '#f43f5e15' }]}>
               <Ionicons name="close-circle" size={18} color="#f43f5e" />
             </View>
-            <Text style={styles.statLabel}>REJECTED</Text>
+            <Text style={styles.statLabel}>{es ? 'RECHAZADAS' : 'REJECTED'}</Text>
             <Text style={styles.statVal}>{rejectedCount}</Text>
           </View>
         </View>
@@ -183,20 +184,20 @@ export const MaintenanceStaffDashboard = ({ activeSubTab }) => {
           <Ionicons name="search" size={18} color="#64748b" style={{ marginRight: 8 }} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search by ID, Property, Unit or Issue..."
+            placeholder={es ? 'Buscar por ID, Propiedad, Unidad o Problema...' : 'Search by ID, Property, Unit or Issue...'}
             placeholderTextColor="#64748b"
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
         </View>
 
-        <Text style={styles.sectionTitle}>MY TASKS</Text>
+        <Text style={styles.sectionTitle}>{es ? 'MIS TAREAS' : 'MY TASKS'}</Text>
 
         {loading ? (
           <ActivityIndicator color="#38bdf8" style={{ marginTop: 20 }} />
         ) : filteredTasks.length === 0 ? (
           <View style={styles.emptyCard}>
-            <Text style={styles.emptyText}>No tasks matched your search or filters.</Text>
+            <Text style={styles.emptyText}>{es ? 'No se encontraron tareas con su búsqueda.' : 'No tasks matched your search or filters.'}</Text>
           </View>
         ) : (
           filteredTasks.slice(0, 5).map((task) => renderTaskItem(task, true)) // Pass true for isDashboard
@@ -225,7 +226,7 @@ export const MaintenanceStaffDashboard = ({ activeSubTab }) => {
           <View style={styles.badgeRow}>
             <View style={[styles.statusBadge, { backgroundColor: taskIsActive ? '#eab30815' : isCompleted ? '#10b98115' : '#38bdf815' }]}>
               <Text style={[styles.statusBadgeText, { color: taskIsActive ? '#eab308' : isCompleted ? '#10b981' : '#38bdf8' }]}>
-                {taskIsActive ? 'In Progress' : task.status}
+                {taskIsActive ? (es ? 'En Progreso' : 'In Progress') : (es && task.status === 'Completed' ? 'Completado' : es && task.status === 'Assigned' ? 'Asignado' : es && task.status === 'Rejected' ? 'Rechazado' : task.status)}
               </Text>
             </View>
             <View style={[styles.priorityBadge, { backgroundColor: `${priorityColor}15` }]}>

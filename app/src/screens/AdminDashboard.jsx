@@ -13,7 +13,7 @@ import {
   Animated,
 } from 'react-native';
 import apiClient from '../api/client';
-import { useAuthStore } from '../store/useStore';
+import { useAuthStore, useThemeStore } from '../store/useStore';
 import { useThemeColors } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -56,8 +56,10 @@ const AnimatedTouchable = ({ children, onPress, style, disabled }) => {
 
 export const AdminDashboard = ({ onNavigate }) => {
   const { logout, refreshAccessToken } = useAuthStore();
+  const { language } = useThemeStore();
   const { colors, isDarkMode } = useThemeColors();
   const styles = getStyles(colors, isDarkMode);
+  const es = language === 'es';
 
   // States
   const [loading, setLoading] = useState(true);
@@ -212,7 +214,7 @@ export const AdminDashboard = ({ onNavigate }) => {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color="#38bdf8" />
-        <Text style={styles.loadingText} allowFontScaling={false}>Loading Super Admin SaaS Portal...</Text>
+        <Text style={styles.loadingText} allowFontScaling={false}>{es ? 'Cargando Panel de Super Admin...' : 'Loading Super Admin SaaS Portal...'}</Text>
       </View>
     );
   }
@@ -232,11 +234,11 @@ export const AdminDashboard = ({ onNavigate }) => {
       {/* Super Admin Header */}
       <View style={styles.header}>
         <View style={styles.titleRow}>
-          <Text style={styles.title} allowFontScaling={false}>SaaS Platform Control Panel</Text>
+          <Text style={styles.title} allowFontScaling={false}>{es ? 'Panel de Control de la Plataforma' : 'SaaS Platform Control Panel'}</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <TouchableOpacity style={styles.syncBtn} onPress={loadData}>
               <Ionicons name="refresh-outline" size={14} color={colors.textSecondary} />
-              <Text style={styles.syncText} allowFontScaling={false}>Sync Metrics</Text>
+              <Text style={styles.syncText} allowFontScaling={false}>{es ? 'Sincronizar' : 'Sync Metrics'}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.bellBtn} onPress={() => onNavigate && onNavigate('notifications')}>
@@ -253,7 +255,7 @@ export const AdminDashboard = ({ onNavigate }) => {
       <View style={styles.kpiGrid}>
         <View style={styles.kpiCard}>
           <View style={styles.kpiHeaderRow}>
-            <Text style={styles.kpiLabel} allowFontScaling={false}>ACTIVE COMPANIES</Text>
+            <Text style={styles.kpiLabel} allowFontScaling={false}>{es ? 'EMPRESAS ACTIVAS' : 'ACTIVE COMPANIES'}</Text>
             <View style={[styles.iconCircle, { backgroundColor: 'rgba(56, 189, 248, 0.12)' }]}>
               <Ionicons name="business-outline" size={14} color="#38bdf8" />
             </View>
@@ -261,15 +263,15 @@ export const AdminDashboard = ({ onNavigate }) => {
           <Text style={styles.kpiVal} allowFontScaling={false}>{stats.activeCompanies}</Text>
           <View style={styles.kpiFooterRow}>
             <View style={styles.badgeGreen}>
-              <Text style={styles.badgeGreenText} allowFontScaling={false}>+12 new</Text>
+              <Text style={styles.badgeGreenText} allowFontScaling={false}>+12 {es ? 'nuevas' : 'new'}</Text>
             </View>
-            <Text style={styles.kpiSubText} allowFontScaling={false}>this month</Text>
+            <Text style={styles.kpiSubText} allowFontScaling={false}>{es ? 'este mes' : 'this month'}</Text>
           </View>
         </View>
 
         <View style={styles.kpiCard}>
           <View style={styles.kpiHeaderRow}>
-            <Text style={styles.kpiLabel} allowFontScaling={false}>ACTIVE USERS</Text>
+            <Text style={styles.kpiLabel} allowFontScaling={false}>{es ? 'USUARIOS ACTIVOS' : 'ACTIVE USERS'}</Text>
             <View style={[styles.iconCircle, { backgroundColor: 'rgba(16, 185, 129, 0.12)' }]}>
               <Ionicons name="people-outline" size={14} color="#10b981" />
             </View>
@@ -277,9 +279,9 @@ export const AdminDashboard = ({ onNavigate }) => {
           <Text style={styles.kpiVal} allowFontScaling={false}>{stats.activeUsers}</Text>
           <View style={styles.kpiFooterRow}>
             <View style={styles.badgeGreen}>
-              <Text style={styles.badgeGreenText} allowFontScaling={false}>+142 new</Text>
+              <Text style={styles.badgeGreenText} allowFontScaling={false}>+142 {es ? 'nuevos' : 'new'}</Text>
             </View>
-            <Text style={styles.kpiSubText} allowFontScaling={false}>weekly signups</Text>
+            <Text style={styles.kpiSubText} allowFontScaling={false}>{es ? 'registros semanales' : 'weekly signups'}</Text>
           </View>
         </View>
       </View>
@@ -287,7 +289,7 @@ export const AdminDashboard = ({ onNavigate }) => {
       <View style={styles.kpiGrid}>
         <View style={styles.kpiCard}>
           <View style={styles.kpiHeaderRow}>
-            <Text style={styles.kpiLabel} allowFontScaling={false}>MRR (REVENUE)</Text>
+            <Text style={styles.kpiLabel} allowFontScaling={false}>{es ? 'MRR (INGRESOS)' : 'MRR (REVENUE)'}</Text>
             <View style={[styles.iconCircle, { backgroundColor: 'rgba(129, 140, 248, 0.12)' }]}>
               <Ionicons name="card-outline" size={14} color="#818cf8" />
             </View>
@@ -299,13 +301,13 @@ export const AdminDashboard = ({ onNavigate }) => {
             <View style={styles.badgeGreen}>
               <Text style={styles.badgeGreenText} allowFontScaling={false}>+8.4%</Text>
             </View>
-            <Text style={styles.kpiSubText} allowFontScaling={false}>m/m growth</Text>
+            <Text style={styles.kpiSubText} allowFontScaling={false}>{es ? 'crecimiento m/m' : 'm/m growth'}</Text>
           </View>
         </View>
 
         <View style={styles.kpiCard}>
           <View style={styles.kpiHeaderRow}>
-            <Text style={styles.kpiLabel} allowFontScaling={false}>ACTIVE SUBSCRIPTIONS</Text>
+            <Text style={styles.kpiLabel} allowFontScaling={false}>{es ? 'SUSCRIPCIONES ACTIVAS' : 'ACTIVE SUBSCRIPTIONS'}</Text>
             <View style={[styles.iconCircle, { backgroundColor: 'rgba(250, 204, 21, 0.12)' }]}>
               <Ionicons name="bar-chart-outline" size={14} color="#facc15" />
             </View>
@@ -315,15 +317,15 @@ export const AdminDashboard = ({ onNavigate }) => {
             <View style={styles.badgeGreen}>
               <Text style={styles.badgeGreenText} allowFontScaling={false}>98.5%</Text>
             </View>
-            <Text style={styles.kpiSubText} allowFontScaling={false}>retention</Text>
+            <Text style={styles.kpiSubText} allowFontScaling={false}>{es ? 'retención' : 'retention'}</Text>
           </View>
         </View>
       </View>
 
       {/* MRR Growth Chart Card */}
       <View style={styles.chartCard}>
-        <Text style={styles.chartTitle} allowFontScaling={false}>Monthly Recurring Revenue (MRR) Growth</Text>
-        <Text style={styles.chartSubtitle} allowFontScaling={false}>Comparison of previous cycle vs current ARR metrics</Text>
+        <Text style={styles.chartTitle} allowFontScaling={false}>{es ? 'Crecimiento de Ingresos Recurrentes (MRR)' : 'Monthly Recurring Revenue (MRR) Growth'}</Text>
+        <Text style={styles.chartSubtitle} allowFontScaling={false}>{es ? 'Comparación ciclo anterior vs métricas ARR actuales' : 'Comparison of previous cycle vs current ARR metrics'}</Text>
         
         <View style={styles.legendRow}>
           <View style={styles.legendItem}>
@@ -371,8 +373,8 @@ export const AdminDashboard = ({ onNavigate }) => {
 
       {/* Subscription Plan Distribution Card */}
       <View style={styles.chartCard}>
-        <Text style={styles.chartTitle} allowFontScaling={false}>Subscription Plan Distribution</Text>
-        <Text style={styles.chartSubtitle} allowFontScaling={false}>Breakdown of active companies by SaaS tier</Text>
+        <Text style={styles.chartTitle} allowFontScaling={false}>{es ? 'Distribución de Planes de Suscripción' : 'Subscription Plan Distribution'}</Text>
+        <Text style={styles.chartSubtitle} allowFontScaling={false}>{es ? 'Desglose de empresas activas por nivel SaaS' : 'Breakdown of active companies by SaaS tier'}</Text>
 
         <View style={styles.planProgressContainer}>
           <View style={styles.planProgressItem}>

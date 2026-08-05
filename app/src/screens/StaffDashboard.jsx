@@ -7,13 +7,15 @@ import {
   TouchableOpacity,
   RefreshControl,
 } from 'react-native';
-import { useAuthStore } from '../store/useStore';
+import { useAuthStore, useThemeStore } from '../store/useStore';
 import { useThemeColors } from '../theme';
 
 export const StaffDashboard = () => {
   const { user } = useAuthStore();
+  const { language } = useThemeStore();
   const { colors, isDarkMode } = useThemeColors();
   const styles = getStyles(colors, isDarkMode);
+  const es = language === 'es';
   const [refreshing, setRefreshing] = useState(false);
 
   const workOrders = [
@@ -30,36 +32,36 @@ export const StaffDashboard = () => {
     >
       <View style={styles.header}>
         <View style={styles.roleBadge}>
-          <Text style={styles.roleBadgeText} allowFontScaling={false}>🛠️ Maintenance Staff</Text>
+          <Text style={styles.roleBadgeText} allowFontScaling={false}>🛠️ {es ? 'Personal de Mantenimiento' : 'Maintenance Staff'}</Text>
         </View>
-        <Text style={styles.title} allowFontScaling={false}>Work Orders Dashboard</Text>
-        <Text style={styles.subtitle} allowFontScaling={false}>Manage repair tasks, assigned units & work orders</Text>
+        <Text style={styles.title} allowFontScaling={false}>{es ? 'Tablero de Órdenes de Trabajo' : 'Work Orders Dashboard'}</Text>
+        <Text style={styles.subtitle} allowFontScaling={false}>{es ? 'Gestione tareas, unidades asignadas y órdenes de trabajo' : 'Manage repair tasks, assigned units & work orders'}</Text>
       </View>
 
       {/* KPI Stats */}
       <View style={styles.kpiGrid}>
         <View style={styles.kpiCard}>
-          <Text style={styles.kpiLabel} allowFontScaling={false}>ASSIGNED ORDERS</Text>
+          <Text style={styles.kpiLabel} allowFontScaling={false}>{es ? 'ÓRDENES ASIGNADAS' : 'ASSIGNED ORDERS'}</Text>
           <Text style={[styles.kpiVal, { color: '#38bdf8' }]} allowFontScaling={false}>4</Text>
-          <Text style={styles.kpiSub} allowFontScaling={false}>Active Work Tickets</Text>
+          <Text style={styles.kpiSub} allowFontScaling={false}>{es ? 'Tickets Activos' : 'Active Work Tickets'}</Text>
         </View>
 
         <View style={styles.kpiCard}>
-          <Text style={styles.kpiLabel} allowFontScaling={false}>IN PROGRESS</Text>
+          <Text style={styles.kpiLabel} allowFontScaling={false}>{es ? 'EN PROGRESO' : 'IN PROGRESS'}</Text>
           <Text style={[styles.kpiVal, { color: '#facc15' }]} allowFontScaling={false}>2</Text>
-          <Text style={styles.kpiSub} allowFontScaling={false}>Currently Repairing</Text>
+          <Text style={styles.kpiSub} allowFontScaling={false}>{es ? 'Reparando Actualmente' : 'Currently Repairing'}</Text>
         </View>
 
         <View style={styles.kpiCard}>
-          <Text style={styles.kpiLabel} allowFontScaling={false}>COMPLETED (THIS MONTH)</Text>
+          <Text style={styles.kpiLabel} allowFontScaling={false}>{es ? 'COMPLETADAS (MES)' : 'COMPLETED (THIS MONTH)'}</Text>
           <Text style={[styles.kpiVal, { color: '#4ade80' }]} allowFontScaling={false}>14</Text>
-          <Text style={styles.kpiSub} allowFontScaling={false}>Resolved Tickets</Text>
+          <Text style={styles.kpiSub} allowFontScaling={false}>{es ? 'Tickets Resueltos' : 'Resolved Tickets'}</Text>
         </View>
       </View>
 
       {/* Work Orders List */}
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle} allowFontScaling={false}>📋 Assigned Work Orders</Text>
+        <Text style={styles.sectionTitle} allowFontScaling={false}>📋 {es ? 'Órdenes de Trabajo Asignadas' : 'Assigned Work Orders'}</Text>
       </View>
 
       {workOrders.map((wo) => (
@@ -67,15 +69,17 @@ export const StaffDashboard = () => {
           <View style={styles.cardHeader}>
             <Text style={styles.woId} allowFontScaling={false}>{wo.id}</Text>
             <View style={[styles.priorityBadge, wo.priority === 'High' ? styles.priorityHigh : styles.priorityMed]}>
-              <Text style={styles.priorityText} allowFontScaling={false}>{wo.priority} Priority</Text>
+              <Text style={styles.priorityText} allowFontScaling={false}>
+                {es ? (wo.priority === 'High' ? 'Alta' : wo.priority === 'Medium' ? 'Media' : 'Baja') : wo.priority} {es ? 'Prioridad' : 'Priority'}
+              </Text>
             </View>
           </View>
           <Text style={styles.woTitle} allowFontScaling={false}>{wo.title}</Text>
           <Text style={styles.woLocation} allowFontScaling={false}>📍 {wo.location}</Text>
           <View style={styles.cardFooter}>
-            <Text style={styles.statusText} allowFontScaling={false}>Status: {wo.status}</Text>
+            <Text style={styles.statusText} allowFontScaling={false}>{es ? 'Estado:' : 'Status:'} {es ? (wo.status === 'In Progress' ? 'En Progreso' : wo.status === 'Pending' ? 'Pendiente' : 'Completado') : wo.status}</Text>
             <TouchableOpacity style={styles.updateBtn}>
-              <Text style={styles.updateBtnText} allowFontScaling={false}>Update Status →</Text>
+              <Text style={styles.updateBtnText} allowFontScaling={false}>{es ? 'Actualizar Estado →' : 'Update Status →'}</Text>
             </TouchableOpacity>
           </View>
         </View>

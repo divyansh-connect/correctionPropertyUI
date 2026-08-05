@@ -18,7 +18,7 @@ import {
   Keyboard,
 } from 'react-native';
 import apiClient from '../api/client';
-import { useAuthStore } from '../store/useStore';
+import { useAuthStore, useThemeStore } from '../store/useStore';
 import { useThemeColors } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -61,6 +61,7 @@ const AnimatedTouchable = ({ children, onPress, style, disabled }) => {
 
 export const PropertiesScreen = () => {
   const { logout, refreshAccessToken } = useAuthStore();
+  const { language } = useThemeStore();
   const { colors, isDarkMode } = useThemeColors();
   const styles = getStyles(colors, isDarkMode);
   const [activeTab, setActiveTab] = useState('properties'); // properties, buildings, units

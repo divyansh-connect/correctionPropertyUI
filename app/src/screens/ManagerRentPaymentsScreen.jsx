@@ -17,23 +17,16 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
 } from 'react-native';
-import apiClient from '../api/client';
-<<<<<<< HEAD
 import { useAuthStore, useThemeStore } from '../store/useStore';
-=======
-import { useAuthStore } from '../store/useStore';
 import { useThemeColors } from '../theme';
->>>>>>> b1be112c872b2a2154a973a4ff044bc20e05ee8d
 import { Ionicons } from '@expo/vector-icons';
 
 export const ManagerRentPaymentsScreen = () => {
   const { logout, refreshAccessToken } = useAuthStore();
-<<<<<<< HEAD
   const { language } = useThemeStore();
-=======
   const { colors, isDarkMode } = useThemeColors();
   const styles = getStyles(colors, isDarkMode);
->>>>>>> b1be112c872b2a2154a973a4ff044bc20e05ee8d
+  const es = language === 'es';
 
   // Sub-tab: 'payments' | 'invoices' | 'ledger'
   const [activeTab, setActiveTab] = useState('payments');

@@ -54,24 +54,10 @@ const AnimatedTouchable = ({ children, onPress, style, disabled }) => {
 
 export const CollectionDashboard = () => {
   const { logout, refreshAccessToken } = useAuthStore();
-<<<<<<< HEAD
-  const { theme, language } = useThemeStore();
-  const isDarkMode = theme === 'dark';
-
-  const colors = {
-    bg: isDarkMode ? '#0f172a' : '#f8fafc',
-    cardBg: isDarkMode ? '#1e293b' : '#ffffff',
-    cardBorder: isDarkMode ? '#334155' : '#e2e8f0',
-    textPrimary: isDarkMode ? '#f8fafc' : '#0f172a',
-    textSecondary: isDarkMode ? '#94a3b8' : '#475569',
-    textMuted: isDarkMode ? '#64748b' : '#94a3b8',
-    inputBg: isDarkMode ? '#0f172a' : '#f1f5f9',
-    inputBorder: isDarkMode ? '#334155' : '#cbd5e1',
-  };
-=======
+  const { language } = useThemeStore();
   const { colors, isDarkMode } = useThemeColors();
   const styles = getStyles(colors, isDarkMode);
->>>>>>> b1be112c872b2a2154a973a4ff044bc20e05ee8d
+  const es = language === 'es';
 
   const [metrics, setMetrics] = useState(null);
   const [charts, setCharts] = useState(null);

@@ -104,11 +104,11 @@ export default function App() {
   switch (role) {
     case 'Super Admin':
       moduleTabs = [
-        { id: 'dashboard', label: 'Dashboard', icon: 'grid-outline', activeIcon: 'grid' },
-        { id: 'companies', label: 'Companies', icon: 'business-outline', activeIcon: 'business' },
-        { id: 'subscriptions', label: 'Subscriptions', icon: 'card-outline', activeIcon: 'card' },
-        { id: 'platform-users', label: 'Users', icon: 'people-outline', activeIcon: 'people' },
-        { id: 'profile', label: 'Profile', icon: 'person-outline', activeIcon: 'person' },
+        { id: 'dashboard', label: language === 'es' ? 'Tablero' : 'Dashboard', icon: 'grid-outline', activeIcon: 'grid' },
+        { id: 'companies', label: language === 'es' ? 'Empresas' : 'Companies', icon: 'business-outline', activeIcon: 'business' },
+        { id: 'subscriptions', label: language === 'es' ? 'Suscripciones' : 'Subscriptions', icon: 'card-outline', activeIcon: 'card' },
+        { id: 'platform-users', label: language === 'es' ? 'Usuarios' : 'Users', icon: 'people-outline', activeIcon: 'people' },
+        { id: 'profile', label: language === 'es' ? 'Perfil' : 'Profile', icon: 'person-outline', activeIcon: 'person' },
       ];
       break;
 
