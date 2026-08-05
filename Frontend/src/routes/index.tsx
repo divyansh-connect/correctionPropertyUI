@@ -204,6 +204,7 @@ import { TenantProfilePage } from '../features/tenant/TenantProfilePage';
 import { TenantSettingsPage } from '../features/tenant/TenantSettingsPage';
 import { TenantSupportPage } from '../features/tenant/TenantSupportPage';
 import { TenantNotificationsPage } from '../features/tenant/TenantNotificationsPage';
+import { UserProfilePage } from '../features/dashboard/UserProfilePage';
 import { CommDashboardPage } from '../features/communication/CommDashboardPage';
 import { CommInboxPage } from '../features/communication/CommInboxPage';
 import { CommConversationsPage } from '../features/communication/CommConversationsPage';
@@ -469,6 +470,17 @@ const indexRoute = createRoute({
       </ProtectedWrapper>
     );
   },
+});
+
+// Profile Route
+const profileRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/profile',
+  component: () => (
+    <ProtectedWrapper>
+      <UserProfilePage />
+    </ProtectedWrapper>
+  ),
 });
 
 // Properties Routes (Phase 2)
@@ -5392,6 +5404,7 @@ const delinquencyReportRoute = createRoute({
 // --- REGISTER TREE ---
 const routeTree = rootRoute.addChildren([
   indexRoute,
+  profileRoute,
   landingRoute,
   loginRoute,
   forgotPasswordRoute,

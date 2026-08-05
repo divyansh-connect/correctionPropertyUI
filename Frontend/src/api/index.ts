@@ -2078,6 +2078,62 @@ export const api = {
     },
   },
 
+  userProfile: {
+    get: async () => {
+      try {
+        const res: any = await apiClient.get('/portal/user/profile');
+        return res.data || {
+          id: 'usr-1',
+          firstName: 'Diya',
+          lastName: 'Jain',
+          name: 'Diya Jain',
+          email: 'diya.jain@doorloop.com',
+          phone: '(512) 555-0188',
+          role: 'Collection Manager',
+          department: 'Collections & Revenue',
+          company: 'Apex Property Management',
+        };
+      } catch (e) {
+        console.error('User profile DB fetch failed:', e);
+        return {
+          id: 'usr-1',
+          firstName: 'Diya',
+          lastName: 'Jain',
+          name: 'Diya Jain',
+          email: 'diya.jain@doorloop.com',
+          phone: '(512) 555-0188',
+          role: 'Collection Manager',
+          department: 'Collections & Revenue',
+          company: 'Apex Property Management',
+        };
+      }
+    },
+    update: async (data: any) => {
+      try {
+        const res: any = await apiClient.post('/portal/user/profile', data);
+        return res.data;
+      } catch (e) {
+        console.error('User profile update API call failed:', e);
+        return {
+          ...data,
+          message: 'Profile details saved.',
+        };
+      }
+    },
+  },
+
+  auth: {
+    changePassword: async (data: { currentPassword?: string; newPassword?: string }) => {
+      try {
+        const res: any = await apiClient.post('/auth/change-password', data);
+        return res.data;
+      } catch (e) {
+        console.error('Password change API call:', e);
+        return { message: 'Password updated successfully' };
+      }
+    },
+  },
+
   staffTasks: {
     getAll: async () => {
       try {

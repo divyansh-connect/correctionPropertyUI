@@ -50,6 +50,7 @@ export const en = {
     tenantInvoices: "Tenant Invoices",
     paymentHistory: "Payment History",
     tenantLedger: "Tenant Ledger",
+    profile: "Profile",
     createCompany: "Create Company",
     companyUsers: "Company Users",
     plans: "Plans",

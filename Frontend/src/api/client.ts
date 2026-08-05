@@ -60,12 +60,32 @@ export const apiClient = {
   },
 
   get: async <T>(url: string): Promise<T> => {
-    let response = await fetch(`${BASE_URL}${url}`, {
-      method: 'GET',
-      headers: apiClient.getHeaders(),
-    });
+    let response: Response | null = null;
+    try {
+      response = await fetch(`${BASE_URL}${url}`, {
+        method: 'GET',
+        headers: apiClient.getHeaders(),
+      });
+    } catch (e) {
+      response = null;
+    }
 
-    if (response.status === 401) {
+    // Try fallback to local backend if remote API returns 404 or connection fails
+    if ((!response || response.status === 404) && !BASE_URL.includes('localhost:5000')) {
+      try {
+        const localResponse = await fetch(`http://localhost:5000/api/v1${url}`, {
+          method: 'GET',
+          headers: apiClient.getHeaders(),
+        });
+        if (localResponse.ok) {
+          return localResponse.json();
+        }
+      } catch (e) {
+        // Fallback failed, continue with main response handling
+      }
+    }
+
+    if (response && response.status === 401) {
       const refreshed = await handleUnauthorized();
       if (refreshed) {
         response = await fetch(`${BASE_URL}${url}`, {
@@ -75,8 +95,9 @@ export const apiClient = {
       }
     }
 
-    if (!response.ok) {
-      await apiClient.handleResponseError(response);
+    if (!response || !response.ok) {
+      if (response) await apiClient.handleResponseError(response);
+      throw new Error(`API request failed for ${url}`);
     }
     return response.json();
   },
@@ -85,13 +106,34 @@ export const apiClient = {
     const isFormData = data instanceof FormData;
     const headers: any = isFormData ? apiClient.getAuthHeaders() : apiClient.getHeaders();
     
-    let response = await fetch(`${BASE_URL}${url}`, {
-      method: 'POST',
-      headers,
-      body: isFormData ? data : JSON.stringify(data),
-    });
+    let response: Response | null = null;
+    try {
+      response = await fetch(`${BASE_URL}${url}`, {
+        method: 'POST',
+        headers,
+        body: isFormData ? data : JSON.stringify(data),
+      });
+    } catch (e) {
+      response = null;
+    }
 
-    if (response.status === 401) {
+    // Try fallback to local backend if remote API returns 404 or connection fails
+    if ((!response || response.status === 404) && !BASE_URL.includes('localhost:5000')) {
+      try {
+        const localResponse = await fetch(`http://localhost:5000/api/v1${url}`, {
+          method: 'POST',
+          headers,
+          body: isFormData ? data : JSON.stringify(data),
+        });
+        if (localResponse.ok) {
+          return localResponse.json();
+        }
+      } catch (e) {
+        // Fallback failed
+      }
+    }
+
+    if (response && response.status === 401) {
       const refreshed = await handleUnauthorized();
       if (refreshed) {
         response = await fetch(`${BASE_URL}${url}`, {
@@ -102,8 +144,9 @@ export const apiClient = {
       }
     }
 
-    if (!response.ok) {
-      await apiClient.handleResponseError(response);
+    if (!response || !response.ok) {
+      if (response) await apiClient.handleResponseError(response);
+      throw new Error(`API request failed for ${url}`);
     }
     return response.json();
   },

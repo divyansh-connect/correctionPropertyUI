@@ -50,6 +50,7 @@ export const es = {
     tenantInvoices: "Facturas de Inquilinos",
     paymentHistory: "Historial de Pagos",
     tenantLedger: "Libro de Inquilinos",
+    profile: "Perfil",
     createCompany: "Crear Empresa",
     companyUsers: "Usuarios de Empresa",
     plans: "Planes",

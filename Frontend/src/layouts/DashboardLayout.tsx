@@ -75,6 +75,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         { title: t('nav.securityAndLogs'), path: '/platform-security/audit' },
       ],
     },
+    {
+      title: t('nav.profile'),
+      icon: <User className="w-5 h-5" />,
+      path: '/profile',
+    },
   ];
 
   // --- PROPERTY MANAGER MENU ITEMS ---
@@ -191,6 +196,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         { title: t('nav.connectedApps'), path: '/platform-integrations/connected' },
       ],
     },
+    {
+      title: t('nav.profile'),
+      icon: <User className="w-5 h-5" />,
+      path: '/profile',
+    },
   ];
 
   // --- COLLECTION MANAGER MENU ITEMS ---
@@ -210,6 +220,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       title: t('nav.tenantLedger'),
       icon: <BookOpen className="w-5 h-5" />,
       path: '/rent-ledger',
+    },
+    {
+      title: t('nav.profile'),
+      icon: <User className="w-5 h-5" />,
+      path: '/profile',
     },
   ];
 
@@ -669,12 +684,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                     <button
                       onClick={() => {
                         setShowProfileMenu(false);
-                        navigate('/settings');
+                        navigate('/profile');
                       }}
                       className="w-full text-left px-2 py-1.5 rounded hover:bg-muted text-xs font-semibold flex items-center space-x-2"
                     >
-                      <Settings className="w-4 h-4 text-muted-foreground" />
-                      <span>{t('header.accountSettings')}</span>
+                      <User className="w-4 h-4 text-muted-foreground" />
+                      <span>{t('nav.profile')}</span>
                     </button>
                     <button
                       onClick={() => {
