@@ -102,15 +102,15 @@ export const OwnerStatementsPage: React.FC = () => {
             <div className="space-y-3.5 pt-3.5 border-t">
               <div className="flex justify-between border-b pb-2">
                 <span className="text-muted-foreground">{t('ownerStatementsPage.operatingRevenues')}</span>
-                <span className="text-emerald-500 font-bold">${selectedStatement.income.toLocaleString()}</span>
+                <span className="text-emerald-500 font-bold">${(Number(selectedStatement.income || (selectedStatement as any).totalIncome) || 0).toLocaleString()}</span>
               </div>
               <div className="flex justify-between border-b pb-2">
                 <span className="text-muted-foreground">{t('ownerStatementsPage.operatingExpenses')}</span>
-                <span className="text-rose-500 font-bold">-${selectedStatement.expenses.toLocaleString()}</span>
+                <span className="text-rose-500 font-bold">-${(Number(selectedStatement.expenses || (selectedStatement as any).totalExpenses) || 0).toLocaleString()}</span>
               </div>
               <div className="flex justify-between pt-1 border-t border-dashed text-sm font-black uppercase">
                 <span>{t('ownerStatementsPage.netPayout')}</span>
-                <span className="text-emerald-500">${selectedStatement.netDistribution.toLocaleString()}</span>
+                <span className="text-emerald-500">${(Number(selectedStatement.netDistribution) || 0).toLocaleString()}</span>
               </div>
             </div>
 

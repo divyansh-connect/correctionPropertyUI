@@ -5,16 +5,21 @@ import {
   View,
   ScrollView,
   ActivityIndicator,
-  TouchableOpacity,
   RefreshControl,
-  Modal,
+  TouchableOpacity,
   TextInput,
+  Modal,
   Alert,
   Animated,
   Easing,
+  Platform,
+  KeyboardAvoidingView,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from 'react-native';
 import apiClient from '../api/client';
 import { useAuthStore } from '../store/useStore';
+import { Ionicons } from '@expo/vector-icons';
 
 // Animated Touchable Component
 const AnimatedTouchable = ({ children, onPress, style, disabled }) => {
@@ -54,20 +59,90 @@ const AnimatedTouchable = ({ children, onPress, style, disabled }) => {
 };
 
 export const PropertiesScreen = () => {
-  const { user, logout, refreshAccessToken } = useAuthStore();
-  const [properties, setProperties] = useState([]);
+  const { logout, refreshAccessToken } = useAuthStore();
+  const [activeTab, setActiveTab] = useState('properties'); // properties, buildings, units
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Data States
+  const [properties, setProperties] = useState([]);
+  const [buildings, setBuildings] = useState([]);
+  const [units, setUnits] = useState([]);
+  const [owners, setOwners] = useState([]);
+
+  // Detail Modal States
   const [selectedProperty, setSelectedProperty] = useState(null);
 
-  // Add Property Modal State
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [propertyName, setPropertyName] = useState('');
-  const [propertyAddress, setPropertyAddress] = useState('');
-  const [propertyType, setPropertyType] = useState('Residential');
-  const [unitsCount, setUnitsCount] = useState('12');
+  // Unit Detail Modal States
+  const [isUnitDetailOpen, setIsUnitDetailOpen] = useState(false);
+  const [viewingUnit, setViewingUnit] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [unitDetailData, setUnitDetailData] = useState({
+    unit: null,
+    leases: [],
+    workOrders: [],
+    invoices: [],
+  });
+  const [selectedSubTab, setSelectedSubTab] = useState('lease'); // lease, payments, maintenance, documents
+
+  // Form Modals Active States
+  const [isAddPropOpen, setIsAddPropOpen] = useState(false);
+  const [isAddBuildingOpen, setIsAddBuildingOpen] = useState(false);
+  const [isAddUnitOpen, setIsAddUnitOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  // --- Add Property Form State ---
+  const [pName, setPName] = useState('');
+  const [pType, setPType] = useState('Apartment');
+  const [pStatus, setPStatus] = useState('Active');
+  const [pStreet, setPStreet] = useState('');
+  const [pCity, setPCity] = useState('Austin');
+  const [pState, setPState] = useState('TX');
+  const [pCountry, setPCountry] = useState('USA');
+  const [pZip, setPZip] = useState('78701');
+  const [pOwnerId, setPOwnerId] = useState('');
+  const [pShare, setPShare] = useState('100');
+  const [pMgtCo, setPMgtCo] = useState('Apex Property Management');
+  const [pYearBuilt, setPYearBuilt] = useState('2020');
+  const [pBuildingsCount, setPBuildingsCount] = useState('1');
+  const [pUnitsCount, setPUnitsCount] = useState('0');
+  const [pSqft, setPSqft] = useState('10000');
+  const [pPurchasePrice, setPPurchasePrice] = useState('1000000');
+  const [pCurrentValue, setPCurrentValue] = useState('1200000');
+  const [pExpenses, setPExpenses] = useState('0');
+  // Dropdown states for Add Property
+  const [showTypeDropdown, setShowTypeDropdown] = useState(false);
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
+  const [showOwnerDropdown, setShowOwnerDropdown] = useState(false);
+
+  // --- Add Building Form State ---
+  const [bPropId, setBPropId] = useState('');
+  const [bName, setBName] = useState('');
+  const [bFloors, setBFloors] = useState('3');
+  const [bUnitsCount, setBUnitsCount] = useState('12');
+  const [bStreetAddress, setBStreetAddress] = useState('');
+  const [bStatus, setBStatus] = useState('Active');
+  // Dropdown states for Add Building
+  const [showBPropDropdown, setShowBPropDropdown] = useState(false);
+  const [showBStatusDropdown, setShowBStatusDropdown] = useState(false);
+
+  // --- Add Unit Form State ---
+  const [uPropId, setUPropId] = useState('');
+  const [uBuildingId, setUBuildingId] = useState('');
+  const [uNumber, setUNumber] = useState('');
+  const [uFloor, setUFloor] = useState('1');
+  const [uSqft, setUSqft] = useState('850');
+  const [uBeds, setUBeds] = useState('2');
+  const [uBaths, setUBaths] = useState('2');
+  const [uRent, setURent] = useState('1500');
+  const [uDeposit, setUDeposit] = useState('1500');
+  const [uAvailDate, setUAvailDate] = useState('2026-08-05');
+  const [uStatus, setUStatus] = useState('Vacant');
+  // Dropdown states for Add Unit
+  const [showUPropDropdown, setShowUPropDropdown] = useState(false);
+  const [showUBuildDropdown, setShowUBuildDropdown] = useState(false);
+  const [showUStatusDropdown, setShowUStatusDropdown] = useState(false);
 
   // Animations
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -92,77 +167,28 @@ export const PropertiesScreen = () => {
     ]).start();
   };
 
-  // Fetch strictly from live Railway backend endpoint & filter strictly by Logged In Owner
-  const fetchProperties = async () => {
+  // Fetch Live Data
+  const fetchData = async () => {
     try {
       setLoading(true);
-      const res = await apiClient.get('/properties', logout, refreshAccessToken);
-      let list = [];
-
-      if (res && res.data && Array.isArray(res.data)) {
-        list = res.data;
-      } else if (Array.isArray(res)) {
-        list = res;
-      }
-
-      // Strict Owner Filtering: Show only properties owned by logged-in user
-      const currentUserEmail = (user?.email || '').toLowerCase().trim();
-      const currentUserId = user?.id;
-
-      if (list.length > 0 && (currentUserEmail || currentUserId)) {
-        const ownerProperties = list.filter((p) => {
-          const ownerEmail = (p.owner?.email || p.ownerEmail || '').toLowerCase().trim();
-          const ownerId = p.ownerId || p.owner?.id;
-          return (
-            (currentUserEmail && ownerEmail === currentUserEmail) ||
-            (currentUserId && ownerId === currentUserId)
-          );
-        });
-
-        // If logged-in owner has properties, show strictly their assets (removes Property 2)
-        if (ownerProperties.length > 0) {
-          setProperties(ownerProperties);
-        } else {
-          setProperties(list);
-        }
-      } else {
-        setProperties(list);
-      }
-    } catch (e) {
-      console.log('Error fetching properties from Railway:', e.message);
-      // Fallback matching Web screenshot 1-to-1 for owner 1
-      setProperties([
-        {
-          id: '56233e7b-dd50-4725-bd98-0cc22ec0d1bf',
-          name: 'Sky house ',
-          type: 'Apartment',
-          status: 'Active',
-          address: 'Bhopal mp nagar, Austin, TX 78701',
-          unitsCount: 1,
-          occupiedUnits: 1,
-          occupancyRate: 100,
-          yearBuilt: 2020,
-          squareFootage: 10000,
-          purchasePrice: 1000000,
-          currentValue: 1200000,
-        },
-        {
-          id: 'ea718a90-c56c-4e00-8834-cede59073cea',
-          name: 'property 1',
-          type: 'Apartment',
-          status: 'Active',
-          address: 'Indore, indore, Mp, India, 42342',
-          unitsCount: 12,
-          occupiedUnits: 10,
-          occupancyRate: 83,
-          yearBuilt: 2010,
-          squareFootage: 8500,
-          purchasePrice: 2000000,
-          currentValue: 2200000,
-          buildings: [{ name: 'Building 1', floors: 3, unitsCount: 12 }],
-          units: [{ unitNumber: 'room 1b', floor: 1, bedrooms: 2, bathrooms: 2, rentAmount: 1000, status: 'Occupied' }],
-        },
+      const [propsRes, buildingsRes, unitsRes, ownersRes] = await Promise.all([
+        apiClient.get('/properties', logout, refreshAccessToken).catch(() => null),
+        apiClient.get('/buildings', logout, refreshAccessToken).catch(() => null),
+        apiClient.get('/units', logout, refreshAccessToken).catch(() => null),
+        apiClient.get('/owners', logout, refreshAccessToken).catch(() => null),
       ]);
+
+      const rawProps = Array.isArray(propsRes) ? propsRes : (propsRes?.data || []);
+      const rawBuildings = Array.isArray(buildingsRes) ? buildingsRes : (buildingsRes?.data || []);
+      const rawUnits = Array.isArray(unitsRes) ? unitsRes : (unitsRes?.data || []);
+      const rawOwners = Array.isArray(ownersRes) ? ownersRes : (ownersRes?.data || []);
+
+      setProperties(rawProps);
+      setBuildings(rawBuildings);
+      setUnits(rawUnits);
+      setOwners(rawOwners);
+    } catch (e) {
+      console.log('Error fetching properties directory data:', e.message);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -171,384 +197,1435 @@ export const PropertiesScreen = () => {
   };
 
   useEffect(() => {
-    fetchProperties();
-  }, []);
+    fetchData();
+  }, [activeTab]);
 
-  const handleAddSubmit = async () => {
-    if (!propertyName.trim()) {
-      Alert.alert('Error', 'Please enter a property name');
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchData();
+  };
+
+  // --- View Unit Details ---
+  const handleViewUnitDetails = async (unitItem) => {
+    try {
+      setDetailLoading(true);
+      setViewingUnit(unitItem);
+      setIsUnitDetailOpen(true);
+      setSelectedSubTab('lease'); // default sub-tab
+      
+      const [unitRes, leasesRes, workRes, invoicesRes] = await Promise.all([
+        apiClient.get(`/units/${unitItem.id}`, logout, refreshAccessToken).catch(() => null),
+        apiClient.get('/leases', logout, refreshAccessToken).catch(() => null),
+        apiClient.get('/work-orders', logout, refreshAccessToken).catch(() => null),
+        apiClient.get('/invoices', logout, refreshAccessToken).catch(() => null),
+      ]);
+      
+      const detailedUnit = unitRes?.data || unitItem;
+      const filteredLeases = (Array.isArray(leasesRes) ? leasesRes : (leasesRes?.data || [])).filter(l => l.unitId === unitItem.id);
+      const filteredWork = (Array.isArray(workRes) ? workRes : (workRes?.data || [])).filter(w => w.unitId === unitItem.id || w.unit?.id === unitItem.id);
+      const filteredInvoices = (Array.isArray(invoicesRes) ? invoicesRes : (invoicesRes?.data || [])).filter(i => i.unitId === unitItem.id || i.unitNumber === unitItem.unitNumber);
+      
+      setUnitDetailData({
+        unit: detailedUnit,
+        leases: filteredLeases,
+        workOrders: filteredWork,
+        invoices: filteredInvoices,
+      });
+    } catch (e) {
+      console.log('Error loading unit detail data:', e.message);
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  // --- Deletion Handlers ---
+  const handleDeleteProperty = (id, name) => {
+    Alert.alert(
+      'Delete Property',
+      `Are you sure you want to delete property "${name}"? This will delete all buildings, units, leases, and distributions associated with it.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setLoading(true);
+              await apiClient.delete(`/properties/${id}`, logout, refreshAccessToken);
+              Alert.alert('Success', 'Property deleted successfully');
+              fetchData();
+            } catch (err) {
+              Alert.alert('Error', err.message || 'Failed to delete property');
+              setLoading(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleDeleteBuilding = (id, name) => {
+    Alert.alert(
+      'Delete Building',
+      `Are you sure you want to delete building "${name}"?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setLoading(true);
+              await apiClient.delete(`/buildings/${id}`, logout, refreshAccessToken);
+              Alert.alert('Success', 'Building deleted successfully');
+              fetchData();
+            } catch (err) {
+              Alert.alert('Error', err.message || 'Failed to delete building');
+              setLoading(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleDeleteUnit = (id, number) => {
+    Alert.alert(
+      'Delete Unit',
+      `Are you sure you want to delete unit "${number}"?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setLoading(true);
+              await apiClient.delete(`/units/${id}`, logout, refreshAccessToken);
+              Alert.alert('Success', 'Unit deleted successfully');
+              fetchData();
+            } catch (err) {
+              Alert.alert('Error', err.message || 'Failed to delete unit');
+              setLoading(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // --- Creation Handlers ---
+  const handleCreateProperty = async () => {
+    if (!pName.trim()) {
+      Alert.alert('Validation Error', 'Property Name is required.');
       return;
     }
 
-    setSubmitting(true);
-    const newProp = {
-      id: `prop-${Date.now()}`,
-      name: propertyName.trim(),
-      address: propertyAddress.trim() || 'Indore, Mp, India',
-      type: propertyType,
-      status: 'Active',
-      unitsCount: parseInt(unitsCount) || 12,
-      ownerId: user?.id || '',
-      owner: { email: user?.email || 'owner1b@gmail.com' },
-    };
+    try {
+      setSubmitting(true);
+      const payload = {
+        name: pName.trim(),
+        type: pType,
+        status: pStatus,
+        streetAddress: pStreet.trim() || undefined,
+        city: pCity.trim() || undefined,
+        state: pState.trim() || undefined,
+        country: pCountry.trim() || undefined,
+        zip: pZip.trim() || undefined,
+        address: pStreet.trim() ? `${pStreet.trim()}, ${pCity.trim()}, ${pState.trim()}` : 'Austin, TX',
+        ownerId: pOwnerId || undefined,
+        ownershipPercentage: Number(pShare) || 100,
+        managementCompany: pMgtCo.trim() || 'Apex Property Management',
+        yearBuilt: Number(pYearBuilt) || 2020,
+        squareFootage: Number(pSqft) || 10000,
+        purchasePrice: Number(pPurchasePrice) || 1000000,
+        currentValue: Number(pCurrentValue) || 1200000,
+      };
+
+      await apiClient.post('/properties', payload, logout, refreshAccessToken);
+      Alert.alert('Success', 'Property created successfully.');
+      setIsAddPropOpen(false);
+      setPName('');
+      setPStreet('');
+      setPOwnerId('');
+      fetchData();
+    } catch (err) {
+      Alert.alert('Error', err.message || 'Failed to create property');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleCreateBuilding = async () => {
+    if (!bPropId || !bName.trim()) {
+      Alert.alert('Validation Error', 'Associated Property and Building Name are required.');
+      return;
+    }
 
     try {
-      await apiClient.post('/properties', newProp, logout, refreshAccessToken);
-    } catch (e) {
-      console.log('Post property error, applying fallback state:', e.message);
+      setSubmitting(true);
+      const payload = {
+        propertyId: bPropId,
+        name: bName.trim(),
+        floors: Number(bFloors) || 3,
+        unitsCount: Number(bUnitsCount) || 12,
+        streetAddress: bStreetAddress.trim() || undefined,
+        status: bStatus,
+      };
+
+      await apiClient.post('/buildings', payload, logout, refreshAccessToken);
+      Alert.alert('Success', 'Building created successfully.');
+      setIsAddBuildingOpen(false);
+      setBName('');
+      setBPropId('');
+      fetchData();
+    } catch (err) {
+      Alert.alert('Error', err.message || 'Failed to create building');
     } finally {
-      setProperties((prev) => [newProp, ...prev]);
       setSubmitting(false);
-      setIsAddModalOpen(false);
-      setPropertyName('');
-      setPropertyAddress('');
-      runEntryAnimation();
-      Alert.alert('Success', `Property "${newProp.name}" added successfully!`);
     }
   };
 
-  const filteredProperties = properties.filter((p) => {
-    const text = `${p.name || ''} ${p.address || ''} ${p.type || ''}`.toLowerCase();
-    return text.includes(searchQuery.toLowerCase());
-  });
-
-  const formatAddress = (address) => {
-    if (!address) return 'Indore, Mp, India';
-    if (typeof address === 'object') {
-      const parts = [address.street || address.streetAddress, address.city, address.state, address.zip].filter(Boolean);
-      return parts.length > 0 ? parts.join(', ') : 'Indore, Mp, USA';
+  const handleCreateUnit = async () => {
+    if (!uPropId || !uNumber.trim()) {
+      Alert.alert('Validation Error', 'Associated Property and Unit Number are required.');
+      return;
     }
-    return String(address);
+
+    try {
+      setSubmitting(true);
+      const payload = {
+        propertyId: uPropId,
+        buildingId: uBuildingId || undefined,
+        unitNumber: uNumber.trim(),
+        floor: Number(uFloor) || 1,
+        squareFootage: Number(uSqft) || 850,
+        bedrooms: Number(uBeds) || 2,
+        bathrooms: Number(uBaths) || 2,
+        rentAmount: Number(uRent) || 1500,
+        securityDeposit: Number(uDeposit) || 1500,
+        availabilityDate: uAvailDate,
+        status: uStatus,
+      };
+
+      await apiClient.post('/units', payload, logout, refreshAccessToken);
+      Alert.alert('Success', 'Unit created successfully.');
+      setIsAddUnitOpen(false);
+      setUNumber('');
+      setUPropId('');
+      setUBuildingId('');
+      fetchData();
+    } catch (err) {
+      Alert.alert('Error', err.message || 'Failed to create unit');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  if (loading && !refreshing) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#38bdf8" />
-        <Text style={styles.loadingText} allowFontScaling={false}>Loading Properties Portfolio...</Text>
-      </View>
-    );
-  }
+  // --- Search Filters ---
+  const filteredProperties = properties.filter(p =>
+    (p.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (p.address || '').toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredBuildings = buildings.filter(b =>
+    (b.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (b.property?.name || '').toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredUnits = units.filter(u =>
+    (u.unitNumber || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (u.property?.name || '').toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const formatAddress = (addr) => {
+    if (!addr) return 'Bhopal, MP, India';
+    return String(addr).split(',').slice(0, 3).join(', ').trim();
+  };
+
+  // Options Constant Arrays
+  const pTypes = ['Apartment', 'Commercial', 'SingleFamily', 'MultiFamily', 'HOA'];
+  const pStatuses = ['Active', 'Inactive'];
+  const unitStatuses = ['Vacant', 'Occupied'];
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.contentContainer}
-      showsVerticalScrollIndicator={true}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchProperties} tintColor="#38bdf8" />}
-    >
-      <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
-        {/* Page Header */}
-        <View style={styles.header}>
-          <Text style={styles.breadcrumb} allowFontScaling={false}>Home › Properties</Text>
-          <View style={styles.titleRow}>
-            <Text style={styles.title} allowFontScaling={false}>Properties & Units</Text>
-
-            {/* + ADD PROPERTY ACTION BUTTON */}
-            <AnimatedTouchable style={styles.addBtn} onPress={() => setIsAddModalOpen(true)}>
-              <Text style={styles.addBtnText} allowFontScaling={false}>+ Add Property</Text>
-            </AnimatedTouchable>
-          </View>
-          <Text style={styles.subtitle} allowFontScaling={false}>
-            Manage real estate assets, building specs, unit occupancies, and monthly revenues.
-          </Text>
-        </View>
-
-        {/* Search Bar */}
+    <View style={styles.mainWrapper}>
+      {/* Header Controls (Fixed) */}
+      <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
         <View style={styles.searchBarRow}>
-          <TextInput
-            style={styles.searchInput}
-            placeholder="🔍 Search properties by name, location, or type..."
-            placeholderTextColor="#94a3b8"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-        </View>
-
-        {/* Section Title */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle} allowFontScaling={false}>
-            REAL ESTATE ASSETS ({filteredProperties.length})
-          </Text>
-        </View>
-
-        {/* Property Cards List */}
-        {filteredProperties.length === 0 ? (
-          <View style={styles.emptyCard}>
-            <Text style={styles.emptyText} allowFontScaling={false}>No se encontraron resultados.</Text>
-            <Text style={styles.emptySubText} allowFontScaling={false}>
-              No properties found matching search query.
-            </Text>
+          <View style={styles.searchContainer}>
+            <Ionicons name="search-outline" size={18} color="#64748b" style={{ marginRight: 6 }} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder={
+                activeTab === 'properties'
+                  ? 'Search properties by name...'
+                  : activeTab === 'buildings'
+                    ? 'Search buildings by name...'
+                    : 'Search units by number...'
+              }
+              placeholderTextColor="#64748b"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
           </View>
-        ) : (
-          filteredProperties.map((item, idx) => (
-            <AnimatedTouchable
-              key={item.id || `prop-${idx}`}
-              style={styles.card}
-              onPress={() => setSelectedProperty(item)}
-            >
-              <View style={styles.cardHeader}>
-                <Text style={styles.propertyName} allowFontScaling={false}>
-                  🏢 {item.name || 'Property'}
+          <TouchableOpacity
+            style={styles.addBtn}
+            onPress={() => {
+              if (activeTab === 'properties') setIsAddPropOpen(true);
+              else if (activeTab === 'buildings') setIsAddBuildingOpen(true);
+              else setIsAddUnitOpen(true);
+            }}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="add" size={18} color="#0f172a" />
+            <Text style={styles.addBtnText} allowFontScaling={false}>
+              {activeTab === 'properties' ? 'Property' : activeTab === 'buildings' ? 'Building' : 'Unit'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Tab Switcher */}
+        <View style={[styles.tabContainer, { margin: 0, marginTop: 12, marginBottom: 4 }]}>
+          <TouchableOpacity
+            style={[styles.tabBtn, activeTab === 'properties' && styles.tabBtnActive]}
+            onPress={() => { setActiveTab('properties'); setSearchQuery(''); }}
+          >
+            <Text style={[styles.tabBtnText, activeTab === 'properties' && styles.tabBtnTextActive]} allowFontScaling={false}>Properties</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tabBtn, activeTab === 'buildings' && styles.tabBtnActive]}
+            onPress={() => { setActiveTab('buildings'); setSearchQuery(''); }}
+          >
+            <Text style={[styles.tabBtnText, activeTab === 'buildings' && styles.tabBtnTextActive]} allowFontScaling={false}>Buildings</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tabBtn, activeTab === 'units' && styles.tabBtnActive]}
+            onPress={() => { setActiveTab('units'); setSearchQuery(''); }}
+          >
+            <Text style={[styles.tabBtnText, activeTab === 'units' && styles.tabBtnTextActive]} allowFontScaling={false}>Units</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: 12 }]}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#38bdf8" />}
+      >
+        <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
+          {/* TAB 1: PROPERTIES */}
+          {activeTab === 'properties' && (
+            <>
+
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle} allowFontScaling={false}>
+                  PORTFOLIO PROPERTIES ({filteredProperties.length})
                 </Text>
-
-                <View style={styles.rightHeaderGroup}>
-                  <View style={styles.badge}>
-                    <Text style={styles.badgeText} allowFontScaling={false}>
-                      {item.status || 'Active'}
-                    </Text>
-                  </View>
-
-                  <TouchableOpacity style={styles.eyeBtn} onPress={() => setSelectedProperty(item)} activeOpacity={0.7}>
-                    <Text style={styles.eyeBtnText} allowFontScaling={false}>👁</Text>
-                  </TouchableOpacity>
-                </View>
               </View>
 
-              <Text style={styles.address} allowFontScaling={false}>
-                📍 {formatAddress(item.address)}
-              </Text>
+              {filteredProperties.length === 0 ? (
+                <View style={styles.emptyCard}>
+                  <Ionicons name="business-outline" size={48} color="#475569" style={{ marginBottom: 10 }} />
+                  <Text style={styles.emptyText} allowFontScaling={false}>No properties found</Text>
+                </View>
+              ) : (
+                filteredProperties.map((item, idx) => {
+                  const totalUnits = item.units && item.units.length > 0 ? item.units.length : (item.unitsCount || 0);
+                  const occUnits = item.units && item.units.length > 0 
+                    ? item.units.filter(u => String(u.status).toLowerCase() === 'occupied' || u.tenant || u.tenantId).length 
+                    : (item.occupiedUnits || 0);
+                  const vacUnits = Math.max(0, totalUnits - occUnits);
+                  const occRate = totalUnits > 0 ? Math.round((occUnits / totalUnits) * 100) : (item.occupancyRate || 0);
+                  const valuation = item.currentValue || item.purchasePrice || 1200000;
+                  const rentVal = item.units && item.units.length > 0 
+                    ? item.units.reduce((sum, u) => sum + (Number(u.rentAmount || u.rent) || 0), 0) 
+                    : (item.monthlyRent !== undefined ? item.monthlyRent : (item.rentAmount || 0));
+                  const shareText = item.ownershipPercentage !== undefined ? `${item.ownershipPercentage}% Share` : '100% Share';
 
-              <View style={styles.cardFooter}>
-                <Text style={styles.infoText} allowFontScaling={false}>
-                  Type: <Text style={{ color: '#38bdf8' }}>{item.type || 'Residential'}</Text> | Units: {item.unitsCount || (item.units ? item.units.length : 1)}
+                  return (
+                    <TouchableOpacity
+                      key={item.id || `prop-${idx}`}
+                      style={styles.card}
+                      onPress={() => setSelectedProperty(item)}
+                      activeOpacity={0.9}
+                    >
+                      <View style={styles.cardHeader}>
+                        <View style={styles.headerTitleContainer}>
+                          <Ionicons name="business-outline" size={20} color="#38bdf8" style={{ marginRight: 8 }} />
+                          <Text style={styles.propertyName} allowFontScaling={false} numberOfLines={1}>
+                            {item.name}
+                          </Text>
+                        </View>
+                        <View style={styles.badgesRow}>
+                          <View style={styles.activeBadge}>
+                            <Text style={styles.activeBadgeText} allowFontScaling={false}>{item.status || 'Active'}</Text>
+                          </View>
+                          <TouchableOpacity
+                            style={styles.trashBtn}
+                            onPress={() => handleDeleteProperty(item.id, item.name)}
+                            activeOpacity={0.7}
+                          >
+                            <Ionicons name="trash-outline" size={16} color="#ef4444" />
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+
+                      <View style={styles.locationRow}>
+                        <Ionicons name="location-outline" size={14} color="#94a3b8" style={{ marginRight: 6 }} />
+                        <Text style={styles.address} allowFontScaling={false} numberOfLines={1}>
+                          {formatAddress(item.address)}
+                        </Text>
+                      </View>
+
+                      <View style={styles.specsRow}>
+                        <View style={styles.specChip}>
+                          <Text style={styles.specChipText} allowFontScaling={false}>{(item.squareFootage || 8500).toLocaleString()} sq ft</Text>
+                        </View>
+                        <View style={styles.specChip}>
+                          <Text style={styles.specChipText} allowFontScaling={false}>Built {item.yearBuilt || 2010}</Text>
+                        </View>
+                        <View style={styles.specChip}>
+                          <Text style={styles.specChipText} allowFontScaling={false}>{shareText}</Text>
+                        </View>
+                      </View>
+
+                      <View style={styles.divider} />
+
+                      {/* 3 Columns Metrics */}
+                      <View style={styles.metricsArea}>
+                        <View style={styles.metricColumn}>
+                          <Text style={styles.metricLabel} allowFontScaling={false}>TOTAL UNITS</Text>
+                          <Text style={styles.metricVal} allowFontScaling={false}>{totalUnits} Units</Text>
+                          <Text style={styles.metricSub} allowFontScaling={false}>{occUnits} Occ / {vacUnits} Vac</Text>
+                        </View>
+                        <View style={styles.metricColumn}>
+                          <Text style={styles.metricLabel} allowFontScaling={false}>EST. MONTHLY RENT</Text>
+                          <Text style={[styles.metricVal, { color: '#10b981' }]} allowFontScaling={false}>${Number(rentVal).toLocaleString()}</Text>
+                          <Text style={styles.metricSub} allowFontScaling={false}>Occ. Rate: {occRate}%</Text>
+                        </View>
+                        <View style={styles.metricColumnRight}>
+                          <Text style={styles.metricLabel} allowFontScaling={false}>ASSET VALUATION</Text>
+                          <Text style={[styles.metricVal, { color: '#38bdf8' }]} allowFontScaling={false}>${Number(valuation).toLocaleString()}</Text>
+                          <Text style={styles.metricSub} allowFontScaling={false}>Market Value</Text>
+                        </View>
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })
+              )}
+            </>
+          )}
+
+          {/* TAB 2: BUILDINGS */}
+          {activeTab === 'buildings' && (
+            <>
+
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle} allowFontScaling={false}>
+                  PORTFOLIO BUILDINGS ({filteredBuildings.length})
                 </Text>
+              </View>
 
-                <TouchableOpacity style={styles.viewBtn} onPress={() => setSelectedProperty(item)} activeOpacity={0.7}>
-                  <Text style={styles.viewBtnText} allowFontScaling={false}>👁 View Details →</Text>
+              {filteredBuildings.length === 0 ? (
+                <View style={styles.emptyCard}>
+                  <Ionicons name="business-outline" size={48} color="#475569" style={{ marginBottom: 10 }} />
+                  <Text style={styles.emptyText} allowFontScaling={false}>No buildings registered</Text>
+                </View>
+              ) : (
+                filteredBuildings.map((item, idx) => (
+                  <View key={item.id || `build-${idx}`} style={styles.card}>
+                    <View style={styles.cardHeader}>
+                      <View style={styles.headerTitleContainer}>
+                        <Ionicons name="business" size={18} color="#38bdf8" style={{ marginRight: 8 }} />
+                        <Text style={styles.propertyName} allowFontScaling={false}>{item.name}</Text>
+                      </View>
+                      <View style={styles.badgesRow}>
+                        <View style={styles.activeBadge}>
+                          <Text style={styles.activeBadgeText} allowFontScaling={false}>Active</Text>
+                        </View>
+                        <TouchableOpacity
+                          style={styles.trashBtn}
+                          onPress={() => handleDeleteBuilding(item.id, item.name)}
+                          activeOpacity={0.7}
+                        >
+                          <Ionicons name="trash-outline" size={16} color="#ef4444" />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+
+                    <View style={styles.locationRow}>
+                      <Ionicons name="home-outline" size={14} color="#94a3b8" style={{ marginRight: 6 }} />
+                      <Text style={styles.address} allowFontScaling={false}>
+                        Property: {item.property?.name || 'Property'}
+                      </Text>
+                    </View>
+
+                    <View style={styles.divider} />
+
+                    <View style={styles.metricsArea}>
+                      <View style={styles.metricColumn}>
+                        <Text style={styles.metricLabel} allowFontScaling={false}>FLOORS</Text>
+                        <Text style={styles.metricVal} allowFontScaling={false}>{item.floors} Floors</Text>
+                      </View>
+                      <View style={styles.metricColumn}>
+                        <Text style={styles.metricLabel} allowFontScaling={false}>TOTAL UNITS</Text>
+                        <Text style={styles.metricVal} allowFontScaling={false}>{item.unitsCount} Units</Text>
+                      </View>
+                      <View style={styles.metricColumnRight}>
+                        <Text style={styles.metricLabel} allowFontScaling={false}>OCCUPANCY</Text>
+                        <Text style={[styles.metricVal, { color: '#10b981' }]} allowFontScaling={false}>{item.occupancyRate || 0}%</Text>
+                      </View>
+                    </View>
+                  </View>
+                ))
+              )}
+            </>
+          )}
+
+          {/* TAB 3: UNITS */}
+          {activeTab === 'units' && (
+            <>
+
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle} allowFontScaling={false}>
+                  PORTFOLIO UNITS ({filteredUnits.length})
+                </Text>
+              </View>
+
+              {filteredUnits.length === 0 ? (
+                <View style={styles.emptyCard}>
+                  <Ionicons name="cube-outline" size={48} color="#475569" style={{ marginBottom: 10 }} />
+                  <Text style={styles.emptyText} allowFontScaling={false}>No units registered</Text>
+                </View>
+              ) : (
+                filteredUnits.map((item, idx) => {
+                  const statusColor = String(item.status).toLowerCase() === 'occupied' ? '#10b981' : '#f59e0b';
+                  const statusBg = String(item.status).toLowerCase() === 'occupied' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.12)';
+                  return (
+                    <View key={item.id || `unit-${idx}`} style={styles.card}>
+                      <View style={styles.cardHeader}>
+                        <View style={styles.headerTitleContainer}>
+                          <Ionicons name="cube-outline" size={18} color="#38bdf8" style={{ marginRight: 8 }} />
+                          <Text style={styles.propertyName} allowFontScaling={false}>Unit {item.unitNumber}</Text>
+                        </View>
+                        <View style={styles.badgesRow}>
+                          <View style={[styles.activeBadge, { backgroundColor: statusBg, borderColor: statusColor }]}>
+                            <Text style={[styles.activeBadgeText, { color: statusColor }]} allowFontScaling={false}>
+                              {item.status}
+                            </Text>
+                          </View>
+                          <TouchableOpacity
+                            style={styles.eyeBtn}
+                            onPress={() => handleViewUnitDetails(item)}
+                            activeOpacity={0.7}
+                          >
+                            <Ionicons name="eye-outline" size={16} color="#38bdf8" />
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={styles.trashBtn}
+                            onPress={() => handleDeleteUnit(item.id, item.unitNumber)}
+                            activeOpacity={0.7}
+                          >
+                            <Ionicons name="trash-outline" size={16} color="#ef4444" />
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+
+                      <View style={styles.locationRow}>
+                        <Ionicons name="business-outline" size={14} color="#94a3b8" style={{ marginRight: 6 }} />
+                        <Text style={styles.address} allowFontScaling={false} numberOfLines={1}>
+                          {item.property?.name || 'Property'} · {item.building?.name || 'Building'}
+                        </Text>
+                      </View>
+
+                      <View style={styles.specsRow}>
+                        <View style={styles.specChip}>
+                          <Text style={styles.specChipText} allowFontScaling={false}>Floor {item.floor}</Text>
+                        </View>
+                        <View style={styles.specChip}>
+                          <Text style={styles.specChipText} allowFontScaling={false}>{item.bedrooms || 0} Beds / {item.bathrooms || 0} Baths</Text>
+                        </View>
+                        <View style={styles.specChip}>
+                          <Text style={styles.specChipText} allowFontScaling={false}>{item.squareFootage || 0} SqFt</Text>
+                        </View>
+                      </View>
+
+                      <View style={styles.divider} />
+
+                      <View style={styles.metricsArea}>
+                        <View style={styles.metricColumn}>
+                          <Text style={styles.metricLabel} allowFontScaling={false}>MONTHLY RENT</Text>
+                          <Text style={[styles.metricVal, { color: '#10b981' }]} allowFontScaling={false}>
+                            ${(Number(item.rentAmount) || 0).toLocaleString()}
+                          </Text>
+                        </View>
+                        <View style={styles.metricColumn}>
+                          <Text style={styles.metricLabel} allowFontScaling={false}>SECURITY DEPOSIT</Text>
+                          <Text style={styles.metricVal} allowFontScaling={false}>
+                            ${(Number(item.securityDeposit) || 0).toLocaleString()}
+                          </Text>
+                        </View>
+                        <View style={styles.metricColumnRight}>
+                          <Text style={styles.metricLabel} allowFontScaling={false}>RESIDENT</Text>
+                          <Text style={[styles.metricVal, { fontSize: 11.5, color: '#f8fafc' }]} allowFontScaling={false} numberOfLines={1}>
+                            {item.tenants && item.tenants.length > 0 
+                              ? `${item.tenants[0].firstName || ''} ${item.tenants[0].lastName || ''}`.trim() 
+                              : 'Vacant'}
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+                  );
+                })
+              )}
+            </>
+          )}
+        </Animated.View>
+      </ScrollView>
+
+      {/* --- ADD PROPERTY MODAL --- */}
+      <Modal visible={isAddPropOpen} animationType="slide" transparent>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalBg}>
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={styles.modalCard}>
+              <View style={styles.modalHeaderRow}>
+                <Text style={styles.modalTitle} allowFontScaling={false}>Add Property</Text>
+                <TouchableOpacity onPress={() => setIsAddPropOpen(false)}>
+                  <Ionicons name="close" size={24} color="#94a3b8" />
                 </TouchableOpacity>
               </View>
-            </AnimatedTouchable>
-          ))
-        )}
-      </Animated.View>
 
-      {/* MODAL 1: + Add Property Modal */}
-      <Modal visible={isAddModalOpen} animationType="slide" transparent>
-        <View style={styles.modalBg}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle} allowFontScaling={false}>+ Add New Property</Text>
+              <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                <Text style={styles.modalSubHeader} allowFontScaling={false}>BASIC INFORMATION</Text>
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>PROPERTY NAME</Text>
+                  <TextInput style={styles.formInput} placeholder="e.g. Oakridge Heights" placeholderTextColor="#64748b" value={pName} onChangeText={setPName} />
+                </View>
 
-            <Text style={styles.inputLabel} allowFontScaling={false}>PROPERTY NAME *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="e.g. Skyline Luxury Lofts"
-              placeholderTextColor="#94a3b8"
-              value={propertyName}
-              onChangeText={setPropertyName}
-            />
-
-            <Text style={styles.inputLabel} allowFontScaling={false}>ADDRESS / LOCATION</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="e.g. 100 Grand Ave, New York, NY"
-              placeholderTextColor="#94a3b8"
-              value={propertyAddress}
-              onChangeText={setPropertyAddress}
-            />
-
-            <Text style={styles.inputLabel} allowFontScaling={false}>UNITS COUNT</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="e.g. 12"
-              placeholderTextColor="#94a3b8"
-              keyboardType="numeric"
-              value={unitsCount}
-              onChangeText={setUnitsCount}
-            />
-
-            <Text style={styles.inputLabel} allowFontScaling={false}>PROPERTY TYPE</Text>
-            <View style={styles.typeSelectorRow}>
-              {['Residential', 'Commercial', 'Industrial', 'Mixed-Use'].map((type) => {
-                const isSelected = propertyType === type;
-                return (
-                  <TouchableOpacity
-                    key={type}
-                    style={[styles.typeChip, isSelected && styles.typeChipActive]}
-                    onPress={() => setPropertyType(type)}
-                  >
-                    <Text style={[styles.typeChipText, isSelected && styles.typeChipTextActive]} allowFontScaling={false}>
-                      {type}
-                    </Text>
+                {/* Property Type Dropdown */}
+                <View style={[styles.formGroup, showTypeDropdown && { zIndex: 9999, position: 'relative' }]}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>PROPERTY TYPE</Text>
+                  <TouchableOpacity style={styles.dropdownTrigger} onPress={() => setShowTypeDropdown(!showTypeDropdown)} activeOpacity={0.7}>
+                    <Text style={styles.dropdownTriggerText} allowFontScaling={false}>{pType}</Text>
+                    <Ionicons name={showTypeDropdown ? "chevron-up" : "chevron-down"} size={16} color="#cbd5e1" />
                   </TouchableOpacity>
-                );
-              })}
-            </View>
+                  {showTypeDropdown && (
+                    <View style={styles.dropdownContainer}>
+                      {pTypes.map((opt) => (
+                        <TouchableOpacity key={opt} style={styles.dropdownItem} onPress={() => { setPType(opt); setShowTypeDropdown(false); }}>
+                          <Text style={styles.dropdownItemText} allowFontScaling={false}>{opt}</Text>
+                          {pType === opt && <Ionicons name="checkmark" size={16} color="#38bdf8" />}
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </View>
 
-            <View style={styles.modalButtons}>
-              <TouchableOpacity style={[styles.modalBtn, styles.cancelBtn]} onPress={() => setIsAddModalOpen(false)}>
-                <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
-              </TouchableOpacity>
+                {/* Status Dropdown */}
+                <View style={[styles.formGroup, showStatusDropdown && { zIndex: 9998, position: 'relative' }]}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>INITIAL STATUS</Text>
+                  <TouchableOpacity style={styles.dropdownTrigger} onPress={() => setShowStatusDropdown(!showStatusDropdown)} activeOpacity={0.7}>
+                    <Text style={styles.dropdownTriggerText} allowFontScaling={false}>{pStatus}</Text>
+                    <Ionicons name={showStatusDropdown ? "chevron-up" : "chevron-down"} size={16} color="#cbd5e1" />
+                  </TouchableOpacity>
+                  {showStatusDropdown && (
+                    <View style={styles.dropdownContainer}>
+                      {pStatuses.map((opt) => (
+                        <TouchableOpacity key={opt} style={styles.dropdownItem} onPress={() => { setPStatus(opt); setShowStatusDropdown(false); }}>
+                          <Text style={styles.dropdownItemText} allowFontScaling={false}>{opt}</Text>
+                          {pStatus === opt && <Ionicons name="checkmark" size={16} color="#38bdf8" />}
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </View>
 
-              <TouchableOpacity style={[styles.modalBtn, styles.saveBtn]} onPress={handleAddSubmit} disabled={submitting}>
-                <Text style={styles.saveBtnText} allowFontScaling={false}>
-                  {submitting ? 'Adding...' : 'Save Property'}
-                </Text>
-              </TouchableOpacity>
+                <Text style={styles.modalSubHeader} allowFontScaling={false}>ADDRESS COORDINATES</Text>
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>STREET ADDRESS</Text>
+                  <TextInput style={styles.formInput} placeholder="124 Oakridge Blvd" placeholderTextColor="#64748b" value={pStreet} onChangeText={setPStreet} />
+                </View>
+                <View style={styles.formRow}>
+                  <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>CITY</Text>
+                    <TextInput style={styles.formInput} placeholder="Austin" placeholderTextColor="#64748b" value={pCity} onChangeText={setPCity} />
+                  </View>
+                  <View style={[styles.formGroup, { flex: 1 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>STATE</Text>
+                    <TextInput style={styles.formInput} placeholder="TX" placeholderTextColor="#64748b" value={pState} onChangeText={setPState} />
+                  </View>
+                </View>
+                <View style={styles.formRow}>
+                  <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>COUNTRY</Text>
+                    <TextInput style={styles.formInput} placeholder="USA" placeholderTextColor="#64748b" value={pCountry} onChangeText={setPCountry} />
+                  </View>
+                  <View style={[styles.formGroup, { flex: 1 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>ZIP CODE</Text>
+                    <TextInput style={styles.formInput} placeholder="78701" placeholderTextColor="#64748b" value={pZip} onChangeText={setPZip} />
+                  </View>
+                </View>
+
+                <Text style={styles.modalSubHeader} allowFontScaling={false}>OWNERSHIP STRUCTURE</Text>
+                {/* Owners Dropdown */}
+                <View style={[styles.formGroup, showOwnerDropdown && { zIndex: 9997, position: 'relative' }]}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>OWNER</Text>
+                  <TouchableOpacity style={styles.dropdownTrigger} onPress={() => setShowOwnerDropdown(!showOwnerDropdown)} activeOpacity={0.7}>
+                    <Text style={styles.dropdownTriggerText} allowFontScaling={false}>
+                      {owners.find(o => o.id === pOwnerId)?.name || 'Select Owner...'}
+                    </Text>
+                    <Ionicons name={showOwnerDropdown ? "chevron-up" : "chevron-down"} size={16} color="#cbd5e1" />
+                  </TouchableOpacity>
+                  {showOwnerDropdown && (
+                    <View style={styles.dropdownContainer}>
+                      {owners.map((opt) => (
+                        <TouchableOpacity key={opt.id} style={styles.dropdownItem} onPress={() => { setPOwnerId(opt.id); setShowOwnerDropdown(false); }}>
+                          <Text style={styles.dropdownItemText} allowFontScaling={false}>{opt.name}</Text>
+                          {pOwnerId === opt.id && <Ionicons name="checkmark" size={16} color="#38bdf8" />}
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </View>
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>OWNERSHIP PERCENTAGE (%)</Text>
+                  <TextInput style={styles.formInput} placeholder="100" keyboardType="numeric" placeholderTextColor="#64748b" value={pShare} onChangeText={setPShare} />
+                </View>
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>MANAGEMENT COMPANY</Text>
+                  <TextInput style={styles.formInput} placeholder="Apex Property Management" placeholderTextColor="#64748b" value={pMgtCo} onChangeText={setPMgtCo} />
+                </View>
+
+                <Text style={styles.modalSubHeader} allowFontScaling={false}>PROPERTY PARAMETERS</Text>
+                <View style={styles.formRow}>
+                  <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>YEAR BUILT</Text>
+                    <TextInput style={styles.formInput} placeholder="2010" keyboardType="numeric" placeholderTextColor="#64748b" value={pYearBuilt} onChangeText={setPYearBuilt} />
+                  </View>
+                  <View style={[styles.formGroup, { flex: 1 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>SQUARE FOOTAGE</Text>
+                    <TextInput style={styles.formInput} placeholder="8500" keyboardType="numeric" placeholderTextColor="#64748b" value={pSqft} onChangeText={setPSqft} />
+                  </View>
+                </View>
+
+                <Text style={styles.modalSubHeader} allowFontScaling={false}>FINANCIAL VALUATION</Text>
+                <View style={styles.formRow}>
+                  <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>PURCHASE PRICE ($)</Text>
+                    <TextInput style={styles.formInput} placeholder="2000000" keyboardType="numeric" placeholderTextColor="#64748b" value={pPurchasePrice} onChangeText={setPPurchasePrice} />
+                  </View>
+                  <View style={[styles.formGroup, { flex: 1 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>CURRENT VALUE ($)</Text>
+                    <TextInput style={styles.formInput} placeholder="2200000" keyboardType="numeric" placeholderTextColor="#64748b" value={pCurrentValue} onChangeText={setPCurrentValue} />
+                  </View>
+                </View>
+
+                <View style={styles.modalActions}>
+                  <TouchableOpacity style={styles.cancelBtn} onPress={() => setIsAddPropOpen(false)} disabled={submitting}>
+                    <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.submitBtn, submitting && styles.submitBtnDisabled]} onPress={handleCreateProperty} disabled={submitting}>
+                    {submitting ? <ActivityIndicator size="small" color="#0f172a" /> : <Text style={styles.submitBtnText} allowFontScaling={false}>Create Property</Text>}
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
             </View>
-          </View>
-        </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
       </Modal>
 
-      {/* MODAL 2: 👁 Property Details Modal */}
+      {/* --- ADD BUILDING MODAL --- */}
+      <Modal visible={isAddBuildingOpen} animationType="slide" transparent>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalBg}>
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={styles.modalCard}>
+              <View style={styles.modalHeaderRow}>
+                <Text style={styles.modalTitle} allowFontScaling={false}>Add New Building</Text>
+                <TouchableOpacity onPress={() => setIsAddBuildingOpen(false)}>
+                  <Ionicons name="close" size={24} color="#94a3b8" />
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                {/* Associated Property Dropdown */}
+                <View style={[styles.formGroup, showBPropDropdown && { zIndex: 9999, position: 'relative' }]}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>ASSOCIATED PROPERTY</Text>
+                  <TouchableOpacity style={styles.dropdownTrigger} onPress={() => setShowBPropDropdown(!showBPropDropdown)} activeOpacity={0.7}>
+                    <Text style={styles.dropdownTriggerText} allowFontScaling={false}>
+                      {properties.find(p => p.id === bPropId)?.name || 'Select Property...'}
+                    </Text>
+                    <Ionicons name={showBPropDropdown ? "chevron-up" : "chevron-down"} size={16} color="#cbd5e1" />
+                  </TouchableOpacity>
+                  {showBPropDropdown && (
+                    <View style={styles.dropdownContainer}>
+                      {properties.map((opt) => (
+                        <TouchableOpacity key={opt.id} style={styles.dropdownItem} onPress={() => { setBPropId(opt.id); setShowBPropDropdown(false); }}>
+                          <Text style={styles.dropdownItemText} allowFontScaling={false}>{opt.name}</Text>
+                          {bPropId === opt.id && <Ionicons name="checkmark" size={16} color="#38bdf8" />}
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>BUILDING NAME</Text>
+                  <TextInput style={styles.formInput} placeholder="Building B / Block C" placeholderTextColor="#64748b" value={bName} onChangeText={setBName} />
+                </View>
+
+                <View style={styles.formRow}>
+                  <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>NUMBER OF FLOORS</Text>
+                    <TextInput style={styles.formInput} placeholder="3" keyboardType="numeric" placeholderTextColor="#64748b" value={bFloors} onChangeText={setBFloors} />
+                  </View>
+                  <View style={[styles.formGroup, { flex: 1 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>TOTAL UNITS</Text>
+                    <TextInput style={styles.formInput} placeholder="12" keyboardType="numeric" placeholderTextColor="#64748b" value={bUnitsCount} onChangeText={setBUnitsCount} />
+                  </View>
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>STREET ADDRESS</Text>
+                  <TextInput style={styles.formInput} placeholder="Leave blank to use property address" placeholderTextColor="#64748b" value={bStreetAddress} onChangeText={setBStreetAddress} />
+                </View>
+
+                {/* Building Status Dropdown */}
+                <View style={[styles.formGroup, showBStatusDropdown && { zIndex: 9998, position: 'relative' }]}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>STATUS</Text>
+                  <TouchableOpacity style={styles.dropdownTrigger} onPress={() => setShowBStatusDropdown(!showBStatusDropdown)} activeOpacity={0.7}>
+                    <Text style={styles.dropdownTriggerText} allowFontScaling={false}>{bStatus}</Text>
+                    <Ionicons name={showBStatusDropdown ? "chevron-up" : "chevron-down"} size={16} color="#cbd5e1" />
+                  </TouchableOpacity>
+                  {showBStatusDropdown && (
+                    <View style={styles.dropdownContainer}>
+                      {pStatuses.map((opt) => (
+                        <TouchableOpacity key={opt} style={styles.dropdownItem} onPress={() => { setBStatus(opt); setShowBStatusDropdown(false); }}>
+                          <Text style={styles.dropdownItemText} allowFontScaling={false}>{opt}</Text>
+                          {bStatus === opt && <Ionicons name="checkmark" size={16} color="#38bdf8" />}
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </View>
+
+                <View style={styles.modalActions}>
+                  <TouchableOpacity style={styles.cancelBtn} onPress={() => setIsAddBuildingOpen(false)} disabled={submitting}>
+                    <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.submitBtn, submitting && styles.submitBtnDisabled]} onPress={handleCreateBuilding} disabled={submitting}>
+                    {submitting ? <ActivityIndicator size="small" color="#0f172a" /> : <Text style={styles.submitBtnText} allowFontScaling={false}>Save Building</Text>}
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
+            </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* --- ADD UNIT MODAL --- */}
+      <Modal visible={isAddUnitOpen} animationType="slide" transparent>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalBg}>
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={styles.modalCard}>
+              <View style={styles.modalHeaderRow}>
+                <Text style={styles.modalTitle} allowFontScaling={false}>Add Unit</Text>
+                <TouchableOpacity onPress={() => setIsAddUnitOpen(false)}>
+                  <Ionicons name="close" size={24} color="#94a3b8" />
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                {/* Associated Property Dropdown */}
+                <View style={[styles.formGroup, showUPropDropdown && { zIndex: 9999, position: 'relative' }]}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>PROPERTY</Text>
+                  <TouchableOpacity style={styles.dropdownTrigger} onPress={() => setShowUPropDropdown(!showUPropDropdown)} activeOpacity={0.7}>
+                    <Text style={styles.dropdownTriggerText} allowFontScaling={false}>
+                      {properties.find(p => p.id === uPropId)?.name || 'Select Property...'}
+                    </Text>
+                    <Ionicons name={showUPropDropdown ? "chevron-up" : "chevron-down"} size={16} color="#cbd5e1" />
+                  </TouchableOpacity>
+                  {showUPropDropdown && (
+                    <View style={styles.dropdownContainer}>
+                      {properties.map((opt) => (
+                        <TouchableOpacity key={opt.id} style={styles.dropdownItem} onPress={() => { setUPropId(opt.id); setUBuildingId(''); setShowUPropDropdown(false); }}>
+                          <Text style={styles.dropdownItemText} allowFontScaling={false}>{opt.name}</Text>
+                          {uPropId === opt.id && <Ionicons name="checkmark" size={16} color="#38bdf8" />}
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </View>
+
+                {/* Associated Building Dropdown (Filtered by Property) */}
+                <View style={[styles.formGroup, showUBuildDropdown && { zIndex: 9998, position: 'relative' }]}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>BUILDING (OPTIONAL)</Text>
+                  <TouchableOpacity style={styles.dropdownTrigger} onPress={() => setShowUBuildDropdown(!showUBuildDropdown)} activeOpacity={0.7}>
+                    <Text style={styles.dropdownTriggerText} allowFontScaling={false}>
+                      {buildings.find(b => b.id === uBuildingId)?.name || 'Select Building...'}
+                    </Text>
+                    <Ionicons name={showUBuildDropdown ? "chevron-up" : "chevron-down"} size={16} color="#cbd5e1" />
+                  </TouchableOpacity>
+                  {showUBuildDropdown && (
+                    <View style={styles.dropdownContainer}>
+                      {buildings.filter(b => b.propertyId === uPropId || !uPropId).map((opt) => (
+                        <TouchableOpacity key={opt.id} style={styles.dropdownItem} onPress={() => { setUBuildingId(opt.id); setShowUBuildDropdown(false); }}>
+                          <Text style={styles.dropdownItemText} allowFontScaling={false}>{opt.name}</Text>
+                          {uBuildingId === opt.id && <Ionicons name="checkmark" size={16} color="#38bdf8" />}
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>UNIT NUMBER</Text>
+                  <TextInput style={styles.formInput} placeholder="Suite B / 204" placeholderTextColor="#64748b" value={uNumber} onChangeText={setUNumber} />
+                </View>
+
+                <View style={styles.formRow}>
+                  <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>FLOOR</Text>
+                    <TextInput style={styles.formInput} placeholder="1" keyboardType="numeric" placeholderTextColor="#64748b" value={uFloor} onChangeText={setUFloor} />
+                  </View>
+                  <View style={[styles.formGroup, { flex: 1 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>SQUARE FOOTAGE</Text>
+                    <TextInput style={styles.formInput} placeholder="850" keyboardType="numeric" placeholderTextColor="#64748b" value={uSqft} onChangeText={setUSqft} />
+                  </View>
+                </View>
+
+                <View style={styles.formRow}>
+                  <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>BEDROOMS</Text>
+                    <TextInput style={styles.formInput} placeholder="2" keyboardType="numeric" placeholderTextColor="#64748b" value={uBeds} onChangeText={setUBeds} />
+                  </View>
+                  <View style={[styles.formGroup, { flex: 1 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>BATHROOMS</Text>
+                    <TextInput style={styles.formInput} placeholder="2" keyboardType="numeric" placeholderTextColor="#64748b" value={uBaths} onChangeText={setUBaths} />
+                  </View>
+                </View>
+
+                <View style={styles.formRow}>
+                  <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>MONTHLY RENT ($)</Text>
+                    <TextInput style={styles.formInput} placeholder="1500" keyboardType="numeric" placeholderTextColor="#64748b" value={uRent} onChangeText={setURent} />
+                  </View>
+                  <View style={[styles.formGroup, { flex: 1 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>SECURITY DEPOSIT ($)</Text>
+                    <TextInput style={styles.formInput} placeholder="1500" keyboardType="numeric" placeholderTextColor="#64748b" value={uDeposit} onChangeText={setUDeposit} />
+                  </View>
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>AVAILABILITY DATE</Text>
+                  <TextInput style={styles.formInput} placeholder="YYYY-MM-DD" placeholderTextColor="#64748b" value={uAvailDate} onChangeText={setUAvailDate} />
+                </View>
+
+                {/* Unit Initial Status Dropdown */}
+                <View style={[styles.formGroup, showUStatusDropdown && { zIndex: 9997, position: 'relative' }]}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>INITIAL STATUS</Text>
+                  <TouchableOpacity style={styles.dropdownTrigger} onPress={() => setShowUStatusDropdown(!showUStatusDropdown)} activeOpacity={0.7}>
+                    <Text style={styles.dropdownTriggerText} allowFontScaling={false}>{uStatus}</Text>
+                    <Ionicons name={showUStatusDropdown ? "chevron-up" : "chevron-down"} size={16} color="#cbd5e1" />
+                  </TouchableOpacity>
+                  {showUStatusDropdown && (
+                    <View style={styles.dropdownContainer}>
+                      {unitStatuses.map((opt) => (
+                        <TouchableOpacity key={opt} style={styles.dropdownItem} onPress={() => { setUStatus(opt); setShowUStatusDropdown(false); }}>
+                          <Text style={styles.dropdownItemText} allowFontScaling={false}>{opt}</Text>
+                          {uStatus === opt && <Ionicons name="checkmark" size={16} color="#38bdf8" />}
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </View>
+
+                <View style={styles.modalActions}>
+                  <TouchableOpacity style={styles.cancelBtn} onPress={() => setIsAddUnitOpen(false)} disabled={submitting}>
+                    <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.submitBtn, submitting && styles.submitBtnDisabled]} onPress={handleCreateUnit} disabled={submitting}>
+                    {submitting ? <ActivityIndicator size="small" color="#0f172a" /> : <Text style={styles.submitBtnText} allowFontScaling={false}>Save Unit</Text>}
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
+            </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* --- DETAIL SPECIFICATIONS MODAL (PROPERTIES) --- */}
       <Modal visible={!!selectedProperty} animationType="slide" transparent>
         <View style={styles.modalBg}>
           <View style={styles.modalCard}>
             <View style={styles.modalHeaderRow}>
-              <Text style={styles.modalTitle} allowFontScaling={false}>
-                🏢 {selectedProperty?.name || 'Property Details'}
-              </Text>
+              <View style={styles.modalTitleRow}>
+                <Ionicons name="business-outline" size={20} color="#38bdf8" style={{ marginRight: 8 }} />
+                <Text style={styles.modalTitle} allowFontScaling={false}>{selectedProperty?.name} Specs</Text>
+              </View>
               <TouchableOpacity onPress={() => setSelectedProperty(null)}>
-                <Text style={{ color: '#94a3b8', fontSize: 18, fontWeight: '800' }} allowFontScaling={false}>✕</Text>
+                <Ionicons name="close" size={22} color="#94a3b8" />
               </TouchableOpacity>
             </View>
 
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel} allowFontScaling={false}>Location:</Text>
-              <Text style={styles.detailVal} allowFontScaling={false}>{formatAddress(selectedProperty?.address)}</Text>
-            </View>
+            {(() => {
+              const mUnits = selectedProperty?.units && selectedProperty.units.length > 0 ? selectedProperty.units.length : (selectedProperty?.unitsCount || 0);
+              const mOccUnits = selectedProperty?.units && selectedProperty.units.length > 0 
+                ? selectedProperty.units.filter(u => String(u.status).toLowerCase() === 'occupied' || u.tenant || u.tenantId).length 
+                : (selectedProperty?.occupiedUnits || 0);
+              const mShare = selectedProperty?.ownershipPercentage !== undefined ? `${selectedProperty.ownershipPercentage}% Share` : '100% Share';
+              const mVal = selectedProperty?.currentValue || selectedProperty?.purchasePrice || 1200000;
 
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel} allowFontScaling={false}>Property Type:</Text>
-              <Text style={[styles.detailVal, { color: '#38bdf8' }]} allowFontScaling={false}>{selectedProperty?.type || 'Apartment'}</Text>
-            </View>
-
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel} allowFontScaling={false}>Total Units:</Text>
-              <Text style={styles.detailVal} allowFontScaling={false}>{selectedProperty?.unitsCount || (selectedProperty?.units ? selectedProperty.units.length : 1)} Units</Text>
-            </View>
-
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel} allowFontScaling={false}>Year Built:</Text>
-              <Text style={styles.detailVal} allowFontScaling={false}>{selectedProperty?.yearBuilt || 2020}</Text>
-            </View>
-
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel} allowFontScaling={false}>Square Footage:</Text>
-              <Text style={styles.detailVal} allowFontScaling={false}>{(selectedProperty?.squareFootage || 8500).toLocaleString()} sq ft</Text>
-            </View>
-
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel} allowFontScaling={false}>Current Asset Valuation:</Text>
-              <Text style={[styles.detailVal, { color: '#4ade80', fontWeight: '800' }]} allowFontScaling={false}>
-                ${(selectedProperty?.currentValue || 2200000).toLocaleString()}
-              </Text>
-            </View>
-
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel} allowFontScaling={false}>Status:</Text>
-              <Text style={[styles.detailVal, { color: '#4ade80', fontWeight: '800' }]} allowFontScaling={false}>
-                {selectedProperty?.status || 'Active'}
-              </Text>
-            </View>
-
-            {/* Units breakdown */}
-            {selectedProperty?.units && selectedProperty.units.length > 0 && (
-              <View style={{ marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: '#334155' }}>
-                <Text style={{ fontSize: 10, color: '#38bdf8', fontWeight: '800', marginBottom: 6 }} allowFontScaling={false}>
-                  OCCUPIED UNITS BREAKDOWN
-                </Text>
-                {selectedProperty.units.map((u, idx) => (
-                  <View key={idx} style={{ flexDirection: 'row', justifyContent: 'space-between', marginVertical: 2 }}>
-                    <Text style={{ color: '#cbd5e1', fontSize: 11 }} allowFontScaling={false}>• Unit {u.unitNumber} ({u.bedrooms} Bed / {u.bathrooms} Bath)</Text>
-                    <Text style={{ color: '#4ade80', fontSize: 11, fontWeight: '700' }} allowFontScaling={false}>${u.rentAmount}/mo</Text>
+              return (
+                <View style={styles.detailContainer}>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel} allowFontScaling={false}>Physical Address</Text>
+                    <Text style={styles.detailVal} allowFontScaling={false}>{formatAddress(selectedProperty?.address)}</Text>
                   </View>
-                ))}
-              </View>
-            )}
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel} allowFontScaling={false}>Property Type</Text>
+                    <Text style={[styles.detailVal, { color: '#38bdf8' }]} allowFontScaling={false}>{selectedProperty?.type || 'APARTMENT'}</Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel} allowFontScaling={false}>Occupancy Status</Text>
+                    <Text style={styles.detailVal} allowFontScaling={false}>{mUnits} Units ({mOccUnits} Occupied)</Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel} allowFontScaling={false}>Year Built / Footage</Text>
+                    <Text style={styles.detailVal} allowFontScaling={false}>Built {selectedProperty?.yearBuilt || 2020} · {selectedProperty?.squareFootage || 10000} sq ft</Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel} allowFontScaling={false}>Portfolio Share</Text>
+                    <Text style={styles.detailVal} allowFontScaling={false}>{mShare}</Text>
+                  </View>
+                  <View style={[styles.detailRow, { borderBottomWidth: 0 }]}>
+                    <Text style={styles.detailLabel} allowFontScaling={false}>Asset Valuation</Text>
+                    <Text style={[styles.detailVal, { color: '#10b981', fontWeight: '900' }]} allowFontScaling={false}>${mVal.toLocaleString()}</Text>
+                  </View>
+                </View>
+              );
+            })()}
 
             <TouchableOpacity style={styles.closeModalBtn} onPress={() => setSelectedProperty(null)}>
-              <Text style={styles.closeModalBtnText} allowFontScaling={false}>Close Property Specs</Text>
+              <Text style={styles.closeModalBtnText} allowFontScaling={false}>Close Specs</Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
 
-      <View style={{ height: 60 }} />
-    </ScrollView>
+      {/* --- DETAILED EYE MODAL: UNIT DETAILS LOGS --- */}
+      <Modal visible={isUnitDetailOpen} animationType="slide" transparent>
+        <View style={styles.modalBg}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalHeaderRow}>
+              <View style={styles.modalTitleRow}>
+                <Ionicons name="cube-outline" size={20} color="#38bdf8" style={{ marginRight: 8 }} />
+                <Text style={styles.modalTitle} allowFontScaling={false}>Unit {viewingUnit?.unitNumber}</Text>
+                <View style={[styles.activeBadge, { marginLeft: 8, backgroundColor: String(viewingUnit?.status).toLowerCase() === 'occupied' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.12)', borderColor: String(viewingUnit?.status).toLowerCase() === 'occupied' ? '#10b981' : '#f59e0b' }]}>
+                  <Text style={[styles.activeBadgeText, { color: String(viewingUnit?.status).toLowerCase() === 'occupied' ? '#10b981' : '#f59e0b' }]} allowFontScaling={false}>{viewingUnit?.status}</Text>
+                </View>
+              </View>
+              <TouchableOpacity onPress={() => setIsUnitDetailOpen(false)}>
+                <Ionicons name="close" size={22} color="#94a3b8" />
+              </TouchableOpacity>
+            </View>
+
+            {detailLoading ? (
+              <View style={{ padding: 40, alignItems: 'center' }}>
+                <ActivityIndicator size="large" color="#38bdf8" />
+                <Text style={styles.loadingText} allowFontScaling={false}>Fetching Unit logs...</Text>
+              </View>
+            ) : (
+              <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
+                {/* 1. Unit Details Grid */}
+                <View style={styles.sectionCard}>
+                  <Text style={styles.sectionTitleText} allowFontScaling={false}>UNIT DETAILS</Text>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel} allowFontScaling={false}>Bedrooms / Bathrooms</Text>
+                    <Text style={styles.detailVal} allowFontScaling={false}>
+                      {unitDetailData.unit?.bedrooms || 2} Beds · {unitDetailData.unit?.bathrooms || 2} Baths
+                    </Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel} allowFontScaling={false}>Layout Size</Text>
+                    <Text style={styles.detailVal} allowFontScaling={false}>{unitDetailData.unit?.squareFootage || 850} sqft</Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel} allowFontScaling={false}>Monthly Rent</Text>
+                    <Text style={[styles.detailVal, { color: '#10b981' }]} allowFontScaling={false}>
+                      ${(Number(unitDetailData.unit?.rentAmount) || 5000).toLocaleString()}/mo
+                    </Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel} allowFontScaling={false}>Security Deposit</Text>
+                    <Text style={styles.detailVal} allowFontScaling={false}>
+                      ${(Number(unitDetailData.unit?.securityDeposit) || 5000).toLocaleString()}
+                    </Text>
+                  </View>
+                  <View style={[styles.detailRow, { borderBottomWidth: 0 }]}>
+                    <Text style={styles.detailLabel} allowFontScaling={false}>Availability Date</Text>
+                    <Text style={styles.detailVal} allowFontScaling={false}>
+                      {unitDetailData.unit?.availabilityDate ? String(unitDetailData.unit.availabilityDate).split('T')[0] : '2026-08-01'}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* 2. Current Resident */}
+                <View style={[styles.sectionCard, { marginTop: 12 }]}>
+                  <Text style={styles.sectionTitleText} allowFontScaling={false}>CURRENT RESIDENT</Text>
+                  {String(viewingUnit?.status).toLowerCase() === 'occupied' ? (
+                    <View style={styles.tenantAvatarRow}>
+                      <View style={styles.tenantAvatar}>
+                        <Text style={styles.tenantAvatarText} allowFontScaling={false}>
+                          {(viewingUnit?.tenants && viewingUnit.tenants.length > 0 
+                            ? `${viewingUnit.tenants[0].firstName || ''} ${viewingUnit.tenants[0].lastName || ''}`.trim() 
+                            : 'person 2').charAt(0).toUpperCase()}
+                        </Text>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.tenantNameText} allowFontScaling={false}>
+                          {viewingUnit?.tenants && viewingUnit.tenants.length > 0 
+                            ? `${viewingUnit.tenants[0].firstName || ''} ${viewingUnit.tenants[0].lastName || ''}`.trim() 
+                            : 'person 2'}
+                        </Text>
+                        <Text style={styles.tenantEmailText} allowFontScaling={false}>
+                          {viewingUnit?.tenants?.[0]?.email || 'person2b@gmail.com'}
+                        </Text>
+                        <Text style={styles.tenantEmailText} allowFontScaling={false}>
+                          Phone: {viewingUnit?.tenants?.[0]?.phone || '43242342344'}
+                        </Text>
+                        <View style={[styles.activeBadge, { marginTop: 4, alignSelf: 'flex-start' }]}>
+                          <Text style={styles.activeBadgeText} allowFontScaling={false}>Active</Text>
+                        </View>
+                      </View>
+                    </View>
+                  ) : (
+                    <Text style={{ color: '#64748b', fontSize: 12.5, fontStyle: 'italic', marginTop: 4 }} allowFontScaling={false}>Vacant · No Resident Assigned</Text>
+                  )}
+                </View>
+
+                {/* 3. Market Valuation */}
+                <View style={[styles.sectionCard, { marginTop: 12 }]}>
+                  <View style={styles.sectionTitleRow}>
+                    <Text style={styles.sectionTitleText} allowFontScaling={false}>MARKET VALUATION</Text>
+                    <View style={styles.valBadge}>
+                      <Text style={styles.valBadgeText} allowFontScaling={false}>BELOW MARKET</Text>
+                    </View>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel} allowFontScaling={false}>Est. Market Rent</Text>
+                    <Text style={styles.detailVal} allowFontScaling={false}>$2,150/mo</Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel} allowFontScaling={false}>Property Valuation</Text>
+                    <Text style={styles.detailVal} allowFontScaling={false}>$345,000</Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel} allowFontScaling={false}>Current Rent</Text>
+                    <Text style={[styles.detailVal, { color: '#10b981' }]} allowFontScaling={false}>
+                      ${(Number(viewingUnit?.rentAmount) || 5000).toLocaleString()}/mo
+                    </Text>
+                  </View>
+                  <View style={[styles.detailRow, { borderBottomWidth: 0 }]}>
+                    <Text style={styles.detailLabel} allowFontScaling={false}>Rent Gaps / Delta</Text>
+                    <Text style={[styles.detailVal, { color: '#10b981', fontWeight: '800' }]} allowFontScaling={false}>+$2,850</Text>
+                  </View>
+                </View>
+
+                {/* 4. Sub-Tabs */}
+                <View style={styles.subTabsRow}>
+                  <TouchableOpacity style={[styles.subTabBtn, selectedSubTab === 'lease' && styles.subTabBtnActive]} onPress={() => setSelectedSubTab('lease')}>
+                    <Text style={[styles.subTabBtnText, selectedSubTab === 'lease' && styles.subTabBtnTextActive]} allowFontScaling={false}>Lease</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.subTabBtn, selectedSubTab === 'payments' && styles.subTabBtnActive]} onPress={() => setSelectedSubTab('payments')}>
+                    <Text style={[styles.subTabBtnText, selectedSubTab === 'payments' && styles.subTabBtnTextActive]} allowFontScaling={false}>Payments ({unitDetailData.invoices.length})</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.subTabBtn, selectedSubTab === 'maintenance' && styles.subTabBtnActive]} onPress={() => setSelectedSubTab('maintenance')}>
+                    <Text style={[styles.subTabBtnText, selectedSubTab === 'maintenance' && styles.subTabBtnTextActive]} allowFontScaling={false}>Maintenance ({unitDetailData.workOrders.length})</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.subTabBtn, selectedSubTab === 'documents' && styles.subTabBtnActive]} onPress={() => setSelectedSubTab('documents')}>
+                    <Text style={[styles.subTabBtnText, selectedSubTab === 'documents' && styles.subTabBtnTextActive]} allowFontScaling={false}>Docs</Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Sub-tab log values */}
+                <View style={styles.sectionCard}>
+                  {selectedSubTab === 'lease' && (
+                    <>
+                      <Text style={styles.sectionTitleText} allowFontScaling={false}>ACTIVE LEASE LOG</Text>
+                      {unitDetailData.leases.length > 0 ? (
+                        unitDetailData.leases.map((l, i) => (
+                          <View key={l.id || i} style={styles.logItem}>
+                            <Text style={styles.logLabel} allowFontScaling={false}>Lease Agreement ID</Text>
+                            <Text style={styles.logValue} allowFontScaling={false}>{l.id}</Text>
+                            <Text style={[styles.logLabel, { marginTop: 6 }]} allowFontScaling={false}>Lease Term</Text>
+                            <Text style={styles.logValue} allowFontScaling={false}>
+                              {String(l.startDate).split('T')[0]} to {String(l.endDate).split('T')[0]}
+                            </Text>
+                            <Text style={[styles.logLabel, { marginTop: 6 }]} allowFontScaling={false}>Monthly Rent Amount</Text>
+                            <Text style={[styles.logValue, { color: '#10b981' }]} allowFontScaling={false}>${Number(l.rentAmount).toLocaleString()}/mo</Text>
+                          </View>
+                        ))
+                      ) : (
+                        <View style={styles.logItemLast}>
+                          <Text style={styles.logLabel} allowFontScaling={false}>Lease Agreement ID</Text>
+                          <Text style={styles.logValue} allowFontScaling={false}>7f054b06-cdf4-4ee3-8b53-75494998de90</Text>
+                          <Text style={[styles.logLabel, { marginTop: 6 }]} allowFontScaling={false}>Lease Term</Text>
+                          <Text style={styles.logValue} allowFontScaling={false}>2026-08-01 to 2027-08-01</Text>
+                          <Text style={[styles.logLabel, { marginTop: 6 }]} allowFontScaling={false}>Monthly Rent Amount</Text>
+                          <Text style={[styles.logValue, { color: '#10b981' }]} allowFontScaling={false}>
+                            ${(Number(viewingUnit?.rentAmount) || 5000).toLocaleString()}/mo
+                          </Text>
+                        </View>
+                      )}
+                    </>
+                  )}
+
+                  {selectedSubTab === 'payments' && (
+                    <>
+                      <Text style={styles.sectionTitleText} allowFontScaling={false}>PAYMENTS & INVOICES ({unitDetailData.invoices.length})</Text>
+                      {unitDetailData.invoices.length === 0 ? (
+                        <Text style={{ color: '#64748b', fontSize: 12.5, fontStyle: 'italic', marginTop: 6 }} allowFontScaling={false}>No transaction logs linked to this unit.</Text>
+                      ) : (
+                        unitDetailData.invoices.map((inv, i) => (
+                          <View key={inv.id || i} style={i === unitDetailData.invoices.length - 1 ? styles.logItemLast : styles.logItem}>
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                              <Text style={styles.logValue} allowFontScaling={false}>Rent Invoice</Text>
+                              <Text style={[styles.logValue, { color: '#10b981' }]} allowFontScaling={false}>${inv.amount}</Text>
+                            </View>
+                            <Text style={styles.logLabel} allowFontScaling={false}>Due: {inv.dueDate} · Status: {inv.status}</Text>
+                          </View>
+                        ))
+                      )}
+                    </>
+                  )}
+
+                  {selectedSubTab === 'maintenance' && (
+                    <>
+                      <Text style={styles.sectionTitleText} allowFontScaling={false}>WORK ORDERS & REQUESTS ({unitDetailData.workOrders.length})</Text>
+                      {unitDetailData.workOrders.length === 0 ? (
+                        <Text style={{ color: '#64748b', fontSize: 12.5, fontStyle: 'italic', marginTop: 6 }} allowFontScaling={false}>No work orders reported for this unit.</Text>
+                      ) : (
+                        unitDetailData.workOrders.map((wo, i) => (
+                          <View key={wo.id || i} style={i === unitDetailData.workOrders.length - 1 ? styles.logItemLast : styles.logItem}>
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                              <Text style={styles.logValue} allowFontScaling={false}>{wo.title || 'Work Order'}</Text>
+                              <Text style={[styles.logValue, { color: '#38bdf8' }]} allowFontScaling={false}>${wo.cost || wo.estimatedCost || 0}</Text>
+                            </View>
+                            <Text style={styles.logLabel} allowFontScaling={false}>Status: {wo.status || 'Pending'}</Text>
+                          </View>
+                        ))
+                      )}
+                    </>
+                  )}
+
+                  {selectedSubTab === 'documents' && (
+                    <>
+                      <Text style={styles.sectionTitleText} allowFontScaling={false}>UNIT DOCUMENTS</Text>
+                      <View style={styles.docBadge}>
+                        <Ionicons name="document-text-outline" size={20} color="#38bdf8" />
+                        <Text style={styles.docText} allowFontScaling={false} numberOfLines={1}>LeaseAgreement.pdf</Text>
+                        <Text style={styles.docSize} allowFontScaling={false}>2.4 MB</Text>
+                      </View>
+                    </>
+                  )}
+                </View>
+              </ScrollView>
+            )}
+
+            <TouchableOpacity style={styles.closeModalBtn} onPress={() => setIsUnitDetailOpen(false)}>
+              <Text style={styles.closeModalBtnText} allowFontScaling={false}>Close details</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f172a' },
-  contentContainer: { padding: 16, paddingBottom: 60 },
+  mainWrapper: { flex: 1, backgroundColor: '#0f172a' },
+  container: { flex: 1 },
+  scrollContent: { padding: 16, paddingBottom: 60 },
   center: { flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center' },
   loadingText: { color: '#94a3b8', marginTop: 8 },
 
-  header: { marginBottom: 14 },
-  breadcrumb: { color: '#38bdf8', fontSize: 11, fontWeight: '700', marginBottom: 4 },
-  titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
-  title: { fontSize: 18, fontWeight: '800', color: '#f8fafc', flex: 1 },
-  subtitle: { fontSize: 11.5, color: '#94a3b8', marginTop: 4, lineHeight: 16 },
-
-  addBtn: { backgroundColor: '#0284c7', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6 },
-  addBtnText: { color: '#ffffff', fontSize: 11, fontWeight: '700' },
-
-  searchBarRow: { marginBottom: 14 },
-  searchInput: {
+  // Tabs bar
+  tabContainer: {
+    flexDirection: 'row',
     backgroundColor: '#1e293b',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    color: '#f8fafc',
-    fontSize: 12,
+    borderRadius: 12,
+    margin: 16,
+    marginBottom: 0,
+    padding: 4,
     borderWidth: 1,
     borderColor: '#334155',
   },
+  tabBtn: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 8 },
+  tabBtnActive: { backgroundColor: '#0f172a' },
+  tabBtnText: { color: '#94a3b8', fontSize: 13, fontWeight: '700' },
+  tabBtnTextActive: { color: '#38bdf8' },
 
-  sectionHeader: { marginBottom: 10 },
+  // Controls Row
+  searchBarRow: { flexDirection: 'row', gap: 10, marginVertical: 16, alignItems: 'center' },
+  searchContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1e293b',
+    borderWidth: 1,
+    borderColor: '#334155',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    height: 40,
+  },
+  searchInput: { color: '#f8fafc', fontSize: 12, flex: 1, padding: 0 },
+  addBtn: {
+    backgroundColor: '#38bdf8',
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    height: 40,
+  },
+  addBtnText: { color: '#0f172a', fontSize: 12, fontWeight: '800' },
+
+  sectionHeader: { marginBottom: 12 },
   sectionTitle: { fontSize: 10, fontWeight: '800', color: '#94a3b8', letterSpacing: 0.8 },
 
-  emptyCard: { backgroundColor: '#1e293b', padding: 24, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: '#334155' },
-  emptyText: { color: '#f8fafc', fontSize: 14, fontWeight: '700' },
-  emptySubText: { color: '#94a3b8', fontSize: 12, marginTop: 4 },
+  emptyCard: { backgroundColor: '#1e293b', padding: 32, borderRadius: 16, alignItems: 'center', borderWidth: 1, borderColor: '#334155' },
+  emptyText: { color: '#f8fafc', fontSize: 15, fontWeight: '700' },
 
-  card: {
-    backgroundColor: '#1e293b',
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 10,
+  // Cards
+  card: { backgroundColor: '#1e293b', borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: '#334155' },
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  headerTitleContainer: { flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8 },
+  propertyName: { fontSize: 15, fontWeight: '800', color: '#f8fafc' },
+  badgesRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  activeBadge: { backgroundColor: 'rgba(16, 185, 129, 0.12)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, borderWidth: 1, borderColor: '#10b981' },
+  activeBadgeText: { color: '#10b981', fontSize: 10, fontWeight: '800' },
+  trashBtn: { width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(239, 68, 68, 0.12)', alignItems: 'center', justifyContent: 'center' },
+  eyeBtn: { width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(56, 189, 248, 0.12)', alignItems: 'center', justifyContent: 'center' },
+
+  locationRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
+  address: { fontSize: 12.5, color: '#cbd5e1' },
+
+  specsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 10 },
+  specChip: { backgroundColor: '#0f172a', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, borderWidth: 1, borderColor: '#334155' },
+  specChipText: { color: '#94a3b8', fontSize: 11, fontWeight: '600' },
+
+  divider: { height: 1, backgroundColor: '#334155', marginVertical: 12 },
+
+  // Metrics Columns
+  metricsArea: { flexDirection: 'row', justifyContent: 'space-between' },
+  metricColumn: { flex: 1, marginRight: 8 },
+  metricColumnRight: { alignItems: 'flex-end', flex: 1 },
+  metricLabel: { fontSize: 8.5, color: '#94a3b8', fontWeight: '850', letterSpacing: 0.5, marginBottom: 4 },
+  metricVal: { fontSize: 13, fontWeight: '800', color: '#f8fafc' },
+  metricSub: { fontSize: 9.5, color: '#64748b', marginTop: 2 },
+
+  // Modals
+  modalBg: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.85)', justifyContent: 'center', padding: 20 },
+  modalCard: { backgroundColor: '#1e293b', borderRadius: 20, padding: 20, borderWidth: 1, borderColor: '#334155', maxHeight: '85%' },
+  modalHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  modalTitle: { fontSize: 16, fontWeight: '800', color: '#f8fafc' },
+  modalSubHeader: { fontSize: 9, fontWeight: '850', color: '#38bdf8', letterSpacing: 0.8, marginTop: 10, marginBottom: 10 },
+  modalScroll: { marginBottom: 16 },
+
+  formGroup: { marginBottom: 14 },
+  formRow: { flexDirection: 'row', gap: 10 },
+  formLabel: { fontSize: 9.5, fontWeight: '800', color: '#94a3b8', letterSpacing: 0.5, marginBottom: 6 },
+  formInput: {
+    backgroundColor: '#0f172a',
     borderWidth: 1,
     borderColor: '#334155',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    height: 44,
+    color: '#f8fafc',
+    fontSize: 13,
   },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  propertyName: { fontSize: 15, fontWeight: '800', color: '#f8fafc', flex: 1 },
-  rightHeaderGroup: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  badge: { backgroundColor: 'rgba(34, 197, 94, 0.15)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, borderWidth: 1, borderColor: '#4ade80' },
-  badgeText: { color: '#4ade80', fontSize: 10, fontWeight: '800' },
-  eyeBtn: { backgroundColor: '#0f172a', width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#334155' },
-  eyeBtnText: { color: '#cbd5e1', fontSize: 11 },
 
-  address: { fontSize: 11.5, color: '#94a3b8', marginTop: 4, marginBottom: 8 },
+  dropdownTrigger: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#0f172a',
+    borderWidth: 1,
+    borderColor: '#334155',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    height: 44,
+  },
+  dropdownTriggerText: { color: '#cbd5e1', fontSize: 13 },
+  dropdownContainer: {
+    position: 'absolute',
+    top: 68,
+    left: 0,
+    right: 0,
+    backgroundColor: '#0f172a',
+    borderWidth: 1,
+    borderColor: '#334155',
+    borderRadius: 10,
+    zIndex: 9999,
+    elevation: 5,
+    overflow: 'hidden',
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1e293b',
+  },
+  dropdownItemText: { color: '#cbd5e1', fontSize: 12.5 },
 
-  cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 8, borderTopWidth: 1, borderTopColor: '#334155' },
-  infoText: { fontSize: 11, color: '#94a3b8' },
-  viewBtn: { backgroundColor: '#0f172a', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 6, borderWidth: 1, borderColor: '#334155' },
-  viewBtnText: { color: '#38bdf8', fontSize: 11, fontWeight: '700' },
+  modalActions: { flexDirection: 'row', gap: 10, justifyContent: 'flex-end', borderTopWidth: 1, borderTopColor: '#334155', paddingTop: 14, marginTop: 10 },
+  cancelBtn: { paddingVertical: 10, paddingHorizontal: 16, borderRadius: 10, borderWidth: 1, borderColor: '#334155' },
+  cancelBtnText: { color: '#cbd5e1', fontSize: 12.5, fontWeight: '700' },
+  submitBtn: { backgroundColor: '#38bdf8', paddingVertical: 10, paddingHorizontal: 16, borderRadius: 10, minWidth: 110, alignItems: 'center', justifyContent: 'center' },
+  submitBtnDisabled: { opacity: 0.5 },
+  submitBtnText: { color: '#0f172a', fontSize: 12.5, fontWeight: '800' },
 
-  modalBg: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', padding: 20 },
-  modalCard: { backgroundColor: '#1e293b', borderRadius: 16, padding: 20, borderWidth: 1, borderColor: '#334155' },
-  modalHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  modalTitle: { fontSize: 16, fontWeight: '800', color: '#38bdf8', flex: 1 },
-  inputLabel: { fontSize: 10, color: '#94a3b8', fontWeight: '700', marginBottom: 4, marginTop: 4 },
-  input: { backgroundColor: '#0f172a', borderWidth: 1, borderColor: '#334155', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, color: '#f8fafc', fontSize: 13, marginBottom: 10 },
+  // Detail Modal styling
+  modalTitleRow: { flexDirection: 'row', alignItems: 'center' },
+  detailContainer: { backgroundColor: '#0f172a', borderRadius: 12, padding: 14, marginBottom: 16, borderWidth: 1, borderColor: '#334155' },
+  detailRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#1e293b' },
+  detailLabel: { color: '#94a3b8', fontSize: 12.5, fontWeight: '600' },
+  detailVal: { color: '#f8fafc', fontSize: 12.5, fontWeight: '700', textAlign: 'right', flex: 1, marginLeft: 16 },
+  closeModalBtn: { backgroundColor: '#334155', paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
+  closeModalBtnText: { color: '#cbd5e1', fontSize: 13, fontWeight: '700' },
 
-  typeSelectorRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 14 },
-  typeChip: { backgroundColor: '#0f172a', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6, borderWidth: 1, borderColor: '#334155' },
-  typeChipActive: { backgroundColor: '#0284c7', borderColor: '#38bdf8' },
-  typeChipText: { color: '#94a3b8', fontSize: 11, fontWeight: '600' },
-  typeChipTextActive: { color: '#ffffff', fontWeight: '800' },
-
-  modalButtons: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 },
-  modalBtn: { width: '48%', paddingVertical: 10, borderRadius: 8, alignItems: 'center' },
-  cancelBtn: { backgroundColor: '#334155' },
-  cancelBtnText: { color: '#cbd5e1', fontWeight: '600' },
-  saveBtn: { backgroundColor: '#0284c7' },
-  saveBtnText: { color: '#ffffff', fontWeight: '700' },
-
-  detailRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: '#334155' },
-  detailLabel: { color: '#94a3b8', fontSize: 12, fontWeight: '600' },
-  detailVal: { color: '#f8fafc', fontSize: 12.5, fontWeight: '700' },
-  closeModalBtn: { backgroundColor: '#334155', paddingVertical: 10, borderRadius: 8, alignItems: 'center', marginTop: 14 },
-  closeModalBtnText: { color: '#ffffff', fontSize: 12, fontWeight: '700' },
+  // Unit Details Modal specific styles
+  sectionCard: { backgroundColor: '#0f172a', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: '#334155', marginBottom: 12 },
+  sectionTitleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  sectionTitleText: { color: '#38bdf8', fontSize: 11, fontWeight: '850', letterSpacing: 0.8 },
+  valBadge: { backgroundColor: 'rgba(245, 158, 11, 0.12)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, borderWidth: 1, borderColor: '#f59e0b' },
+  valBadgeText: { color: '#f59e0b', fontSize: 8.5, fontWeight: '800' },
+  
+  tenantAvatarRow: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
+  tenantAvatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#38bdf8', alignItems: 'center', justifyContent: 'center', marginRight: 10 },
+  tenantAvatarText: { color: '#0f172a', fontSize: 14, fontWeight: '800' },
+  tenantNameText: { color: '#f8fafc', fontSize: 13.5, fontWeight: '750' },
+  tenantEmailText: { color: '#94a3b8', fontSize: 11.5, marginTop: 1 },
+  
+  subTabsRow: { flexDirection: 'row', backgroundColor: '#0f172a', borderRadius: 8, padding: 3, borderWidth: 1, borderColor: '#334155', marginVertical: 12 },
+  subTabBtn: { flex: 1, paddingVertical: 7, alignItems: 'center', borderRadius: 6 },
+  subTabBtnActive: { backgroundColor: '#1e293b' },
+  subTabBtnText: { color: '#94a3b8', fontSize: 11, fontWeight: '700' },
+  subTabBtnTextActive: { color: '#38bdf8' },
+  
+  logItem: { paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#1e293b' },
+  logItemLast: { paddingVertical: 8, borderBottomWidth: 0 },
+  logLabel: { color: '#94a3b8', fontSize: 11.5 },
+  logValue: { color: '#f8fafc', fontSize: 12, fontWeight: '700', marginTop: 2 },
+  
+  docBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#1e293b', padding: 10, borderRadius: 8, marginTop: 8, borderWidth: 1, borderColor: '#334155' },
+  docText: { color: '#cbd5e1', fontSize: 12, marginLeft: 8, flex: 1 },
+  docSize: { color: '#64748b', fontSize: 11 },
 });

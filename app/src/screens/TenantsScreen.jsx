@@ -13,6 +13,9 @@ import {
   Animated,
   Easing,
   Platform,
+  KeyboardAvoidingView,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from 'react-native';
 import apiClient from '../api/client';
 import { useAuthStore } from '../store/useStore';
@@ -58,18 +61,41 @@ const AnimatedTouchable = ({ children, onPress, style, disabled }) => {
 export const TenantsScreen = () => {
   const { logout, refreshAccessToken } = useAuthStore();
   const [tenants, setTenants] = useState([]);
+  const [units, setUnits] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTenant, setSelectedTenant] = useState(null);
 
-  // Add Tenant Modal State
+  // Add Tenant Modal Forms Active States
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  // --- Add Tenant Form States ---
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [preferredName, setPreferredName] = useState('');
+  const [dob, setDob] = useState('');
+  const [gender, setGender] = useState('Male');
+  const [nationality, setNationality] = useState('American');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [submitting, setSubmitting] = useState(false);
+  const [password, setPassword] = useState('');
+  const [unitId, setUnitId] = useState('');
+  const [idType, setIdType] = useState('Driver License');
+  const [idNumber, setIdNumber] = useState('');
+  const [empName, setEmpName] = useState('');
+  const [empPosition, setEmpPosition] = useState('');
+  const [empIncome, setEmpIncome] = useState('');
+  const [empStatus, setEmpStatus] = useState('Full-Time');
+  const [tStatus, setTStatus] = useState('Active');
+
+  // Dropdowns active states
+  const [showGenderDropdown, setShowGenderDropdown] = useState(false);
+  const [showUnitDropdown, setShowUnitDropdown] = useState(false);
+  const [showIdDropdown, setShowIdDropdown] = useState(false);
+  const [showEmpDropdown, setShowEmpDropdown] = useState(false);
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
 
   // Animations
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -94,76 +120,22 @@ export const TenantsScreen = () => {
     ]).start();
   };
 
-  // Strictly call live Railway endpoint: GET /tenants
-  const fetchLiveTenants = async () => {
+  // Fetch live tenants & units
+  const fetchLiveTenantsData = async () => {
     try {
       setLoading(true);
-      const res = await apiClient.get('/tenants', logout, refreshAccessToken);
-      const rawList = Array.isArray(res) ? res : (res?.data || []);
-
-      if (rawList && rawList.length > 0) {
-        setTenants(rawList);
-      } else {
-        // Default snapshot matching Web 1-to-1
-        setTenants([
-          {
-            id: 'tenant-1',
-            firstName: 'person',
-            lastName: '1',
-            email: 'person1b@gmail.com',
-            phone: '344232',
-            status: 'Active',
-            unit: {
-              unitNumber: 'room 1b',
-              rentAmount: 1000,
-              property: { name: 'property 1' },
-            },
-          },
-          {
-            id: 'tenant-2',
-            firstName: 'person',
-            lastName: '2',
-            email: 'person2b@gmail.com',
-            phone: '43242342344',
-            status: 'Active',
-            unit: {
-              unitNumber: 'Room 2B',
-              rentAmount: 5000,
-              property: { name: 'Property 2' },
-            },
-          },
-        ]);
-      }
-    } catch (e) {
-      console.log('Error fetching GET /tenants:', e.message);
-      setTenants([
-        {
-          id: 'tenant-1',
-          firstName: 'person',
-          lastName: '1',
-          email: 'person1b@gmail.com',
-          phone: '344232',
-          status: 'Active',
-          unit: {
-            unitNumber: 'room 1b',
-            rentAmount: 1000,
-            property: { name: 'property 1' },
-          },
-        },
-        {
-          id: 'tenant-2',
-          firstName: 'person',
-          lastName: '2',
-          email: 'person2b@gmail.com',
-          phone: '43242342344',
-          status: 'Active',
-          unit: {
-            unitNumber: 'Room 2B',
-            rentAmount: 5000,
-            property: { name: 'Property 2' },
-          },
-        },
+      const [tenantsRes, unitsRes] = await Promise.all([
+        apiClient.get('/tenants', logout, refreshAccessToken).catch(() => null),
+        apiClient.get('/units', logout, refreshAccessToken).catch(() => null),
       ]);
+
+      const rawTenants = Array.isArray(tenantsRes) ? tenantsRes : (tenantsRes?.data || []);
+      const rawUnits = Array.isArray(unitsRes) ? unitsRes : (unitsRes?.data || []);
+
+      setTenants(rawTenants);
+      setUnits(rawUnits);
+    } catch (e) {
+      console.log('Error fetching tenants list:', e.message);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -172,50 +144,110 @@ export const TenantsScreen = () => {
   };
 
   useEffect(() => {
-    fetchLiveTenants();
+    fetchLiveTenantsData();
   }, []);
 
-  const handleAddSubmit = async () => {
-    if (!firstName.trim() || !email.trim()) {
-      Alert.alert('Error', 'Please enter first name and email address');
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchLiveTenantsData();
+  };
+
+  const handleDeleteTenant = (id, name) => {
+    Alert.alert(
+      'Delete Tenant',
+      `Are you sure you want to delete resident "${name}"? This will dissolve lease assignments and invoice ties in their account ledger.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setLoading(true);
+              await apiClient.delete(`/tenants/${id}`, logout, refreshAccessToken);
+              Alert.alert('Success', 'Tenant deleted successfully');
+              fetchLiveTenantsData();
+            } catch (err) {
+              Alert.alert('Error', err.message || 'Failed to delete tenant');
+              setLoading(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleCreateTenant = async () => {
+    if (!firstName.trim() || !lastName.trim() || !email.trim()) {
+      Alert.alert('Validation Error', 'First Name, Last Name and Email are required.');
       return;
     }
 
-    setSubmitting(true);
-    const newTenant = {
-      id: `tenant-${Date.now()}`,
-      firstName: firstName.trim(),
-      lastName: lastName.trim() || '',
-      email: email.trim(),
-      phone: phone.trim() || 'N/A',
-      status: 'Active',
-      unit: { unitNumber: 'room 1b', rentAmount: 1000, property: { name: 'property 1' } },
-    };
-
     try {
-      await apiClient.post('/tenants', newTenant, logout, refreshAccessToken);
-    } catch (e) {
-      console.log('Post tenant fallback state:', e.message);
-    } finally {
-      setTenants((prev) => [newTenant, ...prev]);
-      setSubmitting(false);
+      setSubmitting(true);
+      const payload = {
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        email: email.trim(),
+        phone: phone.trim() || undefined,
+        password: password.trim() || undefined,
+        unitId: unitId || undefined,
+        status: tStatus,
+        // Web fields mapped:
+        preferredName: preferredName.trim() || undefined,
+        dob: dob.trim() || undefined,
+        gender,
+        nationality: nationality.trim() || undefined,
+        idType,
+        idNumber: idNumber.trim() || undefined,
+        employerName: empName.trim() || undefined,
+        position: empPosition.trim() || undefined,
+        monthlyIncome: Number(empIncome) || undefined,
+        employmentStatus: empStatus,
+      };
+
+      await apiClient.post('/tenants', payload, logout, refreshAccessToken);
+      Alert.alert('Success', 'Tenant profile registered successfully.');
       setIsAddOpen(false);
+
+      // Reset
       setFirstName('');
       setLastName('');
+      setPreferredName('');
+      setDob('');
       setEmail('');
       setPhone('');
-      runEntryAnimation();
-      Alert.alert('Success', `Tenant "${newTenant.firstName} ${newTenant.lastName}" registered!`);
+      setPassword('');
+      setUnitId('');
+      setIdNumber('');
+      setEmpName('');
+      setEmpPosition('');
+      setEmpIncome('');
+      
+      fetchLiveTenantsData();
+    } catch (err) {
+      Alert.alert('Error', err.message || 'Failed to register tenant');
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const filteredTenants = tenants.filter((item) => {
     const fullName = `${item.firstName || ''} ${item.lastName || ''} ${item.name || ''}`.toLowerCase();
     const propName = (item.unit?.property?.name || item.propertyName || '').toLowerCase();
+    const unitNum = (item.unit?.unitNumber || item.unitNumber || '').toLowerCase();
     const emailStr = (item.email || '').toLowerCase();
-    const text = `${fullName} ${propName} ${emailStr} ${item.status || ''}`;
-    return text.includes(searchQuery.toLowerCase());
+    return fullName.includes(searchQuery.toLowerCase()) ||
+           propName.includes(searchQuery.toLowerCase()) ||
+           unitNum.includes(searchQuery.toLowerCase()) ||
+           emailStr.includes(searchQuery.toLowerCase());
   });
+
+  // Dropdown lists constant options
+  const genderOptions = ['Male', 'Female', 'Other'];
+  const idOptions = ['Driver License', 'Passport', 'State ID'];
+  const empStatuses = ['Full-Time', 'Part-Time', 'Self-Employed', 'Unemployed'];
+  const statuses = ['Active', 'Pending', 'Inactive'];
 
   if (loading && !refreshing) {
     return (
@@ -227,201 +259,336 @@ export const TenantsScreen = () => {
   }
 
   return (
-    <ScrollView
-      style={styles.mainWrapper}
-      contentContainerStyle={styles.outerContentContainer}
-      showsVerticalScrollIndicator={true}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchLiveTenants} tintColor="#38bdf8" />}
-    >
-      <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
-        {/* Page Header */}
+    <View style={styles.mainWrapper}>
+      {/* Header & Search controls (Fixed) */}
+      <View style={{ paddingHorizontal: 16, paddingTop: Platform.OS === 'ios' ? 48 : 16 }}>
+        {/* Header */}
         <View style={styles.header}>
-          <View style={styles.titleRow}>
-            <Text style={styles.title} allowFontScaling={false}>Tenant Directory</Text>
-            <AnimatedTouchable style={styles.addBtn} onPress={() => setIsAddOpen(true)}>
-              <Ionicons name="person-add" size={14} color="#fff" style={{ marginRight: 4 }} />
-              <Text style={styles.addBtnText} allowFontScaling={false}>Add Tenant</Text>
-            </AnimatedTouchable>
-          </View>
+          <Text style={styles.title} allowFontScaling={false}>Tenant Directory</Text>
           <Text style={styles.subtitle} allowFontScaling={false}>
-            Review active resident contracts, monthly rent rates, unit assignments, and contact details.
+            Verify occupant contact channels, active lease alignments, and rent balances.
           </Text>
         </View>
 
-        {/* Search Bar */}
-        <View style={styles.searchBarRow}>
+        {/* Search Controls */}
+        <View style={[styles.searchBarRow, { marginBottom: 12 }]}>
           <View style={styles.searchContainer}>
-            <Ionicons name="search" size={18} color="#64748b" style={{ marginRight: 8 }} />
+            <Ionicons name="search-outline" size={18} color="#64748b" style={{ marginRight: 6 }} />
             <TextInput
               style={styles.searchInput}
-              placeholder="Search by name, email, or property..."
+              placeholder="Search by name, email, or unit..."
               placeholderTextColor="#64748b"
               value={searchQuery}
-              onChangeText={(txt) => {
-                setSearchQuery(txt);
-              }}
+              onChangeText={setSearchQuery}
             />
           </View>
-          {searchQuery ? (
-            <AnimatedTouchable style={styles.resetBtn} onPress={() => setSearchQuery('')}>
-              <Text style={styles.resetBtnText} allowFontScaling={false}>Reset</Text>
-            </AnimatedTouchable>
-          ) : null}
+          <TouchableOpacity style={styles.addBtn} onPress={() => setIsAddOpen(true)} activeOpacity={0.8}>
+            <Ionicons name="add" size={18} color="#0f172a" />
+            <Text style={styles.addBtnText} allowFontScaling={false}>Add Tenant</Text>
+          </TouchableOpacity>
         </View>
+      </View>
 
-        {/* Section Header */}
-        <View style={styles.showingRow}>
-          <Text style={styles.showingText} allowFontScaling={false}>
-            ACTIVE TENANTS ({filteredTenants.length})
-          </Text>
-        </View>
-
-        {/* Tenants Cards List */}
-        {filteredTenants.length === 0 ? (
-          <View style={styles.emptyCard}>
-            <Ionicons name="people" size={48} color="#475569" style={{ marginBottom: 8 }} />
-            <Text style={styles.emptyText} allowFontScaling={false}>No tenants found</Text>
-            <Text style={styles.emptySubText} allowFontScaling={false}>
-              Try adjusting your search criteria or register a new tenant.
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: 12 }]}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#38bdf8" />}
+      >
+        <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
+          {/* Section title */}
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle} allowFontScaling={false}>
+              ACTIVE RESIDENTS ({filteredTenants.length})
             </Text>
           </View>
-        ) : (
-          filteredTenants.map((item, idx) => {
-            const name = item.name || `${item.firstName || ''} ${item.lastName || ''}`.trim() || 'Tenant';
-            const propName = item.unit?.property?.name || item.propertyName || 'property 1';
-            const unitNum = item.unit?.unitNumber || item.unitNumber || 'room 1b';
-            const rent = Number(item.unit?.rentAmount || item.rentAmount || 1000);
 
-            return (
-              <AnimatedTouchable
-                key={item.id || `tenant-${idx}`}
-                style={styles.card}
-                onPress={() => setSelectedTenant(item)}
-              >
-                <View style={styles.cardHeaderRow}>
-                  <View style={{ flex: 1 }}>
-                    <View style={styles.nameRow}>
-                      <Ionicons name="person-circle-outline" size={18} color="#38bdf8" style={{ marginRight: 6 }} />
-                      <Text style={styles.tenantNameText} allowFontScaling={false}>{name}</Text>
+          {/* Cards List */}
+          {filteredTenants.length === 0 ? (
+            <View style={styles.emptyCard}>
+              <Ionicons name="people-outline" size={48} color="#475569" style={{ marginBottom: 10 }} />
+              <Text style={styles.emptyText} allowFontScaling={false}>No residents found</Text>
+            </View>
+          ) : (
+            filteredTenants.map((item, idx) => {
+              const name = item.name || `${item.firstName || ''} ${item.lastName || ''}`.trim() || 'Tenant';
+              const initial = name.charAt(0).toUpperCase();
+              const propName = item.unit?.property?.name || item.propertyName || 'Property';
+              const unitNum = item.unit?.unitNumber || item.unitNumber || 'room 1b';
+              const rent = Number(item.unit?.rentAmount || item.rentAmount || 1000);
+              
+              const statusColor = String(item.status).toLowerCase() === 'active' ? '#10b981' : '#f59e0b';
+              const statusBg = String(item.status).toLowerCase() === 'active' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.12)';
+
+              return (
+                <View key={item.id || `tenant-${idx}`} style={styles.card}>
+                  <View style={styles.cardHeader}>
+                    <View style={styles.avatar}>
+                      <Text style={styles.avatarText} allowFontScaling={false}>{initial}</Text>
                     </View>
-                    
-                    <View style={styles.metaInfoRow}>
-                      <Ionicons name="business-outline" size={13} color="#94a3b8" style={{ marginRight: 4 }} />
-                      <Text style={styles.propText} allowFontScaling={false}>
+                    <View style={styles.tenantInfo}>
+                      <Text style={styles.tenantName} allowFontScaling={false}>{name}</Text>
+                      <Text style={styles.tenantSubText} allowFontScaling={false}>
                         {propName} · Unit {unitNum}
                       </Text>
                     </View>
-
-                    <View style={styles.metaInfoRow}>
-                      <Ionicons name="mail-outline" size={12} color="#64748b" style={{ marginRight: 4 }} />
-                      <Text style={styles.emailText} allowFontScaling={false} numberOfLines={1}>
-                        {item.email || 'N/A'}
-                      </Text>
-                      {item.phone && (
-                        <>
-                          <Text style={styles.bulletSeparator}>·</Text>
-                          <Ionicons name="call-outline" size={11} color="#64748b" style={{ marginRight: 4 }} />
-                          <Text style={styles.emailText} allowFontScaling={false}>
-                            {item.phone}
-                          </Text>
-                        </>
-                      )}
+                    <View style={styles.badgesRow}>
+                      <TouchableOpacity
+                        style={styles.eyeBtn}
+                        onPress={() => setSelectedTenant(item)}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name="eye-outline" size={16} color="#38bdf8" />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.deleteBtn}
+                        onPress={() => handleDeleteTenant(item.id, name)}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name="trash-outline" size={16} color="#ef4444" />
+                      </TouchableOpacity>
                     </View>
                   </View>
 
-                  <View style={styles.rightGroup}>
-                    <View style={styles.badgeGreen}>
-                      <Text style={styles.badgeGreenText} allowFontScaling={false}>{item.status || 'Active'}</Text>
+                  <View style={styles.divider} />
+
+                  {/* Metadata Row */}
+                  <View style={styles.metaRow}>
+                    <View style={styles.metaCol}>
+                      <Ionicons name="mail-outline" size={13} color="#94a3b8" style={{ marginRight: 6 }} />
+                      <Text style={styles.metaText} allowFontScaling={false} numberOfLines={1}>
+                        {item.email}
+                      </Text>
                     </View>
+                    <View style={styles.metaCol}>
+                      <Ionicons name="call-outline" size={13} color="#94a3b8" style={{ marginRight: 6 }} />
+                      <Text style={styles.metaText} allowFontScaling={false} numberOfLines={1}>
+                        {item.phone || '(512) 555-0199'}
+                      </Text>
+                    </View>
+                  </View>
 
-                    <Text style={styles.rentText} allowFontScaling={false}>
-                      ${rent.toLocaleString()}
-                    </Text>
-
-                    <TouchableOpacity style={styles.eyeBtn} onPress={() => setSelectedTenant(item)} activeOpacity={0.7}>
-                      <Ionicons name="eye-outline" size={14} color="#cbd5e1" />
-                    </TouchableOpacity>
+                  <View style={[styles.metaRow, { marginTop: 8 }]}>
+                    <View style={styles.metaCol}>
+                      <Ionicons name="card-outline" size={13} color="#10b981" style={{ marginRight: 6 }} />
+                      <Text style={[styles.metaText, { color: '#10b981', fontWeight: '800' }]} allowFontScaling={false}>
+                        ${rent.toLocaleString()}/mo Rent
+                      </Text>
+                    </View>
+                    <View style={[styles.activeBadge, { backgroundColor: statusBg, borderColor: statusColor, paddingVertical: 2 }]}>
+                      <Text style={[styles.activeBadgeText, { color: statusColor }]} allowFontScaling={false}>
+                        {item.status || 'Active'}
+                      </Text>
+                    </View>
                   </View>
                 </View>
-              </AnimatedTouchable>
-            );
-          })
-        )}
-      </Animated.View>
+              );
+            })
+          )}
+        </Animated.View>
+      </ScrollView>
 
-      {/* MODAL 1: + Add Tenant */}
+      {/* --- ADD TENANT MODAL (Keyboard Responsive) --- */}
       <Modal visible={isAddOpen} animationType="slide" transparent>
-        <View style={styles.modalBg}>
-          <View style={styles.modalCard}>
-            <View style={styles.modalHeaderRow}>
-              <Text style={styles.modalTitle} allowFontScaling={false}>Register New Tenant</Text>
-              <TouchableOpacity onPress={() => setIsAddOpen(false)}>
-                <Ionicons name="close" size={22} color="#94a3b8" />
-              </TouchableOpacity>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalBg}>
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={styles.modalCard}>
+              <View style={styles.modalHeaderRow}>
+                <Text style={styles.modalTitle} allowFontScaling={false}>Add Tenant</Text>
+                <TouchableOpacity onPress={() => setIsAddOpen(false)}>
+                  <Ionicons name="close" size={24} color="#94a3b8" />
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                <Text style={styles.modalSubHeader} allowFontScaling={false}>PERSONAL INFORMATION</Text>
+                <View style={styles.formRow}>
+                  <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>FIRST NAME *</Text>
+                    <TextInput style={styles.formInput} placeholder="John" placeholderTextColor="#64748b" value={firstName} onChangeText={setFirstName} />
+                  </View>
+                  <View style={[styles.formGroup, { flex: 1 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>LAST NAME *</Text>
+                    <TextInput style={styles.formInput} placeholder="Doe" placeholderTextColor="#64748b" value={lastName} onChangeText={setLastName} />
+                  </View>
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>PREFERRED NAME</Text>
+                  <TextInput style={styles.formInput} placeholder="Johnny" placeholderTextColor="#64748b" value={preferredName} onChangeText={setPreferredName} />
+                </View>
+
+                <View style={styles.formRow}>
+                  <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>DATE OF BIRTH</Text>
+                    <TextInput style={styles.formInput} placeholder="YYYY-MM-DD" placeholderTextColor="#64748b" value={dob} onChangeText={setDob} />
+                  </View>
+
+                  {/* Gender dropdown */}
+                  <View style={[styles.formGroup, { flex: 1 }, showGenderDropdown && { zIndex: 9999, position: 'relative' }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>GENDER</Text>
+                    <TouchableOpacity style={styles.dropdownTrigger} onPress={() => setShowGenderDropdown(!showGenderDropdown)} activeOpacity={0.7}>
+                      <Text style={styles.dropdownTriggerText} allowFontScaling={false}>{gender}</Text>
+                      <Ionicons name={showGenderDropdown ? "chevron-up" : "chevron-down"} size={14} color="#cbd5e1" />
+                    </TouchableOpacity>
+                    {showGenderDropdown && (
+                      <View style={styles.dropdownContainer}>
+                        {genderOptions.map((opt) => (
+                          <TouchableOpacity key={opt} style={styles.dropdownItem} onPress={() => { setGender(opt); setShowGenderDropdown(false); }}>
+                            <Text style={styles.dropdownItemText} allowFontScaling={false}>{opt}</Text>
+                            {gender === opt && <Ionicons name="checkmark" size={16} color="#38bdf8" />}
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    )}
+                  </View>
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>NATIONALITY</Text>
+                  <TextInput style={styles.formInput} placeholder="American" placeholderTextColor="#64748b" value={nationality} onChangeText={setNationality} />
+                </View>
+
+                <Text style={styles.modalSubHeader} allowFontScaling={false}>CONTACT DETAILS</Text>
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>EMAIL ADDRESS *</Text>
+                  <TextInput style={styles.formInput} placeholder="staff@gmail.com" placeholderTextColor="#64748b" keyboardType="email-address" autoCapitalize="none" value={email} onChangeText={setEmail} />
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>MOBILE PHONE</Text>
+                  <TextInput style={styles.formInput} placeholder="(512) 555-0199" placeholderTextColor="#64748b" keyboardType="phone-pad" value={phone} onChangeText={setPhone} />
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>PASSWORD</Text>
+                  <TextInput style={styles.formInput} placeholder="••••••••" placeholderTextColor="#64748b" secureTextEntry autoCapitalize="none" value={password} onChangeText={setPassword} />
+                </View>
+
+                <Text style={styles.modalSubHeader} allowFontScaling={false}>UNIT ASSIGNMENT</Text>
+                {/* Unit ID Dropdown */}
+                <View style={[styles.formGroup, showUnitDropdown && { zIndex: 9998, position: 'relative' }]}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>ASSIGNED UNIT</Text>
+                  <TouchableOpacity style={styles.dropdownTrigger} onPress={() => setShowUnitDropdown(!showUnitDropdown)} activeOpacity={0.7}>
+                    <Text style={styles.dropdownTriggerText} allowFontScaling={false}>
+                      {units.find(u => u.id === unitId) ? `Unit ${units.find(u => u.id === unitId).unitNumber} (${units.find(u => u.id === unitId).property?.name || 'Property'})` : 'Select Unit...'}
+                    </Text>
+                    <Ionicons name={showUnitDropdown ? "chevron-up" : "chevron-down"} size={16} color="#cbd5e1" />
+                  </TouchableOpacity>
+                  {showUnitDropdown && (
+                    <View style={styles.dropdownContainer}>
+                      {units.map((opt) => (
+                        <TouchableOpacity key={opt.id} style={styles.dropdownItem} onPress={() => { setUnitId(opt.id); setShowUnitDropdown(false); }}>
+                          <Text style={styles.dropdownItemText} allowFontScaling={false}>Unit {opt.unitNumber} - {opt.property?.name}</Text>
+                          {unitId === opt.id && <Ionicons name="checkmark" size={16} color="#38bdf8" />}
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </View>
+
+                <Text style={styles.modalSubHeader} allowFontScaling={false}>GOVERNMENT IDS</Text>
+                {/* ID Type dropdown */}
+                <View style={[styles.formGroup, showIdDropdown && { zIndex: 9997, position: 'relative' }]}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>ID TYPE</Text>
+                  <TouchableOpacity style={styles.dropdownTrigger} onPress={() => setShowIdDropdown(!showIdDropdown)} activeOpacity={0.7}>
+                    <Text style={styles.dropdownTriggerText} allowFontScaling={false}>{idType}</Text>
+                    <Ionicons name={showIdDropdown ? "chevron-up" : "chevron-down"} size={14} color="#cbd5e1" />
+                  </TouchableOpacity>
+                  {showIdDropdown && (
+                    <View style={styles.dropdownContainer}>
+                      {idOptions.map((opt) => (
+                        <TouchableOpacity key={opt} style={styles.dropdownItem} onPress={() => { setIdType(opt); setShowIdDropdown(false); }}>
+                          <Text style={styles.dropdownItemText} allowFontScaling={false}>{opt}</Text>
+                          {idType === opt && <Ionicons name="checkmark" size={16} color="#38bdf8" />}
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </View>
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>ID NUMBER</Text>
+                  <TextInput style={styles.formInput} placeholder="A1234567" placeholderTextColor="#64748b" value={idNumber} onChangeText={setIdNumber} />
+                </View>
+
+                <Text style={styles.modalSubHeader} allowFontScaling={false}>EMPLOYMENT PARAMETERS</Text>
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>EMPLOYER NAME</Text>
+                  <TextInput style={styles.formInput} placeholder="Google Inc." placeholderTextColor="#64748b" value={empName} onChangeText={setEmpName} />
+                </View>
+                <View style={styles.formRow}>
+                  <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>POSITION</Text>
+                    <TextInput style={styles.formInput} placeholder="Staff Engineer" placeholderTextColor="#64748b" value={empPosition} onChangeText={setEmpPosition} />
+                  </View>
+                  <View style={[styles.formGroup, { flex: 1 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>MONTHLY INCOME ($)</Text>
+                    <TextInput style={styles.formInput} placeholder="3500" keyboardType="numeric" placeholderTextColor="#64748b" value={empIncome} onChangeText={setEmpIncome} />
+                  </View>
+                </View>
+
+                {/* Employment Status dropdown */}
+                <View style={[styles.formGroup, showEmpDropdown && { zIndex: 9996, position: 'relative' }]}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>EMPLOYMENT STATUS</Text>
+                  <TouchableOpacity style={styles.dropdownTrigger} onPress={() => setShowEmpDropdown(!showEmpDropdown)} activeOpacity={0.7}>
+                    <Text style={styles.dropdownTriggerText} allowFontScaling={false}>{empStatus}</Text>
+                    <Ionicons name={showEmpDropdown ? "chevron-up" : "chevron-down"} size={14} color="#cbd5e1" />
+                  </TouchableOpacity>
+                  {showEmpDropdown && (
+                    <View style={styles.dropdownContainer}>
+                      {empStatuses.map((opt) => (
+                        <TouchableOpacity key={opt} style={styles.dropdownItem} onPress={() => { setEmpStatus(opt); setShowEmpDropdown(false); }}>
+                          <Text style={styles.dropdownItemText} allowFontScaling={false}>{opt}</Text>
+                          {empStatus === opt && <Ionicons name="checkmark" size={16} color="#38bdf8" />}
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </View>
+
+                {/* Tenant account status dropdown */}
+                <View style={[styles.formGroup, showStatusDropdown && { zIndex: 9995, position: 'relative' }]}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>ACCOUNT STATUS</Text>
+                  <TouchableOpacity style={styles.dropdownTrigger} onPress={() => setShowStatusDropdown(!showStatusDropdown)} activeOpacity={0.7}>
+                    <Text style={styles.dropdownTriggerText} allowFontScaling={false}>{tStatus}</Text>
+                    <Ionicons name={showStatusDropdown ? "chevron-up" : "chevron-down"} size={14} color="#cbd5e1" />
+                  </TouchableOpacity>
+                  {showStatusDropdown && (
+                    <View style={styles.dropdownContainer}>
+                      {statuses.map((opt) => (
+                        <TouchableOpacity key={opt} style={styles.dropdownItem} onPress={() => { setTStatus(opt); setShowStatusDropdown(false); }}>
+                          <Text style={styles.dropdownItemText} allowFontScaling={false}>{opt}</Text>
+                          {tStatus === opt && <Ionicons name="checkmark" size={16} color="#38bdf8" />}
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </View>
+
+                {/* Save Buttons inside ScrollView */}
+                <View style={styles.modalActions}>
+                  <TouchableOpacity style={styles.cancelBtn} onPress={() => setIsAddOpen(false)} disabled={submitting}>
+                    <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.submitBtn, submitting && styles.submitBtnDisabled]} onPress={handleCreateTenant} disabled={submitting}>
+                    {submitting ? <ActivityIndicator size="small" color="#0f172a" /> : <Text style={styles.submitBtnText} allowFontScaling={false}>Save Tenant</Text>}
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
             </View>
-
-            <Text style={styles.inputLabel} allowFontScaling={false}>FIRST NAME *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="e.g. John"
-              placeholderTextColor="#64748b"
-              value={firstName}
-              onChangeText={setFirstName}
-            />
-
-            <Text style={styles.inputLabel} allowFontScaling={false}>LAST NAME</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="e.g. Doe"
-              placeholderTextColor="#64748b"
-              value={lastName}
-              onChangeText={setLastName}
-            />
-
-            <Text style={styles.inputLabel} allowFontScaling={false}>EMAIL ADDRESS *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="john.doe@gmail.com"
-              placeholderTextColor="#64748b"
-              keyboardType="email-address"
-              value={email}
-              onChangeText={setEmail}
-            />
-
-            <Text style={styles.inputLabel} allowFontScaling={false}>PHONE NUMBER</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="512-555-0199"
-              placeholderTextColor="#64748b"
-              keyboardType="phone-pad"
-              value={phone}
-              onChangeText={setPhone}
-            />
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity style={[styles.modalBtn, styles.cancelBtn]} onPress={() => setIsAddOpen(false)}>
-                <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={[styles.modalBtn, styles.saveBtn]} onPress={handleAddSubmit} disabled={submitting}>
-                <Text style={styles.saveBtnText} allowFontScaling={false}>
-                  {submitting ? 'Registering...' : 'Register'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
       </Modal>
 
-      {/* MODAL 2: 👁 View Tenant Specs */}
+      {/* --- DETAIL SPECIFICATIONS MODAL (EYE RESIDENT DETAIL) --- */}
       <Modal visible={!!selectedTenant} animationType="slide" transparent>
         <View style={styles.modalBg}>
           <View style={styles.modalCard}>
             <View style={styles.modalHeaderRow}>
-              <View style={styles.nameRow}>
-                <Ionicons name="person-circle" size={24} color="#38bdf8" style={{ marginRight: 8 }} />
+              <View style={styles.modalTitleRow}>
+                <Ionicons name="person-circle-outline" size={20} color="#38bdf8" style={{ marginRight: 8 }} />
                 <Text style={styles.modalTitle} allowFontScaling={false} numberOfLines={1}>
-                  {selectedTenant?.name || `${selectedTenant?.firstName || ''} ${selectedTenant?.lastName || ''}`.trim()}
+                  {selectedTenant?.name || `${selectedTenant?.firstName || ''} ${selectedTenant?.lastName || ''}`.trim()} Details
                 </Text>
               </View>
               <TouchableOpacity onPress={() => setSelectedTenant(null)}>
@@ -429,76 +596,99 @@ export const TenantsScreen = () => {
               </TouchableOpacity>
             </View>
 
-            <View style={styles.detailCard}>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel} allowFontScaling={false}>Email Address</Text>
-                <Text style={styles.detailVal} allowFontScaling={false}>{selectedTenant?.email || 'N/A'}</Text>
-              </View>
+            {selectedTenant && (
+              <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
+                {/* 1. Personal & Contact */}
+                <View style={styles.detailContainer}>
+                  <Text style={styles.modalSubHeader} allowFontScaling={false} style={{ marginTop: 0, marginBottom: 8, color: '#38bdf8', fontSize: 10, fontWeight: '850' }}>
+                    PERSONAL & CONTACT SPECIFICATIONS
+                  </Text>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel} allowFontScaling={false}>Email Address</Text>
+                    <Text style={styles.detailVal} allowFontScaling={false}>{selectedTenant.email}</Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel} allowFontScaling={false}>Phone Contact</Text>
+                    <Text style={styles.detailVal} allowFontScaling={false}>{selectedTenant.phone || '(512) 555-0199'}</Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel} allowFontScaling={false}>Preferred Name</Text>
+                    <Text style={styles.detailVal} allowFontScaling={false}>{selectedTenant.preferredName || selectedTenant.firstName || 'Johnny'}</Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel} allowFontScaling={false}>Birth Date / Gender</Text>
+                    <Text style={styles.detailVal} allowFontScaling={false}>{selectedTenant.dob || '1995-01-01'} · {selectedTenant.gender || 'Male'}</Text>
+                  </View>
+                  <View style={[styles.detailRow, { borderBottomWidth: 0 }]}>
+                    <Text style={styles.detailLabel} allowFontScaling={false}>Nationality</Text>
+                    <Text style={styles.detailVal} allowFontScaling={false}>{selectedTenant.nationality || 'American'}</Text>
+                  </View>
+                </View>
 
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel} allowFontScaling={false}>Phone Contact</Text>
-                <Text style={styles.detailVal} allowFontScaling={false}>{selectedTenant?.phone || 'N/A'}</Text>
-              </View>
+                {/* 2. Employment & Income */}
+                <View style={styles.detailContainer}>
+                  <Text style={styles.modalSubHeader} allowFontScaling={false} style={{ marginTop: 0, marginBottom: 8, color: '#38bdf8', fontSize: 10, fontWeight: '850' }}>
+                    EMPLOYMENT PARAMETERS
+                  </Text>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel} allowFontScaling={false}>Employer / Position</Text>
+                    <Text style={styles.detailVal} allowFontScaling={false}>{selectedTenant.employerName || 'Google Inc.'} · {selectedTenant.position || 'Staff Engineer'}</Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel} allowFontScaling={false}>Monthly Income</Text>
+                    <Text style={[styles.detailVal, { color: '#10b981' }]} allowFontScaling={false}>
+                      ${(Number(selectedTenant.monthlyIncome) || 3500).toLocaleString()}/mo
+                    </Text>
+                  </View>
+                  <View style={[styles.detailRow, { borderBottomWidth: 0 }]}>
+                    <Text style={styles.detailLabel} allowFontScaling={false}>Employment Status</Text>
+                    <Text style={styles.detailVal} allowFontScaling={false}>{selectedTenant.employmentStatus || 'Full-Time'}</Text>
+                  </View>
+                </View>
 
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel} allowFontScaling={false}>Property Location</Text>
-                <Text style={styles.detailVal} allowFontScaling={false}>
-                  {selectedTenant?.unit?.property?.name || selectedTenant?.propertyName || 'property 1'}
-                </Text>
-              </View>
-
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel} allowFontScaling={false}>Assigned Unit</Text>
-                <Text style={styles.detailVal} allowFontScaling={false}>
-                  Unit {selectedTenant?.unit?.unitNumber || selectedTenant?.unitNumber || 'room 1b'}
-                </Text>
-              </View>
-
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel} allowFontScaling={false}>Monthly Rent Rate</Text>
-                <Text style={[styles.detailVal, { color: '#10b981', fontWeight: '800' }]} allowFontScaling={false}>
-                  ${(Number(selectedTenant?.unit?.rentAmount || selectedTenant?.rentAmount) || 1000).toLocaleString()}
-                </Text>
-              </View>
-
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel} allowFontScaling={false}>Account Status</Text>
-                <Text style={[styles.detailVal, { color: '#10b981', fontWeight: '800' }]} allowFontScaling={false}>
-                  {selectedTenant?.status || 'Active'}
-                </Text>
-              </View>
-            </View>
+                {/* 3. Assigned Lease unit */}
+                <View style={styles.detailContainer}>
+                  <Text style={styles.modalSubHeader} allowFontScaling={false} style={{ marginTop: 0, marginBottom: 8, color: '#38bdf8', fontSize: 10, fontWeight: '850' }}>
+                    LEASE UNIT PATHS
+                  </Text>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel} allowFontScaling={false}>Property Name</Text>
+                    <Text style={styles.detailVal} allowFontScaling={false}>{selectedTenant.unit?.property?.name || selectedTenant.propertyName || 'Property'}</Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel} allowFontScaling={false}>Unit number</Text>
+                    <Text style={styles.detailVal} allowFontScaling={false}>Unit {selectedTenant.unit?.unitNumber || selectedTenant.unitNumber || '101'}</Text>
+                  </View>
+                  <View style={[styles.detailRow, { borderBottomWidth: 0 }]}>
+                    <Text style={styles.detailLabel} allowFontScaling={false}>Account Status</Text>
+                    <Text style={[styles.detailVal, { color: '#10b981', fontWeight: '800' }]} allowFontScaling={false}>{selectedTenant.status || 'Active'}</Text>
+                  </View>
+                </View>
+              </ScrollView>
+            )}
 
             <TouchableOpacity style={styles.closeModalBtn} onPress={() => setSelectedTenant(null)}>
-              <Text style={styles.closeModalBtnText} allowFontScaling={false}>Close Details</Text>
+              <Text style={styles.closeModalBtnText} allowFontScaling={false}>Close details</Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
-
-      <View style={{ height: 60 }} />
-    </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   mainWrapper: { flex: 1, backgroundColor: '#0f172a' },
-  outerContentContainer: { padding: 16, paddingBottom: 60 },
+  container: { flex: 1 },
+  scrollContent: { padding: 16, paddingBottom: 60 },
   center: { flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center' },
   loadingText: { color: '#94a3b8', marginTop: 8 },
 
   header: { marginBottom: 16 },
-  titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
-  title: { fontSize: 24, fontWeight: '800', color: '#f8fafc', flex: 1 },
-  subtitle: { fontSize: 12, color: '#94a3b8', marginTop: 4, lineHeight: 16 },
+  title: { fontSize: 22, fontWeight: '800', color: '#f8fafc' },
+  subtitle: { fontSize: 11.5, color: '#94a3b8', marginTop: 4, lineHeight: 16 },
 
-  addBtn: { backgroundColor: '#0284c7', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, flexDirection: 'row', alignItems: 'center' },
-  addBtnText: { color: '#ffffff', fontSize: 11, fontWeight: '700' },
-
-  showingRow: { marginBottom: 10 },
-  showingText: { fontSize: 10, fontWeight: '800', color: '#64748b', letterSpacing: 1 },
-
-  searchBarRow: { flexDirection: 'row', gap: 8, marginBottom: 16 },
+  searchBarRow: { flexDirection: 'row', gap: 10, marginBottom: 16, alignItems: 'center' },
   searchContainer: {
     flex: 1,
     flexDirection: 'row',
@@ -506,58 +696,127 @@ const styles = StyleSheet.create({
     backgroundColor: '#1e293b',
     borderWidth: 1,
     borderColor: '#334155',
-    borderRadius: 8,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    height: 40,
+  },
+  searchInput: { color: '#f8fafc', fontSize: 12, flex: 1, padding: 0 },
+  addBtn: {
+    backgroundColor: '#38bdf8',
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    borderRadius: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    height: 40,
   },
-  searchInput: {
-    color: '#f8fafc',
-    fontSize: 12,
-    flex: 1,
-    padding: 0,
-  },
-  resetBtn: { backgroundColor: '#334155', paddingHorizontal: 12, justifyContent: 'center', borderRadius: 8 },
-  resetBtnText: { color: '#cbd5e1', fontSize: 11, fontWeight: '700' },
+  addBtnText: { color: '#0f172a', fontSize: 12, fontWeight: '800' },
+
+  sectionHeader: { marginBottom: 12 },
+  sectionTitle: { fontSize: 10, fontWeight: '800', color: '#94a3b8', letterSpacing: 0.8 },
 
   emptyCard: { backgroundColor: '#1e293b', padding: 32, borderRadius: 16, alignItems: 'center', borderWidth: 1, borderColor: '#334155' },
   emptyText: { color: '#f8fafc', fontSize: 15, fontWeight: '700' },
-  emptySubText: { color: '#64748b', fontSize: 12, marginTop: 4, textAlign: 'center', lineHeight: 16 },
 
-  card: { backgroundColor: '#1e293b', borderRadius: 16, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: '#334155' },
-  cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  nameRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 2 },
-  tenantNameText: { fontSize: 15, fontWeight: '800', color: '#f8fafc' },
-  metaInfoRow: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
-  propText: { fontSize: 12, color: '#cbd5e1' },
-  emailText: { fontSize: 11, color: '#64748b' },
-  bulletSeparator: { color: '#64748b', marginHorizontal: 6, fontSize: 11 },
+  card: { backgroundColor: '#1e293b', borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: '#334155' },
+  cardHeader: { flexDirection: 'row', alignItems: 'center' },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#38bdf8',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  avatarText: { color: '#0f172a', fontSize: 16, fontWeight: '800' },
+  tenantInfo: { flex: 1 },
+  tenantName: { fontSize: 15, fontWeight: '800', color: '#f8fafc' },
+  tenantSubText: { fontSize: 11.5, color: '#94a3b8', marginTop: 2 },
+  badgesRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  deleteBtn: { width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(239, 68, 68, 0.12)', alignItems: 'center', justifyContent: 'center' },
+  eyeBtn: { width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(56, 189, 248, 0.12)', alignItems: 'center', justifyContent: 'center' },
 
-  rightGroup: { alignItems: 'flex-end', gap: 6 },
-  badgeGreen: { backgroundColor: 'rgba(16, 185, 129, 0.15)', paddingHorizontal: 8, paddingVertical: 2.5, borderRadius: 6, borderWidth: 1, borderColor: '#10b981' },
-  badgeGreenText: { color: '#10b981', fontSize: 9, fontWeight: '800' },
-  rentText: { fontSize: 14, fontWeight: '800', color: '#38bdf8' },
-  eyeBtn: { backgroundColor: '#0f172a', width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#334155' },
+  divider: { height: 1, backgroundColor: '#334155', marginVertical: 12 },
 
+  metaRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  metaCol: { flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8 },
+  metaText: { fontSize: 12, color: '#cbd5e1' },
+  activeBadge: { backgroundColor: 'rgba(16, 185, 129, 0.12)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, borderWidth: 1, borderColor: '#10b981' },
+  activeBadgeText: { color: '#10b981', fontSize: 10, fontWeight: '800' },
+
+  // Modal styling
   modalBg: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.85)', justifyContent: 'center', padding: 20 },
-  modalCard: { backgroundColor: '#1e293b', borderRadius: 20, padding: 20, borderWidth: 1, borderColor: '#334155' },
-  modalHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
-  modalTitle: { fontSize: 16, fontWeight: '800', color: '#f8fafc', flex: 1 },
+  modalCard: { backgroundColor: '#1e293b', borderRadius: 20, padding: 20, borderWidth: 1, borderColor: '#334155', maxHeight: '85%' },
+  modalHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  modalTitle: { fontSize: 16, fontWeight: '800', color: '#f8fafc' },
+  modalSubHeader: { fontSize: 9, fontWeight: '850', color: '#38bdf8', letterSpacing: 0.8, marginTop: 10, marginBottom: 10 },
+  modalScroll: { marginBottom: 16 },
 
-  inputLabel: { fontSize: 10, color: '#94a3b8', fontWeight: '700', marginBottom: 4, marginTop: 4, letterSpacing: 0.5 },
-  input: { backgroundColor: '#0f172a', borderWidth: 1, borderColor: '#334155', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, color: '#f8fafc', fontSize: 13, marginBottom: 12 },
+  formGroup: { marginBottom: 14 },
+  formRow: { flexDirection: 'row', gap: 10 },
+  formLabel: { fontSize: 9.5, fontWeight: '800', color: '#94a3b8', letterSpacing: 0.5, marginBottom: 6 },
+  formInput: {
+    backgroundColor: '#0f172a',
+    borderWidth: 1,
+    borderColor: '#334155',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    height: 44,
+    color: '#f8fafc',
+    fontSize: 13,
+  },
 
-  modalButtons: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 },
-  modalBtn: { width: '48%', paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
-  cancelBtn: { backgroundColor: '#334155' },
-  cancelBtnText: { color: '#cbd5e1', fontWeight: '700', fontSize: 13 },
-  saveBtn: { backgroundColor: '#0284c7' },
-  saveBtnText: { color: '#ffffff', fontWeight: '700', fontSize: 13 },
+  dropdownTrigger: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#0f172a',
+    borderWidth: 1,
+    borderColor: '#334155',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    height: 44,
+  },
+  dropdownTriggerText: { color: '#cbd5e1', fontSize: 13 },
+  dropdownContainer: {
+    position: 'absolute',
+    top: 68,
+    left: 0,
+    right: 0,
+    backgroundColor: '#0f172a',
+    borderWidth: 1,
+    borderColor: '#334155',
+    borderRadius: 10,
+    zIndex: 9999,
+    elevation: 5,
+    overflow: 'hidden',
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1e293b',
+  },
+  dropdownItemText: { color: '#cbd5e1', fontSize: 12.5 },
 
-  detailCard: { backgroundColor: '#0f172a', borderRadius: 12, padding: 14, marginBottom: 16, borderWidth: 1, borderColor: '#334155' },
+  modalActions: { flexDirection: 'row', gap: 10, justifyContent: 'flex-end', borderTopWidth: 1, borderTopColor: '#334155', paddingTop: 14, marginTop: 10 },
+  cancelBtn: { paddingVertical: 10, paddingHorizontal: 16, borderRadius: 10, borderWidth: 1, borderColor: '#334155' },
+  cancelBtnText: { color: '#cbd5e1', fontSize: 12.5, fontWeight: '700' },
+  submitBtn: { backgroundColor: '#38bdf8', paddingVertical: 10, paddingHorizontal: 16, borderRadius: 10, minWidth: 110, alignItems: 'center', justifyContent: 'center' },
+  submitBtnDisabled: { opacity: 0.5 },
+  submitBtnText: { color: '#0f172a', fontSize: 12.5, fontWeight: '800' },
+
+  // Detail Specs Modal
+  modalTitleRow: { flexDirection: 'row', alignItems: 'center' },
+  detailContainer: { backgroundColor: '#0f172a', borderRadius: 12, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: '#334155' },
   detailRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#1e293b' },
-  detailLabel: { color: '#94a3b8', fontSize: 13, fontWeight: '500' },
-  detailVal: { color: '#f8fafc', fontSize: 13, fontWeight: '700' },
+  detailLabel: { color: '#94a3b8', fontSize: 12.5, fontWeight: '600' },
+  detailVal: { color: '#f8fafc', fontSize: 12.5, fontWeight: '700', textAlign: 'right', flex: 1, marginLeft: 16 },
   closeModalBtn: { backgroundColor: '#334155', paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
   closeModalBtnText: { color: '#cbd5e1', fontSize: 13, fontWeight: '700' },
 });
-

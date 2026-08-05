@@ -11,9 +11,12 @@ import {
   Alert,
   ActivityIndicator,
   RefreshControl,
+  Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
 import apiClient from '../api/client';
 import { useAuthStore, useThemeStore } from '../store/useStore';
+import { Ionicons } from '@expo/vector-icons';
 
 export const ProfileScreen = () => {
   const { user, logout, refreshAccessToken } = useAuthStore();
@@ -57,7 +60,6 @@ export const ProfileScreen = () => {
   const role = getNormalizedRole(user?.role);
   const isTenant = role === 'Tenant';
   const isOwner = role === 'Owner';
-  const isStaff = role === 'Maintenance Staff';
 
   // Strictly hit Railway live endpoints: /portal/tenant/profile or /portal/owner/profile
   const fetchLiveProfile = async () => {
@@ -85,7 +87,7 @@ export const ProfileScreen = () => {
       console.log('Profile fetch error, using live defaults:', e.message);
       setFirstName(user?.firstName || (isTenant ? 'person' : 'owner'));
       setLastName(user?.lastName || (isTenant ? '1' : 'new 2'));
-      setPhone(user?.phone || (isTenant ? '344232' : '2342524525252'));
+      setPhone(user?.phone || (isTenant ? '344232' : '23425245252'));
       setUserEmail(user?.email || (isTenant ? 'person1b@gmail.com' : 'owner1b@gmail.com'));
       setUnitNumber('Unit room 1b');
       setEmergencyContact('Emergency Contact Available');
@@ -176,6 +178,8 @@ export const ProfileScreen = () => {
     );
   }
 
+  const userInitial = firstName.charAt(0).toUpperCase() || userEmail.charAt(0).toUpperCase() || 'P';
+
   return (
     <ScrollView
       style={styles.container}
@@ -183,52 +187,33 @@ export const ProfileScreen = () => {
       showsVerticalScrollIndicator={false}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchLiveProfile} tintColor="#38bdf8" />}
     >
-      {/* Page Header */}
-      {isStaff ? (
-        <View style={styles.mobileProfileHeader}>
-          <View style={styles.mobileAvatarContainer}>
-            <Text style={styles.mobileAvatarText}>
-              {firstName.charAt(0).toUpperCase() || 'V'}
-            </Text>
-          </View>
-          <Text style={styles.mobileProfileName}>{firstName} {lastName}</Text>
-          <View style={styles.roleBadgeContainer}>
-            <Text style={styles.roleBadgeText}>Maintenance Staff</Text>
-          </View>
-          <View style={styles.mobileHeaderBtnsRow}>
-            <TouchableOpacity style={styles.mobileEditBtn} onPress={() => setIsEditModalOpen(true)}>
-              <Text style={styles.mobileEditBtnText}>✏️ Edit Profile</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.mobilePasswordBtn} onPress={() => setIsPasswordModalOpen(true)}>
-              <Text style={styles.mobilePasswordBtnText}>🔒 Reset Password</Text>
-            </TouchableOpacity>
-          </View>
+      {/* Premium Mobile Profile Header Card */}
+      <View style={styles.mobileProfileHeader}>
+        <View style={styles.mobileAvatarContainer}>
+          <Text style={styles.mobileAvatarText} allowFontScaling={false}>{userInitial}</Text>
         </View>
-      ) : (
-        <View style={styles.header}>
-          <Text style={styles.breadcrumb} allowFontScaling={false}>Home › Profile</Text>
-          <View style={styles.titleRow}>
-            <Text style={styles.title} allowFontScaling={false}>Account Profile</Text>
-            
-            <View style={styles.headerBtnsRow}>
-              <TouchableOpacity style={styles.editHeaderBtn} onPress={() => setIsEditModalOpen(true)}>
-                <Text style={styles.editHeaderBtnText} allowFontScaling={false}>✏️ Edit Profile</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.passwordHeaderBtn} onPress={() => setIsPasswordModalOpen(true)}>
-                <Text style={styles.passwordHeaderBtnText} allowFontScaling={false}>🔒 Reset Password</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-          <Text style={styles.subtitle} allowFontScaling={false}>
-            Verify personal contact details, security credentials, unit assignments, and emergency contacts.
-          </Text>
+        <Text style={styles.mobileProfileName} allowFontScaling={false}>{firstName} {lastName}</Text>
+        <View style={styles.roleBadgeContainer}>
+          <Text style={styles.roleBadgeText} allowFontScaling={false}>{role}</Text>
         </View>
-      )}
+        <View style={styles.mobileHeaderBtnsRow}>
+          <TouchableOpacity style={styles.mobileEditBtn} onPress={() => setIsEditModalOpen(true)}>
+            <Ionicons name="create-outline" size={14} color="#0f172a" style={{ marginRight: 6 }} />
+            <Text style={styles.mobileEditBtnText} allowFontScaling={false}>Edit Profile</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.mobilePasswordBtn} onPress={() => setIsPasswordModalOpen(true)}>
+            <Ionicons name="lock-closed-outline" size={14} color="#f8fafc" style={{ marginRight: 6 }} />
+            <Text style={styles.mobilePasswordBtnText} allowFontScaling={false}>Reset Password</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
 
-      {/* Box 1: CONTACT & RESIDENT DETAILS matching Web Screenshot 1-to-1 */}
+      {/* Card 1: CONTACT DETAILS */}
       <View style={styles.card}>
-        <Text style={styles.cardTitle} allowFontScaling={false}>CONTACT DETAILS</Text>
+        <View style={styles.cardTitleRow}>
+          <Ionicons name="call-outline" size={15} color="#38bdf8" style={{ marginRight: 6 }} />
+          <Text style={styles.cardTitle} allowFontScaling={false}>CONTACT DETAILS</Text>
+        </View>
         <View style={styles.divider} />
 
         <View style={styles.formRow}>
@@ -261,7 +246,7 @@ export const ProfileScreen = () => {
             </Text>
             <View style={[styles.readOnlyBox, styles.disabledBox]}>
               <Text style={[styles.readOnlyText, styles.disabledText]} allowFontScaling={false}>
-                🔒 {userEmail}
+                <Ionicons name="lock-closed" size={11} color="#94a3b8" style={{ marginRight: 4 }} /> {userEmail}
               </Text>
             </View>
           </View>
@@ -295,60 +280,65 @@ export const ProfileScreen = () => {
         )}
       </View>
 
-      {/* Box 2: PERMITS & RECORDS / BANK SPECS */}
-      {!isStaff && (
-        <View style={styles.card}>
+      {/* Card 2: PERMITS & RECORDS / BANK SPECS */}
+      <View style={styles.card}>
+        <View style={styles.cardTitleRow}>
+          <Ionicons name={isOwner ? "card-outline" : "car-outline"} size={15} color="#38bdf8" style={{ marginRight: 6 }} />
           <Text style={styles.cardTitle} allowFontScaling={false}>
             {isOwner ? 'ACH DIRECT DEPOSIT BANKING' : 'PERMITS & RESIDENT RECORDS'}
           </Text>
-          <View style={styles.divider} />
-
-          {isOwner ? (
-            <>
-              <View style={styles.permitItem}>
-                <Text style={styles.permitLabel} allowFontScaling={false}>BANK NAME</Text>
-                <Text style={styles.permitVal} allowFontScaling={false}>{profileData.bankName || 'Checking Account'}</Text>
-              </View>
-              <View style={styles.permitItem}>
-                <Text style={styles.permitLabel} allowFontScaling={false}>ACCOUNT NUMBER</Text>
-                <Text style={styles.permitVal} allowFontScaling={false}>{profileData.accountNumber || 'XXXX-XXXX-9822'}</Text>
-              </View>
-              <View style={styles.permitItem}>
-                <Text style={styles.permitLabel} allowFontScaling={false}>ROUTING STATUS</Text>
-                <Text style={[styles.permitVal, { color: '#4ade80', fontWeight: '800' }]} allowFontScaling={false}>Verified</Text>
-              </View>
-            </>
-          ) : (
-            <>
-              <View style={styles.permitItem}>
-                <Text style={styles.permitLabel} allowFontScaling={false}>REGISTERED VEHICLES</Text>
-                <Text style={styles.permitVal} allowFontScaling={false}>{vehicles}</Text>
-              </View>
-
-              <View style={styles.permitItem}>
-                <Text style={styles.permitLabel} allowFontScaling={false}>REGISTERED PETS</Text>
-                <Text style={styles.permitVal} allowFontScaling={false}>{pets}</Text>
-              </View>
-
-              <View style={styles.permitItem}>
-                <Text style={styles.permitLabel} allowFontScaling={false}>PREFERRED LANGUAGE</Text>
-                <Text style={styles.permitVal} allowFontScaling={false}>{preferredLanguage}</Text>
-              </View>
-            </>
-          )}
         </View>
-      )}
+        <View style={styles.divider} />
 
-      {/* App Preferences */}
+        {isOwner ? (
+          <>
+            <View style={styles.permitItem}>
+              <Text style={styles.permitLabel} allowFontScaling={false}>BANK NAME</Text>
+              <Text style={styles.permitVal} allowFontScaling={false}>{profileData.bankName || 'Checking Account'}</Text>
+            </View>
+            <View style={styles.permitItem}>
+              <Text style={styles.permitLabel} allowFontScaling={false}>ACCOUNT NUMBER</Text>
+              <Text style={styles.permitVal} allowFontScaling={false}>{profileData.accountNumber || 'XXXX-XXXX-9822'}</Text>
+            </View>
+            <View style={styles.permitItem}>
+              <Text style={styles.permitLabel} allowFontScaling={false}>ROUTING STATUS</Text>
+              <Text style={[styles.permitVal, { color: '#10b981', fontWeight: '800' }]} allowFontScaling={false}>Verified</Text>
+            </View>
+          </>
+        ) : (
+          <>
+            <View style={styles.permitItem}>
+              <Text style={styles.permitLabel} allowFontScaling={false}>REGISTERED VEHICLES</Text>
+              <Text style={styles.permitVal} allowFontScaling={false}>{vehicles}</Text>
+            </View>
+
+            <View style={styles.permitItem}>
+              <Text style={styles.permitLabel} allowFontScaling={false}>REGISTERED PETS</Text>
+              <Text style={styles.permitVal} allowFontScaling={false}>{pets}</Text>
+            </View>
+
+            <View style={styles.permitItem}>
+              <Text style={styles.permitLabel} allowFontScaling={false}>PREFERRED LANGUAGE</Text>
+              <Text style={styles.permitVal} allowFontScaling={false}>{preferredLanguage}</Text>
+            </View>
+          </>
+        )}
+      </View>
+
+      {/* Card 3: APP PREFERENCES */}
       <View style={styles.card}>
-        <Text style={styles.cardTitle} allowFontScaling={false}>APP PREFERENCES</Text>
+        <View style={styles.cardTitleRow}>
+          <Ionicons name="settings-outline" size={15} color="#38bdf8" style={{ marginRight: 6 }} />
+          <Text style={styles.cardTitle} allowFontScaling={false}>APP PREFERENCES</Text>
+        </View>
         <View style={styles.divider} />
 
         <View style={styles.settingRow}>
           <View style={styles.rowInfo}>
-            <Text style={styles.rowLabel} allowFontScaling={false}>
-              {isDarkMode ? '🌙 Dark Mode' : '☀️ Light Mode'}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Ionicons name="moon-outline" size={16} color="#f8fafc" style={{ marginRight: 6 }} />
+              <Text style={styles.rowLabel} allowFontScaling={false}>Dark Mode</Text>
+            </View>
             <Text style={styles.rowSub} allowFontScaling={false}>
               Toggle between Dark and Light interface
             </Text>
@@ -363,170 +353,203 @@ export const ProfileScreen = () => {
       </View>
 
       {/* Logout Button */}
-      <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
-        <Text style={styles.logoutBtnText} allowFontScaling={false}>🚪 Sign Out</Text>
+      <TouchableOpacity style={styles.logoutBtn} onPress={logout} activeOpacity={0.8}>
+        <Ionicons name="log-out-outline" size={18} color="#ffffff" style={{ marginRight: 8 }} />
+        <Text style={styles.logoutBtnText} allowFontScaling={false}>Sign Out</Text>
       </TouchableOpacity>
 
       {/* MODAL 1: Edit Profile Details Modal */}
       <Modal visible={isEditModalOpen} animationType="slide" transparent>
         <View style={styles.modalBg}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle} allowFontScaling={false}>✏️ Edit Profile Details</Text>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={{ flex: 1, width: '100%', justifyContent: 'center' }}
+          >
+            <ScrollView 
+              contentContainerStyle={styles.modalScrollContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={styles.modalCard}>
+                <View style={styles.modalHeaderRow}>
+                  <Text style={styles.modalTitle} allowFontScaling={false}>Edit Profile Details</Text>
+                  <TouchableOpacity onPress={() => setIsEditModalOpen(false)}>
+                    <Ionicons name="close" size={22} color="#94a3b8" />
+                  </TouchableOpacity>
+                </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel} allowFontScaling={false}>FIRST NAME</Text>
-              <TextInput
-                style={styles.input}
-                value={firstName}
-                onChangeText={setFirstName}
-                placeholder="First Name"
-                placeholderTextColor="#94a3b8"
-              />
-            </View>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel} allowFontScaling={false}>FIRST NAME</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={firstName}
+                    onChangeText={setFirstName}
+                    placeholder="First Name"
+                    placeholderTextColor="#64748b"
+                  />
+                </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel} allowFontScaling={false}>LAST NAME</Text>
-              <TextInput
-                style={styles.input}
-                value={lastName}
-                onChangeText={setLastName}
-                placeholder="Last Name"
-                placeholderTextColor="#94a3b8"
-              />
-            </View>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel} allowFontScaling={false}>LAST NAME</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={lastName}
+                    onChangeText={setLastName}
+                    placeholder="Last Name"
+                    placeholderTextColor="#64748b"
+                  />
+                </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel} allowFontScaling={false}>PHONE</Text>
-              <TextInput
-                style={styles.input}
-                value={phone}
-                onChangeText={setPhone}
-                placeholder="Phone Number"
-                placeholderTextColor="#94a3b8"
-                keyboardType="phone-pad"
-              />
-            </View>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel} allowFontScaling={false}>PHONE</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={phone}
+                    onChangeText={setPhone}
+                    placeholder="Phone Number"
+                    placeholderTextColor="#64748b"
+                    keyboardType="phone-pad"
+                  />
+                </View>
 
-            {/* EMAIL IS LOCKED / READ-ONLY */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel} allowFontScaling={false}>
-                EMAIL ADDRESS <Text style={{ color: '#f59e0b', fontSize: 9 }}>(CANNOT BE CHANGED)</Text>
-              </Text>
-              <TextInput
-                style={[styles.input, styles.disabledInput]}
-                value={`🔒 ${userEmail}`}
-                editable={false}
-                placeholderTextColor="#64748b"
-              />
-            </View>
+                {/* EMAIL IS LOCKED / READ-ONLY */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel} allowFontScaling={false}>
+                    EMAIL ADDRESS <Text style={{ color: '#f59e0b', fontSize: 9 }}>(CANNOT BE CHANGED)</Text>
+                  </Text>
+                  <TextInput
+                    style={[styles.input, styles.disabledInput]}
+                    value={`🔒 ${userEmail}`}
+                    editable={false}
+                    placeholderTextColor="#64748b"
+                  />
+                </View>
 
-            {isTenant ? (
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel} allowFontScaling={false}>EMERGENCY CONTACT</Text>
-                <TextInput
-                  style={styles.input}
-                  value={emergencyContact}
-                  onChangeText={setEmergencyContact}
-                  placeholder="Emergency Contact"
-                  placeholderTextColor="#94a3b8"
-                />
+                {isTenant ? (
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel} allowFontScaling={false}>EMERGENCY CONTACT</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={emergencyContact}
+                      onChangeText={setEmergencyContact}
+                      placeholder="Emergency Contact"
+                      placeholderTextColor="#64748b"
+                    />
+                  </View>
+                ) : (
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel} allowFontScaling={false}>MAILING STREET ADDRESS</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={streetAddress}
+                      onChangeText={setStreetAddress}
+                      placeholder="Street Address"
+                      placeholderTextColor="#64748b"
+                    />
+                  </View>
+                )}
+
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity
+                    style={[styles.modalBtn, styles.cancelBtn]}
+                    onPress={() => setIsEditModalOpen(false)}
+                  >
+                    <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.modalBtn, styles.saveBtn]}
+                    onPress={handleSaveProfile}
+                    disabled={saving}
+                  >
+                    <Text style={styles.saveBtnText} allowFontScaling={false}>
+                      {saving ? 'Saving...' : 'Save Details'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-            ) : (
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel} allowFontScaling={false}>MAILING STREET ADDRESS</Text>
-                <TextInput
-                  style={styles.input}
-                  value={streetAddress}
-                  onChangeText={setStreetAddress}
-                  placeholder="Street Address"
-                  placeholderTextColor="#94a3b8"
-                />
-              </View>
-            )}
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalBtn, styles.cancelBtn]}
-                onPress={() => setIsEditModalOpen(false)}
-              >
-                <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.modalBtn, styles.saveBtn]}
-                onPress={handleSaveProfile}
-                disabled={saving}
-              >
-                <Text style={styles.saveBtnText} allowFontScaling={false}>
-                  {saving ? 'Saving...' : 'Save Details'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+            </ScrollView>
+          </KeyboardAvoidingView>
         </View>
       </Modal>
 
-      {/* MODAL 2: 🔒 Reset Security Password Modal */}
+      {/* MODAL 2: Reset Security Password Modal */}
       <Modal visible={isPasswordModalOpen} animationType="slide" transparent>
         <View style={styles.modalBg}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle} allowFontScaling={false}>🔒 Reset Security Password</Text>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={{ flex: 1, width: '100%', justifyContent: 'center' }}
+          >
+            <ScrollView 
+              contentContainerStyle={styles.modalScrollContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={styles.modalCard}>
+                <View style={styles.modalHeaderRow}>
+                  <Text style={styles.modalTitle} allowFontScaling={false}>Reset Password</Text>
+                  <TouchableOpacity onPress={() => setIsPasswordModalOpen(false)}>
+                    <Ionicons name="close" size={22} color="#94a3b8" />
+                  </TouchableOpacity>
+                </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel} allowFontScaling={false}>CURRENT PASSWORD *</Text>
-              <TextInput
-                style={styles.input}
-                value={currentPassword}
-                onChangeText={setCurrentPassword}
-                secureTextEntry
-                placeholder="••••••••"
-                placeholderTextColor="#94a3b8"
-              />
-            </View>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel} allowFontScaling={false}>CURRENT PASSWORD *</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={currentPassword}
+                    onChangeText={setCurrentPassword}
+                    secureTextEntry
+                    placeholder="••••••••"
+                    placeholderTextColor="#64748b"
+                  />
+                </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel} allowFontScaling={false}>NEW PASSWORD *</Text>
-              <TextInput
-                style={styles.input}
-                value={newPassword}
-                onChangeText={setNewPassword}
-                secureTextEntry
-                placeholder="••••••••"
-                placeholderTextColor="#94a3b8"
-              />
-            </View>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel} allowFontScaling={false}>NEW PASSWORD *</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={newPassword}
+                    onChangeText={setNewPassword}
+                    secureTextEntry
+                    placeholder="••••••••"
+                    placeholderTextColor="#64748b"
+                  />
+                </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel} allowFontScaling={false}>CONFIRM NEW PASSWORD *</Text>
-              <TextInput
-                style={styles.input}
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                secureTextEntry
-                placeholder="••••••••"
-                placeholderTextColor="#94a3b8"
-              />
-            </View>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel} allowFontScaling={false}>CONFIRM NEW PASSWORD *</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    secureTextEntry
+                    placeholder="••••••••"
+                    placeholderTextColor="#64748b"
+                  />
+                </View>
 
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalBtn, styles.cancelBtn]}
-                onPress={() => setIsPasswordModalOpen(false)}
-              >
-                <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
-              </TouchableOpacity>
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity
+                    style={[styles.modalBtn, styles.cancelBtn]}
+                    onPress={() => setIsPasswordModalOpen(false)}
+                  >
+                    <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
+                  </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[styles.modalBtn, styles.saveBtn]}
-                onPress={handleResetPasswordSubmit}
-                disabled={resettingPassword}
-              >
-                <Text style={styles.saveBtnText} allowFontScaling={false}>
-                  {resettingPassword ? 'Updating...' : 'Update Password'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+                  <TouchableOpacity
+                    style={[styles.modalBtn, styles.saveBtn]}
+                    onPress={handleResetPasswordSubmit}
+                    disabled={resettingPassword}
+                  >
+                    <Text style={styles.saveBtnText} allowFontScaling={false}>
+                      {resettingPassword ? 'Updating...' : 'Update Password'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </ScrollView>
+          </KeyboardAvoidingView>
         </View>
       </Modal>
 
@@ -541,91 +564,83 @@ const styles = StyleSheet.create({
   center: { flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center' },
   loadingText: { color: '#94a3b8', marginTop: 8 },
 
-  header: { marginBottom: 14 },
-  breadcrumb: { color: '#38bdf8', fontSize: 11, fontWeight: '700', marginBottom: 4 },
-  titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
-  title: { fontSize: 18, fontWeight: '800', color: '#f8fafc', flex: 1 },
-  subtitle: { fontSize: 11.5, color: '#94a3b8', marginTop: 4, lineHeight: 16 },
-
-  headerBtnsRow: { flexDirection: 'row', gap: 6 },
-  editHeaderBtn: { backgroundColor: '#0284c7', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6 },
-  editHeaderBtnText: { color: '#ffffff', fontSize: 11, fontWeight: '700' },
-  passwordHeaderBtn: { backgroundColor: '#1e293b', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6, borderWidth: 1, borderColor: '#475569' },
-  passwordHeaderBtnText: { color: '#fbbf24', fontSize: 11, fontWeight: '700' },
-
-  card: { backgroundColor: '#1e293b', borderRadius: 14, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: '#334155' },
-  cardTitle: { fontSize: 11, fontWeight: '800', color: '#38bdf8', letterSpacing: 0.8 },
-  divider: { height: 1, backgroundColor: '#334155', marginVertical: 10 },
+  card: { backgroundColor: '#1e293b', borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: '#334155' },
+  cardTitleRow: { flexDirection: 'row', alignItems: 'center' },
+  cardTitle: { fontSize: 11, fontWeight: '800', color: '#cbd5e1', letterSpacing: 1 },
+  divider: { height: 1, backgroundColor: '#334155', marginVertical: 12 },
 
   formRow: { flexDirection: 'row', gap: 10, marginBottom: 10 },
   formCol: { flex: 1 },
-  fieldLabel: { fontSize: 9.5, color: '#94a3b8', fontWeight: '800', marginBottom: 4 },
-  readOnlyBox: { backgroundColor: '#0f172a', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, borderWidth: 1, borderColor: '#334155' },
-  readOnlyText: { color: '#f8fafc', fontSize: 12, fontWeight: '600' },
+  fieldLabel: { fontSize: 9.5, color: '#94a3b8', fontWeight: '800', marginBottom: 4, letterSpacing: 0.5 },
+  readOnlyBox: { backgroundColor: '#0f172a', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, borderWidth: 1, borderColor: '#334155' },
+  readOnlyText: { color: '#f8fafc', fontSize: 13, fontWeight: '600' },
   disabledBox: { backgroundColor: 'rgba(15, 23, 42, 0.6)', borderColor: '#475569' },
   disabledText: { color: '#94a3b8', fontWeight: '700' },
 
-  permitItem: { marginVertical: 4 },
-  permitLabel: { fontSize: 9.5, color: '#94a3b8', fontWeight: '800' },
-  permitVal: { fontSize: 12, color: '#f8fafc', fontWeight: '600', marginTop: 2 },
+  permitItem: { marginVertical: 6 },
+  permitLabel: { fontSize: 9.5, color: '#94a3b8', fontWeight: '800', letterSpacing: 0.5 },
+  permitVal: { fontSize: 13, color: '#f8fafc', fontWeight: '600', marginTop: 3 },
 
   settingRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   rowInfo: { flex: 1, paddingRight: 10 },
-  rowLabel: { fontSize: 13, fontWeight: '700', color: '#f8fafc' },
-  rowSub: { fontSize: 11, color: '#94a3b8', marginTop: 2 },
+  rowLabel: { fontSize: 14, fontWeight: '800', color: '#f8fafc' },
+  rowSub: { fontSize: 11.5, color: '#94a3b8', marginTop: 2 },
 
-  logoutBtn: { backgroundColor: '#ef4444', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginTop: 10 },
-  logoutBtnText: { color: '#ffffff', fontSize: 13, fontWeight: '800' },
+  logoutBtn: { backgroundColor: '#ef4444', borderRadius: 12, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 16 },
+  logoutBtnText: { color: '#ffffff', fontSize: 14, fontWeight: '800' },
 
-  modalBg: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', padding: 20 },
-  modalCard: { backgroundColor: '#1e293b', borderRadius: 16, padding: 20, borderWidth: 1, borderColor: '#334155' },
-  modalTitle: { fontSize: 17, fontWeight: '800', color: '#38bdf8', marginBottom: 14 },
+  modalBg: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.85)', justifyContent: 'center', padding: 20 },
+  modalScrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    padding: 16,
+    paddingTop: Platform.OS === 'ios' ? 40 : 16,
+    paddingBottom: Platform.OS === 'ios' ? 60 : 30,
+  },
+  modalCard: { backgroundColor: '#1e293b', borderRadius: 20, padding: 20, borderWidth: 1, borderColor: '#334155' },
+  modalHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
+  modalTitle: { fontSize: 16, fontWeight: '800', color: '#f8fafc' },
 
-  inputGroup: { marginBottom: 10 },
-  inputLabel: { fontSize: 9.5, color: '#94a3b8', fontWeight: '700', marginBottom: 4 },
-  input: { backgroundColor: '#0f172a', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 9, color: '#f8fafc', fontSize: 12, borderWidth: 1, borderColor: '#334155' },
-  disabledInput: { backgroundColor: '#1e293b', borderColor: '#475569', color: '#94a3b8', opacity: 0.8 },
+  inputGroup: { marginBottom: 12 },
+  inputLabel: { fontSize: 10, color: '#94a3b8', fontWeight: '700', marginBottom: 6, marginTop: 4, letterSpacing: 0.5 },
+  input: { backgroundColor: '#0f172a', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, color: '#f8fafc', fontSize: 13, borderWidth: 1, borderColor: '#334155' },
+  disabledInput: { backgroundColor: '#1e293b', borderColor: '#475569', color: '#64748b', opacity: 0.8 },
 
-  modalButtons: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 14 },
-  modalBtn: { width: '48%', paddingVertical: 10, borderRadius: 8, alignItems: 'center' },
+  modalButtons: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 16 },
+  modalBtn: { width: '48%', paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
   cancelBtn: { backgroundColor: '#334155' },
-  cancelBtnText: { color: '#cbd5e1', fontWeight: '600' },
+  cancelBtnText: { color: '#cbd5e1', fontWeight: '700', fontSize: 13 },
   saveBtn: { backgroundColor: '#0284c7' },
-  saveBtnText: { color: '#ffffff', fontWeight: '700' },
+  saveBtnText: { color: '#ffffff', fontWeight: '700', fontSize: 13 },
 
   mobileProfileHeader: {
     alignItems: 'center',
     paddingVertical: 20,
     backgroundColor: '#1e293b',
-    borderRadius: 16,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: '#334155',
     marginBottom: 16,
   },
   mobileAvatarContainer: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     backgroundColor: '#38bdf8',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10,
-    shadowColor: '#38bdf8',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 6,
+    marginBottom: 12,
   },
   mobileAvatarText: {
     color: '#0f172a',
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: '800',
   },
   mobileProfileName: {
     color: '#f8fafc',
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '800',
-    marginBottom: 6,
+    marginBottom: 4,
   },
   roleBadgeContainer: {
     backgroundColor: 'rgba(16, 185, 129, 0.15)',
@@ -638,9 +653,10 @@ const styles = StyleSheet.create({
   },
   roleBadgeText: {
     color: '#10b981',
-    fontSize: 11,
-    fontWeight: '700',
+    fontSize: 10.5,
+    fontWeight: '800',
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   mobileHeaderBtnsRow: {
     flexDirection: 'row',
@@ -652,9 +668,11 @@ const styles = StyleSheet.create({
   mobileEditBtn: {
     flex: 1,
     backgroundColor: '#38bdf8',
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingVertical: 10,
+    borderRadius: 10,
     alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
   },
   mobileEditBtnText: {
     color: '#0f172a',
@@ -664,11 +682,13 @@ const styles = StyleSheet.create({
   mobilePasswordBtn: {
     flex: 1,
     backgroundColor: '#334155',
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingVertical: 10,
+    borderRadius: 10,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#475569',
+    flexDirection: 'row',
+    justifyContent: 'center',
   },
   mobilePasswordBtnText: {
     color: '#f8fafc',

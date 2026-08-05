@@ -34,6 +34,12 @@ import { DistributionsScreen } from './screens/DistributionsScreen';
 import { ReportsScreen } from './screens/ReportsScreen';
 import { InvoicesScreen } from './screens/InvoicesScreen';
 import { TenantLedgerScreen } from './screens/TenantLedgerScreen';
+import { TenantServicesScreen } from './screens/TenantServicesScreen';
+import { OwnerFinancialsScreen } from './screens/OwnerFinancialsScreen';
+import { OwnerMaintenanceScreen } from './screens/OwnerMaintenanceScreen';
+import { OwnerServicesScreen } from './screens/OwnerServicesScreen';
+import { ManagerServicesScreen } from './screens/ManagerServicesScreen';
+import { OwnersScreen } from './screens/OwnersScreen';
 
 export default function App() {
   const { user, isAuthenticated, isLoaded, initializeAuth } = useAuthStore();
@@ -123,9 +129,9 @@ export default function App() {
       moduleTabs = [
         { id: 'dashboard', label: 'Dashboard', icon: 'grid-outline', activeIcon: 'grid' },
         { id: 'properties', label: 'Properties', icon: 'business-outline', activeIcon: 'business' },
-        { id: 'rent', label: 'Financials', icon: 'cash-outline', activeIcon: 'cash' },
         { id: 'maintenance', label: 'Repairs', icon: 'hammer-outline', activeIcon: 'hammer' },
-        { id: 'more', label: 'All 9', icon: 'menu-outline', activeIcon: 'menu' },
+        { id: 'messages', label: 'Messages', icon: 'chatbubbles-outline', activeIcon: 'chatbubbles' },
+        { id: 'more', label: 'Services', icon: 'apps-outline', activeIcon: 'apps' },
       ];
       break;
 
@@ -134,8 +140,8 @@ export default function App() {
         { id: 'dashboard', label: 'Dashboard', icon: 'grid-outline', activeIcon: 'grid' },
         { id: 'lease', label: 'Lease', icon: 'document-text-outline', activeIcon: 'document-text' },
         { id: 'rent', label: 'Payments', icon: 'card-outline', activeIcon: 'card' },
-        { id: 'maintenance', label: 'Repairs', icon: 'hammer-outline', activeIcon: 'hammer' },
-        { id: 'more', label: 'All', icon: 'menu-outline', activeIcon: 'menu' },
+        { id: 'messages', label: 'Messages', icon: 'chatbubbles-outline', activeIcon: 'chatbubbles' },
+        { id: 'more', label: 'Services', icon: 'apps-outline', activeIcon: 'apps' },
       ];
       break;
 
@@ -164,7 +170,7 @@ export default function App() {
       case 'Maintenance Staff':
         return <StaffDashboard />;
       case 'Owner':
-        return <OwnerDashboard />;
+        return <OwnerDashboard onNavigate={(screenId) => setActiveTab(screenId)} />;
       case 'Tenant':
         return <TenantDashboard onNavigate={(screenId) => setActiveTab(screenId)} />;
       default:
@@ -195,8 +201,9 @@ export default function App() {
       case 'applications':
         return <LeadsScreen />;
       case 'tenants':
-      case 'owners':
         return <TenantsScreen />;
+      case 'owners':
+        return <OwnersScreen />;
       case 'documents':
         return <TenantDocumentsScreen />;
       case 'invoices':
@@ -211,13 +218,13 @@ export default function App() {
       case 'reports':
         return <ReportsScreen />;
       case 'rent':
-        return role === 'Owner' ? <RentScreen /> : <RentScreen />;
+        return role === 'Owner' ? <OwnerFinancialsScreen /> : <RentScreen />;
       case 'financials':
       case 'ledger':
       case 'accounting':
-        return role === 'Owner' ? <RentScreen /> : <TenantLedgerScreen />;
+        return role === 'Owner' ? <OwnerFinancialsScreen /> : <TenantLedgerScreen />;
       case 'maintenance':
-        return <MaintenanceScreen />;
+        return role === 'Owner' ? <OwnerMaintenanceScreen /> : <MaintenanceScreen />;
       case 'companies':
         return <CompaniesScreen />;
       case 'distributions':
@@ -226,13 +233,54 @@ export default function App() {
         return renderDashboardByRole();
       case 'profile':
         return <ProfileScreen />;
+      case 'more':
+        if (role === 'Tenant') {
+          return (
+            <TenantServicesScreen 
+              onNavigate={(screenId) => {
+                if (screenId === 'logout') {
+                  useAuthStore.getState().logout();
+                } else {
+                  setActiveTab(screenId);
+                }
+              }} 
+            />
+          );
+        }
+        if (role === 'Owner') {
+          return (
+            <OwnerServicesScreen 
+              onNavigate={(screenId) => {
+                if (screenId === 'logout') {
+                  useAuthStore.getState().logout();
+                } else {
+                  setActiveTab(screenId);
+                }
+              }} 
+            />
+          );
+        }
+        if (role === 'Property Manager') {
+          return (
+            <ManagerServicesScreen 
+              onNavigate={(screenId) => {
+                if (screenId === 'logout') {
+                  useAuthStore.getState().logout();
+                } else {
+                  setActiveTab(screenId);
+                }
+              }} 
+            />
+          );
+        }
+        return renderDashboardByRole();
       default:
         return renderDashboardByRole();
     }
   };
 
   const handleTabPress = (tabId) => {
-    if (tabId === 'more') {
+    if (tabId === 'more' && role !== 'Tenant' && role !== 'Owner' && role !== 'Property Manager') {
       setDrawerVisible(true);
     } else {
       setActiveTab(tabId);
@@ -244,7 +292,7 @@ export default function App() {
       <StatusBar style="light" />
 
       {/* Top Header Bar with Hamburger Drawer, Notification Bell Icon & Profile Badge */}
-      {(role !== 'Maintenance Staff' && role !== 'Tenant') && (
+      {(role !== 'Maintenance Staff' && role !== 'Tenant' && role !== 'Owner' && role !== 'Property Manager') && (
         <View style={styles.topHeader}>
           <View style={styles.brandContainer}>
             <TouchableOpacity style={styles.hamburgerBtn} onPress={() => setDrawerVisible(true)}>
