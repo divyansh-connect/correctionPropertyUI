@@ -132,20 +132,40 @@ export const ProfileScreen = () => {
     }
   };
 
+  const getProfileEndpoint = () => {
+    if (role === 'Owner') return '/portal/owner/profile';
+    if (role === 'Tenant') return '/portal/tenant/profile';
+    if (role === 'Maintenance Staff') return '/portal/staff/profile';
+    return '/portal/user/profile';
+  };
+
   // Load Personal Profile Details
   const loadPersonalProfile = async (showLoading = true) => {
     try {
       if (showLoading) setLoading(true);
-      const res = await apiClient.get('/portal/profile', logout, refreshAccessToken);
-      if (res && res.data) {
-        setProfileData(res.data);
-        setFirstName(res.data.firstName || '');
-        setLastName(res.data.lastName || '');
-        setPhone(res.data.phone || '');
-        setUserEmail(res.data.email || '');
-        setUnitNumber(res.data.unitNumber || '');
-        setEmergencyContact(res.data.emergencyContact || '');
-        setStreetAddress(res.data.streetAddress || '');
+      const endpoint = getProfileEndpoint();
+      const res = await apiClient.get(endpoint, logout, refreshAccessToken);
+      const data = res?.data || res;
+      if (data) {
+        setProfileData(data);
+        
+        let fName = data.firstName || '';
+        let lName = data.lastName || '';
+        if (!fName && data.name) {
+          const parts = data.name.split(' ');
+          fName = parts[0] || '';
+          lName = parts.slice(1).join(' ') || '';
+        }
+        
+        setFirstName(fName || user?.firstName || 'User');
+        setLastName(lName || user?.lastName || '');
+        setPhone(data.phone || '');
+        setUserEmail(data.email || user?.email || '');
+        setUnitNumber(data.unitNumber || '');
+        setEmergencyContact(data.emergencyContact || '');
+        setStreetAddress(data.streetAddress || '');
+        if (data.vehicles) setVehicles(data.vehicles);
+        if (data.pets) setPets(data.pets);
       } else {
         // Mock fallback
         setFirstName(user?.firstName || 'User');
@@ -153,6 +173,7 @@ export const ProfileScreen = () => {
         setUserEmail(user?.email || 'user@example.com');
       }
     } catch (e) {
+      console.log('Profile GET API error:', e.message);
       setFirstName(user?.firstName || 'User');
       setLastName(user?.lastName || '');
       setUserEmail(user?.email || 'user@example.com');
@@ -297,18 +318,30 @@ export const ProfileScreen = () => {
     }
     try {
       setSaving(true);
-      const payload = {
-        firstName,
-        lastName,
-        phone,
-        streetAddress,
-        emergencyContact,
-      };
-      await apiClient.put('/portal/profile', payload, logout, refreshAccessToken);
+      const endpoint = getProfileEndpoint();
+      let payload = {};
+      if (role === 'Owner' || role === 'Tenant' || role === 'Maintenance Staff') {
+        payload = {
+          name: `${firstName} ${lastName}`.trim(),
+          phone,
+          streetAddress,
+          emergencyContact,
+          vehicles,
+          pets,
+        };
+      } else {
+        payload = {
+          firstName,
+          lastName,
+          phone,
+        };
+      }
+      await apiClient.post(endpoint, payload, logout, refreshAccessToken);
       Alert.alert('Success', 'Personal profile updated successfully.');
       setIsEditModalOpen(false);
       loadPersonalProfile(true);
     } catch (e) {
+      console.log('Profile update error:', e.message);
       Alert.alert('Success', 'Personal profile updated successfully.');
       setIsEditModalOpen(false);
       setSaving(false);
