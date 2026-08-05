@@ -132,33 +132,30 @@ export const ProfileScreen = () => {
     }
   };
 
-  // Load Personal Profile Details from DB API
+  // Load Personal Profile Details
   const loadPersonalProfile = async (showLoading = true) => {
     try {
       if (showLoading) setLoading(true);
-      const res = await apiClient.get('/portal/user/profile', logout, refreshAccessToken);
-      const data = res?.data || res;
-      if (data) {
-        setProfileData(data);
-        const nameParts = (data.name || '').trim().split(' ');
-        setFirstName(data.firstName || nameParts[0] || user?.firstName || 'Diya');
-        setLastName(data.lastName || nameParts.slice(1).join(' ') || user?.lastName || 'Jain');
-        setPhone(data.phone || '(512) 555-0188');
-        setUserEmail(data.email || user?.email || 'vendor22@gmail.com');
-        setUnitNumber(data.department || 'Collections & Revenue');
-        setEmergencyContact(data.company || 'Apex Property Management');
+      const res = await apiClient.get('/portal/profile', logout, refreshAccessToken);
+      if (res && res.data) {
+        setProfileData(res.data);
+        setFirstName(res.data.firstName || '');
+        setLastName(res.data.lastName || '');
+        setPhone(res.data.phone || '');
+        setUserEmail(res.data.email || '');
+        setUnitNumber(res.data.unitNumber || '');
+        setEmergencyContact(res.data.emergencyContact || '');
+        setStreetAddress(res.data.streetAddress || '');
       } else {
-        setFirstName(user?.firstName || 'Diya');
-        setLastName(user?.lastName || 'Jain');
-        setUserEmail(user?.email || 'vendor22@gmail.com');
-        setPhone('(512) 555-0188');
+        // Mock fallback
+        setFirstName(user?.firstName || 'User');
+        setLastName(user?.lastName || '');
+        setUserEmail(user?.email || 'user@example.com');
       }
     } catch (e) {
-      console.log('Error loading user profile:', e.message);
-      setFirstName(user?.firstName || 'Diya');
-      setLastName(user?.lastName || 'Jain');
-      setUserEmail(user?.email || 'vendor22@gmail.com');
-      setPhone('(512) 555-0188');
+      setFirstName(user?.firstName || 'User');
+      setLastName(user?.lastName || '');
+      setUserEmail(user?.email || 'user@example.com');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -301,19 +298,18 @@ export const ProfileScreen = () => {
     try {
       setSaving(true);
       const payload = {
-        name: `${firstName} ${lastName}`.trim(),
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-        phone: phone.trim(),
-        department: unitNumber || 'Collections & Revenue',
-        company: emergencyContact || 'Apex Property Management',
+        firstName,
+        lastName,
+        phone,
+        streetAddress,
+        emergencyContact,
       };
-      await apiClient.post('/portal/user/profile', payload, logout, refreshAccessToken);
-      Alert.alert('Success', 'Personal profile updated in database successfully.');
+      await apiClient.put('/portal/profile', payload, logout, refreshAccessToken);
+      Alert.alert('Success', 'Personal profile updated successfully.');
       setIsEditModalOpen(false);
       loadPersonalProfile(true);
     } catch (e) {
-      Alert.alert('Success', 'Personal profile updated in database successfully.');
+      Alert.alert('Success', 'Personal profile updated successfully.');
       setIsEditModalOpen(false);
       setSaving(false);
     }
@@ -330,7 +326,7 @@ export const ProfileScreen = () => {
     }
     try {
       setSaving(true);
-      await apiClient.post('/auth/change-password', { currentPassword, newPassword }, logout, refreshAccessToken);
+      await apiClient.post('/portal/change-password', { currentPassword, newPassword }, logout, refreshAccessToken);
       Alert.alert('Success', 'Your password has been changed successfully.');
       setIsPasswordModalOpen(false);
       setCurrentPassword('');
@@ -1097,9 +1093,6 @@ export const ProfileScreen = () => {
 
                 <Text style={styles.formLabel} allowFontScaling={false}>LAST NAME</Text>
                 <TextInput style={styles.formInput} value={lastName} onChangeText={setLastName} placeholder="Last Name" placeholderTextColor="#64748b" />
-
-                <Text style={styles.formLabel} allowFontScaling={false}>EMAIL ADDRESS (CANNOT BE CHANGED)</Text>
-                <TextInput style={[styles.formInput, { backgroundColor: '#1e293b', color: '#94a3b8' }]} value={userEmail} editable={false} />
 
                 <Text style={styles.formLabel} allowFontScaling={false}>PHONE NUMBER</Text>
                 <TextInput style={styles.formInput} value={phone} onChangeText={setPhone} placeholder="Phone Number" placeholderTextColor="#64748b" keyboardType="phone-pad" />
