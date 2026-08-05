@@ -39,9 +39,10 @@ const safeStorage = {
   }
 };
 
-// --- Theme Store ---
+// --- Theme & Language Store ---
 export const useThemeStore = create((set) => ({
   theme: 'dark',
+  language: 'en', // 'en' | 'es'
   toggleTheme: async () => {
     set((state) => {
       const newTheme = state.theme === 'light' ? 'dark' : 'light';
@@ -53,11 +54,17 @@ export const useThemeStore = create((set) => ({
     await safeStorage.setItem('theme', theme);
     set({ theme });
   },
+  setLanguage: async (language) => {
+    await safeStorage.setItem('language', language);
+    set({ language });
+  },
   loadTheme: async () => {
-    const saved = await safeStorage.getItem('theme');
-    if (saved === 'light' || saved === 'dark') {
-      set({ theme: saved });
-    }
+    const savedTheme = await safeStorage.getItem('theme');
+    const savedLang = await safeStorage.getItem('language');
+    set({
+      theme: (savedTheme === 'light' || savedTheme === 'dark') ? savedTheme : 'dark',
+      language: (savedLang === 'es' || savedLang === 'en') ? savedLang : 'en',
+    });
   },
 }));
 

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Text, TouchableOpacity, ActivityIndicator, Platform, SafeAreaView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { useAuthStore } from './store/useStore';
+import { useAuthStore, useThemeStore } from './store/useStore';
 import { Ionicons } from '@expo/vector-icons';
 
 import { SplashScreen } from './components/SplashScreen';
@@ -52,6 +52,7 @@ export default function App() {
 
   useEffect(() => {
     initializeAuth();
+    useThemeStore.getState().loadTheme();
   }, []);
 
   // Reset active tab to 'dashboard' whenever user logs in or switches user

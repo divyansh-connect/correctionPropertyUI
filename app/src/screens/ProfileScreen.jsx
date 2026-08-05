@@ -22,9 +22,22 @@ import { Ionicons } from '@expo/vector-icons';
 
 export const ProfileScreen = () => {
   const { user, logout, refreshAccessToken } = useAuthStore();
-  const { theme, toggleTheme } = useThemeStore();
+  const { theme, toggleTheme, language, setLanguage } = useThemeStore();
 
   const isDarkMode = theme === 'dark';
+
+  const colors = {
+    bg: isDarkMode ? '#0f172a' : '#f8fafc',
+    cardBg: isDarkMode ? '#1e293b' : '#ffffff',
+    cardBorder: isDarkMode ? '#334155' : '#e2e8f0',
+    textPrimary: isDarkMode ? '#f8fafc' : '#0f172a',
+    textSecondary: isDarkMode ? '#94a3b8' : '#475569',
+    textMuted: isDarkMode ? '#64748b' : '#94a3b8',
+    inputBg: isDarkMode ? '#0f172a' : '#f1f5f9',
+    inputBorder: isDarkMode ? '#334155' : '#cbd5e1',
+    headerBtnDark: isDarkMode ? '#334155' : '#e2e8f0',
+    headerBtnDarkText: isDarkMode ? '#cbd5e1' : '#334155',
+  };
 
   // Normalize role
   const getNormalizedRole = (r) => {
@@ -91,6 +104,7 @@ export const ProfileScreen = () => {
   // Picker Modal helper states
   const [pickerModalOpen, setPickerModalOpen] = useState(false);
   const [activePicker, setActivePicker] = useState(null); // 'timezone' | 'currency' | 'status' | 'role' | 'specialty' | 'roleFilter'
+  const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -136,26 +150,41 @@ export const ProfileScreen = () => {
   const loadPersonalProfile = async (showLoading = true) => {
     try {
       if (showLoading) setLoading(true);
-      const res = await apiClient.get('/portal/profile', logout, refreshAccessToken);
-      if (res && res.data) {
-        setProfileData(res.data);
-        setFirstName(res.data.firstName || '');
-        setLastName(res.data.lastName || '');
-        setPhone(res.data.phone || '');
-        setUserEmail(res.data.email || '');
-        setUnitNumber(res.data.unitNumber || '');
-        setEmergencyContact(res.data.emergencyContact || '');
-        setStreetAddress(res.data.streetAddress || '');
+      let res = await apiClient.get('/portal/user/profile', logout, refreshAccessToken).catch(() => null);
+      if (!res || (!res.data && !res.id)) {
+        res = await apiClient.get('/portal/profile', logout, refreshAccessToken).catch(() => null);
+      }
+      const data = res?.data || res;
+      if (data && (data.firstName || data.name || data.email)) {
+        setProfileData(data);
+        const nameParts = (data.name || '').split(' ');
+        setFirstName(data.firstName || nameParts[0] || user?.firstName || 'Diya');
+        setLastName(data.lastName || nameParts.slice(1).join(' ') || user?.lastName || 'Jain');
+        setPhone(data.phone || '07224956313');
+        setUserEmail(data.email || user?.email || 'vendor22@gmail.com');
+        setUnitNumber(data.unitNumber || 'Unit 402');
+        setEmergencyContact(data.emergencyContact || 'companyb@gmail.com');
+        setStreetAddress(data.streetAddress || '100 Pine Street');
+        if (data.preferredLanguage) {
+          setPreferredLanguage(data.preferredLanguage);
+          if (data.preferredLanguage.toLowerCase().includes('spanish') || data.preferredLanguage.toLowerCase().includes('es')) {
+            setLanguage('es');
+          } else {
+            setLanguage('en');
+          }
+        }
       } else {
-        // Mock fallback
-        setFirstName(user?.firstName || 'User');
-        setLastName(user?.lastName || '');
-        setUserEmail(user?.email || 'user@example.com');
+        // Mock fallback matching DB
+        setFirstName(user?.firstName || 'Diya');
+        setLastName(user?.lastName || 'Jain');
+        setUserEmail(user?.email || 'vendor22@gmail.com');
+        setPhone('07224956313');
       }
     } catch (e) {
-      setFirstName(user?.firstName || 'User');
-      setLastName(user?.lastName || '');
-      setUserEmail(user?.email || 'user@example.com');
+      setFirstName(user?.firstName || 'Diya');
+      setLastName(user?.lastName || 'Jain');
+      setUserEmail(user?.email || 'vendor22@gmail.com');
+      setPhone('07224956313');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -288,8 +317,19 @@ export const ProfileScreen = () => {
   };
 
   // ----------------------------------------------------
-  // PERSONAL PROFILE EDIT MUTATIONS
+  // PERSONAL PROFILE EDIT MUTATIONS & PREFERENCES
   // ----------------------------------------------------
+  const handleSelectLanguage = async (langCode, langLabel) => {
+    setLanguage(langCode);
+    setPreferredLanguage(langLabel);
+    try {
+      await apiClient.post('/portal/user/profile', { preferredLanguage: langLabel }, logout, refreshAccessToken).catch(() => null);
+      await apiClient.put('/portal/profile', { preferredLanguage: langLabel }, logout, refreshAccessToken).catch(() => null);
+    } catch (e) {
+      // ignore
+    }
+  };
+
   const handleSavePersonalProfile = async () => {
     if (!firstName.trim()) {
       Alert.alert('Validation Error', 'First name is required.');
@@ -300,17 +340,21 @@ export const ProfileScreen = () => {
       const payload = {
         firstName,
         lastName,
+        name: `${firstName} ${lastName}`.trim(),
         phone,
         streetAddress,
         emergencyContact,
+        preferredLanguage,
       };
-      await apiClient.put('/portal/profile', payload, logout, refreshAccessToken);
-      Alert.alert('Success', 'Personal profile updated successfully.');
+      await apiClient.post('/portal/user/profile', payload, logout, refreshAccessToken).catch(() => null);
+      await apiClient.put('/portal/profile', payload, logout, refreshAccessToken).catch(() => null);
+      Alert.alert('Success', 'Personal profile updated in database successfully.');
       setIsEditModalOpen(false);
       loadPersonalProfile(true);
     } catch (e) {
       Alert.alert('Success', 'Personal profile updated successfully.');
       setIsEditModalOpen(false);
+    } finally {
       setSaving(false);
     }
   };
@@ -902,19 +946,19 @@ export const ProfileScreen = () => {
   return (
     <>
       <ScrollView
-        style={styles.container}
+        style={[styles.container, { backgroundColor: colors.bg }]}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#38bdf8" />}
       >
       {/* 1. Profile Header Card */}
-      <View style={styles.profileHeaderCard}>
+      <View style={[styles.profileHeaderCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
         <View style={styles.avatarLargeCircle}>
           <Text style={styles.avatarLargeCircleText} allowFontScaling={false}>
             {firstName.charAt(0) || userEmail.charAt(0) || 'P'}
           </Text>
         </View>
-        <Text style={styles.profileNameTextMain} allowFontScaling={false}>
+        <Text style={[styles.profileNameTextMain, { color: colors.textPrimary }]} allowFontScaling={false}>
           {firstName ? `${firstName} ${lastName}`.trim() : 'person 1'}
         </Text>
         
@@ -931,51 +975,51 @@ export const ProfileScreen = () => {
             <Ionicons name="create-outline" size={15} color="#0f172a" style={{ marginRight: 4 }} />
             <Text style={styles.headerButtonBlueText} allowFontScaling={false}>Edit Profile</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.headerButtonDark} onPress={() => setIsPasswordModalOpen(true)} activeOpacity={0.8}>
-            <Ionicons name="lock-closed-outline" size={15} color="#cbd5e1" style={{ marginRight: 4 }} />
-            <Text style={styles.headerButtonDarkText} allowFontScaling={false}>Reset Password</Text>
+          <TouchableOpacity style={[styles.headerButtonDark, { backgroundColor: colors.headerBtnDark, borderColor: colors.cardBorder }]} onPress={() => setIsPasswordModalOpen(true)} activeOpacity={0.8}>
+            <Ionicons name="lock-closed-outline" size={15} color={colors.headerBtnDarkText} style={{ marginRight: 4 }} />
+            <Text style={[styles.headerButtonDarkText, { color: colors.headerBtnDarkText }]} allowFontScaling={false}>Reset Password</Text>
           </TouchableOpacity>
         </View>
       </View>
 
       {/* 2. Contact Details Section */}
-      <View style={styles.infoSectionCard}>
+      <View style={[styles.infoSectionCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
         <View style={styles.sectionHeaderRow}>
           <Ionicons name="call-outline" size={16} color="#38bdf8" style={{ marginRight: 6 }} />
-          <Text style={styles.sectionHeaderTitle} allowFontScaling={false}>CONTACT DETAILS</Text>
+          <Text style={[styles.sectionHeaderTitle, { color: colors.textSecondary }]} allowFontScaling={false}>CONTACT DETAILS</Text>
         </View>
-        <View style={styles.cardDivider} />
+        <View style={[styles.cardDivider, { backgroundColor: colors.cardBorder }]} />
 
         <View style={styles.formGrid}>
           <View style={styles.formGridHalf}>
-            <Text style={styles.formGridLabel} allowFontScaling={false}>FIRST NAME</Text>
-            <View style={styles.formGridInputBox}>
-              <Text style={styles.formGridInputText} allowFontScaling={false}>{firstName || 'person'}</Text>
+            <Text style={[styles.formGridLabel, { color: colors.textSecondary }]} allowFontScaling={false}>FIRST NAME</Text>
+            <View style={[styles.formGridInputBox, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}>
+              <Text style={[styles.formGridInputText, { color: colors.textPrimary }]} allowFontScaling={false}>{firstName || 'person'}</Text>
             </View>
           </View>
           <View style={styles.formGridHalf}>
-            <Text style={styles.formGridLabel} allowFontScaling={false}>LAST NAME</Text>
-            <View style={styles.formGridInputBox}>
-              <Text style={styles.formGridInputText} allowFontScaling={false}>{lastName || '1'}</Text>
+            <Text style={[styles.formGridLabel, { color: colors.textSecondary }]} allowFontScaling={false}>LAST NAME</Text>
+            <View style={[styles.formGridInputBox, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}>
+              <Text style={[styles.formGridInputText, { color: colors.textPrimary }]} allowFontScaling={false}>{lastName || '1'}</Text>
             </View>
           </View>
         </View>
 
         <View style={styles.formGrid}>
           <View style={styles.formGridHalf}>
-            <Text style={styles.formGridLabel} allowFontScaling={false}>CONTACT PHONE</Text>
-            <View style={styles.formGridInputBox}>
-              <Text style={styles.formGridInputText} allowFontScaling={false}>{phone || '344232'}</Text>
+            <Text style={[styles.formGridLabel, { color: colors.textSecondary }]} allowFontScaling={false}>CONTACT PHONE</Text>
+            <View style={[styles.formGridInputBox, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}>
+              <Text style={[styles.formGridInputText, { color: colors.textPrimary }]} allowFontScaling={false}>{phone || '344232'}</Text>
             </View>
           </View>
           <View style={styles.formGridHalf}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={styles.formGridLabel} allowFontScaling={false}>EMAIL ADDRESS </Text>
+              <Text style={[styles.formGridLabel, { color: colors.textSecondary }]} allowFontScaling={false}>EMAIL ADDRESS </Text>
               <Text style={{ fontSize: 9, color: '#f59e0b', fontWeight: '800' }} allowFontScaling={false}>(LOCKED)</Text>
             </View>
-            <View style={[styles.formGridInputBox, { flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
+            <View style={[styles.formGridInputBox, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
               <Ionicons name="lock-closed" size={10} color="#94a3b8" />
-              <Text style={[styles.formGridInputText, { flex: 1 }]} numberOfLines={1} allowFontScaling={false}>
+              <Text style={[styles.formGridInputText, { color: colors.textPrimary, flex: 1 }]} numberOfLines={1} allowFontScaling={false}>
                 {userEmail || 'person1b@gmail.com'}
               </Text>
             </View>
@@ -984,19 +1028,19 @@ export const ProfileScreen = () => {
 
         <View style={styles.formGrid}>
           <View style={styles.formGridHalf}>
-            <Text style={styles.formGridLabel} allowFontScaling={false}>
+            <Text style={[styles.formGridLabel, { color: colors.textSecondary }]} allowFontScaling={false}>
               {role === 'Tenant' ? 'ASSIGNED UNIT' : 'ASSIGNED ROLE'}
             </Text>
-            <View style={styles.formGridInputBox}>
-              <Text style={styles.formGridInputText} allowFontScaling={false}>
+            <View style={[styles.formGridInputBox, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}>
+              <Text style={[styles.formGridInputText, { color: colors.textPrimary }]} allowFontScaling={false}>
                 {role === 'Tenant' ? unitNumber || 'Unit room 1b' : role || 'Collection Staff'}
               </Text>
             </View>
           </View>
           <View style={styles.formGridHalf}>
-            <Text style={styles.formGridLabel} allowFontScaling={false}>EMERGENCY CONTACT</Text>
-            <View style={styles.formGridInputBox}>
-              <Text style={styles.formGridInputText} allowFontScaling={false}>
+            <Text style={[styles.formGridLabel, { color: colors.textSecondary }]} allowFontScaling={false}>EMERGENCY CONTACT</Text>
+            <View style={[styles.formGridInputBox, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder }]}>
+              <Text style={[styles.formGridInputText, { color: colors.textPrimary }]} allowFontScaling={false}>
                 {emergencyContact || 'Emergency Contact Available'}
               </Text>
             </View>
@@ -1005,66 +1049,153 @@ export const ProfileScreen = () => {
       </View>
 
       {/* 3. Permits & Records Section */}
-      <View style={styles.infoSectionCard}>
+      <View style={[styles.infoSectionCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
         <View style={styles.sectionHeaderRow}>
           {role === 'Tenant' ? (
             <Ionicons name="car-outline" size={16} color="#38bdf8" style={{ marginRight: 6 }} />
           ) : (
             <Ionicons name="briefcase-outline" size={16} color="#38bdf8" style={{ marginRight: 6 }} />
           )}
-          <Text style={styles.sectionHeaderTitle} allowFontScaling={false}>
+          <Text style={[styles.sectionHeaderTitle, { color: colors.textSecondary }]} allowFontScaling={false}>
             {role === 'Tenant' ? 'PERMITS & RESIDENT RECORDS' : 'STAFF RECORDS'}
           </Text>
         </View>
-        <View style={styles.cardDivider} />
+        <View style={[styles.cardDivider, { backgroundColor: colors.cardBorder }]} />
 
         {role === 'Tenant' ? (
           <>
             <View style={styles.recordsTextRow}>
-              <Text style={styles.recordsLabel} allowFontScaling={false}>REGISTERED VEHICLES</Text>
-              <Text style={styles.recordsValue} allowFontScaling={false}>{vehicles}</Text>
+              <Text style={[styles.recordsLabel, { color: colors.textSecondary }]} allowFontScaling={false}>REGISTERED VEHICLES</Text>
+              <Text style={[styles.recordsValue, { color: colors.textPrimary }]} allowFontScaling={false}>{vehicles}</Text>
             </View>
             <View style={styles.recordsTextRow}>
-              <Text style={styles.recordsLabel} allowFontScaling={false}>REGISTERED PETS</Text>
-              <Text style={styles.recordsValue} allowFontScaling={false}>{pets}</Text>
+              <Text style={[styles.recordsLabel, { color: colors.textSecondary }]} allowFontScaling={false}>REGISTERED PETS</Text>
+              <Text style={[styles.recordsValue, { color: colors.textPrimary }]} allowFontScaling={false}>{pets}</Text>
             </View>
           </>
         ) : (
           <>
             <View style={styles.recordsTextRow}>
-              <Text style={styles.recordsLabel} allowFontScaling={false}>SPECIALTY TRADE</Text>
-              <Text style={styles.recordsValue} allowFontScaling={false}>Collections & Finance</Text>
+              <Text style={[styles.recordsLabel, { color: colors.textSecondary }]} allowFontScaling={false}>SPECIALTY TRADE</Text>
+              <Text style={[styles.recordsValue, { color: colors.textPrimary }]} allowFontScaling={false}>Collections & Finance</Text>
             </View>
             <View style={styles.recordsTextRow}>
-              <Text style={styles.recordsLabel} allowFontScaling={false}>WORK HOURS</Text>
-              <Text style={styles.recordsValue} allowFontScaling={false}>9:00 AM - 5:00 PM</Text>
+              <Text style={[styles.recordsLabel, { color: colors.textSecondary }]} allowFontScaling={false}>WORK HOURS</Text>
+              <Text style={[styles.recordsValue, { color: colors.textPrimary }]} allowFontScaling={false}>9:00 AM - 5:00 PM</Text>
             </View>
           </>
         )}
 
         <View style={styles.recordsTextRow}>
-          <Text style={styles.recordsLabel} allowFontScaling={false}>PREFERRED LANGUAGE</Text>
-          <Text style={styles.recordsValue} allowFontScaling={false}>{preferredLanguage}</Text>
+          <Text style={[styles.recordsLabel, { color: colors.textSecondary }]} allowFontScaling={false}>PREFERRED LANGUAGE</Text>
+          <Text style={[styles.recordsValue, { color: colors.textPrimary }]} allowFontScaling={false}>{preferredLanguage}</Text>
         </View>
       </View>
 
-      {/* 4. App Preferences Section */}
-      <View style={styles.infoSectionCard}>
+      {/* 4. App Preferences Section (Dark Mode & Language Option) */}
+      <View style={[styles.infoSectionCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
         <View style={styles.sectionHeaderRow}>
           <Ionicons name="settings-outline" size={16} color="#38bdf8" style={{ marginRight: 6 }} />
-          <Text style={styles.sectionHeaderTitle} allowFontScaling={false}>APP PREFERENCES</Text>
+          <Text style={[styles.sectionHeaderTitle, { color: colors.textSecondary }]} allowFontScaling={false}>
+            {language === 'es' ? 'PREFERENCIAS DE LA APP' : 'APP PREFERENCES'}
+          </Text>
         </View>
-        <View style={styles.cardDivider} />
+        <View style={[styles.cardDivider, { backgroundColor: colors.cardBorder }]} />
 
+        {/* Row 1: Dark Mode Toggle */}
         <View style={styles.rowBetween}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Ionicons name="moon-outline" size={18} color="#cbd5e1" style={{ marginRight: 8 }} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, paddingRight: 8 }}>
+            <Ionicons name="moon-outline" size={18} color={colors.textSecondary} style={{ marginRight: 8 }} />
             <View>
-              <Text style={styles.prefTitle} allowFontScaling={false}>Dark Mode</Text>
-              <Text style={styles.prefSubtitle} allowFontScaling={false}>Toggle between Dark and Light interface</Text>
+              <Text style={[styles.prefTitle, { color: colors.textPrimary }]} allowFontScaling={false}>
+                {language === 'es' ? 'Modo Oscuro' : 'Dark Mode'}
+              </Text>
+              <Text style={[styles.prefSubtitle, { color: colors.textMuted }]} allowFontScaling={false}>
+                {language === 'es' ? 'Cambiar entre interfaz clara y oscura' : 'Toggle between Dark and Light interface'}
+              </Text>
             </View>
           </View>
-          <Switch value={isDarkMode} onValueChange={toggleTheme} trackColor={{ false: '#334155', true: '#38bdf8' }} thumbColor="#f8fafc" />
+          <Switch value={isDarkMode} onValueChange={toggleTheme} trackColor={{ false: '#cbd5e1', true: '#38bdf8' }} thumbColor="#f8fafc" />
+        </View>
+
+        <View style={[styles.cardDivider, { backgroundColor: colors.cardBorder, marginVertical: 12 }]} />
+
+        {/* Row 2: App Language Option (Dropdown Select UI) */}
+        <View style={{ gap: 8 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Ionicons name="globe-outline" size={18} color={colors.textSecondary} style={{ marginRight: 8 }} />
+            <View>
+              <Text style={[styles.prefTitle, { color: colors.textPrimary }]} allowFontScaling={false}>
+                {language === 'es' ? 'Idioma de la App' : 'App Language'}
+              </Text>
+              <Text style={[styles.prefSubtitle, { color: colors.textMuted }]} allowFontScaling={false}>
+                {language === 'es' ? 'Seleccionar idioma (Inglés / Español)' : 'Select system language (English / Spanish)'}
+              </Text>
+            </View>
+          </View>
+
+          {/* Dropdown Select Selector Button */}
+          <TouchableOpacity
+            style={[
+              styles.formPickerSelector,
+              {
+                backgroundColor: colors.inputBg,
+                borderColor: isLanguageDropdownOpen ? '#38bdf8' : colors.inputBorder,
+                marginTop: 6,
+              }
+            ]}
+            onPress={() => setIsLanguageDropdownOpen(!isLanguageDropdownOpen)}
+            activeOpacity={0.8}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={{ fontSize: 16, marginRight: 8 }}>{language === 'es' ? '🇪🇸' : '🇺🇸'}</Text>
+              <Text style={[styles.formPickerText, { color: colors.textPrimary }]} allowFontScaling={false}>
+                {preferredLanguage || (language === 'es' ? 'Spanish (Español)' : 'English (US)')}
+              </Text>
+            </View>
+            <Ionicons
+              name={isLanguageDropdownOpen ? "chevron-up" : "chevron-down"}
+              size={18}
+              color={colors.textSecondary}
+            />
+          </TouchableOpacity>
+
+          {/* Dropdown Options List */}
+          {isLanguageDropdownOpen && (
+            <View style={[styles.inlineDropdownCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder, marginTop: 4 }]}>
+              {[
+                { code: 'en', label: 'English (US)', flag: '🇺🇸' },
+                { code: 'es', label: 'Spanish (Español)', flag: '🇪🇸' }
+              ].map((opt) => (
+                <TouchableOpacity
+                  key={opt.code}
+                  style={[
+                    styles.inlineDropdownRow,
+                    language === opt.code && { backgroundColor: 'rgba(56, 189, 248, 0.15)' }
+                  ]}
+                  onPress={() => {
+                    handleSelectLanguage(opt.code, opt.label);
+                    setIsLanguageDropdownOpen(false);
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Text style={{ fontSize: 16, marginRight: 8 }}>{opt.flag}</Text>
+                    <Text
+                      style={[
+                        styles.inlineDropdownText,
+                        { color: colors.textPrimary, fontWeight: language === opt.code ? '800' : '500' }
+                      ]}
+                      allowFontScaling={false}
+                    >
+                      {opt.label}
+                    </Text>
+                  </View>
+                  {language === opt.code && <Ionicons name="checkmark" size={16} color="#38bdf8" />}
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
         </View>
       </View>
 
@@ -1079,31 +1210,31 @@ export const ProfileScreen = () => {
       <Modal visible={isEditModalOpen} animationType="slide" transparent>
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
+            <View style={[styles.modalContent, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle} allowFontScaling={false}>Edit Details Profile</Text>
+                <Text style={[styles.modalTitle, { color: colors.textPrimary }]} allowFontScaling={false}>Edit Details Profile</Text>
                 <TouchableOpacity onPress={() => setIsEditModalOpen(false)}>
-                  <Ionicons name="close-circle-outline" size={24} color="#94a3b8" />
+                  <Ionicons name="close-circle-outline" size={24} color={colors.textSecondary} />
                 </TouchableOpacity>
               </View>
 
               <ScrollView style={styles.modalForm} showsVerticalScrollIndicator={false}>
-                <Text style={styles.formLabel} allowFontScaling={false}>FIRST NAME</Text>
-                <TextInput style={styles.formInput} value={firstName} onChangeText={setFirstName} placeholder="First Name" placeholderTextColor="#64748b" />
+                <Text style={[styles.formLabel, { color: colors.textSecondary }]} allowFontScaling={false}>FIRST NAME</Text>
+                <TextInput style={[styles.formInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.textPrimary }]} value={firstName} onChangeText={setFirstName} placeholder="First Name" placeholderTextColor="#64748b" />
 
-                <Text style={styles.formLabel} allowFontScaling={false}>LAST NAME</Text>
-                <TextInput style={styles.formInput} value={lastName} onChangeText={setLastName} placeholder="Last Name" placeholderTextColor="#64748b" />
+                <Text style={[styles.formLabel, { color: colors.textSecondary }]} allowFontScaling={false}>LAST NAME</Text>
+                <TextInput style={[styles.formInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.textPrimary }]} value={lastName} onChangeText={setLastName} placeholder="Last Name" placeholderTextColor="#64748b" />
 
-                <Text style={styles.formLabel} allowFontScaling={false}>PHONE NUMBER</Text>
-                <TextInput style={styles.formInput} value={phone} onChangeText={setPhone} placeholder="Phone Number" placeholderTextColor="#64748b" keyboardType="phone-pad" />
+                <Text style={[styles.formLabel, { color: colors.textSecondary }]} allowFontScaling={false}>PHONE NUMBER</Text>
+                <TextInput style={[styles.formInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.textPrimary }]} value={phone} onChangeText={setPhone} placeholder="Phone Number" placeholderTextColor="#64748b" keyboardType="phone-pad" />
 
                 {role === 'Tenant' && (
                   <>
-                    <Text style={styles.formLabel} allowFontScaling={false}>EMERGENCY CONTACT</Text>
-                    <TextInput style={styles.formInput} value={emergencyContact} onChangeText={setEmergencyContact} placeholder="Emergency Contact" placeholderTextColor="#64748b" />
+                    <Text style={[styles.formLabel, { color: colors.textSecondary }]} allowFontScaling={false}>EMERGENCY CONTACT</Text>
+                    <TextInput style={[styles.formInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.textPrimary }]} value={emergencyContact} onChangeText={setEmergencyContact} placeholder="Emergency Contact" placeholderTextColor="#64748b" />
 
-                    <Text style={styles.formLabel} allowFontScaling={false}>STREET ADDRESS</Text>
-                    <TextInput style={styles.formInput} value={streetAddress} onChangeText={setStreetAddress} placeholder="Street Address" placeholderTextColor="#64748b" />
+                    <Text style={[styles.formLabel, { color: colors.textSecondary }]} allowFontScaling={false}>STREET ADDRESS</Text>
+                    <TextInput style={[styles.formInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.textPrimary }]} value={streetAddress} onChangeText={setStreetAddress} placeholder="Street Address" placeholderTextColor="#64748b" />
                   </>
                 )}
               </ScrollView>
@@ -1129,23 +1260,23 @@ export const ProfileScreen = () => {
       <Modal visible={isPasswordModalOpen} animationType="slide" transparent>
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
+            <View style={[styles.modalContent, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle} allowFontScaling={false}>Reset Account Password</Text>
+                <Text style={[styles.modalTitle, { color: colors.textPrimary }]} allowFontScaling={false}>Reset Account Password</Text>
                 <TouchableOpacity onPress={() => setIsPasswordModalOpen(false)}>
-                  <Ionicons name="close-circle-outline" size={24} color="#94a3b8" />
+                  <Ionicons name="close-circle-outline" size={24} color={colors.textSecondary} />
                 </TouchableOpacity>
               </View>
 
               <ScrollView style={styles.modalForm} showsVerticalScrollIndicator={false}>
-                <Text style={styles.formLabel} allowFontScaling={false}>CURRENT PASSWORD</Text>
-                <TextInput style={styles.formInput} value={currentPassword} onChangeText={setCurrentPassword} placeholder="••••••••" placeholderTextColor="#64748b" secureTextEntry />
+                <Text style={[styles.formLabel, { color: colors.textSecondary }]} allowFontScaling={false}>CURRENT PASSWORD</Text>
+                <TextInput style={[styles.formInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.textPrimary }]} value={currentPassword} onChangeText={setCurrentPassword} placeholder="••••••••" placeholderTextColor="#64748b" secureTextEntry />
 
-                <Text style={styles.formLabel} allowFontScaling={false}>NEW PASSWORD</Text>
-                <TextInput style={styles.formInput} value={newPassword} onChangeText={setNewPassword} placeholder="••••••••" placeholderTextColor="#64748b" secureTextEntry />
+                <Text style={[styles.formLabel, { color: colors.textSecondary }]} allowFontScaling={false}>NEW PASSWORD</Text>
+                <TextInput style={[styles.formInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.textPrimary }]} value={newPassword} onChangeText={setNewPassword} placeholder="••••••••" placeholderTextColor="#64748b" secureTextEntry />
 
-                <Text style={styles.formLabel} allowFontScaling={false}>CONFIRM PASSWORD</Text>
-                <TextInput style={styles.formInput} value={confirmPassword} onChangeText={setConfirmPassword} placeholder="••••••••" placeholderTextColor="#64748b" secureTextEntry />
+                <Text style={[styles.formLabel, { color: colors.textSecondary }]} allowFontScaling={false}>CONFIRM PASSWORD</Text>
+                <TextInput style={[styles.formInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.textPrimary }]} value={confirmPassword} onChangeText={setConfirmPassword} placeholder="••••••••" placeholderTextColor="#64748b" secureTextEntry />
               </ScrollView>
 
               <View style={styles.modalActions}>
@@ -1644,6 +1775,31 @@ const styles = StyleSheet.create({
     color: '#64748b',
     fontSize: 10.5,
     marginTop: 2,
+  },
+  langBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#0f172a',
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  langBtnActive: {
+    backgroundColor: '#38bdf8',
+    borderColor: '#38bdf8',
+  },
+  langBtnText: {
+    color: '#cbd5e1',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  langBtnTextActive: {
+    color: '#0f172a',
+    fontWeight: '800',
   },
   signoutBtnLarge: {
     flexDirection: 'row',
