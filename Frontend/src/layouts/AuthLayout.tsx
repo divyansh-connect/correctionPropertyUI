@@ -73,7 +73,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
               <span className="text-white font-extrabold text-2xl">D</span>
             </div>
             <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-              DoorLoop <span className="text-primary font-semibold">Apex</span>
+              WhatsLandlord <span className="text-primary font-semibold">Apex</span>
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-widest font-extrabold">
               Enterprise Property Suite

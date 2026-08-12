@@ -71,7 +71,7 @@ export const PaymentSettingsPage: React.FC = () => {
 
             <div className="space-y-1">
               <label className="text-muted-foreground uppercase text-[10px]">Reconciliation Webhook URL</label>
-              <Input type="text" defaultValue="https://app.doorloop.com/api/v1/payments/webhook" />
+              <Input type="text" defaultValue="https://app.whatslandlord.com/api/v1/payments/webhook" />
             </div>
           </div>
 

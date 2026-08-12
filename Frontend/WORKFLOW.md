@@ -1,6 +1,6 @@
-# Zentrol Property - Complete Workflow Guide
+# WhatsLandlord Property - Complete Workflow Guide
 
-This document details the project structure, user roles and personas, data flow, and module-specific workflows for the **Zentrol Property** management system.
+This document details the project structure, user roles and personas, data flow, and module-specific workflows for the **WhatsLandlord Property** management system.
 
 ---
 
@@ -23,8 +23,8 @@ This project is built using modern frontend technologies:
 
 The primary directories and key files of the project are organized as follows:
 
-- **[`src/routes/index.tsx`](file:///Users/Software/Kiaan/Zentrol-property/src/routes/index.tsx)**: The single entrypoint for all route definitions and page layouts.
-- **[`src/features/`](file:///Users/Software/Kiaan/Zentrol-property/src/features)**: Modules organized by business domain features:
+- **[`src/routes/index.tsx`](file:///Users/Software/Kiaan/WhatsLandlord-property/src/routes/index.tsx)**: The single entrypoint for all route definitions and page layouts.
+- **[`src/features/`](file:///Users/Software/Kiaan/WhatsLandlord-property/src/features)**: Modules organized by business domain features:
   - `auth/`: Login, Forgot Password, and Reset Password views (with a direct return link to `/landing`).
   - `landing/`: Marketing website showing product packages, features, and an interactive Checkout Modal.
   - `dashboard/`: Custom dashboards for managers and Super Admins.
@@ -41,8 +41,8 @@ The primary directories and key files of the project are organized as follows:
   - `owner/`: Self-service portal for property owners (Properties addition/deletion, Statements, Financials, Distributions, Document uploads).
   - `tenant/`: Dedicated self-service portal for tenants (Payments with zero-balance validation, Maintenance tickets, Lease information, Document uploads).
   - `admin/`: System-wide preferences, team roles, integrations, webhooks, and audit logs.
-- **[`src/components/`](file:///Users/Software/Kiaan/Zentrol-property/src/components)**: Reusable global components like `DataTable`, `KanbanBoard`, `Timeline`, `FileUploader`, and custom UI components.
-- **[`src/store/useStore.ts`](file:///Users/Software/Kiaan/Zentrol-property/src/store/useStore.ts)**: Global state management powered by Zustand (Theme, Authentication, and Notifications).
+- **[`src/components/`](file:///Users/Software/Kiaan/WhatsLandlord-property/src/components)**: Reusable global components like `DataTable`, `KanbanBoard`, `Timeline`, `FileUploader`, and custom UI components.
+- **[`src/store/useStore.ts`](file:///Users/Software/Kiaan/WhatsLandlord-property/src/store/useStore.ts)**: Global state management powered by Zustand (Theme, Authentication, and Notifications).
 
 ---
 
@@ -117,7 +117,7 @@ Authentication is handled dynamically in `useAuthStore` based on the user's logi
    npm run dev
    ```
 3. **Log in with Mock Roles (Email Inputs)**:
-   - **Super Admin**: `admin@zentrol.com`
-   - **Owner**: `owner@zentrol.com`
-   - **Tenant**: `tenant@zentrol.com`
-   - **Property Manager**: `manager@zentrol.com` (or any general email)
+   - **Super Admin**: `admin@whatslandlord.com`
+   - **Owner**: `owner@whatslandlord.com`
+   - **Tenant**: `tenant@whatslandlord.com`
+   - **Property Manager**: `manager@whatslandlord.com` (or any general email)

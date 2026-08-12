@@ -1,6 +1,6 @@
-# Zentrol Property - Complete Interface Wireframes
+# WhatsLandlord Property - Complete Interface Wireframes
 
-This document details the layout wireframes (ASCII Mockups) for the newly introduced/refined interfaces in Zentrol Property, categorized by portal and role.
+This document details the layout wireframes (ASCII Mockups) for the newly introduced/refined interfaces in WhatsLandlord Property, categorized by portal and role.
 
 ---
 

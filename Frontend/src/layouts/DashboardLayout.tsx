@@ -384,7 +384,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             </div>
             {isSidebarOpen && (
               <span className="font-extrabold text-lg tracking-tight whitespace-nowrap text-foreground">
-                DoorLoop <span className="text-primary text-xs font-semibold px-1 py-0.5 rounded bg-primary/10 ml-1">APEX</span>
+                WhatsLandlord <span className="text-primary text-xs font-semibold px-1 py-0.5 rounded bg-primary/10 ml-1">APEX</span>
               </span>
             )}
           </div>
@@ -479,7 +479,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                 <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold">
                   D
                 </div>
-                <span className="font-extrabold text-base">DoorLoop Apex</span>
+                <span className="font-extrabold text-base">WhatsLandlord</span>
               </div>
               <Button variant="ghost" size="icon" onClick={() => setIsMobileOpen(false)}>
                 <X className="w-5 h-5" />

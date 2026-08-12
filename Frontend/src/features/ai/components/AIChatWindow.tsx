@@ -293,7 +293,7 @@ export const AIChatWindow: React.FC<AIChatWindowProps> = ({
           <div className="text-[11px] font-semibold text-muted-foreground space-y-1.5 bg-secondary/35 p-3 rounded-lg border border-border">
             <div className="flex justify-between">
               <span>{t('ai.chat.agentModel')}</span>
-              <span className="text-foreground">DoorLoop-LLM-3.5</span>
+              <span className="text-foreground">WhatsLandlord-LLM-3.5</span>
             </div>
             <div className="flex justify-between">
               <span>{t('ai.chat.temperature')}</span>

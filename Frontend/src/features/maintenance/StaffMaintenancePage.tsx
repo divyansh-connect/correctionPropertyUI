@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate, useLocation } from '@tanstack/react-router';
+import { useNavigate } from '@tanstack/react-router';
 import api from '../../api';
 import { PageHeader } from '../../components/PageHeader';
 import { Card } from '../../components/ui/Card';
@@ -9,7 +9,7 @@ import { Input } from '../../components/ui/Input';
 import { LoadingSkeleton } from '../../components/LoadingSkeleton';
 import { StatusBadge } from '../../components/StatusBadge';
 import {
-  Wrench, DollarSign, CheckCircle2, Clipboard,
+  DollarSign, CheckCircle2, Clipboard,
   Search, Eye, Play, Check, X,
   AlertTriangle, MapPin
 } from 'lucide-react';
@@ -32,12 +32,13 @@ const formatDate = (dateStr?: string) => {
 
 export const StaffMaintenancePage: React.FC = () => {
   const navigate = useNavigate();
-  const location = useLocation();
+  const currentPath = window.location.pathname;
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   // Determine if we are on the Completed Tasks (History) view
-  const isCompletedView = location.pathname.includes('/completed');
+  const isCompletedView = currentPath.includes('/completed');
+
 
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -46,7 +47,6 @@ export const StaffMaintenancePage: React.FC = () => {
   const [rejectReasonText, setRejectReasonText] = useState('');
 
   const [completeTaskId, setCompleteTaskId] = useState<string | null>(null);
-  const [completeOrderEstimate, setCompleteOrderEstimate] = useState<number>(0);
   const [actualCostVal, setActualCostVal] = useState<string>('');
   const [extraExpensesVal, setExtraExpensesVal] = useState<string>('');
   const [resolutionNotesVal, setResolutionNotesVal] = useState('');
@@ -313,7 +313,6 @@ export const StaffMaintenancePage: React.FC = () => {
                             disabled={isBusy}
                             onClick={() => {
                               setCompleteTaskId(order.id);
-                              setCompleteOrderEstimate(order.estimatedCost ?? 0);
                               setActualCostVal(String(order.estimatedCost ?? ''));
                             }}
                             className="flex items-center gap-1.5 h-8 px-4 rounded-xl text-xs font-bold bg-emerald-500 text-white hover:bg-emerald-600 transition-all shadow-sm shadow-emerald-500/15 disabled:opacity-60"
@@ -321,6 +320,7 @@ export const StaffMaintenancePage: React.FC = () => {
                             <Check className="w-3.5 h-3.5" /> {t('staffMaintenance.markCompleted')}
                           </button>
                         )}
+
                       </div>
 
                       <Button

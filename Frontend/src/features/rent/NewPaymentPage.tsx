@@ -248,8 +248,8 @@ export const NewPaymentPage: React.FC = () => {
               </tr>
             </table>
             <div class="footer">
-              DoorLoop Payments Gateway • Recorded by Manager<br>
-              © 2026 DoorLoop, Inc. All rights reserved.
+              WhatsLandlord Payments Gateway • Recorded by Manager<br>
+              © 2026 WhatsLandlord, Inc. All rights reserved.
             </div>
           </div>
           <script>

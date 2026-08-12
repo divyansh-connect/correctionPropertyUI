@@ -1452,7 +1452,21 @@ export const api = {
         const res: any = await apiClient.get('/superadmin/plans');
         return res.data || [];
       } catch (e) {
-        console.error('Plans fetch failed:', e);
+        try {
+          const publicRes: any = await apiClient.get('/auth/plans');
+          return publicRes.data || [];
+        } catch (err) {
+          console.error('Plans fetch failed:', e);
+          return [];
+        }
+      }
+    },
+    getPublic: async () => {
+      try {
+        const res: any = await apiClient.get('/auth/plans');
+        return res.data || [];
+      } catch (e) {
+        console.error('Public plans fetch failed:', e);
         return [];
       }
     },
@@ -1461,6 +1475,7 @@ export const api = {
       return res.data;
     },
   },
+
 
   saasInvoices: {
     getAll: async () => {
@@ -2087,7 +2102,7 @@ export const api = {
           firstName: 'Diya',
           lastName: 'Jain',
           name: 'Diya Jain',
-          email: 'diya.jain@doorloop.com',
+          email: 'diya.jain@whatslandlord.com',
           phone: '(512) 555-0188',
           role: 'Collection Manager',
           department: 'Collections & Revenue',
@@ -2100,7 +2115,7 @@ export const api = {
           firstName: 'Diya',
           lastName: 'Jain',
           name: 'Diya Jain',
-          email: 'diya.jain@doorloop.com',
+          email: 'diya.jain@whatslandlord.com',
           phone: '(512) 555-0188',
           role: 'Collection Manager',
           department: 'Collections & Revenue',
@@ -2122,17 +2137,9 @@ export const api = {
     },
   },
 
-  auth: {
-    changePassword: async (data: { currentPassword?: string; newPassword?: string }) => {
-      try {
-        const res: any = await apiClient.post('/auth/change-password', data);
-        return res.data;
-      } catch (e) {
-        console.error('Password change API call:', e);
-        return { message: 'Password updated successfully' };
-      }
-    },
-  },
+
+
+
 
   staffTasks: {
     getAll: async () => {
@@ -2250,6 +2257,14 @@ export const api = {
   },
 
   auth: {
+    register: async (data: any) => {
+      const res: any = await apiClient.post('/auth/register', data);
+      return res.data;
+    },
+    createHostedPayment: async (data: { amount: number; planName: string; description?: string }) => {
+      const res: any = await apiClient.post('/auth/create-hosted-payment', data);
+      return res.data;
+    },
     changePassword: async (data: any) => {
       try {
         const res: any = await apiClient.post('/auth/change-password', data);
@@ -2259,6 +2274,8 @@ export const api = {
       }
     },
   },
+
+
 };
 
 export default api;

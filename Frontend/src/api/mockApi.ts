@@ -1081,7 +1081,7 @@ for (let c = 1; c <= 5010; c++) {
     name: `ContactName ${c}`,
     role,
     property: `Skyline Luxury Lofts`,
-    email: `contact${c}@doorloop-unified.com`,
+    email: `contact${c}@whatslandlord-unified.com`,
     phone: `(512) 555-7${c.toString().padStart(3, '0')}`,
     status: c % 12 === 0 ? 'Inactive' : 'Active',
   });
@@ -1166,7 +1166,7 @@ for (let em = 1; em <= 4010; em++) {
   commEmailsList.push({
     id: `cem-${em}`,
     from: 'office@skyline-luxury.com',
-    to: `resident${em}@doorloop-unified.com`,
+    to: `resident${em}@whatslandlord-unified.com`,
     subject: `Notice regarding rent statement #${em}`,
     body: `Here is your detailed ledger balance for statement #${em}.`,
     sentAt: `2026-07-${(em % 28) + 1}`,
@@ -1320,7 +1320,7 @@ for (let sh = 1; sh <= 3010; sh++) {
     documentId: `doc-${(sh % 20010) + 1}`,
     documentName: `Document_${sh % 20010 + 1}.pdf`,
     sharedBy: 'Property Manager Staff',
-    sharedWith: `contact${sh}@doorloop-unified.com`,
+    sharedWith: `contact${sh}@whatslandlord-unified.com`,
     permissions: sharePermissions[sh % sharePermissions.length],
     expiresAt: sh % 4 === 0 ? `2026-12-31` : undefined,
     status: shareStatuses[sh % shareStatuses.length],

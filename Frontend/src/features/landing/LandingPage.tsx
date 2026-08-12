@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '../../components/ui/Button';
 import { 
   Sparkles, Building2, ShieldAlert, Cpu, Check, Users, ArrowRight, 
@@ -6,6 +7,8 @@ import {
   Sun, Moon, Loader2
 } from 'lucide-react';
 import { useThemeStore } from '../../store/useStore';
+import api from '../../api';
+import { AcceptHostedModal } from '../../components/AcceptHostedModal';
 
 interface LandingPageProps {
   navigate: (path: string) => void;
@@ -16,29 +19,117 @@ export const LandingPage: React.FC<LandingPageProps> = ({ navigate }) => {
   const [activeTab, setActiveTab] = useState<'portals' | 'ai' | 'developers'>('portals');
   const { theme, toggleTheme } = useThemeStore();
 
-  const [selectedCheckoutPlan, setSelectedCheckoutPlan] = useState<{name: string, price: number} | null>(null);
-  const [checkoutStep, setCheckoutStep] = useState<'form' | 'loading' | 'success'>('form');
-  const [cardName, setCardName] = useState('');
-  const [cardNumber, setCardNumber] = useState('');
-  const [cardExpiry, setCardExpiry] = useState('');
-  const [cardCvv, setCardCvv] = useState('');
+  const { data: dbPlans = [] } = useQuery({
+    queryKey: ['public-plans-landing'],
+    queryFn: () => api.plans.getPublic(),
+  });
 
-  const handleCheckoutSubmit = (e: React.FormEvent) => {
+  const defaultPlans = [
+    { 
+      name: 'Starter', 
+      price: 99, 
+      desc: 'Ideal for independent landlords scaling their initial residential units.',
+      features: ['Up to 50 properties', 'Basic screening logs', 'Standard ledger billing'] 
+    },
+    { 
+      name: 'Professional', 
+      price: 199, 
+      desc: 'For growing property agencies needing advanced rules automation.',
+      features: ['Up to 200 properties', 'Late Fee rules builder', 'AI tenant conversation logs'] 
+    },
+    { 
+      name: 'Enterprise', 
+      price: 499, 
+      desc: 'Designed for enterprise corporations requiring robust security controls.',
+      features: ['Unlimited properties', 'Developer webhook callbacks', 'API keys rotation', 'Dedicated vector library'] 
+    },
+  ];
+
+  const displayPlans = dbPlans.length > 0
+    ? dbPlans.map((p: any) => ({
+        name: p.name,
+        price: p.price,
+        desc: p.description || `${p.maxProperties || '50+'} properties, ${p.billingCycle || 'Monthly'} billing`,
+        features: typeof p.features === 'string' 
+          ? p.features.split(',').map((f: string) => f.trim()) 
+          : (Array.isArray(p.features) ? p.features : ['Full Access', 'Unlimited Portals'])
+      }))
+    : defaultPlans;
+
+  const [selectedCheckoutPlan, setSelectedCheckoutPlan] = useState<{name: string, price: number} | null>(null);
+
+  const [checkoutStep, setCheckoutStep] = useState<'form' | 'loading' | 'success'>('form');
+  const [fullName, setFullName] = useState('');
+  const [companyName, setCompanyName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [phone, setPhone] = useState('');
+  const [formError, setFormError] = useState('');
+
+  // Authorize.Net Accept Hosted Modal States
+  const [isHostedModalOpen, setIsHostedModalOpen] = useState(false);
+  const [hostedToken, setHostedToken] = useState('');
+  const [hostedUrl, setHostedUrl] = useState('');
+
+  const handleCheckoutSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError('');
     setCheckoutStep('loading');
-    setTimeout(() => {
+    try {
+      // 1. Request Hosted Token from Backend
+      const hostedData = await api.auth.createHostedPayment({
+        amount: selectedCheckoutPlan?.price || 99,
+        planName: `${selectedCheckoutPlan?.name} Plan`,
+        description: `SaaS Plan Subscription (${selectedCheckoutPlan?.name}) for ${companyName}`,
+      });
+
+      if (hostedData && hostedData.token) {
+        setHostedToken(hostedData.token);
+        if (hostedData.hostedUrl) setHostedUrl(hostedData.hostedUrl);
+        setCheckoutStep('form');
+        setIsHostedModalOpen(true);
+      } else {
+        throw new Error('Failed to obtain Authorize.Net hosted payment token.');
+      }
+    } catch (err: any) {
+      setCheckoutStep('form');
+      setFormError(err.message || 'Payment initiation failed. Please try again.');
+    }
+  };
+
+  const handleHostedSuccess = async (txData: { transactionId: string }) => {
+    setIsHostedModalOpen(false);
+    setCheckoutStep('loading');
+    try {
+      // 2. Complete Account Registration & Activation ONLY after successful payment
+      await api.auth.register({
+        name: companyName,
+        contactName: fullName,
+        email,
+        phone,
+        password,
+        planName: `${selectedCheckoutPlan?.name} Plan`,
+        price: selectedCheckoutPlan?.price || 99,
+        transactionId: txData.transactionId,
+      });
       setCheckoutStep('success');
       setTimeout(() => {
         setSelectedCheckoutPlan(null);
         setCheckoutStep('form');
-        setCardName('');
-        setCardNumber('');
-        setCardExpiry('');
-        setCardCvv('');
+        setFullName('');
+        setCompanyName('');
+        setEmail('');
+        setPassword('');
+        setPhone('');
         navigate('/login');
       }, 2000);
-    }, 2000);
+    } catch (err: any) {
+      setCheckoutStep('form');
+      setFormError(err.message || 'Registration completion failed.');
+    }
   };
+
+
 
   // Estimate SaaS savings
   const estimatedSavings = Math.round(rentVolume * 0.045);
@@ -91,7 +182,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ navigate }) => {
             <span className="text-white font-black text-base">D</span>
           </div>
           <span className="font-extrabold text-lg tracking-tight text-slate-900 dark:text-white">
-            DoorLoop <span className="text-primary text-xs font-semibold px-1 py-0.5 rounded bg-primary/15 ml-1">APEX</span>
+            WhatsLandlord <span className="text-primary text-xs font-semibold px-1 py-0.5 rounded bg-primary/15 ml-1">APEX</span>
           </span>
         </div>
         <nav className="hidden md:flex space-x-8 text-xs font-extrabold text-slate-505 dark:text-slate-400">
@@ -372,26 +463,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ navigate }) => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
-          {[
-            { 
-              name: 'Starter', 
-              price: 99, 
-              desc: 'Ideal for independent landlords scaling their initial residential units.',
-              features: ['Up to 50 properties', 'Basic screening logs', 'Standard ledger billing'] 
-            },
-            { 
-              name: 'Professional', 
-              price: 199, 
-              desc: 'For growing property agencies needing advanced rules automation.',
-              features: ['Up to 200 properties', 'Late Fee rules builder', 'AI tenant conversation logs'] 
-            },
-            { 
-              name: 'Enterprise', 
-              price: 499, 
-              desc: 'Designed for enterprise corporations requiring robust security controls.',
-              features: ['Unlimited properties', 'Developer webhook callbacks', 'API keys rotation', 'Dedicated vector library'] 
-            },
-          ].map((tier, idx) => (
+          {displayPlans.map((tier: any, idx: number) => (
+
             <div key={idx} className="bg-white dark:bg-white/[0.01] border border-slate-200 dark:border-white/5 p-6 rounded-2xl flex flex-col justify-between hover:border-primary/40 hover:bg-slate-100 dark:hover:bg-white/[0.03] transition-all duration-300 shadow-sm">
               <div className="space-y-4">
                 <span className="text-xs uppercase tracking-wider font-extrabold text-primary">{tier.name}</span>
@@ -420,7 +493,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ navigate }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
           <div className="glass-panel p-6 rounded-2xl space-y-3">
             <p className="text-xs text-slate-700 dark:text-slate-300 italic font-medium leading-relaxed">
-              "Transitioning our 1,500 units to DoorLoop Apex solved our communication latency. The Tenant portal interface has made rent collection completely friction-free."
+              "Transitioning our 1,500 units to WhatsLandlord solved our communication latency. The Tenant portal interface has made rent collection completely friction-free."
             </p>
             <div className="text-xs font-bold">
               <p className="text-slate-900 dark:text-white">Marcus Vance</p>
@@ -448,10 +521,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ navigate }) => {
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                 <span className="text-white font-black text-base">D</span>
               </div>
-              <span className="font-extrabold text-lg text-slate-900 dark:text-white">DoorLoop</span>
+              <span className="font-extrabold text-lg text-slate-900 dark:text-white">WhatsLandlord</span>
             </div>
             <p className="text-slate-505 dark:text-slate-400 leading-relaxed font-semibold max-w-sm text-[11px]">
-              DoorLoop Apex simplifies multi-tenant real estate management, providing high-fidelity portal UI modules and enterprise developer integration matrices.
+              WhatsLandlord simplifies multi-tenant real estate management, providing high-fidelity portal UI modules and enterprise developer integration matrices.
             </p>
           </div>
 
@@ -487,25 +560,36 @@ export const LandingPage: React.FC<LandingPageProps> = ({ navigate }) => {
         </div>
 
         <div className="max-w-6xl mx-auto pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-slate-505 text-[10px]">
-          <span>© {new Date().getFullYear()} DoorLoop Apex SaaS Systems. All rights reserved.</span>
+          <span>© {new Date().getFullYear()} WhatsLandlord SaaS Systems. All rights reserved.</span>
           <div className="flex space-x-6">
             <button className="hover:text-slate-400 dark:hover:text-slate-300">Privacy Policy</button>
             <button className="hover:text-slate-400 dark:hover:text-slate-300">Terms of Service</button>
           </div>
         </div>
-      </footer>
-      {selectedCheckoutPlan && (
+      </footer>      {selectedCheckoutPlan && (
         <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-3xl p-6 w-full max-w-md shadow-2xl space-y-4 text-left text-xs font-semibold text-slate-800 dark:text-slate-200">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-3xl p-6 w-full max-w-xl shadow-2xl space-y-4 text-left text-xs font-semibold text-slate-800 dark:text-slate-200">
             {checkoutStep === 'form' && (
               <form onSubmit={handleCheckoutSubmit} className="space-y-4">
                 <div className="flex justify-between items-center border-b pb-3">
                   <div>
-                    <h3 className="font-extrabold text-sm uppercase text-slate-900 dark:text-white">Secure Checkout</h3>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">Subscribe to DoorLoop / Zentrol Apex</p>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-extrabold text-sm uppercase text-slate-900 dark:text-white">Secure Checkout & Register</h3>
+                      <span className="px-2 py-0.5 bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-[9px] font-black uppercase rounded-full">
+                        Authorize.Net Test Mode
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">Authorize.Net Sandbox Payment Gateway Integration</p>
                   </div>
                   <button type="button" onClick={() => setSelectedCheckoutPlan(null)} className="text-slate-400 hover:text-slate-650 text-xl font-bold">&times;</button>
                 </div>
+
+
+                {formError && (
+                  <div className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-500 rounded-xl text-center">
+                    {formError}
+                  </div>
+                )}
 
                 <div className="p-3.5 bg-primary/10 border border-primary/20 text-primary rounded-2xl flex justify-between items-center">
                   <div>
@@ -515,30 +599,39 @@ export const LandingPage: React.FC<LandingPageProps> = ({ navigate }) => {
                   <p className="font-black text-lg">${selectedCheckoutPlan.price}/mo</p>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-bold text-slate-500">Cardholder Name</label>
-                  <input required placeholder="E.g., John Doe" value={cardName} onChange={e => setCardName(e.target.value)} className="w-full text-xs font-semibold p-2.5 rounded-lg border bg-slate-50 dark:bg-slate-950 focus:ring-1 focus:ring-primary focus:outline-none" />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-bold text-slate-500">Card Number</label>
-                  <input required placeholder="4111 2222 3333 4444" value={cardNumber} onChange={e => setCardNumber(e.target.value)} className="w-full text-xs font-semibold p-2.5 rounded-lg border bg-slate-50 dark:bg-slate-950 focus:ring-1 focus:ring-primary focus:outline-none" />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase font-bold text-slate-500">Full Name</label>
+                    <input required placeholder="Raj Kumar" value={fullName} onChange={e => setFullName(e.target.value)} className="w-full text-xs font-semibold p-2.5 rounded-lg border bg-slate-50 dark:bg-slate-950 focus:ring-1 focus:ring-primary focus:outline-none text-slate-900 dark:text-white" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase font-bold text-slate-500">Company Name</label>
+                    <input required placeholder="Raj Properties" value={companyName} onChange={e => setCompanyName(e.target.value)} className="w-full text-xs font-semibold p-2.5 rounded-lg border bg-slate-50 dark:bg-slate-950 focus:ring-1 focus:ring-primary focus:outline-none text-slate-900 dark:text-white" />
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label className="text-[10px] uppercase font-bold text-slate-500">Expiry Date</label>
-                    <input required placeholder="MM/YY" value={cardExpiry} onChange={e => setCardExpiry(e.target.value)} className="w-full text-xs font-semibold p-2.5 rounded-lg border bg-slate-50 dark:bg-slate-950 focus:ring-1 focus:ring-primary focus:outline-none" />
+                    <label className="text-[10px] uppercase font-bold text-slate-500">Email Address</label>
+                    <input required type="email" placeholder="raj@whatslandlord.com" value={email} onChange={e => setEmail(e.target.value)} className="w-full text-xs font-semibold p-2.5 rounded-lg border bg-slate-50 dark:bg-slate-950 focus:ring-1 focus:ring-primary focus:outline-none text-slate-900 dark:text-white" />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] uppercase font-bold text-slate-500">CVV</label>
-                    <input required placeholder="123" type="password" value={cardCvv} onChange={e => setCardCvv(e.target.value)} className="w-full text-xs font-semibold p-2.5 rounded-lg border bg-slate-50 dark:bg-slate-950 focus:ring-1 focus:ring-primary focus:outline-none" />
+                    <label className="text-[10px] uppercase font-bold text-slate-500">Password</label>
+                    <input required type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} className="w-full text-xs font-semibold p-2.5 rounded-lg border bg-slate-50 dark:bg-slate-950 focus:ring-1 focus:ring-primary focus:outline-none text-slate-900 dark:text-white" />
                   </div>
+                </div>
+                       <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold text-slate-500">Phone Number</label>
+                  <input required placeholder="9876543210" value={phone} onChange={e => setPhone(e.target.value)} className="w-full text-xs font-semibold p-2.5 rounded-lg border bg-slate-50 dark:bg-slate-950 focus:ring-1 focus:ring-primary focus:outline-none text-slate-900 dark:text-white" />
+                </div>
+
+                <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl text-blue-600 dark:text-blue-400 text-[11px] font-semibold flex items-center gap-2">
+                  <span>🔒 Payment details will be collected securely on official Authorize.Net Accept Hosted interface.</span>
                 </div>
 
                 <div className="pt-2 border-t flex justify-end space-x-2">
                   <Button type="button" variant="outline" onClick={() => setSelectedCheckoutPlan(null)}>Cancel</Button>
-                  <Button type="submit" className="bg-primary hover:bg-primary/95 text-white font-bold h-10 px-4 rounded-xl">Pay & Subscribe</Button>
+                  <Button type="submit" className="bg-primary hover:bg-primary/95 text-white font-bold h-10 px-6 rounded-xl">Pay & Subscribe</Button>
                 </div>
               </form>
             )}
@@ -546,25 +639,40 @@ export const LandingPage: React.FC<LandingPageProps> = ({ navigate }) => {
             {checkoutStep === 'loading' && (
               <div className="py-12 flex flex-col items-center justify-center space-y-4 text-center">
                 <Loader2 className="w-10 h-10 animate-spin text-primary" />
-                <p className="font-bold text-sm text-slate-900 dark:text-white">Processing Card Payment...</p>
-                <p className="text-[10px] text-muted-foreground">Verifying 3D Secure credentials</p>
+                <p className="font-bold text-sm text-slate-900 dark:text-white">Creating Property Management Account...</p>
+                <p className="text-[10px] text-muted-foreground">Setting up your secure workspace database</p>
               </div>
             )}
 
             {checkoutStep === 'success' && (
               <div className="py-12 flex flex-col items-center justify-center space-y-4 text-center">
-                <div className="w-12 h-12 bg-emerald-500/15 text-emerald-500 rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/25">
-                  <Check className="w-6 h-6 stroke-[3]" />
+                <div className="w-12 h-12 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center">
+                  <Check className="w-6 h-6" />
                 </div>
-                <p className="font-black text-base text-emerald-500">Payment Successful!</p>
-                <p className="text-[11px] text-muted-foreground font-semibold">Your SaaS instance is ready. Redirecting to Portals...</p>
+                <p className="font-bold text-sm text-slate-900 dark:text-white">Subscription Active!</p>
+                <p className="text-[10px] text-muted-foreground">Redirecting to Login Console...</p>
               </div>
             )}
           </div>
         </div>
+      )}
+
+      {isHostedModalOpen && selectedCheckoutPlan && (
+        <AcceptHostedModal
+          isOpen={isHostedModalOpen}
+          onClose={() => setIsHostedModalOpen(false)}
+          token={hostedToken}
+          hostedUrl={hostedUrl}
+          planName={`${selectedCheckoutPlan.name} Plan`}
+          amount={selectedCheckoutPlan.price}
+          onSuccess={handleHostedSuccess}
+          onCancel={() => setIsHostedModalOpen(false)}
+          onFailure={(err) => setFormError(err)}
+        />
       )}
     </div>
   );
 };
 
 export default LandingPage;
+

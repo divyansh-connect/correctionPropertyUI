@@ -95,7 +95,7 @@ export const InspectionTemplatesPage: React.FC = () => {
 
   const handleCreateNew = () => {
     resetForm();
-    // Pre-populate with standard starter rooms & items for a DoorLoop style inspection
+    // Pre-populate with standard starter rooms & items for a WhatsLandlord style inspection
     setRooms([
       {
         name: 'Kitchen',

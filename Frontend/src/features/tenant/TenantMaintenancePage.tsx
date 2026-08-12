@@ -68,9 +68,10 @@ export const TenantMaintenancePage: React.FC = () => {
     },
   });
 
-  const filteredMaint = maintenance.filter((m) =>
-    m.title.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredMaint = (maintenance || []).filter((m: any) =>
+    (m?.title || '').toLowerCase().includes((searchQuery || '').toLowerCase())
   );
+
 
   const columns: ColumnDef<MaintenanceRequest>[] = [
     {

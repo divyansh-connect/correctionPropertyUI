@@ -70,7 +70,7 @@ export const en = {
   },
   ai: {
     title: "AI Assistant",
-    description: "Interact with the DoorLoop Copilot to query your rental business operations.",
+    description: "Interact with the WhatsLandlord Copilot to query your rental business operations.",
     breadcrumbs: {
       home: "Home",
       aiCenter: "AI Center",

@@ -70,7 +70,7 @@ export const es = {
   },
   ai: {
     title: "Asistente IA",
-    description: "Interactúa con DoorLoop Copilot para consultar las operaciones de tu negocio.",
+    description: "Interactúa con WhatsLandlord Copilot para consultar las operaciones de tu negocio.",
     breadcrumbs: {
       home: "Inicio",
       aiCenter: "Centro de IA",

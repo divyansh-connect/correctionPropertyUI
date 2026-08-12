@@ -176,6 +176,7 @@ export interface MaintenanceRequest {
   propertyName: string;
   unitId: string;
   unitNumber: string;
+  unitName?: string;
   tenantName: string;
   title: string;
   description: string;
@@ -191,6 +192,7 @@ export interface MaintenanceRequest {
   resolutionNotes?: string;
   date?: string;
 }
+
 
 export interface Vendor {
   id: string;
