@@ -848,7 +848,7 @@ export const ProfileScreen = () => {
               <View style={[styles.settingsCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder, marginTop: 16 }]}>
                 <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
                   <Ionicons name="log-out-outline" size={18} color="#ef4444" style={{ marginRight: 6 }} />
-                  <Text style={styles.logoutBtnText} allowFontScaling={false}>Log Out of Zentrol Staff</Text>
+                  <Text style={styles.logoutBtnText} allowFontScaling={false}>Log Out of WhatsLandlord Staff</Text>
                 </TouchableOpacity>
               </View>
             </View>

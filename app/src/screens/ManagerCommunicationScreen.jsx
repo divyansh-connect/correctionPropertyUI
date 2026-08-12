@@ -60,14 +60,14 @@ export const ManagerCommunicationScreen = () => {
   // Outbound listings
   const [announcements, setAnnouncements] = useState([]);
   const [emails, setEmails] = useState([
-    { id: 1, date: '2026-07-2', recipient: 'resident1@doorloop-unified.com', subject: 'Notice regarding rent statement #1', status: 'Draft' },
-    { id: 2, date: '2026-07-3', recipient: 'resident2@doorloop-unified.com', subject: 'Notice regarding rent statement #2', status: 'Scheduled' },
-    { id: 3, date: '2026-07-4', recipient: 'resident3@doorloop-unified.com', subject: 'Notice regarding rent statement #3', status: 'Failed' },
-    { id: 4, date: '2026-07-5', recipient: 'resident4@doorloop-unified.com', subject: 'Notice regarding rent statement #4', status: 'Sent' },
-    { id: 5, date: '2026-07-6', recipient: 'resident5@doorloop-unified.com', subject: 'Notice regarding rent statement #5', status: 'Draft' },
-    { id: 6, date: '2026-07-7', recipient: 'resident6@doorloop-unified.com', subject: 'Notice regarding rent statement #6', status: 'Scheduled' },
-    { id: 7, date: '2026-07-8', recipient: 'resident7@doorloop-unified.com', subject: 'Notice regarding rent statement #7', status: 'Failed' },
-    { id: 8, date: '2026-07-9', recipient: 'resident8@doorloop-unified.com', subject: 'Notice regarding rent statement #8', status: 'Sent' },
+    { id: 1, date: '2026-07-2', recipient: 'resident1@whatslandlord.com', subject: 'Notice regarding rent statement #1', status: 'Draft' },
+    { id: 2, date: '2026-07-3', recipient: 'resident2@whatslandlord.com', subject: 'Notice regarding rent statement #2', status: 'Scheduled' },
+    { id: 3, date: '2026-07-4', recipient: 'resident3@whatslandlord.com', subject: 'Notice regarding rent statement #3', status: 'Failed' },
+    { id: 4, date: '2026-07-5', recipient: 'resident4@whatslandlord.com', subject: 'Notice regarding rent statement #4', status: 'Sent' },
+    { id: 5, date: '2026-07-6', recipient: 'resident5@whatslandlord.com', subject: 'Notice regarding rent statement #5', status: 'Draft' },
+    { id: 6, date: '2026-07-7', recipient: 'resident6@whatslandlord.com', subject: 'Notice regarding rent statement #6', status: 'Scheduled' },
+    { id: 7, date: '2026-07-8', recipient: 'resident7@whatslandlord.com', subject: 'Notice regarding rent statement #7', status: 'Failed' },
+    { id: 8, date: '2026-07-9', recipient: 'resident8@whatslandlord.com', subject: 'Notice regarding rent statement #8', status: 'Sent' },
   ]);
   
   const [smsLogs, setSmsLogs] = useState([
@@ -310,7 +310,7 @@ export const ManagerCommunicationScreen = () => {
       setEmailTemplate(opt);
       if (opt === 'Rent Statement Notice') {
         setEmailSubject('Urgent: Monthly Rent Statement Dispatched');
-        setEmailBody('Dear Resident,\n\nYour rent statement for this month has been generated and posted to your ledger account. Please check the Payments section to execute the transaction.\n\nBest Regards,\nZentrol Management');
+        setEmailBody('Dear Resident,\n\nYour rent statement for this month has been generated and posted to your ledger account. Please check the Payments section to execute the transaction.\n\nBest Regards,\nWhatsLandlord Management');
       } else if (opt === 'Maintenance Scheduled Notice') {
         setEmailSubject('HVAC seasonal maintenance check notification');
         setEmailBody('Dear Resident,\n\nPlease note that HVAC technician visits are scheduled for your unit next week. Let us know if there are pets or specific access directions.\n\nBest Regards,\nMaintenance Department');

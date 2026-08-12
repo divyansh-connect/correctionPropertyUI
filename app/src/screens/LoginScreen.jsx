@@ -73,7 +73,7 @@ export const LoginScreen = () => {
                   resizeMode="cover"
                 />
               </View>
-              <Text style={styles.brandTitle} allowFontScaling={false}>Zentrol Property</Text>
+              <Text style={styles.brandTitle} allowFontScaling={false}>WhatsLandlord</Text>
               <Text style={styles.subtitle} allowFontScaling={false}>Management & Leasing Portal</Text>
             </View>
 

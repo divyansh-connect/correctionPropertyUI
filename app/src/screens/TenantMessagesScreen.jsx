@@ -105,12 +105,12 @@ export const TenantMessagesScreen = () => {
 
   const [chatHistory, setChatHistory] = useState({
     'Property Manager': [
-      { id: '1', sender: 'manager', text: 'Hello! Welcome to Zentrol Owner Portal. How can we assist with your portfolio today?', time: '09:30 AM' },
+      { id: '1', sender: 'manager', text: 'Hello! Welcome to WhatsLandlord Owner Portal. How can we assist with your portfolio today?', time: '09:30 AM' },
       { id: '2', sender: 'user', text: 'Hi! I wanted to check on the monthly ledger statement.', time: '09:32 AM' },
       { id: '3', sender: 'manager', text: 'Your monthly statements for Sky house and property 1 have been published.', time: '09:35 AM' },
     ],
     'Administrador de Propiedades': [
-      { id: '1', sender: 'manager', text: '¡Hola! Bienvenido al Portal del Propietario de Zentrol. ¿Cómo podemos asistirle hoy con su cartera?', time: '09:30 AM' },
+      { id: '1', sender: 'manager', text: '¡Hola! Bienvenido al Portal del Propietario de WhatsLandlord. ¿Cómo podemos asistirle hoy con su cartera?', time: '09:30 AM' },
       { id: '2', sender: 'user', text: '¡Hola! Quería verificar el estado de cuenta mensual.', time: '09:32 AM' },
       { id: '3', sender: 'manager', text: 'Sus estados de cuenta mensuales para Sky house y property 1 han sido publicados.', time: '09:35 AM' },
     ],
@@ -133,10 +133,10 @@ export const TenantMessagesScreen = () => {
       { id: '3', sender: 'manager', text: 'Representante de residentes disponible para consultas sobre la propiedad.', time: 'Lunes' },
     ],
     'Property Manager Office': [
-      { id: '1', sender: 'manager', text: 'Hello! Welcome to Zentrol Property Management. How can we assist you today?', time: '09:30 AM' },
+      { id: '1', sender: 'manager', text: 'Hello! Welcome to WhatsLandlord Property Management. How can we assist you today?', time: '09:30 AM' },
     ],
     'Oficina del Administrador': [
-      { id: '1', sender: 'manager', text: '¡Hola! Bienvenido a la administración de propiedades de Zentrol. ¿Cómo podemos asistirle hoy?', time: '09:30 AM' },
+      { id: '1', sender: 'manager', text: '¡Hola! Bienvenido a la administración de propiedades de WhatsLandlord. ¿Cómo podemos asistirle hoy?', time: '09:30 AM' },
     ],
     'Leasing Office': [
       { id: '1', sender: 'manager', text: 'Leasing office here. Your lease agreement is active.', time: 'Yesterday' },
@@ -197,16 +197,16 @@ export const TenantMessagesScreen = () => {
 
           let bodyText = m.body || m.text || m.message || '';
           if (es) {
-            if (bodyText.includes('Hello! Welcome to Zentrol Property Management')) {
-              bodyText = '¡Hola! Bienvenido a la administración de propiedades de Zentrol. ¿Cómo podemos asistirle hoy?';
+            if (bodyText.includes('Hello! Welcome to WhatsLandlord Property Management')) {
+              bodyText = '¡Hola! Bienvenido a la administración de propiedades de WhatsLandlord. ¿Cómo podemos asistirle hoy?';
             } else if (bodyText.includes('Leasing office here. Your lease agreement is active')) {
               bodyText = 'Oficina de arrendamiento aquí. Su contrato de arrendamiento está activo.';
             } else if (bodyText.includes('Work orders for your property units are currently completed')) {
               bodyText = 'Las órdenes de trabajo para las unidades de su propiedad se encuentran completadas.';
             } else if (bodyText.includes('Your account balance is currently clear')) {
               bodyText = 'El saldo de su cuenta se encuentra actualmente al día.';
-            } else if (bodyText.includes('Hello! Welcome to Zentrol Owner Portal')) {
-              bodyText = '¡Hola! Bienvenido al Portal del Propietario de Zentrol. ¿Cómo podemos asistirle hoy con su cartera?';
+            } else if (bodyText.includes('Hello! Welcome to WhatsLandlord Owner Portal')) {
+              bodyText = '¡Hola! Bienvenido al Portal del Propietario de WhatsLandlord. ¿Cómo podemos asistirle hoy con su cartera?';
             } else if (bodyText.includes('Hi! I wanted to check on the monthly ledger statement')) {
               bodyText = '¡Hola! Quería verificar el estado de cuenta mensual.';
             } else if (bodyText.includes('Your monthly statements for Sky house and property 1 have been published')) {

@@ -1,13 +1,13 @@
-# Zentrol Property - Expo Mobile App (SDK 54)
+# WhatsLandlord - Expo Mobile App (SDK 54)
 
-This directory contains the React Native mobile application for the **Zentrol Property** management system, built using **Expo SDK 54**.
+This directory contains the React Native mobile application for the **WhatsLandlord** management system, built using **Expo SDK 54**.
 
 ---
 
 ## 🚀 Getting Started
 
 ### 1. Prerequisites
-Make sure you have Node.js installed, and your local Doorloop backend is running at `http://localhost:5000`.
+Make sure you have Node.js installed, and your local WhatsLandlord backend is running at `http://localhost:5000`.
 
 ### 2. Install Dependencies
 Run the following command inside the `app` folder to install dependencies:
@@ -38,13 +38,13 @@ By default, the application resolves the backend API endpoint dynamically:
 The application bypasses the landing/checkout flow and lands directly on the **Login Screen**. You can tap any of the **Quick Demo Logins** buttons on the screen or manually enter the emails below to login:
 
 1. **Super Admin / Property Manager**:
-   - Email: `admin@zentrol.com` or `manager@zentrol.com`
+   - Email: `admin@whatslandlord.com` or `manager@whatslandlord.com`
    - Features: Invite user modal, status toggle (Active/Suspended), and revoke user.
 
 2. **Property Owner**:
-   - Email: `owner@zentrol.com`
+   - Email: `owner@whatslandlord.com`
    - Features: View properties, add property form modal, delete property with confirmation, owner document uploads (Statements, Tax, Insurance, Contracts, etc.) with 5MB validation.
 
 3. **Tenant**:
-   - Email: `tenant@zentrol.com`
+   - Email: `tenant@whatslandlord.com`
    - Features: Rent payment with zero balance validation, maintenance ticket submit, tenant document uploads with custom category support.

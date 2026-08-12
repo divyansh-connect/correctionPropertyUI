@@ -41,7 +41,7 @@ const safeStorage = {
 
 const getBaseUrl = () => {
   // Use live production Railway backend URL matching Web App
-  return process.env.EXPO_PUBLIC_API_URL || 'https://doorloop-backend-production.up.railway.app/api/v1';
+  return process.env.EXPO_PUBLIC_API_URL || 'https://whatslandlord-backend-production.up.railway.app/api/v1';
 };
 
 const BASE_URL = getBaseUrl();

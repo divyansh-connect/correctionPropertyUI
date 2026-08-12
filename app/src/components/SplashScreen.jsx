@@ -42,7 +42,7 @@ export const SplashScreen = ({ onFinish }) => {
             resizeMode="cover"
           />
         </View>
-        <Text style={styles.brandTitle} allowFontScaling={false}>Zentrol Property</Text>
+        <Text style={styles.brandTitle} allowFontScaling={false}>WhatsLandlord</Text>
         <Text style={styles.brandSubtitle} allowFontScaling={false}>Management Platform</Text>
       </Animated.View>
     </View>

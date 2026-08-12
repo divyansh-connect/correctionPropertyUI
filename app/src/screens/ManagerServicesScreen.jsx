@@ -83,7 +83,7 @@ export const ManagerServicesScreen = ({ onNavigate }) => {
               {user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'Property Manager'}
             </Text>
             <Text style={styles.profileRole} allowFontScaling={false}>
-              Property Manager · Zentrol Staff
+              Property Manager · WhatsLandlord Staff
             </Text>
           </View>
         </View>

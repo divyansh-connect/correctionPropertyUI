@@ -113,7 +113,7 @@ export const ManagerDashboard = ({ onNavigate }) => {
     fetchLiveMetrics();
   }, []);
 
-  const companyName = user?.companyName || 'Zentrol Property';
+  const companyName = user?.companyName || 'WhatsLandlord';
   const roleTitle = user?.role || 'Property Manager';
   const displayRole = language === 'es' ? 'Gerente de Propiedades' : roleTitle;
 

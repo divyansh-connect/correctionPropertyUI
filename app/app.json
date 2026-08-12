@@ -1,12 +1,24 @@
 {
   "expo": {
-    "name": "Zentrol Property",
-    "slug": "zentrol-property",
+    "name": "WhatsLandlord",
+    "slug": "whatslandlord",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
-    }
+      "supportsTablet": true,
+      "bundleIdentifier": "com.essencedivine.whatslandlord"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "fff899c8-7ceb-4c4b-a2e4-6a50a56097a4"
+      }
+    },
+    "android": {
+      "package": "com.essencedivine.whatslandlord"
+    },
+    "plugins": [
+      "expo-font"
+    ]
   }
 }
