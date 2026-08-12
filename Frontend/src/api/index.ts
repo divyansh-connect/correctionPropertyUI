@@ -2255,7 +2255,6 @@ export const api = {
       return res.data;
     },
   },
-
   auth: {
     register: async (data: any) => {
       const res: any = await apiClient.post('/auth/register', data);
@@ -2274,8 +2273,7 @@ export const api = {
       }
     },
   },
-
-
 };
 
 export default api;
+
