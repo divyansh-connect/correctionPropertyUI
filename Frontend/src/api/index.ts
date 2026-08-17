@@ -266,6 +266,7 @@ export const api = {
           status: t.status,
           createdAt: t.createdAt,
           screeningReports: t.screeningReports || [],
+          invoices: t.invoices || [],
         }));
       } catch (e) {
         console.error('Tenants fetch failed:', e);
@@ -291,6 +292,7 @@ export const api = {
           status: t.status,
           createdAt: t.createdAt,
           screeningReports: t.screeningReports || [],
+          invoices: t.invoices || [],
         };
       } catch (e) {
         console.error(`Tenant fetch by id failed for ${id}:`, e);
@@ -1548,6 +1550,19 @@ export const api = {
         };
       }
     },
+    getWordPressInquiries: async () => {
+      try {
+        const res: any = await apiClient.get('/superadmin/wordpress-inquiries');
+        return res.data || [];
+      } catch (e) {
+        console.error('WordPress inquiries fetch failed:', e);
+        return [];
+      }
+    },
+    createWordPressInquiry: async (data: any) => {
+      const res: any = await apiClient.post('/public/wordpress-inquiry', data);
+      return res.data;
+    },
   },
 
   // Live Backend Connections for Secondary Modules
@@ -2252,6 +2267,28 @@ export const api = {
     },
     cancel: async (id: string, reason: string) => {
       const res: any = await apiClient.post(`/move-outs/${id}/cancel`, { reason });
+      return res.data;
+    },
+  },
+  renewals: {
+    getAll: async () => {
+      const res: any = await apiClient.get('/renewals');
+      return res.data || [];
+    },
+    sendOffer: async (leaseId: string) => {
+      const res: any = await apiClient.post('/renewals/send-offer', { leaseId });
+      return res.data;
+    },
+    update: async (leaseId: string, data: { newRentAmount?: number; termMonths?: number; newEndDate?: string }) => {
+      const res: any = await apiClient.post('/renewals/update', { leaseId, ...data });
+      return res.data;
+    },
+    accept: async (leaseId: string, termMonths?: number) => {
+      const res: any = await apiClient.post('/renewals/accept', { leaseId, termMonths });
+      return res.data;
+    },
+    reject: async (leaseId: string) => {
+      const res: any = await apiClient.post('/renewals/reject', { leaseId });
       return res.data;
     },
   },

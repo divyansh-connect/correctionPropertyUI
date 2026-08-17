@@ -82,21 +82,32 @@ export const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
     }
   }, [open, type]);
 
-  // Derived filter logic for Tenant upload flow
-  const filteredBuildings = buildings.filter((b: any) => b.propertyId === propertyId);
-  const filteredUnits = units.filter((u: any) => u.propertyId === propertyId && u.buildingId === buildingId);
-  const currentUnitTenants = tenants.filter((t: any) => t.unitId === unitId);
+  // Handle Tenant selection and search pre-assigned locations
+  const handleTenantSelect = (selectedId: string) => {
+    setTenantId(selectedId);
+    if (!selectedId) {
+      setPropertyId('');
+      setBuildingId('');
+      setUnitId('');
+      return;
+    }
+    const t = tenants.find((item: any) => item.id === selectedId);
+    if (t) {
+      const uId = t.unitId || '';
+      setUnitId(uId);
 
-  // Auto-set single tenant if only one exists in selected unit
-  useEffect(() => {
-    if (type === 'tenant') {
-      if (currentUnitTenants.length === 1) {
-        setTenantId(currentUnitTenants[0].id);
+      // Find unit in units list to get propertyId and buildingId
+      const u = units.find((item: any) => item.id === uId);
+      if (u) {
+        setPropertyId(u.propertyId || '');
+        setBuildingId(u.buildingId || '');
       } else {
-        setTenantId('');
+        setPropertyId(t.propertyId || '');
+        const b = buildings.find((item: any) => item.propertyId === t.propertyId);
+        setBuildingId(b ? b.id : '');
       }
     }
-  }, [unitId, tenants, type]);
+  };
 
   // Auto-set owner info when property is selected
   useEffect(() => {
@@ -144,27 +155,19 @@ export const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
       return;
     }
 
-    // Valdiations based on type
+    // Validations based on type
     if (type === 'owner') {
       if (!propertyId) {
         setErrorMsg('Please select a property.');
         return;
       }
     } else {
-      if (!propertyId) {
-        setErrorMsg('Please select a property.');
-        return;
-      }
-      if (!buildingId) {
-        setErrorMsg('Please select a building.');
-        return;
-      }
-      if (!unitId) {
-        setErrorMsg('Please select a unit.');
-        return;
-      }
       if (!tenantId) {
-        setErrorMsg('Please select a tenant. The unit must have an assigned tenant.');
+        setErrorMsg('Please select a tenant.');
+        return;
+      }
+      if (!propertyId || !buildingId || !unitId) {
+        setErrorMsg('Selected tenant does not have a fully resolved property, building, or unit assignment.');
         return;
       }
     }
@@ -190,7 +193,9 @@ export const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
       }
 
       setSuccess(true);
-      queryClient.invalidateQueries({ queryKey: ['docs-all'] });
+      queryClient.invalidateQueries({ queryKey: ['docs-general'] });
+      queryClient.invalidateQueries({ queryKey: ['docs-owner'] });
+      queryClient.invalidateQueries({ queryKey: ['docs-tenant'] });
       if (onSuccess) onSuccess();
       
       // Close modal on success after delay
@@ -241,114 +246,82 @@ export const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
               <span>{errorMsg}</span>
             </div>
           )}
-
-          {/* Cascading selection inputs */}
+          {/* Selection inputs */}
           <div className="space-y-3">
-            {/* Property Selector */}
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-muted-foreground uppercase">Property</label>
-              <Select
-                value={propertyId}
-                onChange={(e: any) => {
-                  setPropertyId(e.target.value);
-                  setBuildingId('');
-                  setUnitId('');
-                  setTenantId('');
-                }}
-                required
-              >
-                <option value="">Select Property...</option>
-                {properties.map((p: any) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </Select>
-            </div>
-
-            {/* OWNER FLOW: Show owner details */}
-            {type === 'owner' && propertyId && (
-              <div className="p-3 bg-secondary/20 border border-border rounded-xl">
-                <label className="text-[9px] font-bold text-muted-foreground uppercase block mb-0.5">Associated Owner</label>
-                <span className="text-xs font-bold text-foreground">{getOwnerDisplayName()}</span>
-              </div>
-            )}
-
-            {/* TENANT FLOW: Cascading selectors */}
-            {type === 'tenant' && propertyId && (
+            {type === 'owner' ? (
               <>
-                {/* Building Selector */}
+                {/* Property Selector */}
                 <div className="space-y-1 animate-fade-in">
-                  <label className="text-[10px] font-bold text-muted-foreground uppercase">Building</label>
+                  <label className="text-[10px] font-bold text-muted-foreground uppercase">Property</label>
                   <Select
-                    value={buildingId}
+                    value={propertyId}
                     onChange={(e: any) => {
-                      setBuildingId(e.target.value);
-                      setUnitId('');
-                      setTenantId('');
+                      setPropertyId(e.target.value);
                     }}
                     required
                   >
-                    <option value="">Select Building...</option>
-                    {filteredBuildings.map((b: any) => (
-                      <option key={b.id} value={b.id}>
-                        {b.name}
+                    <option value="">Select Property...</option>
+                    {properties.map((p: any) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
                       </option>
                     ))}
                   </Select>
-                  {filteredBuildings.length === 0 && (
-                    <p className="text-[10px] text-amber-500 font-bold">No buildings registered for this property.</p>
-                  )}
                 </div>
 
-                {/* Unit Selector */}
-                {buildingId && (
-                  <div className="space-y-1 animate-fade-in">
-                    <label className="text-[10px] font-bold text-muted-foreground uppercase">Unit</label>
-                    <Select
-                      value={unitId}
-                      onChange={(e: any) => {
-                        setUnitId(e.target.value);
-                        setTenantId('');
-                      }}
-                      required
-                    >
-                      <option value="">Select Unit...</option>
-                      {filteredUnits.map((u: any) => (
-                        <option key={u.id} value={u.id}>
-                          Unit {u.unitNumber} ({u.status})
-                        </option>
-                      ))}
-                    </Select>
-                    {filteredUnits.length === 0 && (
-                      <p className="text-[10px] text-amber-500 font-bold">No units registered in this building.</p>
-                    )}
+                {/* OWNER FLOW: Show owner details */}
+                {propertyId && (
+                  <div className="p-3 bg-secondary/20 border border-border rounded-xl">
+                    <label className="text-[9px] font-bold text-muted-foreground uppercase block mb-0.5">Associated Owner</label>
+                    <span className="text-xs font-bold text-foreground">{getOwnerDisplayName()}</span>
                   </div>
                 )}
+              </>
+            ) : (
+              <>
+                {/* TENANT FLOW: Select Tenant First */}
+                <div className="space-y-1 animate-fade-in">
+                  <label className="text-[10px] font-bold text-muted-foreground uppercase">Tenant</label>
+                  <Select
+                    value={tenantId}
+                    onChange={(e: any) => handleTenantSelect(e.target.value)}
+                    required
+                  >
+                    <option value="">Select Tenant...</option>
+                    {tenants
+                      .filter((t: any) => t.status === 'Active')
+                      .map((t: any) => (
+                        <option key={t.id} value={t.id}>
+                          {t.firstName} {t.lastName}
+                        </option>
+                      ))}
+                  </Select>
+                </div>
 
-                {/* Tenant Info display */}
-                {unitId && (
-                  <div className="space-y-1 animate-fade-in">
-                    <label className="text-[10px] font-bold text-muted-foreground uppercase">Tenant</label>
-                    {currentUnitTenants.length > 0 ? (
-                      <Select
-                        value={tenantId}
-                        onChange={(e: any) => setTenantId(e.target.value)}
-                        required
-                      >
-                        <option value="">Select Tenant...</option>
-                        {currentUnitTenants.map((t: any) => (
-                          <option key={t.id} value={t.id}>
-                            {t.firstName} {t.lastName}
-                          </option>
-                        ))}
-                      </Select>
-                    ) : (
-                      <div className="p-3 bg-rose-500/5 border border-rose-500/10 text-rose-400 text-xs font-bold rounded-xl flex items-center gap-1.5">
-                        <AlertCircle className="w-4 h-4 shrink-0" />
-                        No active tenant assigned to this unit. Document upload is disabled.
+                {/* Read-only Location Details Card */}
+                {tenantId && (
+                  <div className="p-3 bg-secondary/20 border border-border rounded-xl space-y-2 text-xs animate-fade-in">
+                    <label className="text-[9px] font-bold text-muted-foreground uppercase block mb-1">Resolved Location Details</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <span className="text-[9px] text-muted-foreground uppercase block">Property</span>
+                        <span className="font-semibold text-foreground">
+                          {properties.find((p: any) => p.id === propertyId)?.name || 'Unassigned'}
+                        </span>
                       </div>
-                    )}
+                      <div>
+                        <span className="text-[9px] text-muted-foreground uppercase block">Building</span>
+                        <span className="font-semibold text-foreground">
+                          {buildings.find((b: any) => b.id === buildingId)?.name || 'Unassigned'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[9px] text-muted-foreground uppercase block">Unit</span>
+                        <span className="font-semibold text-foreground">
+                          {units.find((u: any) => u.id === unitId)?.unitNumber ? `Unit ${units.find((u: any) => u.id === unitId)?.unitNumber}` : 'Unassigned'}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 )}
               </>

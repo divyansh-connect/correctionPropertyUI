@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../api';
+import { useNavigate } from '@tanstack/react-router';
 import { PageHeader } from '../../components/PageHeader';
 import { Button } from '../../components/ui/Button';
 import { StatusBadge } from '../../components/StatusBadge';
@@ -9,6 +10,7 @@ import { Eye, ClipboardList, RefreshCw } from 'lucide-react';
 
 export const MoveOutRegistryPage: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<string>(''); // empty means all
 
@@ -114,7 +116,7 @@ export const MoveOutRegistryPage: React.FC = () => {
                         <Button 
                           variant="ghost" 
                           size="sm" 
-                          onClick={() => window.location.href = `/leasing/move-out/${m.id}`}
+                          onClick={() => navigate({ to: `/leasing/move-out/${m.id}` })}
                         >
                           <Eye className="w-4 h-4 mr-1" /> View Workflow
                         </Button>

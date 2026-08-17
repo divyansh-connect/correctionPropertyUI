@@ -51,7 +51,8 @@ export const TenantsPage: React.FC<{ filterStatus?: string }> = ({ filterStatus 
     const matchesProp = propertyFilter === '' || t.propertyId === propertyFilter;
     const matchesStatus = statusFilter === '' || t.status === statusFilter;
     
-    const hasBalance = parseInt((t.id || '').split('-').pop() || '0') % 3 === 0;
+    const balanceSum = (t.invoices || []).reduce((sum, inv) => sum + (inv.balance || 0), 0);
+    const hasBalance = balanceSum > 0;
     const matchesBalance = balanceFilter === '' || 
       (balanceFilter === 'has-balance' && hasBalance) ||
       (balanceFilter === 'no-balance' && !hasBalance);
@@ -115,10 +116,10 @@ export const TenantsPage: React.FC<{ filterStatus?: string }> = ({ filterStatus 
       id: 'balance',
       header: t('tenants.columns.balance'),
       cell: ({ row }) => {
-        const hasBalance = parseInt(row.original.id.split('-').pop() || '0') % 3 === 0;
+        const balanceSum = (row.original.invoices || []).reduce((sum, inv) => sum + (inv.balance || 0), 0);
         return (
-          <span className={hasBalance ? 'text-rose-500 font-bold' : 'text-emerald-500 font-bold'}>
-            {hasBalance ? '$450.00' : '$0.00'}
+          <span className={balanceSum > 0 ? 'text-rose-500 font-bold' : 'text-emerald-500 font-bold'}>
+            ${balanceSum.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
         );
       },

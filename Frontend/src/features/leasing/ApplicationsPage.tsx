@@ -97,7 +97,7 @@ export const ApplicationsPage: React.FC = () => {
       id: 'creditScore',
       header: t('pmApplications.creditScore'),
       cell: ({ row }) => {
-        const score = 650 + (parseInt(row.original.id.split('-').pop() || '0') % 150);
+        const score = 650 + (((row.original.tenantName || '').length * 7) % 150);
         return (
           <span className={`font-bold ${score >= 700 ? 'text-emerald-500' : 'text-amber-500'}`}>
             {score}

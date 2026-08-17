@@ -70,6 +70,7 @@ export interface Tenant {
   propertyId?: string;
   propertyName?: string;
   status: 'Active' | 'Inactive' | 'Pending';
+  invoices?: Invoice[];
 }
 
 export interface Lead {
@@ -576,6 +577,7 @@ export interface OwnerDocument {
   category: 'Statements' | 'Tax Documents' | 'Contracts' | 'Insurance' | 'Property Photos' | 'Maintenance Reports' | 'Inspection Reports' | 'Other';
   uploadedAt: string;
   size: string;
+  fileUrl?: string;
 }
 
 export interface OwnerMessage {

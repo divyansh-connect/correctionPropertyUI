@@ -133,7 +133,7 @@ export const apiClient = {
       }
     }
 
-    if (response && response.status === 401) {
+    if (response && response.status === 401 && !url.includes('/auth/login')) {
       const refreshed = await handleUnauthorized();
       if (refreshed) {
         response = await fetch(`${BASE_URL}${url}`, {

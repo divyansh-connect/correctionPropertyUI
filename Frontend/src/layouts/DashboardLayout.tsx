@@ -75,6 +75,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         { title: t('nav.securityAndLogs'), path: '/platform-security/audit' },
       ],
     },
+    {
+      title: "WordPress Inquiries",
+      icon: <MessageSquare className="w-5 h-5" />,
+      path: '/superadmin/wordpress-inquiries',
+    },
   ];
 
   // --- PROPERTY MANAGER MENU ITEMS ---
@@ -369,12 +374,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         {/* Brand Header */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-border/60">
           <div className="flex items-center space-x-3 overflow-hidden">
-            <div className="w-9 h-9 min-w-9 bg-primary rounded-lg flex items-center justify-center shadow-lg shadow-primary/20">
-              <span className="text-white font-extrabold text-lg">D</span>
-            </div>
             {isSidebarOpen && (
               <span className="font-extrabold text-lg tracking-tight whitespace-nowrap text-foreground">
-                WhatsLandlord <span className="text-primary text-xs font-semibold px-1 py-0.5 rounded bg-primary/10 ml-1">APEX</span>
+                WhatsLandlord
               </span>
             )}
           </div>
@@ -466,9 +468,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           <div className="relative flex flex-col w-72 max-w-xs bg-card border-r border-border p-4 animate-in slide-in-from-left duration-200">
             <div className="flex items-center justify-between pb-4 border-b border-border mb-4">
               <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold">
-                  D
-                </div>
                 <span className="font-extrabold text-base">WhatsLandlord</span>
               </div>
               <Button variant="ghost" size="icon" onClick={() => setIsMobileOpen(false)}>

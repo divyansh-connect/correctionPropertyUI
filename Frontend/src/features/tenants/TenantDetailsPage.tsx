@@ -127,8 +127,8 @@ export const TenantDetailsPage: React.FC = () => {
   }
 
   // Derived Balance / Details
-  const hasBalance = parseInt(tenant.id.split('-').pop() || '0') % 3 === 0;
-  const balanceDue = hasBalance ? 450 : 0;
+  const balanceDue = (tenant.invoices || []).reduce((sum, inv) => sum + (inv.balance || 0), 0);
+  const hasBalance = balanceDue > 0;
   const monthlyRent = lease ? lease.rentAmount : 1400;
 
   const property = allProperties.find((p) => p.id === tenant?.propertyId);

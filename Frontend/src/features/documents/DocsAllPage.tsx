@@ -13,6 +13,7 @@ import { StatusBadge } from '../../components/StatusBadge';
 import { FileTypeIcon } from '../../components/DocumentComponents';
 import { useNavigate } from '@tanstack/react-router';
 import { UploadDocumentModal } from './UploadDocumentModal';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 
 export const DocsAllPage: React.FC = () => {
   const { t } = useTranslation();
@@ -28,6 +29,30 @@ export const DocsAllPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [roleFilter, setRoleFilter] = useState<'all' | 'owner' | 'tenant'>('all');
+
+  // Download states
+  const [successDialogOpen, setSuccessDialogOpen] = useState(false);
+  const [downloadedDocName, setDownloadedDocName] = useState('');
+
+  const handleDownload = (doc: any) => {
+    if (doc.fileUrl) {
+      let downloadUrl = doc.fileUrl;
+      if (downloadUrl.includes('res.cloudinary.com') && downloadUrl.includes('/upload/')) {
+        downloadUrl = downloadUrl.replace('/upload/', '/upload/fl_attachment/');
+      }
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = doc.name;
+      a.target = '_blank';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setDownloadedDocName(doc.name);
+      setSuccessDialogOpen(true);
+    } else {
+      alert(`No download URL available for ${doc.name}`);
+    }
+  };
 
   // Queries for real DB data
   const { data: generalDocs = [], isLoading: loadingGeneral } = useQuery({
@@ -105,6 +130,7 @@ export const DocsAllPage: React.FC = () => {
       status: 'Active',
       updatedAt: d.uploadedAt ? d.uploadedAt.split('T')[0] : 'N/A',
       role: 'owner',
+      fileUrl: d.fileUrl,
     };
   });
 
@@ -124,6 +150,7 @@ export const DocsAllPage: React.FC = () => {
       status: 'Active',
       updatedAt: d.uploadedAt ? d.uploadedAt.split('T')[0] : 'N/A',
       role: 'tenant',
+      fileUrl: d.fileUrl,
     };
   });
 
@@ -168,7 +195,7 @@ export const DocsAllPage: React.FC = () => {
     { accessorKey: 'updatedAt', header: t('pmDocuments.updated'), id: 'updated' },
     { id: 'actions', header: t('pmDocuments.actions'), cell: ({ row }) => (
       <div className="flex gap-1">
-        <Button variant="ghost" size="sm" className="text-[9px]" onClick={() => alert(`Downloading ${row.original.name}`)}>Download</Button>
+        <Button variant="ghost" size="sm" className="text-[9px]" onClick={() => handleDownload(row.original)}>Download</Button>
         <Button variant="ghost" size="sm" className="text-[9px] text-rose-500" onClick={() => archiveMutation.mutate(row.original.id)}>Archive</Button>
       </div>
     )},
@@ -302,7 +329,7 @@ export const DocsAllPage: React.FC = () => {
             <DocumentCard
               key={doc.id} id={doc.id} name={doc.name} category={doc.category}
               size={doc.size} status={doc.status} updatedAt={doc.updatedAt} owner={doc.owner}
-              onDownload={() => alert(`Downloading ${doc.name}`)}
+              onDownload={() => handleDownload(doc)}
               onPreview={() => alert(`Previewing ${doc.name}`)}
               onArchive={() => archiveMutation.mutate(doc.id)}
             />
@@ -315,6 +342,17 @@ export const DocsAllPage: React.FC = () => {
         open={isModalOpen}
         onOpenChange={setIsModalOpen}
         type={modalType}
+      />
+
+      {/* DOWNLOAD SUCCESS DIALOG */}
+      <ConfirmDialog
+        open={successDialogOpen}
+        onOpenChange={setSuccessDialogOpen}
+        title="Download Started"
+        description={`The document "${downloadedDocName}" is being downloaded. Please check your browser's download folder.`}
+        onConfirm={() => setSuccessDialogOpen(false)}
+        confirmText="Great"
+        cancelText="Close"
       />
     </div>
   );

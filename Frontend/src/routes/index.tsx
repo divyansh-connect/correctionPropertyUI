@@ -3,6 +3,7 @@ import {
   createRoute,
   createRouter,
   Outlet,
+  useLocation,
   useNavigate,
   useRouterState
 } from '@tanstack/react-router';
@@ -15,11 +16,13 @@ import {
   Plus, Search, Eye, Edit, Power, Ban, CheckCircle, XCircle, Lock, Settings, Key,
   Database, Mail, FileText, Globe, Building2, Users, CreditCard, BarChart3,
   LifeBuoy, Shield, Activity, Sparkles, Clock, ArrowRight, ShieldAlert, Check, X,
-  Trash2, HelpCircle
+  Trash2, HelpCircle, RefreshCw, Loader2
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { StatusBadge } from '../components/StatusBadge';
 import { PageHeader } from '../components/PageHeader';
+import { Input } from '../components/ui/Input';
+import { FormDialog } from '../components/FormDialog';
 
 // Layouts
 import { AuthLayout } from '../layouts/AuthLayout';
@@ -5162,7 +5165,225 @@ const DelinquencyReportPage: React.FC = () => {
   );
 };
 
+const WordPressInquiriesPage: React.FC = () => {
+  const [inquiries, setInquiries] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState<boolean>(true);
+  const [searchQuery, setSearchQuery] = React.useState<string>('');
+
+  // Form Modal State
+  const [isModalOpen, setIsModalOpen] = React.useState(false);
+  const [submitting, setSubmitting] = React.useState(false);
+  const [formData, setFormData] = React.useState({
+    name: '',
+    email: '',
+    phone: '',
+    subject: '',
+    message: '',
+  });
+
+  const fetchInquiries = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await api.superadmin.getWordPressInquiries();
+      setInquiries(data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    fetchInquiries();
+  }, [fetchInquiries]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setSubmitting(true);
+      await api.superadmin.createWordPressInquiry(formData);
+      setIsModalOpen(false);
+      setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
+      fetchInquiries();
+    } catch (err: any) {
+      alert(err.message || 'Failed to submit test inquiry');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const filtered = inquiries.filter((inq: any) => {
+    const search = searchQuery.toLowerCase();
+    return (
+      inq.name.toLowerCase().includes(search) ||
+      inq.email.toLowerCase().includes(search) ||
+      inq.phone.toLowerCase().includes(search) ||
+      (inq.subject && inq.subject.toLowerCase().includes(search)) ||
+      inq.message.toLowerCase().includes(search)
+    );
+  });
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <PageHeader
+          title="WordPress Form Inquiries"
+          description="Inquiries received from your WordPress website contact form. Live testing is active."
+        />
+        <div className="flex items-center gap-2">
+          <Button 
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-1 text-xs font-bold"
+          >
+            <Plus className="w-3.5 h-3.5 mr-1" />
+            Add Test Inquiry
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={fetchInquiries} 
+            disabled={loading}
+            className="flex items-center gap-1 text-xs"
+          >
+            <RefreshCw className="w-3.5 h-3.5 mr-1" />
+            Refresh
+          </Button>
+        </div>
+      </div>
+
+      <div className="bg-card text-card-foreground rounded-2xl border border-border/60 shadow-sm overflow-hidden">
+        <div className="p-4 border-b border-border/60 flex items-center justify-between gap-4">
+          <Input
+            placeholder="Search inquiries by name, email, phone, subject..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="max-w-md bg-background/50"
+          />
+          <div className="text-xs text-muted-foreground font-bold">
+            Total submissions: {filtered.length}
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="p-12 text-center text-xs font-semibold text-muted-foreground">
+            <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-primary" />
+            Loading WordPress inquiries...
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="p-12 text-center text-xs font-semibold text-muted-foreground">
+            No inquiries found. Submit data from your WordPress form to test the integration.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="border-b border-border/60 bg-muted/30">
+                  <th className="p-4 font-bold text-muted-foreground uppercase tracking-wide">Sender Name</th>
+                  <th className="p-4 font-bold text-muted-foreground uppercase tracking-wide">Email Address</th>
+                  <th className="p-4 font-bold text-muted-foreground uppercase tracking-wide">Phone Number</th>
+                  <th className="p-4 font-bold text-muted-foreground uppercase tracking-wide">Subject</th>
+                  <th className="p-4 font-bold text-muted-foreground uppercase tracking-wide">Message</th>
+                  <th className="p-4 font-bold text-muted-foreground uppercase tracking-wide">Received At</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/60">
+                {filtered.map((inq: any) => (
+                  <tr key={inq.id} className="hover:bg-accent/20 transition-all">
+                    <td className="p-4 font-bold text-foreground">{inq.name}</td>
+                    <td className="p-4 font-bold text-primary">{inq.email}</td>
+                    <td className="p-4 font-mono text-muted-foreground">{inq.phone}</td>
+                    <td className="p-4 font-semibold text-foreground">{inq.subject || 'N/A'}</td>
+                    <td className="p-4 max-w-xs truncate text-muted-foreground" title={inq.message}>{inq.message}</td>
+                    <td className="p-4 font-mono text-muted-foreground">
+                      {new Date(inq.createdAt).toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* CREATE MOCK INQUIRY DIALOG */}
+      <FormDialog
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        title="Add WordPress Test Inquiry"
+        description="Simulate a form submission to verify database insertion and live API connectivity."
+      >
+        <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+          <div className="space-y-1.5">
+            <label className="text-[10px] uppercase font-bold text-muted-foreground">Name *</label>
+            <Input 
+              required 
+              placeholder="E.g., Jane Doe" 
+              value={formData.name} 
+              onChange={e => setFormData({ ...formData, name: e.target.value })} 
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[10px] uppercase font-bold text-muted-foreground">Email *</label>
+            <Input 
+              required 
+              type="email" 
+              placeholder="E.g., janedoe@example.com" 
+              value={formData.email} 
+              onChange={e => setFormData({ ...formData, email: e.target.value })} 
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[10px] uppercase font-bold text-muted-foreground">Phone Number *</label>
+            <Input 
+              required 
+              placeholder="E.g., +1 (555) 0199" 
+              value={formData.phone} 
+              onChange={e => setFormData({ ...formData, phone: e.target.value })} 
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[10px] uppercase font-bold text-muted-foreground">Subject</label>
+            <Input 
+              placeholder="E.g., Pricing Inquiry" 
+              value={formData.subject} 
+              onChange={e => setFormData({ ...formData, subject: e.target.value })} 
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[10px] uppercase font-bold text-muted-foreground">Message *</label>
+            <textarea 
+              required
+              rows={4}
+              placeholder="Enter message details here..." 
+              value={formData.message} 
+              onChange={e => setFormData({ ...formData, message: e.target.value })} 
+              className="w-full text-xs p-3 rounded-lg border border-border bg-background/50 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary placeholder:text-muted-foreground"
+            />
+          </div>
+
+          <div className="flex justify-end space-x-2 pt-4 border-t">
+            <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>Cancel</Button>
+            <Button type="submit" disabled={submitting}>
+              {submitting && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+              Submit Form
+            </Button>
+          </div>
+        </form>
+      </FormDialog>
+    </div>
+  );
+};
+
 // --- ROUTE INSTANTIATIONS FOR NEW VIEWS ---
+const wordpressInquiriesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/superadmin/wordpress-inquiries',
+  component: () => (<ProtectedWrapper><WordPressInquiriesPage /></ProtectedWrapper>),
+});
+
 const companiesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/companies',
@@ -5411,6 +5632,7 @@ const routeTree = rootRoute.addChildren([
   resetPasswordRoute,
 
   // Super Admin Routes
+  wordpressInquiriesRoute,
   companiesRoute,
   newCompanyRoute,
   editCompanyRoute,

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { api } from '../../api';
+import { useNavigate } from '@tanstack/react-router';
 import { PageHeader } from '../../components/PageHeader';
 import { Button } from '../../components/ui/Button';
 import { 
@@ -16,6 +17,7 @@ interface InspectionScreenProps {
 
 export const InspectionScreen: React.FC<InspectionScreenProps> = ({ id }) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [rooms, setRooms] = useState<any[]>([]);
   const [overallNotes, setOverallNotes] = useState('');
   const [managerNotes, setManagerNotes] = useState('');
@@ -618,9 +620,10 @@ export const InspectionScreen: React.FC<InspectionScreenProps> = ({ id }) => {
         <Button 
           variant="outline" 
           onClick={() => {
-            window.location.href = inspection.moveInId
+            const dest = inspection.moveInId
               ? `/leasing/move-in/${inspection.moveInId}`
               : `/leasing/move-out/${inspection.moveOutId}`;
+            navigate({ to: dest });
           }}
         >
           <ArrowLeft className="w-4 h-4 mr-2" /> Back to {inspection.moveInId ? 'Move In' : 'Move Out'}

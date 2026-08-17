@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../api';
+import { useNavigate } from '@tanstack/react-router';
 import { PageHeader } from '../../components/PageHeader';
 import { Button } from '../../components/ui/Button';
 import { AlertCircle, ArrowLeft, CheckCircle2, DollarSign } from 'lucide-react';
@@ -12,6 +13,7 @@ interface DamageReviewPageProps {
 
 export const DamageReviewPage: React.FC<DamageReviewPageProps> = ({ id }) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   // Fetch Move Out details
@@ -62,7 +64,7 @@ export const DamageReviewPage: React.FC<DamageReviewPageProps> = ({ id }) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['moveOut', id] });
       queryClient.invalidateQueries({ queryKey: ['moveOuts'] });
-      window.location.href = `/leasing/move-out/${id}`;
+      navigate({ to: `/leasing/move-out/${id}` });
     },
   });
 
@@ -131,7 +133,7 @@ export const DamageReviewPage: React.FC<DamageReviewPageProps> = ({ id }) => {
     <div className="space-y-6">
       <div className="flex items-center space-x-3">
         <button
-          onClick={() => window.location.href = `/leasing/move-out/${id}`}
+          onClick={() => navigate({ to: `/leasing/move-out/${id}` })}
           className="p-2 rounded-xl bg-card border hover:bg-accent/40 text-foreground transition-all"
         >
           <ArrowLeft className="w-4 h-4" />

@@ -73,7 +73,12 @@ export const LeaseDetailsPage: React.FC = () => {
   };
 
   const payColumns: ColumnDef<any>[] = [
-    { accessorKey: 'dueDate', header: 'Due Date', id: 'dueDate' },
+    { 
+      accessorKey: 'dueDate', 
+      header: 'Due Date', 
+      id: 'dueDate',
+      cell: ({ row }) => <span>{row.original.dueDate ? row.original.dueDate.split('T')[0] : 'N/A'}</span>
+    },
     { accessorKey: 'amount', header: 'Amount', id: 'amount', cell: ({ row }) => <span>${row.original.amount.toLocaleString()}</span> },
     { accessorKey: 'status', header: 'Status', id: 'status', cell: ({ row }) => <StatusBadge status={row.original.status} /> },
   ];
@@ -144,7 +149,7 @@ export const LeaseDetailsPage: React.FC = () => {
           </div>
           <div>
             <p className="text-[10px] font-bold text-muted-foreground uppercase">Start Date</p>
-            <p className="text-sm font-extrabold">{lease.startDate}</p>
+            <p className="text-sm font-extrabold">{lease.startDate ? lease.startDate.split('T')[0] : 'N/A'}</p>
           </div>
         </Card>
 
@@ -154,7 +159,7 @@ export const LeaseDetailsPage: React.FC = () => {
           </div>
           <div>
             <p className="text-[10px] font-bold text-muted-foreground uppercase">Expiration Date</p>
-            <p className="text-sm font-extrabold">{lease.endDate}</p>
+            <p className="text-sm font-extrabold">{lease.endDate ? lease.endDate.split('T')[0] : 'N/A'}</p>
           </div>
         </Card>
 

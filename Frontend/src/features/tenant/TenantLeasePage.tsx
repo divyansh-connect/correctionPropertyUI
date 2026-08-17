@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../../api';
 import { PageHeader } from '../../components/PageHeader';
@@ -19,17 +19,35 @@ import {
   Mail, 
   Phone, 
   Building,
-  Info
+  Info,
+  CheckCircle,
+  AlertTriangle,
+  Gift,
+  Loader2
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 export const TenantLeasePage: React.FC = () => {
+  const { t } = useTranslation();
+  const [msg, setMsg] = useState('');
+  const [actionLoading, setActionLoading] = useState(false);
+  const [selectedTermMonths, setSelectedTermMonths] = useState(12);
+
   // Queries
-  const { data: leases = [], isLoading } = useQuery({ 
+  const { data: leases = [], isLoading, refetch } = useQuery({ 
     queryKey: ['tenant-leases-details'], 
     queryFn: () => api.tenantLeases.getAll() 
   });
-  const { t } = useTranslation();
+
+  // Calculate dynamic end date based on selected months
+  const calculatedEndDate = React.useMemo(() => {
+    const rawLease = leases && leases.length > 0 ? leases[0] : null;
+    const endDateStr = rawLease?.endDate || rawLease?.leaseEnd;
+    if (!endDateStr) return 'N/A';
+    const d = new Date(endDateStr);
+    d.setMonth(d.getMonth() + selectedTermMonths);
+    return d.toISOString().split('T')[0];
+  }, [leases, selectedTermMonths]);
 
   if (isLoading) {
     return <LoadingSkeleton type="card" />;
@@ -56,12 +74,45 @@ export const TenantLeasePage: React.FC = () => {
     tenantName: rawLease.tenant ? `${rawLease.tenant.firstName || ''} ${rawLease.tenant.lastName || ''}`.trim() : rawLease.tenantName || '',
     propertyName: rawLease.property?.name || rawLease.propertyName || 'Property',
     unitNumber: rawLease.unit ? `Unit ${rawLease.unit.unitNumber}` : rawLease.unitNumber || 'Unassigned Unit',
+    renewal: rawLease.renewal || null,
   };
 
   const property = lease.property || {};
   const unit = lease.unit || {};
   const tenant = lease.tenant || {};
   const owner = property.owner || {};
+
+  const handleAcceptRenewal = async () => {
+    setActionLoading(true);
+    try {
+      await api.renewals.accept(lease.id, selectedTermMonths);
+      setMsg('Renewal proposal accepted! Your agreement has been renewed successfully.');
+      setTimeout(() => {
+        refetch();
+        setMsg('');
+      }, 2000);
+    } catch (e) {
+      console.error(e);
+      alert('Failed to accept renewal proposal.');
+    }
+    setActionLoading(false);
+  };
+
+  const handleDeclineRenewal = async () => {
+    setActionLoading(true);
+    try {
+      await api.renewals.reject(lease.id);
+      setMsg('Renewal declined. Your move-out checklist is now scheduled.');
+      setTimeout(() => {
+        refetch();
+        setMsg('');
+      }, 2000);
+    } catch (e) {
+      console.error(e);
+      alert('Failed to decline renewal proposal.');
+    }
+    setActionLoading(false);
+  };
 
   return (
     <div className="space-y-6 text-foreground max-w-5xl">
@@ -73,6 +124,104 @@ export const TenantLeasePage: React.FC = () => {
           { label: t('tenant.nav.lease') },
         ]}
       />
+
+      {/* Success Notification Alert */}
+      {msg && (
+        <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 p-4 rounded-xl text-xs font-bold flex items-center space-x-2">
+          <CheckCircle className="w-5 h-5 flex-shrink-0 animate-bounce" />
+          <span>{msg}</span>
+        </div>
+      )}
+
+      {/* RENEWAL OFFER ALERT CARDS */}
+      {lease.renewal && lease.renewal.status === 'OFFER_SENT' && (
+        <Card className="p-6 border-2 border-emerald-500/30 bg-emerald-500/5 rounded-2xl shadow-md space-y-4">
+          <div className="flex items-start space-x-3.5">
+            <div className="bg-emerald-500/10 p-2.5 rounded-xl border border-emerald-500/20 text-emerald-400">
+              <Gift className="w-6 h-6 shrink-0" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="font-extrabold text-sm uppercase text-emerald-400">Lease Renewal Offer Received! 🎉</h3>
+              <p className="text-xs text-muted-foreground">
+                Your current lease agreement is set to expire on <strong className="text-foreground">{lease.leaseEnd}</strong>. The property management office has drafted a renewal offer:
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 border-y border-emerald-500/10 py-4 my-2 text-xs font-semibold">
+            <div className="space-y-1">
+              <span className="text-[10px] text-muted-foreground uppercase">Current Rent</span>
+              <p className="font-extrabold text-base text-muted-foreground">${(Number(lease.rentAmount) || 0).toLocaleString()} / mo</p>
+            </div>
+            <div className="space-y-1">
+              <span className="text-[10px] text-emerald-400 uppercase font-bold">New Proposed Rent</span>
+              <p className="font-extrabold text-lg text-emerald-400">${(Number(lease.renewal.newRentAmount) || 0).toLocaleString()} / mo</p>
+            </div>
+            <div className="space-y-1">
+              <span className="text-[10px] text-emerald-400 uppercase font-bold">Select Lease Term</span>
+              <select
+                value={selectedTermMonths}
+                onChange={e => setSelectedTermMonths(Number(e.target.value))}
+                className="w-full mt-0.5 p-2 rounded border border-emerald-500/20 bg-secondary/80 text-xs font-extrabold focus:outline-none"
+              >
+                <option value={3}>3 Months</option>
+                <option value={6}>6 Months</option>
+                <option value={9}>9 Months</option>
+                <option value={12}>12 Months (1 Year)</option>
+              </select>
+            </div>
+            <div className="space-y-1">
+              <span className="text-[10px] text-muted-foreground uppercase">New Expiration Date</span>
+              <p className="font-extrabold text-base text-foreground mt-2">{calculatedEndDate}</p>
+            </div>
+          </div>
+
+          <div className="flex justify-end items-center space-x-3 pt-1">
+            {actionLoading ? (
+              <div className="flex items-center space-x-2 text-xs text-muted-foreground font-semibold">
+                <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
+                <span>Processing agreement...</span>
+              </div>
+            ) : (
+              <>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={handleDeclineRenewal}
+                  className="bg-rose-500/10 border-rose-500/20 text-rose-400 hover:bg-rose-500/20 text-[10px] font-extrabold py-2 px-4"
+                >
+                  Decline & Vacate
+                </Button>
+                <Button 
+                  size="sm" 
+                  onClick={handleAcceptRenewal}
+                  className="bg-emerald-500 text-white hover:bg-emerald-600 text-[10px] font-extrabold py-2 px-4"
+                >
+                  Accept & Sign Lease
+                </Button>
+              </>
+            )}
+          </div>
+        </Card>
+      )}
+
+      {lease.renewal && lease.renewal.status === 'ACCEPTED' && (
+        <Card className="p-4 border border-emerald-500/20 bg-emerald-500/5 rounded-xl flex items-center space-x-3 text-xs">
+          <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />
+          <span className="text-muted-foreground font-semibold">
+            Your lease renewal proposal has been accepted! Your contract will automatically roll over at the new rent rate of <strong className="text-emerald-400">${lease.renewal.newRentAmount}</strong> on lease expiration.
+          </span>
+        </Card>
+      )}
+
+      {lease.renewal && lease.renewal.status === 'REJECTED' && (
+        <Card className="p-4 border border-rose-500/20 bg-rose-500/5 rounded-xl flex items-center space-x-3 text-xs">
+          <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0" />
+          <span className="text-muted-foreground font-semibold">
+            Lease renewal offer was declined. Move-out scheduled for <strong className="text-rose-400">{lease.leaseEnd}</strong>.
+          </span>
+        </Card>
+      )}
 
       {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -291,4 +440,5 @@ export const TenantLeasePage: React.FC = () => {
     </div>
   );
 };
+
 export default TenantLeasePage;

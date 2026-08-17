@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
@@ -12,7 +12,7 @@ import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { StatusBadge } from '../../components/StatusBadge';
 import { CurrencyInput } from '../../components/Phase4Components';
-import { Plus, Check, X, Loader2 } from 'lucide-react';
+import { Plus, Check, X, Loader2, Building, Home, User } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
 
 export const ExpensesPage: React.FC = () => {
@@ -23,7 +23,9 @@ export const ExpensesPage: React.FC = () => {
 
   // Dialog state
   const [isOpen, setIsOpen] = useState(false);
+  const [uiPayeeType, setUiPayeeType] = useState<'VendorMaintenance' | 'Tenant' | 'Owner'>('VendorMaintenance');
   const [payeeType, setPayeeType] = useState<'Vendor' | 'Maintenance' | 'Tenant' | 'Owner'>('Vendor');
+  const [selectedCombinedPayeeId, setSelectedCombinedPayeeId] = useState('');
   const [propertyId, setPropertyId] = useState('');
   const [buildingId, setBuildingId] = useState('');
   const [unitId, setUnitId] = useState('');
@@ -44,38 +46,87 @@ export const ExpensesPage: React.FC = () => {
   const { data: owners = [] } = useQuery({ queryKey: ['owners'], queryFn: () => api.owner.getAll() });
   const { data: users = [] } = useQuery({ queryKey: ['users-list'], queryFn: () => api.users.getAll() });
 
+  // Auto-select property effect for Owner
+  useEffect(() => {
+    if (uiPayeeType === 'Owner' && selectedOwnerId) {
+      const owned = properties.filter((p) => p.ownerId === selectedOwnerId);
+      if (owned.length === 1) {
+        setPropertyId(owned[0].id);
+      } else {
+        setPropertyId('');
+      }
+    }
+  }, [selectedOwnerId, uiPayeeType, properties]);
+
+  const handleCombinedPayeeChange = (value: string) => {
+    setSelectedCombinedPayeeId(value);
+    if (value.startsWith('vendor-')) {
+      setPayeeType('Vendor');
+      setSelectedVendorId(value.replace('vendor-', ''));
+      setSelectedMaintenanceId('');
+    } else if (value.startsWith('staff-')) {
+      setPayeeType('Maintenance');
+      setSelectedMaintenanceId(value.replace('staff-', ''));
+      setSelectedVendorId('');
+    } else {
+      setSelectedVendorId('');
+      setSelectedMaintenanceId('');
+    }
+  };
+
   // Mutations
   const createMutation = useMutation({
     mutationFn: () => {
-      const prop = properties.find((p) => p.id === propertyId);
-      
       let resolvedPayeeName = '';
       let payeeId = '';
-      if (payeeType === 'Vendor') {
-        const vendor = vendors.find((v) => v.id === selectedVendorId);
-        resolvedPayeeName = vendor ? vendor.name : 'Vendor';
-        payeeId = selectedVendorId;
-      } else if (payeeType === 'Maintenance') {
-        const staff = users.find((u) => u.id === selectedMaintenanceId);
-        resolvedPayeeName = staff ? staff.name : 'Maintenance Staff';
-        payeeId = selectedMaintenanceId;
-      } else if (payeeType === 'Tenant') {
+      let resolvedPropertyId = '';
+      let resolvedBuildingId = '';
+      let resolvedUnitId = '';
+
+      if (uiPayeeType === 'VendorMaintenance') {
+        resolvedPropertyId = propertyId;
+        resolvedBuildingId = buildingId;
+        resolvedUnitId = unitId;
+
+        if (payeeType === 'Vendor') {
+          const vendor = vendors.find((v) => v.id === selectedVendorId);
+          resolvedPayeeName = vendor ? vendor.name : 'Vendor';
+          payeeId = selectedVendorId;
+        } else {
+          const staff = users.find((u) => u.id === selectedMaintenanceId);
+          resolvedPayeeName = staff ? staff.name : 'Maintenance Staff';
+          payeeId = selectedMaintenanceId;
+        }
+      } else if (uiPayeeType === 'Tenant') {
         const tenant = tenants.find((t) => t.id === selectedTenantId);
         resolvedPayeeName = tenant ? `${tenant.firstName} ${tenant.lastName} (Tenant)` : 'Tenant';
         payeeId = selectedTenantId;
-      } else if (payeeType === 'Owner') {
+
+        resolvedPropertyId = tenant ? tenant.propertyId || '' : '';
+        resolvedUnitId = tenant ? tenant.unitId || '' : '';
+        if (tenant && tenant.unitId) {
+          const matchingUnit = units.find((u) => u.id === tenant.unitId);
+          resolvedBuildingId = matchingUnit ? matchingUnit.buildingId || '' : '';
+        }
+      } else if (uiPayeeType === 'Owner') {
         const owner = owners.find((o) => o.id === selectedOwnerId);
         resolvedPayeeName = owner ? `${owner.firstName} ${owner.lastName} (Owner)` : 'Owner';
         payeeId = selectedOwnerId;
+
+        resolvedPropertyId = propertyId;
+        resolvedBuildingId = '';
+        resolvedUnitId = '';
       }
+
+      const prop = properties.find((p) => p.id === resolvedPropertyId);
 
       return api.expenses.create({
         vendorName: resolvedPayeeName,
-        propertyId,
+        propertyId: resolvedPropertyId,
         propertyName: prop ? prop.name : 'Property',
-        buildingId,
-        unitId,
-        payeeType,
+        buildingId: resolvedBuildingId,
+        unitId: resolvedUnitId,
+        payeeType: uiPayeeType === 'VendorMaintenance' ? payeeType : (uiPayeeType as any),
         payeeId,
         category,
         amount,
@@ -95,6 +146,8 @@ export const ExpensesPage: React.FC = () => {
       setSelectedMaintenanceId('');
       setSelectedTenantId('');
       setSelectedOwnerId('');
+      setSelectedCombinedPayeeId('');
+      setUiPayeeType('VendorMaintenance');
       setPayeeType('Vendor');
     },
   });
@@ -229,114 +282,179 @@ export const ExpensesPage: React.FC = () => {
           
           <div className="space-y-1">
             <label className="text-xs font-bold text-muted-foreground uppercase">Payee Type</label>
-            <Select value={payeeType} onChange={(e) => {
-              setPayeeType(e.target.value as any);
+            <Select value={uiPayeeType} onChange={(e) => {
+              setUiPayeeType(e.target.value as any);
+              setSelectedCombinedPayeeId('');
               setSelectedVendorId('');
               setSelectedMaintenanceId('');
               setSelectedTenantId('');
               setSelectedOwnerId('');
+              setPropertyId('');
+              setBuildingId('');
+              setUnitId('');
             }}>
-              <option value="Vendor">Vendor / Service Partner</option>
-              <option value="Maintenance">Maintenance Staff (Internal)</option>
+              <option value="VendorMaintenance">Vendor / Staff Payee</option>
               <option value="Tenant">Tenant (Refund / Return)</option>
               <option value="Owner">Property Owner (Distribution)</option>
             </Select>
           </div>
 
-          <div className="space-y-1">
-            <label className="text-xs font-bold text-muted-foreground uppercase">Property Portfolio</label>
-            <Select value={propertyId} onChange={(e) => {
-              setPropertyId(e.target.value);
-              setBuildingId('');
-              setUnitId('');
-              setSelectedTenantId('');
-              setSelectedOwnerId('');
-            }}>
-              <option value="">Select Property...</option>
-              {properties.map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </Select>
-          </div>
+          {uiPayeeType === 'VendorMaintenance' && (
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-muted-foreground uppercase">Payee (Vendor / Staff)</label>
+                <Select value={selectedCombinedPayeeId} onChange={(e) => handleCombinedPayeeChange(e.target.value)}>
+                  <option value="">Select Payee...</option>
+                  <optgroup label="Vendors">
+                    {vendors.map((v) => (
+                      <option key={v.id} value={`vendor-${v.id}`}>{v.name}</option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Maintenance Staff">
+                    {users
+                      .filter((u) => u.role === 'Maintenance Staff' || u.role === 'Maintenance')
+                      .map((u) => (
+                        <option key={u.id} value={`staff-${u.id}`}>{u.name}</option>
+                      ))
+                    }
+                  </optgroup>
+                </Select>
+              </div>
 
-          <div className="space-y-1">
-            <label className="text-xs font-bold text-muted-foreground uppercase">Building Portfolio</label>
-            <Select value={buildingId} onChange={(e) => {
-              setBuildingId(e.target.value);
-              setUnitId('');
-              setSelectedTenantId('');
-            }} disabled={!propertyId}>
-              <option value="">Select Building...</option>
-              {buildings.filter((b) => b.propertyId === propertyId).map((b) => (
-                <option key={b.id} value={b.id}>{b.name}</option>
-              ))}
-            </Select>
-          </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-muted-foreground uppercase">Property Portfolio</label>
+                <Select value={propertyId} onChange={(e) => {
+                  setPropertyId(e.target.value);
+                  setBuildingId('');
+                  setUnitId('');
+                }}>
+                  <option value="">Select Property...</option>
+                  {properties.map((p) => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </Select>
+              </div>
 
-          <div className="space-y-1">
-            <label className="text-xs font-bold text-muted-foreground uppercase">Rentable Unit</label>
-            <Select value={unitId} onChange={(e) => {
-              setUnitId(e.target.value);
-              setSelectedTenantId('');
-            }} disabled={!buildingId}>
-              <option value="">Select Unit...</option>
-              {units.filter((u) => u.buildingId === buildingId).map((u) => (
-                <option key={u.id} value={u.id}>Unit {u.unitNumber} - {u.status}</option>
-              ))}
-            </Select>
-          </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-muted-foreground uppercase">Building Portfolio</label>
+                <Select value={buildingId} onChange={(e) => {
+                  setBuildingId(e.target.value);
+                  setUnitId('');
+                }} disabled={!propertyId}>
+                  <option value="">Select Building...</option>
+                  {buildings.filter((b) => b.propertyId === propertyId).map((b) => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
+                </Select>
+              </div>
 
-          {payeeType === 'Vendor' && (
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-muted-foreground uppercase">Vendor Payee</label>
-              <Select value={selectedVendorId} onChange={(e) => setSelectedVendorId(e.target.value)}>
-                <option value="">Select Vendor...</option>
-                {vendors.map((v) => (
-                  <option key={v.id} value={v.id}>{v.name}</option>
-                ))}
-              </Select>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-muted-foreground uppercase">Rentable Unit</label>
+                <Select value={unitId} onChange={(e) => setUnitId(e.target.value)} disabled={!buildingId}>
+                  <option value="">Select Unit...</option>
+                  {units.filter((u) => u.buildingId === buildingId).map((u) => (
+                    <option key={u.id} value={u.id}>Unit {u.unitNumber} - {u.status}</option>
+                  ))}
+                </Select>
+              </div>
             </div>
           )}
 
-          {payeeType === 'Maintenance' && (
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-muted-foreground uppercase">Maintenance Staff Payee</label>
-              <Select value={selectedMaintenanceId} onChange={(e) => setSelectedMaintenanceId(e.target.value)}>
-                <option value="">Select Maintainer...</option>
-                {users
-                  .filter((u) => u.role === 'Maintenance Staff' || u.role === 'Maintenance')
-                  .map((u) => (
-                    <option key={u.id} value={u.id}>{u.name}</option>
-                  ))
-                }
-              </Select>
+          {uiPayeeType === 'Tenant' && (
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-muted-foreground uppercase">Resident / Tenant Payee</label>
+                <Select value={selectedTenantId} onChange={(e) => setSelectedTenantId(e.target.value)}>
+                  <option value="">Select Tenant...</option>
+                  {tenants.map((t) => (
+                    <option key={t.id} value={t.id}>{t.firstName} {t.lastName}</option>
+                  ))}
+                </Select>
+              </div>
+
+              {selectedTenantId && (() => {
+                const tenant = tenants.find((t) => t.id === selectedTenantId);
+                const tenantProp = properties.find((p) => p.id === tenant?.propertyId);
+                const tenantUnit = units.find((u) => u.id === tenant?.unitId);
+                const tenantBldg = buildings.find((b) => b.id === tenantUnit?.buildingId);
+
+                return (
+                  <div className="p-4 bg-secondary/20 border border-border/40 rounded-2xl space-y-3">
+                    <h4 className="text-[10px] font-extrabold uppercase text-muted-foreground tracking-wider flex items-center gap-1.5">
+                      <User className="w-3.5 h-3.5 text-primary" /> Associated Location Details
+                    </h4>
+                    <div className="grid grid-cols-3 gap-4 text-xs font-semibold text-foreground/80">
+                      <div className="space-y-1">
+                        <span className="text-[9px] text-muted-foreground uppercase block">Property</span>
+                        <span className="flex items-center gap-1"><Home className="w-3 h-3 text-muted-foreground" /> {tenantProp ? tenantProp.name : 'N/A'}</span>
+                      </div>
+                      <div className="space-y-1">
+                        <span className="text-[9px] text-muted-foreground uppercase block">Building</span>
+                        <span className="flex items-center gap-1"><Building className="w-3 h-3 text-muted-foreground" /> {tenantBldg ? tenantBldg.name : 'N/A'}</span>
+                      </div>
+                      <div className="space-y-1">
+                        <span className="text-[9px] text-muted-foreground uppercase block">Unit</span>
+                        <span className="flex items-center gap-1"><Building className="w-3 h-3 text-muted-foreground" /> Unit {tenantUnit ? tenantUnit.unitNumber : 'N/A'}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           )}
 
-          {payeeType === 'Tenant' && (
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-muted-foreground uppercase">Resident / Tenant Payee</label>
-              <Select value={selectedTenantId} onChange={(e) => setSelectedTenantId(e.target.value)}>
-                <option value="">Select Tenant...</option>
-                {tenants
-                  .filter((t) => !unitId || t.unitId === unitId || t.propertyId === propertyId)
-                  .map((t) => (
-                    <option key={t.id} value={t.id}>{t.firstName} {t.lastName} {t.unitNumber ? `(Unit ${t.unitNumber})` : ''}</option>
-                  ))
-                }
-              </Select>
-            </div>
-          )}
+          {uiPayeeType === 'Owner' && (
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-muted-foreground uppercase">Property Owner Payee</label>
+                <Select value={selectedOwnerId} onChange={(e) => setSelectedOwnerId(e.target.value)}>
+                  <option value="">Select Owner...</option>
+                  {owners.map((o) => (
+                    <option key={o.id} value={o.id}>{o.firstName} {o.lastName}</option>
+                  ))}
+                </Select>
+              </div>
 
-          {payeeType === 'Owner' && (
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-muted-foreground uppercase">Property Owner Payee</label>
-              <Select value={selectedOwnerId} onChange={(e) => setSelectedOwnerId(e.target.value)}>
-                <option value="">Select Owner...</option>
-                {owners.map((o) => (
-                  <option key={o.id} value={o.id}>{o.firstName} {o.lastName}</option>
-                ))}
-              </Select>
+              {selectedOwnerId && (() => {
+                const ownedProperties = properties.filter((p) => p.ownerId === selectedOwnerId);
+
+                return (
+                  <div className="space-y-4">
+                    {ownedProperties.length > 1 && (
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-muted-foreground uppercase">Select Property</label>
+                        <Select value={propertyId} onChange={(e) => setPropertyId(e.target.value)}>
+                          <option value="">Choose Property...</option>
+                          {ownedProperties.map((p) => (
+                            <option key={p.id} value={p.id}>{p.name}</option>
+                          ))}
+                        </Select>
+                      </div>
+                    )}
+
+                    {propertyId && (() => {
+                      const resolvedProp = properties.find((p) => p.id === propertyId);
+                      return (
+                        <div className="p-4 bg-secondary/20 border border-border/40 rounded-2xl space-y-3">
+                          <h4 className="text-[10px] font-extrabold uppercase text-muted-foreground tracking-wider flex items-center gap-1.5">
+                            <Home className="w-3.5 h-3.5 text-primary" /> Associated Property Details
+                          </h4>
+                          <div className="grid grid-cols-2 gap-4 text-xs font-semibold text-foreground/80">
+                            <div className="space-y-1">
+                              <span className="text-[9px] text-muted-foreground uppercase block">Property Name</span>
+                              <span>{resolvedProp ? resolvedProp.name : 'N/A'}</span>
+                            </div>
+                            <div className="space-y-1">
+                              <span className="text-[9px] text-muted-foreground uppercase block">Address</span>
+                              <span>{resolvedProp ? resolvedProp.address || resolvedProp.streetAddress || 'N/A' : 'N/A'}</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                );
+              })()}
             </div>
           )}
 
@@ -365,11 +483,9 @@ export const ExpensesPage: React.FC = () => {
             <Button
               onClick={() => createMutation.mutate()}
               disabled={
-                !propertyId ||
-                (payeeType === 'Vendor' && !selectedVendorId) ||
-                (payeeType === 'Maintenance' && !selectedMaintenanceId) ||
-                (payeeType === 'Tenant' && !selectedTenantId) ||
-                (payeeType === 'Owner' && !selectedOwnerId) ||
+                (uiPayeeType === 'VendorMaintenance' && (!selectedCombinedPayeeId || !propertyId)) ||
+                (uiPayeeType === 'Tenant' && !selectedTenantId) ||
+                (uiPayeeType === 'Owner' && (!selectedOwnerId || !propertyId)) ||
                 createMutation.isPending
               }
             >

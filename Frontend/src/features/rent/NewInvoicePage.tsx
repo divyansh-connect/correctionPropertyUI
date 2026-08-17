@@ -127,7 +127,7 @@ export const NewInvoicePage: React.FC = () => {
             <label className="text-xs font-bold text-muted-foreground uppercase">Tenant</label>
             <Select {...register('tenantId')}>
               <option value="">Select Resident...</option>
-              {tenants.map((t) => (
+              {tenants.filter((t: any) => t.unitId).map((t: any) => (
                 <option key={t.id} value={t.id}>
                   {t.firstName} {t.lastName} ({t.propertyName ? `${t.propertyName} - Unit ${t.unitNumber}` : 'No Unit'})
                 </option>

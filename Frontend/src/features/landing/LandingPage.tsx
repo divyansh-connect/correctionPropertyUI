@@ -178,11 +178,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ navigate }) => {
       {/* Navigation Header */}
       <header className="sticky top-0 z-50 backdrop-blur-md border-b border-slate-200/80 dark:border-white/5 bg-white/70 dark:bg-slate-950/70 h-16 flex items-center justify-between px-6 lg:px-12 transition-colors duration-300">
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-lg shadow-primary/25">
-            <span className="text-white font-black text-base">D</span>
-          </div>
           <span className="font-extrabold text-lg tracking-tight text-slate-900 dark:text-white">
-            WhatsLandlord <span className="text-primary text-xs font-semibold px-1 py-0.5 rounded bg-primary/15 ml-1">APEX</span>
+            WhatsLandlord
           </span>
         </div>
         <nav className="hidden md:flex space-x-8 text-xs font-extrabold text-slate-505 dark:text-slate-400">
@@ -518,9 +515,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ navigate }) => {
           {/* Logo and Tagline */}
           <div className="sm:col-span-2 space-y-4">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-white font-black text-base">D</span>
-              </div>
               <span className="font-extrabold text-lg text-slate-900 dark:text-white">WhatsLandlord</span>
             </div>
             <p className="text-slate-505 dark:text-slate-400 leading-relaxed font-semibold max-w-sm text-[11px]">

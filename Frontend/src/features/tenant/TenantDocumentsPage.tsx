@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import api from '../../api';
 import { PageHeader } from '../../components/PageHeader';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { DataTable } from '../../components/DataTable';
 import { FilterBar } from '../../components/FilterBar';
 import { FormDialog } from '../../components/FormDialog';
@@ -24,6 +25,30 @@ export const TenantDocumentsPage: React.FC = () => {
   const [fileName, setFileName] = useState('');
   const [fileCategory, setFileCategory] = useState('Rental Agreement');
   const [customCategory, setCustomCategory] = useState('');
+
+  // Download states
+  const [successDialogOpen, setSuccessDialogOpen] = useState(false);
+  const [downloadedDocName, setDownloadedDocName] = useState('');
+
+  const handleDownload = (doc: any) => {
+    if (doc.fileUrl) {
+      let downloadUrl = doc.fileUrl;
+      if (downloadUrl.includes('res.cloudinary.com') && downloadUrl.includes('/upload/')) {
+        downloadUrl = downloadUrl.replace('/upload/', '/upload/fl_attachment/');
+      }
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = doc.name;
+      a.target = '_blank';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setDownloadedDocName(doc.name);
+      setSuccessDialogOpen(true);
+    } else {
+      alert(`No download URL available for ${doc.name}`);
+    }
+  };
 
   // Queries
   const { data: documents = [], isLoading } = useQuery({ queryKey: ['tenant-documents-list'], queryFn: () => api.tenantDocuments.getAll() });
@@ -77,18 +102,20 @@ export const TenantDocumentsPage: React.FC = () => {
       cell: ({ row }) => (
         <div className="flex items-center gap-2 font-bold text-foreground">
           <FileText className="w-4 h-4 text-primary shrink-0" />
-          <span>{row.original.name}</span>
+          <span className="cursor-pointer hover:underline text-primary" onClick={() => handleDownload(row.original)}>
+            {row.original.name}
+          </span>
         </div>
       ),
     },
     { accessorKey: 'category', header: t('tenant.documents.category', 'Category'), id: 'category' },
-    { accessorKey: 'uploadedDate', header: t('tenant.documents.uploadedDate', 'Uploaded Date'), id: 'uploadedDate' },
+    { accessorKey: 'uploadedAt', header: t('tenant.documents.uploadedDate', 'Uploaded Date'), id: 'uploadedAt' },
     { accessorKey: 'size', header: t('tenant.documents.size', 'File Size'), id: 'size' },
     {
       id: 'actions',
       header: t('tenant.documents.actions', 'Actions'),
       cell: ({ row }) => (
-        <Button variant="ghost" size="icon" onClick={() => alert(`Downloading: ${row.original.name}`)} title={t('tenant.documents.download', 'Download file')}>
+        <Button variant="ghost" size="icon" onClick={() => handleDownload(row.original)} title={t('tenant.documents.download', 'Download file')}>
           <Download className="w-4 h-4" />
         </Button>
       ),
@@ -193,6 +220,17 @@ export const TenantDocumentsPage: React.FC = () => {
           </div>
         </form>
       </FormDialog>
+
+      {/* DOWNLOAD SUCCESS DIALOG */}
+      <ConfirmDialog
+        open={successDialogOpen}
+        onOpenChange={setSuccessDialogOpen}
+        title="Download Started"
+        description={`The document "${downloadedDocName}" is being downloaded. Please check your browser's download folder.`}
+        onConfirm={() => setSuccessDialogOpen(false)}
+        confirmText="Great"
+        cancelText="Close"
+      />
     </div>
   );
 };

@@ -103,11 +103,11 @@ export const LeadsPage: React.FC = () => {
 
   // Convert leads list to KanbanItem format
   const kanbanItems = filteredLeads.map((l) => {
-    const budgetVal = l.budget ?? (1400 + (parseInt(l.id.split('-').pop() || '0') % 4) * 200);
+    const budgetVal = l.budget ?? 1500;
     const resolvedName = l.name || `${l.firstName || ''} ${l.lastName || ''}`.trim() || 'Unnamed Lead';
     const resolvedProperty = l.property || l.propertyName || 'Unknown Property';
     const resolvedDate = l.moveInDate || l.createdAt;
-    const resolvedPriority = l.priority || (parseInt(l.id.split('-').pop() || '0') % 2 === 0 ? 'High' : 'Medium');
+    const resolvedPriority = l.priority || 'Medium';
 
     return {
       id: l.id,

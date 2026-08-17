@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../api';
+import { useNavigate } from '@tanstack/react-router';
 import { PageHeader } from '../../components/PageHeader';
 import { Button } from '../../components/ui/Button';
 import { StatusBadge } from '../../components/StatusBadge';
@@ -16,6 +17,7 @@ interface MoveOutDetailPageProps {
 
 export const MoveOutDetailPage: React.FC<MoveOutDetailPageProps> = ({ id }) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
   const [cancelReason, setCancelReason] = useState('');
@@ -309,11 +311,11 @@ export const MoveOutDetailPage: React.FC<MoveOutDetailPageProps> = ({ id }) => {
 
                       <div className="flex space-x-2 mt-3 sm:mt-0">
                         {ins.status !== 'COMPLETED' ? (
-                          <Button size="sm" onClick={() => window.location.href = `/leasing/inspections/${ins.id}`}>
+                          <Button size="sm" onClick={() => navigate({ to: `/leasing/inspections/${ins.id}` })}>
                             <Play className="w-3.5 h-3.5 mr-1" /> Resume Inspection
                           </Button>
                         ) : (
-                          <Button variant="outline" size="sm" onClick={() => window.location.href = `/leasing/inspections/${ins.id}`}>
+                          <Button variant="outline" size="sm" onClick={() => navigate({ to: `/leasing/inspections/${ins.id}` })}>
                             <Eye className="w-3.5 h-3.5 mr-1" /> View Checklist
                           </Button>
                         )}
@@ -394,7 +396,7 @@ export const MoveOutDetailPage: React.FC<MoveOutDetailPageProps> = ({ id }) => {
                   <Clock className="w-5 h-5 flex-shrink-0 animate-spin" />
                   <span>Move out inspection is currently in progress. Complete and sign checklist to proceed.</span>
                 </div>
-                <Button onClick={() => window.location.href = `/leasing/inspections/${activeInspection?.id}`} className="w-full">
+                <Button onClick={() => navigate({ to: `/leasing/inspections/${activeInspection?.id}` })} className="w-full">
                   <Play className="w-4 h-4 mr-2" /> Resume Inspection Screen
                 </Button>
               </div>
@@ -408,7 +410,7 @@ export const MoveOutDetailPage: React.FC<MoveOutDetailPageProps> = ({ id }) => {
                 </div>
 
                 <Button 
-                  onClick={() => window.location.href = `/leasing/damage-review/${id}`} 
+                  onClick={() => navigate({ to: `/leasing/damage-review/${id}` })} 
                   className="w-full bg-primary hover:bg-primary/95 font-bold"
                 >
                   <FileText className="w-4 h-4 mr-2" /> Review Damage Items
@@ -424,7 +426,7 @@ export const MoveOutDetailPage: React.FC<MoveOutDetailPageProps> = ({ id }) => {
                 </div>
 
                 <Button 
-                  onClick={() => window.location.href = `/leasing/damage-review/${id}`} 
+                  onClick={() => navigate({ to: `/leasing/damage-review/${id}` })} 
                   className="w-full bg-primary hover:bg-primary/95 font-bold"
                 >
                   <FileText className="w-4 h-4 mr-2" /> Adjust Damage & Deposit

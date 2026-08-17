@@ -69,11 +69,8 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
         <div className="w-full max-w-md relative z-10 space-y-8 animate-fade-in">
           {/* Logo and Brand Heading */}
           <div className="text-center flex flex-col items-center">
-            <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 mb-3 hover:rotate-12 transition duration-300">
-              <span className="text-white font-extrabold text-2xl">D</span>
-            </div>
             <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-              WhatsLandlord <span className="text-primary font-semibold">Apex</span>
+              WhatsLandlord
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-widest font-extrabold">
               Enterprise Property Suite

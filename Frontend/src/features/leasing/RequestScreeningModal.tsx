@@ -17,6 +17,7 @@ export const RequestScreeningModal: React.FC<RequestScreeningModalProps> = ({ op
   const queryClient = useQueryClient();
 
   // Form states
+  const [tenantId, setTenantId] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -29,14 +30,17 @@ export const RequestScreeningModal: React.FC<RequestScreeningModalProps> = ({ op
   // Queries
   const { data: properties = [] } = useQuery({ queryKey: ['properties-list'], queryFn: () => api.property.getAll() });
   const { data: units = [] } = useQuery({ queryKey: ['units-list'], queryFn: () => api.unit.getAll() });
+  const { data: tenants = [] } = useQuery({ queryKey: ['tenants-list'], queryFn: () => api.tenant.getAll() });
 
-  const activeUnits = units.filter((u) => u.propertyId === propertyId);
+  const unassignedTenants = tenants.filter((t: any) => !t.unitId);
+  const activeUnits = units.filter((u) => u.propertyId === propertyId && u.status === 'Vacant');
 
   const requestMutation = useMutation({
     mutationFn: () => {
       const selectedProp = properties.find(p => p.id === propertyId);
       const selectedUnit = units.find(u => u.id === unitId);
       return api.screening.create({
+        tenantId,
         firstName,
         lastName,
         email,
@@ -53,6 +57,7 @@ export const RequestScreeningModal: React.FC<RequestScreeningModalProps> = ({ op
       queryClient.invalidateQueries({ queryKey: ['screening-checks-list'] });
       onOpenChange(false);
       // Reset form
+      setTenantId('');
       setFirstName('');
       setLastName('');
       setEmail('');
@@ -67,7 +72,7 @@ export const RequestScreeningModal: React.FC<RequestScreeningModalProps> = ({ op
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (firstName && lastName && email && propertyId && unitId) {
+    if (tenantId && propertyId && unitId) {
       requestMutation.mutate();
     }
   };
@@ -79,46 +84,35 @@ export const RequestScreeningModal: React.FC<RequestScreeningModalProps> = ({ op
         {/* Applicant details */}
         <div className="space-y-2.5">
           <h4 className="font-extrabold text-[10px] text-muted-foreground uppercase tracking-wider border-b pb-1">Applicant Details</h4>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="text-muted-foreground text-[10px] uppercase font-bold">First Name *</label>
-              <Input
-                placeholder="E.g. James"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-muted-foreground text-[10px] uppercase font-bold">Last Name *</label>
-              <Input
-                placeholder="E.g. Smith"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                required
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="text-muted-foreground text-[10px] uppercase font-bold">Email Address *</label>
-              <Input
-                type="email"
-                placeholder="E.g. james@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-muted-foreground text-[10px] uppercase font-bold">Phone Number</label>
-              <Input
-                placeholder="E.g. (555) 012-3456"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-              />
-            </div>
+          <div className="space-y-1">
+            <label className="text-muted-foreground text-[10px] uppercase font-bold">Select Applicant / Tenant *</label>
+            <Select 
+              value={tenantId} 
+              onChange={(e) => {
+                const tId = e.target.value;
+                setTenantId(tId);
+                const selectedT = unassignedTenants.find((t: any) => t.id === tId);
+                if (selectedT) {
+                  setFirstName(selectedT.firstName);
+                  setLastName(selectedT.lastName);
+                  setEmail(selectedT.email);
+                  setPhoneNumber(selectedT.phone || '');
+                } else {
+                  setFirstName('');
+                  setLastName('');
+                  setEmail('');
+                  setPhoneNumber('');
+                }
+              }} 
+              required
+            >
+              <option value="">Choose Applicant...</option>
+              {unassignedTenants.map((t: any) => (
+                <option key={t.id} value={t.id}>
+                  {t.firstName} {t.lastName} ({t.email})
+                </option>
+              ))}
+            </Select>
           </div>
         </div>
 
@@ -173,7 +167,7 @@ export const RequestScreeningModal: React.FC<RequestScreeningModalProps> = ({ op
           <Button
             type="submit"
             className="bg-primary hover:bg-primary/95 text-white font-bold flex items-center gap-1.5"
-            disabled={requestMutation.isPending || !firstName || !lastName || !email || !propertyId || !unitId}
+            disabled={requestMutation.isPending || !tenantId || !propertyId || !unitId}
           >
             {requestMutation.isPending ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
