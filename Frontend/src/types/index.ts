@@ -1028,7 +1028,7 @@ export interface ScreeningCheck {
   paymentResponsibility: 'Applicant' | 'Manager';
   paymentStatus?: 'Pending' | 'Paid' | 'Waived';
   applicantStatus: 'Invited' | 'Started' | 'Submitted';
-  screeningStatus: 'Pending' | 'Processing' | 'Completed' | 'Approved' | 'Declined';
+  screeningStatus: 'Pending' | 'Processing' | 'Completed' | 'Approved' | 'Declined' | 'Pending Approval' | 'Pending Documents';
   identityVerificationStatus: 'Pending' | 'Verified' | 'Failed';
   creditScore?: number;
   creditRecommendation?: 'Approved' | 'Conditional' | 'Review Recommended' | 'Declined';
@@ -1045,6 +1045,11 @@ export interface ScreeningCheck {
   creditReportUrl?: string;
   criminalReportUrl?: string;
   evictionReportUrl?: string;
+  dob?: string;
+  ssn?: string;
+  authorized?: boolean;
+  documentUrl?: string;
+  documentName?: string;
 }
 
 

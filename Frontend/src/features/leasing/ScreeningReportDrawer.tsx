@@ -101,19 +101,57 @@ export const ScreeningReportDrawer: React.FC<ScreeningReportDrawerProps> = ({ sc
         {/* IDENTITY VERIFICATION */}
         <div className="space-y-2">
           <h4 className="font-extrabold text-[10px] text-muted-foreground uppercase tracking-wider border-b pb-1">Identity verification</h4>
-          <div className="flex items-center justify-between p-3.5 bg-secondary/15 rounded-xl border border-border/40">
-            <div className="flex items-center gap-2.5">
-              <User className="w-5 h-5 text-primary" />
-              <div>
-                <p className="font-extrabold">Identity Check</p>
-                <p className="text-[10px] text-muted-foreground font-medium">Verify SSN matches applicant profile records.</p>
+          <div className="p-3.5 bg-secondary/15 rounded-xl border border-border/40 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <User className="w-5 h-5 text-primary" />
+                <div>
+                  <p className="font-extrabold">Identity Check</p>
+                  <p className="text-[10px] text-muted-foreground font-medium">Verify SSN matches applicant profile records.</p>
+                </div>
               </div>
+              <span className={`px-2.5 py-1 rounded-full text-[10px] border font-black ${getVerificationStatusColor(screening.identityVerificationStatus || (screening.authorized ? 'Verified' : 'Pending'))}`}>
+                {screening.identityVerificationStatus || (screening.authorized ? 'Verified' : 'Pending')}
+              </span>
             </div>
-            <span className={`px-2.5 py-1 rounded-full text-[10px] border font-black ${getVerificationStatusColor(screening.identityVerificationStatus)}`}>
-              {screening.identityVerificationStatus}
-            </span>
+            {(screening.dob || screening.ssn) && (
+              <div className="grid grid-cols-2 gap-2 border-t border-border/40 pt-2 text-[10px] font-bold">
+                <div>
+                  <span className="text-[8px] uppercase text-muted-foreground">Date of Birth</span>
+                  <p className="text-foreground">{screening.dob || '—'}</p>
+                </div>
+                <div>
+                  <span className="text-[8px] uppercase text-muted-foreground">Social Security Number</span>
+                  <p className="text-foreground">{screening.ssn ? `***-**-${screening.ssn.slice(-4)}` : '—'}</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
+
+        {/* TENANT UPLOADED DOCUMENT */}
+        {screening.documentUrl && (
+          <div className="space-y-2">
+            <h4 className="font-extrabold text-[10px] text-muted-foreground uppercase tracking-wider border-b pb-1">Uploaded Verification Document</h4>
+            <div className="p-3 bg-primary/10 border border-primary/20 rounded-xl flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <FileText className="w-5 h-5 text-primary" />
+                <div>
+                  <p className="font-bold text-foreground">{screening.documentName || 'Identity_Proof_Document.pdf'}</p>
+                  <p className="text-[10px] text-muted-foreground font-medium">Uploaded by applicant for background verify check.</p>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open(screening.documentUrl, '_blank')}
+                className="text-primary border-primary/30 hover:bg-primary/10 font-bold py-1 h-8 text-[10px] flex items-center gap-1"
+              >
+                <Download className="w-3.5 h-3.5" /> View/Download
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* CREDIT REPORT CARD */}
         <div className="space-y-2">
@@ -260,7 +298,7 @@ export const ScreeningReportDrawer: React.FC<ScreeningReportDrawerProps> = ({ sc
       {/* DRAWER FOOTER ACTIONS */}
       <div className="p-4 border-t bg-secondary/15 flex justify-end gap-2 shrink-0">
         <Button variant="outline" onClick={onClose} disabled={approveMutation.isPending || declineMutation.isPending || generateReportMutation.isPending}>Close</Button>
-        {screening.screeningStatus === 'Processing' && (
+        {(screening.screeningStatus === 'Processing' || screening.screeningStatus === 'Pending Approval') && (
           <Button
             onClick={() => generateReportMutation.mutate()}
             className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold flex items-center gap-1"

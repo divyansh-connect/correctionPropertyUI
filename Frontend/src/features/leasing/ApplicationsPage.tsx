@@ -92,7 +92,16 @@ export const ApplicationsPage: React.FC = () => {
     },
     { accessorKey: 'propertyName', header: t('pmApplications.interestedProperty'), id: 'property' },
     { accessorKey: 'unitNumber', header: t('pmApplications.unit'), id: 'unit' },
-    { accessorKey: 'submittedDate', header: t('pmApplications.submissionDate'), id: 'submittedDate' },
+    { 
+      accessorKey: 'submittedDate', 
+      header: t('pmApplications.submissionDate'), 
+      id: 'submittedDate',
+      cell: ({ row }) => {
+        const dateStr = row.original.submittedDate;
+        if (!dateStr) return '—';
+        return dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
+      }
+    },
     {
       id: 'creditScore',
       header: t('pmApplications.creditScore'),
@@ -125,22 +134,6 @@ export const ApplicationsPage: React.FC = () => {
           <Button variant="ghost" size="icon" onClick={() => setSelectedApp(row.original)} title="Review Application">
             <Eye className="w-4 h-4" />
           </Button>
-          {row.original.status === 'Pending' && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-emerald-500 hover:bg-emerald-500/10 border-emerald-500/30 text-[10px] font-extrabold h-7 py-0 px-2 flex items-center"
-              onClick={() => startScreeningMutation.mutate(row.original)}
-              disabled={startScreeningMutation.isPending}
-            >
-              {startScreeningMutation.isPending ? (
-                <Loader2 className="w-3 h-3 animate-spin mr-1" />
-              ) : (
-                <Play className="w-3 h-3 mr-1" />
-              )}
-              Ready for Screening
-            </Button>
-          )}
         </div>
       ),
     },
@@ -236,23 +229,6 @@ export const ApplicationsPage: React.FC = () => {
 
             <div className="flex justify-end space-x-2 pt-6 border-t">
               <Button variant="outline" onClick={() => setSelectedApp(null)}>Close</Button>
-              {selectedApp.status === 'Pending' && (
-                <>
-                  <Button
-                    variant="outline"
-                    className="text-rose-500 border-rose-500/30 hover:bg-rose-500/10"
-                    onClick={() => rejectMutation.mutate(selectedApp.id)}
-                  >
-                    Reject Applicant
-                  </Button>
-                  <Button
-                    className="bg-emerald-500 hover:bg-emerald-600 text-white"
-                    onClick={() => approveMutation.mutate(selectedApp.id)}
-                  >
-                    Approve Application
-                  </Button>
-                </>
-              )}
               {selectedApp.status === 'Approved' && (
                 <Button onClick={() => navigate({ to: '/leases/new' })}>
                   Convert to Lease

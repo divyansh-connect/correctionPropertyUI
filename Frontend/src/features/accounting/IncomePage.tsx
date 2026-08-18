@@ -218,7 +218,7 @@ export const IncomePage: React.FC = () => {
                 <label className="text-xs font-bold text-muted-foreground uppercase">Resident / Tenant Payee</label>
                 <Select value={selectedTenantId} onChange={(e) => setSelectedTenantId(e.target.value)}>
                   <option value="">Select Tenant...</option>
-                  {tenants.map((t) => (
+                  {tenants.filter((t: any) => t.unitId).map((t) => (
                     <option key={t.id} value={t.id}>{t.firstName} {t.lastName}</option>
                   ))}
                 </Select>

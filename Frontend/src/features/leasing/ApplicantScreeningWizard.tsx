@@ -7,8 +7,9 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { LoadingSkeleton } from '../../components/LoadingSkeleton';
 import { 
-  User, ShieldCheck, CreditCard, CheckCircle, 
-  ArrowRight, ArrowLeft, Loader2, Sparkles, Lock 
+  User, ShieldCheck, CheckCircle, 
+  ArrowRight, ArrowLeft, Loader2, Sparkles, Lock,
+  UploadCloud, FileText
 } from 'lucide-react';
 
 export const ApplicantScreeningWizard: React.FC = () => {
@@ -22,10 +23,7 @@ export const ApplicantScreeningWizard: React.FC = () => {
   const [dob, setDob] = useState('');
   const [ssn, setSsn] = useState('');
   const [authorized, setAuthorized] = useState(false);
-  const [cardName, setCardName] = useState('');
-  const [cardNumber, setCardNumber] = useState('');
-  const [cardExp, setCardExp] = useState('');
-  const [cardCvv, setCardCvv] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   // Queries
   const { data: screening, isLoading } = useQuery({
@@ -34,24 +32,30 @@ export const ApplicantScreeningWizard: React.FC = () => {
   });
 
   const consentMutation = useMutation({
-    mutationFn: () => api.screening.submitConsent(screeningId),
-    onSuccess: (data) => {
+    mutationFn: () => api.screening.update(screeningId, {
+      dob,
+      ssn,
+      authorized: true,
+      status: 'Pending Documents'
+    }),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['applicant-screening-detail', screeningId] });
-      // If manager pays, we skip step 4 and go straight to Step 5
-      if (data.paymentResponsibility === 'Manager') {
-        setStep(5);
-      } else {
-        setStep(4);
-      }
+      setStep(4);
     },
+    onError: (err: any) => {
+      alert('Failed to save consent: ' + err.message);
+    }
   });
 
-  const paymentMutation = useMutation({
-    mutationFn: () => api.screening.submitPayment(screeningId),
+  const uploadMutation = useMutation({
+    mutationFn: (file: File) => api.screening.uploadDocument(screeningId, file),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['applicant-screening-detail', screeningId] });
       setStep(5);
     },
+    onError: (err: any) => {
+      alert('Upload failed: ' + err.message);
+    }
   });
 
   if (isLoading || !screening) {
@@ -74,25 +78,17 @@ export const ApplicantScreeningWizard: React.FC = () => {
         alert('You must authorize the screening check to proceed.');
       }
     } else if (step === 4) {
-      if (cardName && cardNumber && cardExp && cardCvv) {
-        paymentMutation.mutate();
+      if (selectedFile) {
+        uploadMutation.mutate(selectedFile);
       } else {
-        alert('Please fill out card payment credentials.');
+        alert('Please select a document to upload.');
       }
     }
   };
 
   const handlePrevStep = () => {
-    if (step > 1) {
-      if (step === 5) {
-        // Can't go back once completed
-        return;
-      }
-      if (step === 4 && screening.paymentResponsibility === 'Manager') {
-        setStep(3);
-      } else {
-        setStep(step - 1);
-      }
+    if (step > 1 && step < 5) {
+      setStep(step - 1);
     }
   };
 
@@ -102,8 +98,8 @@ export const ApplicantScreeningWizard: React.FC = () => {
       {/* HEADER PROGRESS STEP BAR */}
       <div className="flex justify-between items-center bg-card border rounded-2xl p-4 shadow-sm shrink-0">
         <div className="space-y-1">
-          <h1 className="text-xl font-black text-foreground uppercase tracking-wider">Tenant Screening check</h1>
-          <p className="text-[10px] text-muted-foreground font-mono">STEP {step} OF 5 • PROVIDER: {screening.screeningProvider || 'TransUnion'}</p>
+          <h1 className="text-xl font-black text-foreground uppercase tracking-wider">Tenant Screening Check</h1>
+          <p className="text-[10px] text-muted-foreground font-mono">STEP {step} OF 5 • PROVIDER: TransUnion</p>
         </div>
         <div className="flex gap-1.5">
           {[1, 2, 3, 4, 5].map((s) => (
@@ -130,7 +126,7 @@ export const ApplicantScreeningWizard: React.FC = () => {
               <Sparkles className="w-4.5 h-4.5 text-primary animate-pulse" /> Screening Check Invitation
             </h3>
             <p className="text-muted-foreground text-xs leading-relaxed font-medium">
-              You have been invited by Apex Property Management to complete a rental application screening check. This request will be processed securely using TransUnion.
+              You have been invited by Apex Property Management to complete a rental application screening check. This request will be processed securely.
             </p>
             <div className="p-4 bg-secondary/15 rounded-xl border border-border/40 space-y-2">
               <p className="text-[10px] uppercase text-muted-foreground font-black">Application Target Location</p>
@@ -199,65 +195,41 @@ export const ApplicantScreeningWizard: React.FC = () => {
                 className="w-4.5 h-4.5 rounded text-primary focus:ring-primary border-border bg-background mt-0.5 shrink-0"
               />
               <p className="text-xs leading-relaxed font-semibold text-foreground">
-                I authorize Apex Property Management and the screening provider (TransUnion) to obtain my consumer report, criminal background report, and eviction history for rental screening purposes.
+                I authorize Apex Property Management and the screening provider to obtain my consumer report, criminal background report, and eviction history for rental screening purposes.
               </p>
             </label>
           </div>
         )}
 
-        {/* STEP 4: MOCK CREDIT CARD PAYMENT */}
+        {/* STEP 4: DOCUMENT UPLOAD */}
         {step === 4 && (
           <div className="space-y-4">
             <h3 className="font-extrabold text-sm uppercase border-b pb-2 flex items-center gap-1.5">
-              <CreditCard className="w-4.5 h-4.5 text-primary" /> Screening Charge Payment
+              <FileText className="w-4.5 h-4.5 text-primary" /> Upload Identity Proof Document
             </h3>
-            <div className="p-4 bg-primary/10 border border-primary/20 rounded-xl flex justify-between items-center text-xs">
-              <span className="font-extrabold">Total Tenant Screening Fee:</span>
-              <span className="text-base font-black text-emerald-500">$29.99</span>
-            </div>
-            <div className="space-y-3">
-              <div className="space-y-1">
-                <label className="text-[10px] uppercase text-muted-foreground font-black">Cardholder Name *</label>
-                <Input
-                  placeholder="E.g. James Smith"
-                  value={cardName}
-                  onChange={e => setCardName(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-[10px] uppercase text-muted-foreground font-black">Card Number *</label>
-                <Input
-                  placeholder="4111 2222 3333 4444"
-                  value={cardNumber}
-                  onChange={e => setCardNumber(e.target.value)}
-                  maxLength={19}
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase text-muted-foreground font-black">Expiration Date *</label>
-                  <Input
-                    placeholder="MM/YY"
-                    value={cardExp}
-                    onChange={e => setCardExp(e.target.value)}
-                    maxLength={5}
-                    required
-                  />
+            <p className="text-muted-foreground text-xs leading-relaxed font-medium">
+              Please upload a copy of your Government-issued Photo ID (e.g. Passport, Drivers License, State ID) or W2 Income statements. Max file size: 5MB.
+            </p>
+            <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-border/60 hover:border-primary/45 rounded-2xl bg-secondary/5 transition relative">
+              <input
+                type="file"
+                id="doc-upload"
+                onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.txt"
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              />
+              <UploadCloud className="w-9 h-9 text-muted-foreground mb-2" />
+              {selectedFile ? (
+                <div className="text-center">
+                  <p className="font-bold text-foreground">{selectedFile.name}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">{(selectedFile.size / (1024 * 1024)).toFixed(2)} MB • Ready to upload</p>
                 </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase text-muted-foreground font-black">CVV Security Code *</label>
-                  <Input
-                    type="password"
-                    placeholder="123"
-                    value={cardCvv}
-                    onChange={e => setCardCvv(e.target.value)}
-                    maxLength={4}
-                    required
-                  />
+              ) : (
+                <div className="text-center">
+                  <p className="font-bold text-muted-foreground">Drag and drop or click to browse</p>
+                  <p className="text-[10px] text-muted-foreground/60 mt-0.5">Supports PDF, JPG, PNG, Word up to 5MB</p>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         )}
@@ -268,18 +240,18 @@ export const ApplicantScreeningWizard: React.FC = () => {
             <div className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center mx-auto mb-2 animate-bounce">
               <CheckCircle className="w-9 h-9 text-emerald-500" />
             </div>
-            <h3 className="text-lg font-black uppercase text-foreground">Screening Request Submitted</h3>
+            <h3 className="text-lg font-black uppercase text-foreground">Screening Documents Submitted</h3>
             <p className="text-muted-foreground text-xs max-w-sm mx-auto font-medium leading-relaxed">
-              Your screening request credentials have been processed successfully. The reports are currently in **Processing** status. Property Manager has been notified.
+              Your screening consent and proof of document have been submitted successfully. The report is currently in **Pending Approval** status. Property Manager has been notified.
             </p>
             <div className="p-4 bg-secondary/15 rounded-xl border border-border/40 max-w-sm mx-auto text-xs font-semibold">
               <div className="flex justify-between border-b pb-2">
                 <span className="text-muted-foreground">Screening Status:</span>
-                <span className="text-amber-500 font-extrabold uppercase animate-pulse">Processing</span>
+                <span className="text-amber-500 font-extrabold uppercase animate-pulse">Pending Approval</span>
               </div>
               <div className="flex justify-between pt-2">
-                <span className="text-muted-foreground">Payment Receipt:</span>
-                <span className="text-foreground font-extrabold font-mono">TXN-49031</span>
+                <span className="text-muted-foreground">Document Status:</span>
+                <span className="text-emerald-500 font-extrabold">Received</span>
               </div>
             </div>
           </div>
@@ -302,12 +274,12 @@ export const ApplicantScreeningWizard: React.FC = () => {
               disabled={
                 (step === 2 && (!dob || !ssn)) ||
                 (step === 3 && !authorized) ||
-                (step === 4 && (!cardName || !cardNumber || !cardExp || !cardCvv)) ||
+                (step === 4 && !selectedFile) ||
                 consentMutation.isPending ||
-                paymentMutation.isPending
+                uploadMutation.isPending
               }
             >
-              {consentMutation.isPending || paymentMutation.isPending ? (
+              {consentMutation.isPending || uploadMutation.isPending ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
               ) : (
                 <>Continue <ArrowRight className="w-3.5 h-3.5" /></>

@@ -1066,6 +1066,50 @@ export const api = {
       const res: any = await apiClient.post('/portal/screening/reports', data);
       return res.data;
     },
+    getById: async (id: string) => {
+      try {
+        const res: any = await apiClient.get(`/portal/screening/reports/${id}`);
+        const s = res.data;
+        if (!s) return null;
+        return {
+          id: s.id,
+          applicantName: s.tenant ? `${s.tenant.firstName || ''} ${s.tenant.lastName || ''}`.trim() : 'Unknown Tenant',
+          applicantEmail: s.tenant?.email || '',
+          applicantPhone: s.tenant?.phone || '',
+          propertyName: s.tenant?.unit?.property?.name || 'N/A',
+          unitNumber: s.tenant?.unit?.unitNumber ? `Unit ${s.tenant.unit.unitNumber}` : 'N/A',
+          creditScore: s.creditScore,
+          criminalBackground: s.criminalPass ? 'Passed' : 'Flagged',
+          evictionHistory: s.evictionPass ? 'No Records' : 'Flagged',
+          status: s.status,
+          screeningStatus: s.status || 'Pending Documents',
+          screeningPackage: 'Basic',
+          date: s.createdAt,
+          dob: s.dob,
+          ssn: s.ssn,
+          authorized: s.authorized,
+          documentUrl: s.documentUrl,
+          documentName: s.documentName,
+        };
+      } catch (e) {
+        console.error('Screening report fetch by id failed:', e);
+        return null;
+      }
+    },
+    update: async (id: string, data: { status?: string; dob?: string; ssn?: string; authorized?: boolean }) => {
+      const res: any = await apiClient.put(`/portal/screening/reports/${id}`, data);
+      return res.data;
+    },
+    uploadDocument: async (id: string, file: File) => {
+      const formData = new FormData();
+      formData.append('document', file);
+      const res: any = await apiClient.post(`/portal/screening/reports/${id}/upload`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return res.data;
+    },
     generateReport: async (id: string) => {
       const res: any = await apiClient.put(`/portal/screening/reports/${id}`, { status: 'Completed' });
       return res.data;
@@ -2423,7 +2467,27 @@ export const api = {
       }
     },
   },
+  integrations: {
+    getAll: async () => {
+      try {
+        const res: any = await apiClient.get('/integrations');
+        return res.data || [];
+      } catch (e) {
+        console.error('Integrations fetch failed:', e);
+        return [];
+      }
+    },
+    save: async (provider: string, data: any) => {
+      const res: any = await apiClient.post('/integrations/update', { provider, ...data });
+      return res.data;
+    },
+    test: async (provider: string, data: any) => {
+      const res: any = await apiClient.post('/integrations/test', { provider, ...data });
+      return res.data;
+    },
+  },
 };
 
 export default api;
+
 

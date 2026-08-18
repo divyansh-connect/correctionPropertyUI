@@ -302,22 +302,15 @@ export const ExpensesPage: React.FC = () => {
           {uiPayeeType === 'VendorMaintenance' && (
             <div className="space-y-4">
               <div className="space-y-1">
-                <label className="text-xs font-bold text-muted-foreground uppercase">Payee (Vendor / Staff)</label>
+                <label className="text-xs font-bold text-muted-foreground uppercase">Payee (Staff)</label>
                 <Select value={selectedCombinedPayeeId} onChange={(e) => handleCombinedPayeeChange(e.target.value)}>
                   <option value="">Select Payee...</option>
-                  <optgroup label="Vendors">
-                    {vendors.map((v) => (
-                      <option key={v.id} value={`vendor-${v.id}`}>{v.name}</option>
-                    ))}
-                  </optgroup>
-                  <optgroup label="Maintenance Staff">
-                    {users
-                      .filter((u) => u.role === 'Maintenance Staff' || u.role === 'Maintenance')
-                      .map((u) => (
-                        <option key={u.id} value={`staff-${u.id}`}>{u.name}</option>
-                      ))
-                    }
-                  </optgroup>
+                  {users
+                    .filter((u) => u.role === 'Maintenance Staff' || u.role === 'Maintenance')
+                    .map((u) => (
+                      <option key={u.id} value={`staff-${u.id}`}>{u.name}</option>
+                    ))
+                  }
                 </Select>
               </div>
 
@@ -366,7 +359,7 @@ export const ExpensesPage: React.FC = () => {
                 <label className="text-xs font-bold text-muted-foreground uppercase">Resident / Tenant Payee</label>
                 <Select value={selectedTenantId} onChange={(e) => setSelectedTenantId(e.target.value)}>
                   <option value="">Select Tenant...</option>
-                  {tenants.map((t) => (
+                  {tenants.filter((t: any) => t.unitId).map((t) => (
                     <option key={t.id} value={t.id}>{t.firstName} {t.lastName}</option>
                   ))}
                 </Select>
