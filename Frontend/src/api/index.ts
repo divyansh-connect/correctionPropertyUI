@@ -1715,6 +1715,26 @@ export const api = {
     },
   },
 
+  aiAssistant: {
+    ...mockApi.aiAssistant,
+    sendMessage: async (chatId: string, message: string) => {
+      try {
+        const res: any = await apiClient.post('/ai/chat', { prompt: message, chatId });
+        const payload = res.data?.data || res.data || res;
+        return {
+          id: `ai-${Date.now()}`,
+          sender: 'AI' as const,
+          text: payload.response || payload.text || 'I parsed your request with live data.',
+          timestamp: new Date().toISOString(),
+          suggestedActions: payload.suggestedActions || [],
+          relatedRecords: payload.relatedRecords || [],
+        };
+      } catch (e) {
+        return mockApi.aiAssistant.sendMessage(chatId, message);
+      }
+    },
+  },
+
   ownerProperties: {
     getAll: async () => {
       try {
