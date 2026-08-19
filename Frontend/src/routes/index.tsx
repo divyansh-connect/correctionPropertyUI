@@ -2958,7 +2958,7 @@ const SubscriptionInvoicesPage: React.FC = () => {
   const [companies, setCompanies] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState<boolean>(true);
   const [showCreate, setShowCreate] = React.useState<boolean>(false);
-  const [newInvoice, setNewInvoice] = React.useState({ companyId: '', companyName: '', amount: '', status: 'Paid', dueDate: '' });
+  const [newInvoice, setNewInvoice] = React.useState({ companyId: '', companyName: '', amount: '', status: 'Paid', dueDate: '', transactionId: '' });
 
   const fetchInvoices = React.useCallback(async () => {
     try {
@@ -2970,7 +2970,7 @@ const SubscriptionInvoicesPage: React.FC = () => {
       setInvoices(invData);
       setCompanies(compData);
       if (compData.length > 0) {
-        setNewInvoice(prev => ({ ...prev, companyId: compData[0].id, companyName: compData[0].name }));
+        setNewInvoice(prev => ({ ...prev, companyId: compData[0].id, companyName: compData[0].name, transactionId: '' }));
       }
     } catch (e) {
       console.error(e);
@@ -2993,10 +2993,11 @@ const SubscriptionInvoicesPage: React.FC = () => {
         amount: parseFloat(newInvoice.amount),
         status: newInvoice.status,
         dueDate: newInvoice.dueDate || new Date().toISOString(),
+        transactionId: newInvoice.transactionId || undefined,
       });
       fetchInvoices();
       setShowCreate(false);
-      setNewInvoice({ companyId: companies[0]?.id || '', companyName: companies[0]?.name || '', amount: '', status: 'Paid', dueDate: '' });
+      setNewInvoice({ companyId: companies[0]?.id || '', companyName: companies[0]?.name || '', amount: '', status: 'Paid', dueDate: '', transactionId: '' });
     } catch (err) {
       console.error(err);
     }
@@ -3072,6 +3073,16 @@ const SubscriptionInvoicesPage: React.FC = () => {
                 <option value="Overdue">Overdue</option>
               </select>
             </div>
+            <div className="space-y-1 col-span-2">
+              <label className="text-[10px] font-bold text-muted-foreground uppercase">Transaction ID</label>
+              <input
+                type="text"
+                value={newInvoice.transactionId}
+                onChange={e => setNewInvoice(prev => ({ ...prev, transactionId: e.target.value }))}
+                placeholder="e.g. AUTHNET-1234567890 (optional)"
+                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold"
+              />
+            </div>
           </div>
           <div className="border-t pt-4 flex justify-end space-x-2">
             <Button type="button" variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
@@ -3095,6 +3106,7 @@ const SubscriptionInvoicesPage: React.FC = () => {
                   <th className="p-4">{t('subscriptionsPage.invoicesTable.amountPaid')}</th>
                   <th className="p-4">{t('subscriptionsPage.invoicesTable.invoiceDate')}</th>
                   <th className="p-4">{t('subscriptionsPage.invoicesTable.status')}</th>
+                  <th className="p-4">{t('subscriptionsPage.invoicesTable.transactionId', 'Transaction ID')}</th>
                   <th className="p-4 text-right">Actions</th>
                 </tr>
               </thead>
@@ -3106,6 +3118,7 @@ const SubscriptionInvoicesPage: React.FC = () => {
                     <td className="p-4 font-bold">${inv.amount}</td>
                     <td className="p-4 font-mono text-muted-foreground">{inv.createdAt ? inv.createdAt.split('T')[0] : '2026-07-01'}</td>
                     <td className="p-4"><StatusBadge status={inv.status} /></td>
+                    <td className="p-4 font-mono text-muted-foreground">{inv.transactionId || 'N/A'}</td>
                     <td className="p-4 text-right">
                       <Button variant="outline" size="sm" onClick={() => handleStatusToggle(inv.id, inv.status)} className="text-[10px] py-1 px-2">
                         Mark {inv.status === 'Paid' ? 'Unpaid' : 'Paid'}

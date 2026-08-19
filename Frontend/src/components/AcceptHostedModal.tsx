@@ -47,9 +47,31 @@ export const AcceptHostedModal: React.FC<AcceptHostedModalProps> = ({
           // Authorize.Net postMessage parsing
           if (event.data.includes('action=successfulSave') || event.data.includes('action=transactResponse')) {
             setPaymentState('success');
-            const mockTxId = `AUTHNET-HOSTED-${Math.floor(100000000 + Math.random() * 900000000)}`;
+            let transactionId = '';
+            let authCode = 'AUTH-OK';
+
+            if (event.data.includes('response=')) {
+              const urlParams = new URLSearchParams(event.data);
+              const responseJsonStr = urlParams.get('response');
+              if (responseJsonStr) {
+                try {
+                  const responseObj = JSON.parse(responseJsonStr);
+                  transactionId = responseObj.transId || '';
+                  if (responseObj.authorizationCode) {
+                    authCode = responseObj.authorizationCode;
+                  }
+                } catch (jsonErr) {
+                  console.error('Failed to parse Authorize.Net postMessage response JSON:', jsonErr);
+                }
+              }
+            }
+
+            if (!transactionId) {
+              transactionId = `AUTHNET-HOSTED-${Math.floor(100000000 + Math.random() * 900000000)}`;
+            }
+
             setTimeout(() => {
-              onSuccess({ transactionId: mockTxId, authCode: 'AUTH-OK' });
+              onSuccess({ transactionId, authCode });
             }, 1200);
           } else if (event.data.includes('action=cancel')) {
             onCancel();
