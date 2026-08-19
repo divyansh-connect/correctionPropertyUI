@@ -41,9 +41,13 @@ export const MoveInDetailPage: React.FC<MoveInDetailPageProps> = ({ id }) => {
   // Mutations
   const startInspectionMutation = useMutation({
     mutationFn: (templateId: string) => api.moveIns.startInspection(id, templateId),
-    onSuccess: () => {
-      refetch();
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['moveIns'] });
+      if (data?.id) {
+        navigate({ to: `/leasing/inspections/${data.id}` });
+      } else {
+        refetch();
+      }
     },
   });
 

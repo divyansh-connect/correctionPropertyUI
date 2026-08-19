@@ -41,9 +41,13 @@ export const MoveOutDetailPage: React.FC<MoveOutDetailPageProps> = ({ id }) => {
   // Mutations
   const startInspectionMutation = useMutation({
     mutationFn: (templateId: string) => api.moveOuts.startInspection(id, templateId),
-    onSuccess: () => {
-      refetch();
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['moveOuts'] });
+      if (data?.id) {
+        navigate({ to: `/leasing/inspections/${data.id}` });
+      } else {
+        refetch();
+      }
     },
   });
 
