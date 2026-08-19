@@ -10,6 +10,7 @@ import { Button } from '../components/ui/Button';
 import { StatusBadge } from '../components/StatusBadge';
 import { clsx } from 'clsx';
 import { LanguageSelector } from '../components/LanguageSelector';
+import { TenantAiConciergeWidget } from '../components/TenantAiConciergeWidget';
 import { useTranslation } from 'react-i18next';
 
 interface MenuItem {
@@ -252,8 +253,9 @@ export const TenantLayout: React.FC<TenantLayoutProps> = ({
         </header>
 
         {/* OUTLET PAGE BODY */}
-        <main className="flex-1 overflow-y-auto p-6 bg-secondary/5">
+        <main className="flex-1 overflow-y-auto p-6 bg-secondary/5 relative">
           {children}
+          <TenantAiConciergeWidget />
         </main>
 
       </div>

@@ -74,6 +74,19 @@ export const RequestDetailsPage: React.FC = () => {
     },
   });
 
+  // AI Vendor Recommendation Query
+  const { data: aiRecommendation } = useQuery({
+    queryKey: ['ai-vendor-recommendation', id, request?.category],
+    queryFn: () => api.serviceRequests.autoAssign({
+      title: request?.title,
+      description: request?.description,
+      category: request?.category,
+    }),
+    enabled: !!request,
+  });
+
+  const recommendedVendor = aiRecommendation?.recommendedVendor || null;
+
   if (isLoading || !request) {
     return <LoadingSkeleton type="details" />;
   }
@@ -141,6 +154,44 @@ export const RequestDetailsPage: React.FC = () => {
           <Button variant="outline" size="sm" onClick={() => navigate({ to: '/maintenance/requests' })}>Back to List</Button>
         </div>
       </div>
+
+      {/* AI AUTO VENDOR RECOMMENDATION BANNER */}
+      {recommendedVendor && request.status !== 'Completed' && (
+        <Card className="p-4 bg-gradient-to-r from-primary/10 via-emerald-500/5 to-amber-500/10 border border-primary/30 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-sm">
+          <div className="space-y-1 flex-1">
+            <div className="flex items-center space-x-2">
+              <span className="font-black text-xs text-primary uppercase tracking-wider flex items-center gap-1">
+                🤖 AI Auto-Vendor Recommendation
+              </span>
+              <span className="text-[10px] bg-emerald-500/20 text-emerald-600 font-extrabold px-2 py-0.5 rounded-full">
+                {recommendedVendor.matchScore || 98}% Match Score
+              </span>
+            </div>
+            <p className="font-extrabold text-sm text-foreground">
+              {recommendedVendor.vendorName} • {recommendedVendor.serviceType} Specialist ({recommendedVendor.rating || 4.9}★)
+            </p>
+            <p className="text-xs text-muted-foreground font-medium">
+              {recommendedVendor.reasoning}
+            </p>
+          </div>
+
+          {!request.assignedVendorName && (
+            <Button
+              size="sm"
+              onClick={() => {
+                assignMutation.mutate({
+                  vendorId: recommendedVendor.vendorId || vendorsList[0]?.id || 'v-1',
+                  cost: 200,
+                });
+              }}
+              disabled={assignMutation.isPending}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs h-9 px-4 shrink-0 shadow-md flex items-center gap-1.5"
+            >
+              ⚡ Auto-Assign Best Vendor
+            </Button>
+          )}
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         
@@ -278,7 +329,7 @@ export const RequestDetailsPage: React.FC = () => {
                   </span>
                 </a>
                 <a 
-                  href={`https://wa.me/5550199`} 
+                  href={`https://wa.me/${(request.tenantPhone || request.phone || '').replace(/\D/g, '') || '15550199'}?text=${encodeURIComponent(`Hi ${request.tenantName}, updating you regarding your maintenance ticket: ${request.title}`)}`} 
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className="flex items-center justify-between p-2.5 bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/10 rounded-xl transition text-foreground"

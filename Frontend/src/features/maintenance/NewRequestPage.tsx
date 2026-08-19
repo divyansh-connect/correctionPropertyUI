@@ -66,6 +66,26 @@ export const NewRequestPage: React.FC = () => {
       ? units.filter((u) => u.propertyId === selectedPropertyId)
       : [];
 
+  // AI DIY Troubleshooting State
+  const [aiTips, setAiTips] = React.useState<{ tips: string[]; category: string; emergencyAlert: boolean; suggestionTitle: string } | null>(null);
+  const [loadingTips, setLoadingTips] = React.useState(false);
+
+  const fetchAiTroubleshooting = async () => {
+    const desc = watch('description');
+    const cat = watch('category');
+    if (!desc) return;
+    setLoadingTips(true);
+    try {
+      const result: any = await api.serviceRequests.troubleshoot({ description: desc, category: cat });
+      const data = result?.data || result;
+      setAiTips(data);
+    } catch (e) {
+      console.warn('AI Troubleshooting failed:', e);
+    } finally {
+      setLoadingTips(false);
+    }
+  };
+
   const createMutation = useMutation({
     mutationFn: (values: RequestFormValues) => {
       const prop = properties.find((p) => p.id === values.propertyId);
@@ -177,14 +197,67 @@ export const NewRequestPage: React.FC = () => {
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-bold text-muted-foreground uppercase">Description of Issue</label>
+            <div className="flex justify-between items-center">
+              <label className="text-xs font-bold text-muted-foreground uppercase">Description of Issue</label>
+              {watch('description') && (
+                <button
+                  type="button"
+                  onClick={fetchAiTroubleshooting}
+                  disabled={loadingTips}
+                  className="text-[11px] font-bold text-primary hover:underline flex items-center gap-1 transition"
+                >
+                  {loadingTips ? <Loader2 className="w-3 h-3 animate-spin" /> : <Loader2 className="w-3 h-3 hidden" />}
+                  <span>✨ Get AI DIY Tips</span>
+                </button>
+              )}
+            </div>
             <textarea
-              className="w-full min-h-[100px] p-3 rounded-lg border border-border bg-card text-foreground"
+              className="w-full min-h-[90px] p-3 rounded-lg border border-border bg-card text-foreground"
               placeholder="Describe the issue, leak rates, or equipment behaviors..."
               {...register('description', { required: 'Description required' })}
             />
             {errors.description && <p className="text-rose-500">{errors.description.message}</p>}
           </div>
+
+          {/* AI DIY TROUBLESHOOTING BOX */}
+          {aiTips && (
+            <div className="p-4 bg-gradient-to-r from-amber-500/10 via-primary/5 to-emerald-500/10 rounded-xl border border-amber-500/30 space-y-3 animate-in fade-in duration-200">
+              <div className="flex justify-between items-center">
+                <span className="font-extrabold text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                  🤖 {aiTips.suggestionTitle || 'AI DIY Troubleshooting Tips'}
+                </span>
+                <span className="text-[10px] bg-amber-500/20 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded-full font-bold">
+                  Try Before Submitting
+                </span>
+              </div>
+              <p className="text-[11px] text-muted-foreground font-medium">
+                Try these 3 simple troubleshooting steps. If these fix your issue, you can cancel this ticket!
+              </p>
+              <ul className="space-y-1.5 pl-1">
+                {aiTips.tips.map((tip, idx) => (
+                  <li key={idx} className="text-xs flex items-start gap-2 bg-background/80 p-2 rounded-lg border border-border/40">
+                    <span className="w-4 h-4 rounded-full bg-primary/20 text-primary text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                      {idx + 1}
+                    </span>
+                    <span className="text-foreground font-semibold leading-tight">{tip}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="flex justify-between items-center pt-1 border-t border-border/30">
+                <button
+                  type="button"
+                  onClick={() => {
+                    alert('Great! Request canceled. We are glad your issue is resolved!');
+                    navigate({ to: '/maintenance/requests' });
+                  }}
+                  className="text-xs font-extrabold text-emerald-600 hover:text-emerald-700 underline"
+                >
+                  ✓ Issue Fixed! Cancel Ticket
+                </button>
+                <span className="text-[10px] text-muted-foreground italic">Or click 'Submit Request' below if still broken</span>
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4 items-center">
             <div className="space-y-1">

@@ -142,7 +142,7 @@ export const TenantMessagesPage: React.FC = () => {
                 <span className="text-[9px] font-mono text-muted-foreground">manager@apexpm.com</span>
               </a>
               <a 
-                href={`https://wa.me/5550199`} 
+                href={`https://wa.me/15550199?text=${encodeURIComponent('Hi Property Manager, contacting you from Tenant Portal.')}`} 
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="flex items-center justify-between p-2.5 bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/10 rounded-xl transition text-foreground"

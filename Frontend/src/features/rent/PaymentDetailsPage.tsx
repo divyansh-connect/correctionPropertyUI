@@ -111,7 +111,7 @@ export const PaymentDetailsPage: React.FC = () => {
             <MessageSquare className="w-4 h-4 text-primary" /> SMS Receipt
           </Button>
           <a 
-            href={`https://wa.me/5550199?text=${encodeURIComponent(`Thank you ${payment.tenantName}! Your payment of $${payment.amount.toLocaleString()} for ${payment.propertyName} Unit ${payment.unitNumber} has been received. Receipt ID: ${payment.id}. Payment Method: ${payment.paymentMethod}.`)}`} 
+            href={`https://wa.me/${(payment.tenantPhone || payment.phone || '').replace(/\D/g, '') || '15550199'}?text=${encodeURIComponent(`Thank you ${payment.tenantName}! Your payment of $${payment.amount.toLocaleString()} for ${payment.propertyName} Unit ${payment.unitNumber} has been received. Receipt ID: ${payment.id}. Payment Method: ${payment.paymentMethod}.`)}`} 
             target="_blank" 
             rel="noopener noreferrer" 
             className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/10 rounded-lg text-xs font-semibold transition text-foreground"

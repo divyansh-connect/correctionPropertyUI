@@ -143,7 +143,7 @@ export const CommInboxPage: React.FC = () => {
                   </span>
                 </a>
                 <a 
-                  href={`https://wa.me/5550199`} 
+                  href={`https://wa.me/${(activeConv.phone || '').replace(/\D/g, '') || '15550199'}?text=${encodeURIComponent(`Hi ${activeConv.contactName}, contacting you regarding property management updates.`)}`} 
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className="flex items-center justify-between p-2.5 bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/10 rounded-xl transition text-foreground"

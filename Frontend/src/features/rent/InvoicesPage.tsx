@@ -219,7 +219,7 @@ export const InvoicesPage: React.FC = () => {
                   <span>{t('invoicesPage.sendSms')}</span>
                 </Button>
                 <a 
-                  href={`https://wa.me/5550199?text=${encodeURIComponent(`Hi ${selectedInvoice.tenantName}, here is your outstanding statement balance details for invoice ${getInvoiceNumber(selectedInvoice.id)} (${selectedInvoice.propertyName} Unit ${selectedInvoice.unitNumber}). Total amount due: $${selectedInvoice.balance.toLocaleString()}. Please view details and complete payment: http://localhost:5173/tenant/payments`)}`} 
+                  href={`https://wa.me/${(selectedInvoice.tenantPhone || selectedInvoice.phone || '').replace(/\D/g, '') || '15550199'}?text=${encodeURIComponent(`Hi ${selectedInvoice.tenantName}, here is your outstanding statement balance details for invoice ${getInvoiceNumber(selectedInvoice.id)} (${selectedInvoice.propertyName} Unit ${selectedInvoice.unitNumber}). Total amount due: $${selectedInvoice.balance.toLocaleString()}. Please view details and complete payment: http://localhost:5173/tenant/payments`)}`} 
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/10 rounded-xl transition text-foreground"

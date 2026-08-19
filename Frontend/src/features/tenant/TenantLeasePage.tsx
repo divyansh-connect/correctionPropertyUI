@@ -33,6 +33,32 @@ export const TenantLeasePage: React.FC = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [selectedTermMonths, setSelectedTermMonths] = useState(12);
 
+  // Option 3: AI Lease Q&A Assistant State
+  const [aiQuestion, setAiQuestion] = useState('');
+  const [aiResponseHistory, setAiResponseHistory] = useState<Array<{ q: string; a: string }>>([
+    {
+      q: 'What is my late fee grace period?',
+      a: 'Rent is due on the 1st of every month. A grace period is provided until the 5th; after the 5th, a $50 late fee is automatically applied to your account balance.',
+    },
+  ]);
+  const [aiLoading, setAiLoading] = useState(false);
+
+  const handleAskLeaseAi = async (customQ?: string) => {
+    const qToAsk = customQ || aiQuestion;
+    if (!qToAsk.trim()) return;
+    setAiLoading(true);
+    try {
+      const res: any = await api.tenantLeases.askAi(qToAsk);
+      const answerText = res?.answer || res?.data?.answer || 'Please contact your property manager for detailed lease addendums.';
+      setAiResponseHistory((prev) => [...prev, { q: qToAsk, a: answerText }]);
+      if (!customQ) setAiQuestion('');
+    } catch (e) {
+      console.error('Lease AI Q&A failed:', e);
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   // Queries
   const { data: leases = [], isLoading, refetch } = useQuery({ 
     queryKey: ['tenant-leases-details'], 
@@ -349,6 +375,95 @@ export const TenantLeasePage: React.FC = () => {
               <span className="bg-secondary/40 border p-3 rounded-xl text-center text-foreground/80">{t('tenantLease.utilities.pest')}</span>
               <span className="bg-secondary/40 border p-3 rounded-xl text-center text-foreground/80">Water & Gas</span>
             </div>
+          </Card>
+
+          {/* OPTION 3: 24/7 TENANT AI LEASE Q&A ASSISTANT WIDGET */}
+          <Card className="p-6 border border-primary/30 bg-gradient-to-br from-card via-primary/5 to-secondary/20 rounded-2xl space-y-4 shadow-sm">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div className="flex items-center space-x-2">
+                <span className="p-2 bg-primary/10 text-primary rounded-xl font-bold">🤖</span>
+                <div>
+                  <h4 className="font-extrabold text-sm uppercase text-foreground">24/7 AI Lease Assistant</h4>
+                  <p className="text-[11px] text-muted-foreground font-semibold">Ask any question about your signed lease agreement</p>
+                </div>
+              </div>
+              <span className="text-[10px] bg-emerald-500/20 text-emerald-600 font-extrabold px-2.5 py-1 rounded-full uppercase">
+                Live AI Help
+              </span>
+            </div>
+
+            {/* Quick Sample Questions Chips */}
+            <div className="space-y-1.5">
+              <p className="text-[10px] uppercase font-bold text-muted-foreground">Quick Frequently Asked Questions:</p>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => handleAskLeaseAi('Are pets allowed in my unit?')}
+                  disabled={aiLoading}
+                  className="text-[11px] font-semibold bg-background hover:bg-primary/10 hover:text-primary border border-border/50 px-2.5 py-1 rounded-lg transition"
+                >
+                  🐾 Pets Allowed?
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleAskLeaseAi('What is the late fee grace period?')}
+                  disabled={aiLoading}
+                  className="text-[11px] font-semibold bg-background hover:bg-primary/10 hover:text-primary border border-border/50 px-2.5 py-1 rounded-lg transition"
+                >
+                  ⏰ Late Fee Policy?
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleAskLeaseAi('What utilities are included in my rent?')}
+                  disabled={aiLoading}
+                  className="text-[11px] font-semibold bg-background hover:bg-primary/10 hover:text-primary border border-border/50 px-2.5 py-1 rounded-lg transition"
+                >
+                  ⚡ Utilities Included?
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleAskLeaseAi('What is the notice period for move-out?')}
+                  disabled={aiLoading}
+                  className="text-[11px] font-semibold bg-background hover:bg-primary/10 hover:text-primary border border-border/50 px-2.5 py-1 rounded-lg transition"
+                >
+                  🔑 Move-out Notice?
+                </button>
+              </div>
+            </div>
+
+            {/* Chat History Box */}
+            <div className="space-y-3 max-h-56 overflow-y-auto p-3.5 bg-card rounded-xl border border-border/40 font-semibold text-xs">
+              {aiResponseHistory.map((item, idx) => (
+                <div key={idx} className="space-y-1.5 border-b border-border/20 last:border-0 pb-2 last:pb-0">
+                  <p className="text-primary font-bold text-[11px] flex items-center gap-1">
+                    <span>Q:</span> {item.q}
+                  </p>
+                  <p className="text-foreground leading-relaxed text-xs bg-secondary/20 p-2.5 rounded-lg border border-border/30">
+                    {item.a}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            {/* Input Form */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleAskLeaseAi();
+              }}
+              className="flex items-center gap-2 pt-1"
+            >
+              <input
+                type="text"
+                placeholder="Ask anything about rent, deposit, pets, or lease rules..."
+                value={aiQuestion}
+                onChange={(e) => setAiQuestion(e.target.value)}
+                className="flex-1 text-xs p-2.5 rounded-xl border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary font-semibold"
+              />
+              <Button type="submit" size="sm" disabled={aiLoading || !aiQuestion.trim()} className="h-9 px-3.5 text-xs font-bold flex items-center gap-1">
+                {aiLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Ask AI'}
+              </Button>
+            </form>
           </Card>
         </div>
 
