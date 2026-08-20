@@ -66,9 +66,10 @@ export const AIResponseCard: React.FC<AIResponseCardProps> = ({
             {suggestedActions.map((action, i) => (
               <Button
                 key={i}
+                variant="ghost"
                 size="sm"
                 onClick={() => handleActionClick(action)}
-                className="text-[10px] font-extrabold bg-primary/10 text-primary hover:bg-primary/15 py-1.5 px-3 rounded-lg border-0"
+                className="text-[10px] font-extrabold bg-primary/10 text-primary hover:text-primary hover:bg-primary/15 py-1.5 px-3 rounded-lg border-0"
               >
                 {action} <ArrowRight className="w-3 h-3 ml-1" />
               </Button>

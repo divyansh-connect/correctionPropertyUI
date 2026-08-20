@@ -1103,11 +1103,7 @@ export const api = {
     uploadDocument: async (id: string, file: File) => {
       const formData = new FormData();
       formData.append('document', file);
-      const res: any = await apiClient.post(`/portal/screening/reports/${id}/upload`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const res: any = await apiClient.post(`/portal/screening/reports/${id}/upload`, formData);
       return res.data;
     },
     generateReport: async (id: string) => {

@@ -202,10 +202,6 @@ export const AIChatWindow: React.FC<AIChatWindowProps> = ({
                 timestamp={m.timestamp}
                 onCopy={() => handleCopy(m.text)}
               />
-              <AIResponseCard
-                suggestedActions={m.suggestedActions}
-                relatedRecords={m.relatedRecords}
-              />
             </div>
           ))}
           {loading && (
