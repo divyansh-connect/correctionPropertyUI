@@ -19,6 +19,7 @@ import {
 import apiClient from '../api/client';
 import { useAuthStore, useThemeStore } from '../store/useStore';
 import { Ionicons } from '@expo/vector-icons';
+import { changePasswordSchema, provisionUserSchema } from '../validations/mobile.validation';
 
 export const ProfileScreen = () => {
   const { user, logout, refreshAccessToken } = useAuthStore();
@@ -112,6 +113,9 @@ export const ProfileScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  const [passErrors, setPassErrors] = useState({});
+  const [provErrors, setProvErrors] = useState({});
+
   // Load Company Settings and Users
   const loadCompanyData = async (showLoading = true) => {
     try {
@@ -132,12 +136,12 @@ export const ProfileScreen = () => {
         setCompanyUsers(usersRes.data || usersRes || []);
       } else {
         setCompanyUsers([
-          { id: '1', name: 'Diya Jain', email: 'vendor22@gmail.com', role: 'COLLECTION MANAGER', status: 'ACTIVE' },
-          { id: '2', name: 'Diya Jain', email: 'vendor2@gmail.com', role: 'COLLECTION MANAGER', status: 'ACTIVE' },
-          { id: '3', name: 'test', email: 'Test@gmail.com', role: 'PROPERTY MANAGER', status: 'ACTIVE' },
-          { id: '4', name: 'vendor 2', email: 'vendor2b@gmail.com', role: 'MAINTENANCE STAFF', status: 'ACTIVE' },
-          { id: '5', name: 'vendor 1', email: 'vendor1b@gmail.com', role: 'MAINTENANCE STAFF', status: 'ACTIVE' },
-          { id: '6', name: 'person B', email: 'personb@gmail.com', role: 'PROPERTY MANAGER', status: 'ACTIVE' }
+          { id: '1', name: 'Diya Jain', email: 'collection@apexpm.com', role: 'COLLECTION MANAGER', status: 'ACTIVE' },
+          { id: '2', name: 'Diya Jain', email: 'collection@apexpm.com', role: 'COLLECTION MANAGER', status: 'ACTIVE' },
+          { id: '3', name: 'test', email: 'manager@apexpm.com', role: 'PROPERTY MANAGER', status: 'ACTIVE' },
+          { id: '4', name: 'vendor 2', email: 'staff@apexpm.com', role: 'MAINTENANCE STAFF', status: 'ACTIVE' },
+          { id: '5', name: 'vendor 1', email: 'staff@apexpm.com', role: 'MAINTENANCE STAFF', status: 'ACTIVE' },
+          { id: '6', name: 'person B', email: 'manager@apexpm.com', role: 'PROPERTY MANAGER', status: 'ACTIVE' }
         ]);
       }
     } catch (e) {
@@ -175,9 +179,9 @@ export const ProfileScreen = () => {
         setFirstName(data.firstName || nameParts[0] || user?.firstName || 'Diya');
         setLastName(data.lastName || nameParts.slice(1).join(' ') || user?.lastName || 'Jain');
         setPhone(data.phone || '07224956313');
-        setUserEmail(data.email || user?.email || 'vendor22@gmail.com');
-        setUnitNumber(data.unitNumber || 'Unit 402');
-        setEmergencyContact(data.emergencyContact || 'companyb@gmail.com');
+        setUserEmail(data.email || user?.email || 'manager@apexpm.com');
+        setUnitNumber(data.unitNumber || 'Unit room 1b');
+        setEmergencyContact(data.emergencyContact || 'manager@apexpm.com');
         setStreetAddress(data.streetAddress || '100 Pine Street');
         if (data.vehicles) setVehicles(data.vehicles);
         if (data.pets) setPets(data.pets);
@@ -193,13 +197,13 @@ export const ProfileScreen = () => {
         // Mock fallback matching DB
         setFirstName(user?.firstName || 'Diya');
         setLastName(user?.lastName || 'Jain');
-        setUserEmail(user?.email || 'vendor22@gmail.com');
+        setUserEmail(user?.email || 'manager@apexpm.com');
         setPhone('07224956313');
       }
     } catch (e) {
       setFirstName(user?.firstName || 'Diya');
       setLastName(user?.lastName || 'Jain');
-      setUserEmail(user?.email || 'vendor22@gmail.com');
+      setUserEmail(user?.email || 'manager@apexpm.com');
       setPhone('07224956313');
     } finally {
       setLoading(false);
@@ -250,19 +254,33 @@ export const ProfileScreen = () => {
 
   // B. Provision User
   const handleProvisionUser = async () => {
-    if (!provFullName.trim() || !provEmail.trim() || !provPassword.trim()) {
-      Alert.alert('Validation Error', 'Name, Email and Password are required.');
+    setProvErrors({});
+
+    const validationData = {
+      fullName: provFullName,
+      email: provEmail,
+      phone: provPhone,
+      password: provPassword,
+    };
+
+    const valRes = provisionUserSchema.safeParse(validationData);
+    if (!valRes.success) {
+      const errs = {};
+      valRes.error.issues.forEach(issue => {
+        errs[issue.path[0]] = issue.message;
+      });
+      setProvErrors(errs);
       return;
     }
 
     try {
       setSubmitting(true);
       const payload = {
-        name: provFullName.trim(),
-        email: provEmail.trim(),
-        phone: provPhone.trim() || undefined,
+        name: valRes.data.fullName,
+        email: valRes.data.email,
+        phone: valRes.data.phone || undefined,
         status: provStatus.toUpperCase(),
-        password: provPassword,
+        password: valRes.data.password,
         role: provRole.toUpperCase().replace(/ /g, '_'),
         specialtyTrade: provSpecialty,
         buildingsScope: provBuildingsScope,
@@ -402,14 +420,24 @@ export const ProfileScreen = () => {
   };
 
   const handleUpdatePassword = async () => {
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      Alert.alert('Error', 'Please fill in all password fields.');
+    setPassErrors({});
+
+    const validationData = {
+      currentPassword,
+      newPassword,
+      confirmPassword,
+    };
+
+    const valRes = changePasswordSchema.safeParse(validationData);
+    if (!valRes.success) {
+      const errs = {};
+      valRes.error.issues.forEach(issue => {
+        errs[issue.path[0]] = issue.message;
+      });
+      setPassErrors(errs);
       return;
     }
-    if (newPassword !== confirmPassword) {
-      Alert.alert('Error', 'New password and confirmation do not match.');
-      return;
-    }
+
     try {
       setSaving(true);
       await apiClient.post('/portal/change-password', { currentPassword, newPassword }, logout, refreshAccessToken);
@@ -992,6 +1020,7 @@ export const ProfileScreen = () => {
                     value={provFullName}
                     onChangeText={setProvFullName}
                   />
+                  {provErrors.fullName && <Text style={styles.errorLabel} allowFontScaling={false}>{provErrors.fullName}</Text>}
 
                   <Text style={styles.formLabel} allowFontScaling={false}>EMAIL ADDRESS</Text>
                   <TextInput
@@ -1003,15 +1032,18 @@ export const ProfileScreen = () => {
                     value={provEmail}
                     onChangeText={setProvEmail}
                   />
+                  {provErrors.email && <Text style={styles.errorLabel} allowFontScaling={false}>{provErrors.email}</Text>}
 
                   <Text style={styles.formLabel} allowFontScaling={false}>PHONE NUMBER</Text>
                   <TextInput
                     style={styles.formInput}
                     placeholder="e.g. (555) 0122"
                     placeholderTextColor="#64748b"
+                    keyboardType="phone-pad"
                     value={provPhone}
                     onChangeText={setProvPhone}
                   />
+                  {provErrors.phone && <Text style={styles.errorLabel} allowFontScaling={false}>{provErrors.phone}</Text>}
 
                   <Text style={styles.formLabel} allowFontScaling={false}>STATUS</Text>
                   <TouchableOpacity
@@ -1053,6 +1085,7 @@ export const ProfileScreen = () => {
                     value={provPassword}
                     onChangeText={setProvPassword}
                   />
+                  {provErrors.password && <Text style={styles.errorLabel} allowFontScaling={false}>{provErrors.password}</Text>}
 
                   <Text style={styles.formLabel} allowFontScaling={false}>ROLE</Text>
                   <TouchableOpacity
@@ -1261,7 +1294,7 @@ export const ProfileScreen = () => {
             <View style={[styles.formGridInputBox, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
               <Ionicons name="lock-closed" size={10} color="#94a3b8" />
               <Text style={[styles.formGridInputText, { color: colors.textPrimary, flex: 1 }]} numberOfLines={1} allowFontScaling={false}>
-                {userEmail || 'person1b@gmail.com'}
+                {userEmail || 'tenant@apexpm.com'}
               </Text>
             </View>
           </View>
@@ -1583,16 +1616,19 @@ export const ProfileScreen = () => {
                   {language === 'es' ? 'CONTRASEÑA ACTUAL' : 'CURRENT PASSWORD'}
                 </Text>
                 <TextInput style={[styles.formInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.textPrimary }]} value={currentPassword} onChangeText={setCurrentPassword} placeholder="••••••••" placeholderTextColor="#64748b" secureTextEntry />
+                {passErrors.currentPassword && <Text style={styles.errorLabel} allowFontScaling={false}>{passErrors.currentPassword}</Text>}
 
                 <Text style={[styles.formLabel, { color: colors.textSecondary }]} allowFontScaling={false}>
                   {language === 'es' ? 'NUEVA CONTRASEÑA' : 'NEW PASSWORD'}
                 </Text>
                 <TextInput style={[styles.formInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.textPrimary }]} value={newPassword} onChangeText={setNewPassword} placeholder="••••••••" placeholderTextColor="#64748b" secureTextEntry />
+                {passErrors.newPassword && <Text style={styles.errorLabel} allowFontScaling={false}>{passErrors.newPassword}</Text>}
 
                 <Text style={[styles.formLabel, { color: colors.textSecondary }]} allowFontScaling={false}>
                   {language === 'es' ? 'CONFIRMAR CONTRASEÑA' : 'CONFIRM PASSWORD'}
                 </Text>
                 <TextInput style={[styles.formInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.textPrimary }]} value={confirmPassword} onChangeText={setConfirmPassword} placeholder="••••••••" placeholderTextColor="#64748b" secureTextEntry />
+                {passErrors.confirmPassword && <Text style={styles.errorLabel} allowFontScaling={false}>{passErrors.confirmPassword}</Text>}
               </ScrollView>
 
               <View style={styles.modalActions}>
@@ -1620,6 +1656,7 @@ export const ProfileScreen = () => {
 };
 
 const getStyles = (colors) => StyleSheet.create({
+  errorLabel: { color: '#ef4444', fontSize: 10.5, marginTop: 4, fontWeight: '700' },
   mainWrapper: { flex: 1, backgroundColor: colors.bg },
   container: { flex: 1, backgroundColor: colors.bg },
   scrollContent: { paddingHorizontal: 16, paddingBottom: 60, paddingTop: 12 },

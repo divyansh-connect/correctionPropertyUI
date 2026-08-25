@@ -16,13 +16,17 @@ import {
   KeyboardAvoidingView,
   TouchableWithoutFeedback,
   Keyboard,
+  Linking,
 } from 'react-native';
 import apiClient from '../api/client';
 import { useAuthStore } from '../store/useStore';
 import { useThemeColors } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
+import * as DocumentPicker from 'expo-document-picker';
+import { leadSchema, screeningSchema, leaseSchema, moveInSchema, moveOutSchema } from '../validations/mobile.validation';
+import { CustomDatePicker } from '../components/CustomDatePicker';
 
-export const LeadsScreen = () => {
+export const LeadsScreen = ({ onNavigate }) => {
   const { logout, refreshAccessToken } = useAuthStore();
   const { colors, isDarkMode } = useThemeColors();
   const styles = getStyles(colors, isDarkMode);
@@ -96,6 +100,29 @@ export const LeadsScreen = () => {
   const [pickerModalOpen, setPickerModalOpen] = useState(false);
   const [activePicker, setActivePicker] = useState(null); // 'property' | 'unit' | 'tenant' | 'stage' | 'package'
 
+  // 7. Background screening details modal states
+  const [selectedScreening, setSelectedScreening] = useState(null);
+  const [loadingDetail, setLoadingDetail] = useState(false);
+  const [screeningDocFile, setScreeningDocFile] = useState(null);
+  const [screeningDob, setScreeningDob] = useState('');
+  const [screeningSsn, setScreeningSsn] = useState('');
+  const [screeningConsent, setScreeningConsent] = useState(false);
+
+  // 8. Move In / Move Out start inspection states
+  const [selectedMoveInOrOut, setSelectedMoveInOrOut] = useState(null);
+  const [startInspectionTemplateId, setStartInspectionTemplateId] = useState('');
+  const [leadErrors, setLeadErrors] = useState({});
+  const [appErrors, setAppErrors] = useState({});
+  const [scrErrors, setScrErrors] = useState({});
+  const [leaseErrors, setLeaseErrors] = useState({});
+
+  // Date picker modal states
+  const [showInDatePicker, setShowInDatePicker] = useState(false);
+  const [showOutDatePicker, setShowOutDatePicker] = useState(false);
+  const [showScrDobPicker, setShowScrDobPicker] = useState(false);
+  const [showLeaseStartPicker, setShowLeaseStartPicker] = useState(false);
+  const [showLeaseEndPicker, setShowLeaseEndPicker] = useState(false);
+
   // Animations
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(25)).current;
@@ -152,11 +179,7 @@ export const LeadsScreen = () => {
       })));
     } catch (e) {
       console.log('Leads fetch failed:', e.message);
-      setLeadsList([
-        { id: '1', name: 'person 1', email: 'person1@example.com', phone: '555-0101', propertyName: 'Property 1', stage: 'NEW' },
-        { id: '2', name: 'person 2', email: 'person2@example.com', phone: '555-0102', propertyName: 'Property 2', stage: 'CONTACTED' },
-        { id: '3', name: 'demo lead', email: 'demo@example.com', phone: '555-0103', propertyName: 'Property 1', stage: 'TOUR SCHEDULED' }
-      ]);
+      setLeadsList([]);
     } finally {
       if (activeTab === 'leads') {
         setLoading(false);
@@ -185,10 +208,7 @@ export const LeadsScreen = () => {
       })));
     } catch (e) {
       console.log('Applications fetch failed:', e.message);
-      setApplicationsList([
-        { id: '1', applicantName: 'person 2', propertyName: 'Property 2', unitNumber: 'Room 2B', submissionDate: '2026-08-01', creditScore: '750', proposedRent: 2550, status: 'Under Review' },
-        { id: '2', applicantName: 'person 1', propertyName: 'Property 1', unitNumber: 'room 1b', submissionDate: '2026-08-01', creditScore: '710', proposedRent: 1100, status: 'Approved' }
-      ]);
+      setApplicationsList([]);
     } finally {
       if (activeTab === 'applications') {
         setLoading(false);
@@ -215,10 +235,7 @@ export const LeadsScreen = () => {
       })));
     } catch (e) {
       console.log('Screening fetch failed:', e.message);
-      setScreeningList([
-        { id: '1', applicantName: 'person 1', email: 'person1b@gmail.com', propertyName: 'property 1', unitNumber: 'room 1b', screeningPackage: 'Premium', screeningStatus: 'Approved' },
-        { id: '2', applicantName: 'person 2', email: 'person2b@gmail.com', propertyName: 'Property 2', unitNumber: 'Room 2B', screeningPackage: 'Basic', screeningStatus: 'Processing' }
-      ]);
+      setScreeningList([]);
     } finally {
       if (activeTab === 'screening') {
         setLoading(false);
@@ -247,11 +264,7 @@ export const LeadsScreen = () => {
       })));
     } catch (e) {
       console.log('Leases fetch failed:', e.message);
-      setLeasesList([
-        { id: '1', leaseNumber: '1', tenantName: 'person 1', propertyName: 'property 1', unitNumber: 'room 1b', startDate: '2026-08-01', endDate: '2027-08-01', monthlyRent: 1000 },
-        { id: '2', leaseNumber: '2', tenantName: 'person 2', propertyName: 'Property 2', unitNumber: 'Room 2B', startDate: '2026-08-01', endDate: '2027-08-01', monthlyRent: 5000 },
-        { id: '3', leaseNumber: '3', tenantName: 'person 1', propertyName: 'property 1', unitNumber: 'room 1B', startDate: '2026-08-01', endDate: '2027-08-01', monthlyRent: 10000 }
-      ]);
+      setLeasesList([]);
     } finally {
       if (activeTab === 'leases') {
         setLoading(false);
@@ -278,11 +291,7 @@ export const LeadsScreen = () => {
       })));
     } catch (e) {
       console.log('Move-ins fetch failed:', e.message);
-      setMoveInList([
-        { id: '1', tenantName: 'person 2', propertyName: 'Property 2', unitNumber: 'Room 2B', scheduledDate: '2026-08-01', workflowStatus: 'Completed' },
-        { id: '2', tenantName: 'person 1', propertyName: 'property 1', unitNumber: 'room 1b', scheduledDate: '2026-08-01', workflowStatus: 'Completed' },
-        { id: '3', tenantName: 'person 1', propertyName: 'property 1', unitNumber: 'room 1B', scheduledDate: '2026-08-01', workflowStatus: 'Inspection in Progress' }
-      ]);
+      setMoveInList([]);
     } finally {
       if (activeTab === 'movein') {
         setLoading(false);
@@ -328,15 +337,11 @@ export const LeadsScreen = () => {
         id: t.id,
         name: t.name || 'Template',
         roomsCount: t.roomsCount || 4,
-        createdBy: t.createdBy || 'companyb@gmail.com',
+        createdBy: t.createdBy || 'manager@apexpm.com',
       })));
     } catch (e) {
       console.log('Templates fetch failed:', e.message);
-      setTemplatesList([
-        { id: '1', name: 'Assign 2', roomsCount: 4, createdBy: 'companyb@gmail.com' },
-        { id: '2', name: 'Assign 1', roomsCount: 4, createdBy: 'companyb@gmail.com' },
-        { id: '3', name: 'Demo 1', roomsCount: 4, createdBy: 'companyb@gmail.com' },
-      ]);
+      setTemplatesList([]);
     } finally {
       if (activeTab === 'templates') {
         setLoading(false);
@@ -374,18 +379,30 @@ export const LeadsScreen = () => {
 
   // A. Save new CRM lead
   const handleSaveLead = async () => {
-    if (!leadName.trim()) {
-      Alert.alert('Validation Error', 'Lead Name is required.');
+    setLeadErrors({});
+
+    const validationData = {
+      name: leadName.trim(),
+      email: leadEmail.trim(),
+      phone: leadPhone.trim(),
+    };
+
+    const valRes = leadSchema.safeParse(validationData);
+    if (!valRes.success) {
+      const errs = {};
+      valRes.error.issues.forEach(issue => {
+        errs[issue.path[0]] = issue.message;
+      });
+      setLeadErrors(errs);
       return;
     }
 
     try {
       setSubmitting(true);
-      const chosenProp = properties.find(p => p.id === leadPropertyId);
       const payload = {
-        name: leadName.trim(),
-        email: leadEmail.trim() || undefined,
-        phone: leadPhone.trim() || undefined,
+        name: valRes.data.name,
+        email: valRes.data.email || undefined,
+        phone: valRes.data.phone || undefined,
         propertyId: leadPropertyId || undefined,
         stage: leadStage
       };
@@ -398,51 +415,36 @@ export const LeadsScreen = () => {
       setLeadPhone('');
       fetchLeads(true);
     } catch (e) {
-      const chosenProp = properties.find(p => p.id === leadPropertyId);
-      setLeadsList(prev => [
-        {
-          id: String(Date.now()),
-          name: leadName.trim(),
-          email: leadEmail.trim() || 'N/A',
-          phone: leadPhone.trim() || 'N/A',
-          propertyName: chosenProp?.name || 'Property',
-          stage: leadStage
-        },
-        ...prev
-      ]);
-      Alert.alert('Success', 'Lead Pipeline record created successfully.');
-      setRecordLeadOpen(false);
-      setLeadName('');
-      setLeadEmail('');
-      setLeadPhone('');
+      Alert.alert('Error', e.message || 'Failed to create lead.');
+    } finally {
       setSubmitting(false);
-      runEntryAnimation();
-    }
-  };
-
-  // B. Update background application status
-  const handleUpdateApplicationStatus = async (id, status) => {
-    try {
-      await apiClient.put(`/applications/${id}`, { status }, logout, refreshAccessToken);
-      fetchApplications(true);
-    } catch (e) {
-      setApplicationsList(prev => prev.map(item => item.id === id ? { ...item, status } : item));
-      Alert.alert('Success', `Application status updated to ${status}.`);
     }
   };
 
   // C. Save screening check
   const handleRequestScreening = async () => {
-    if (!screenName.trim() || !screenEmail.trim()) {
-      Alert.alert('Validation Error', 'Name and Email are required.');
+    setScrErrors({});
+
+    const validationData = {
+      applicantName: screenName.trim(),
+      email: screenEmail.trim(),
+    };
+
+    const valRes = screeningSchema.safeParse(validationData);
+    if (!valRes.success) {
+      const errs = {};
+      valRes.error.issues.forEach(issue => {
+        errs[issue.path[0]] = issue.message;
+      });
+      setScrErrors(errs);
       return;
     }
 
     try {
       setSubmitting(true);
       const payload = {
-        applicantName: screenName.trim(),
-        email: screenEmail.trim(),
+        applicantName: valRes.data.applicantName,
+        email: valRes.data.email,
         propertyId: screenPropertyId || undefined,
         unitId: screenUnitId || undefined,
         status: 'Processing'
@@ -455,44 +457,161 @@ export const LeadsScreen = () => {
       setScreenEmail('');
       fetchScreening(true);
     } catch (e) {
-      const chosenProp = properties.find(p => p.id === screenPropertyId);
-      const chosenUnit = units.find(u => u.id === screenUnitId);
-      setScreeningList(prev => [
-        {
-          id: String(Date.now()),
-          applicantName: screenName.trim(),
-          email: screenEmail.trim(),
-          propertyName: chosenProp?.name || 'Property',
-          unitNumber: chosenUnit?.unitNumber || 'Room 1b',
-          screeningPackage: screenPackage,
-          screeningStatus: 'Processing'
-        },
-        ...prev
-      ]);
-      Alert.alert('Success', 'Screening check report generated.');
-      setRecordScreeningOpen(false);
-      setScreenName('');
-      setScreenEmail('');
+      Alert.alert('Error', e.message || 'Failed to request screening check.');
+    } finally {
       setSubmitting(false);
-      runEntryAnimation();
+    }
+  };
+
+  // D. Selected Screening Details fetcher
+  const handleSelectScreening = async (item) => {
+    try {
+      setLoadingDetail(true);
+      setSelectedScreening(item); // Temporary set list values
+      setScreeningDob('');
+      setScreeningSsn('');
+      setScreeningConsent(false);
+      setScreeningDocFile(null);
+
+      const res = await apiClient.get(`/portal/screening/reports/${item.id}`, logout, refreshAccessToken);
+      const detail = res?.data || res;
+      if (detail) {
+        setSelectedScreening({
+          id: detail.id,
+          applicantName: detail.applicantName || (detail.tenant ? `${detail.tenant.firstName || ''} ${detail.tenant.lastName || ''}`.trim() : 'Applicant'),
+          email: detail.email || detail.applicantEmail || detail.tenant?.email || 'N/A',
+          propertyName: detail.propertyName || detail.tenant?.unit?.property?.name || 'Property',
+          unitNumber: detail.unitNumber || (detail.tenant?.unit?.unitNumber ? `Unit ${detail.tenant.unit.unitNumber}` : 'Unassigned'),
+          screeningPackage: detail.screeningPackage || 'Basic',
+          screeningStatus: detail.status || detail.screeningStatus || 'Processing',
+          creditScore: detail.creditScore !== undefined ? detail.creditScore : 'N/A',
+          criminalBackground: detail.criminalBackground || (detail.criminalPass ? 'Passed' : 'Flagged') || 'N/A',
+          evictionHistory: detail.evictionHistory || (detail.evictionPass ? 'No Records' : 'Flagged') || 'N/A',
+          dob: detail.dob || '—',
+          ssn: detail.ssn || '—',
+          authorized: detail.authorized || false,
+          documentUrl: detail.documentUrl || '',
+          documentName: detail.documentName || '',
+        });
+        if (detail.dob) setScreeningDob(detail.dob);
+        if (detail.ssn) setScreeningSsn(detail.ssn);
+        if (detail.authorized) setScreeningConsent(detail.authorized);
+      }
+    } catch (e) {
+      console.log('Error fetching screening details:', e.message);
+      Alert.alert('Error', 'Failed to load live screening details.');
+    } finally {
+      setLoadingDetail(false);
+    }
+  };
+
+  // E. Submit screening decisions (Approve, Decline, Generate/Complete)
+  const handleUpdateScreeningStatus = async (id, statusVal) => {
+    try {
+      setSubmitting(true);
+      await apiClient.put(`/portal/screening/reports/${id}`, { status: statusVal }, logout, refreshAccessToken);
+      Alert.alert('Success', `Screening status updated to ${statusVal}.`);
+      setSelectedScreening(null);
+      fetchScreening(true);
+    } catch (e) {
+      Alert.alert('Error', e.message || 'Failed to update screening status.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // F. Upload document / Complete screening check flow
+  const handleCompleteScreeningFlow = async () => {
+    if (!screeningConsent) {
+      Alert.alert('Consent Required', 'Applicant must authorize and give consent.');
+      return;
+    }
+    if (!screeningDob.trim() || !screeningSsn.trim()) {
+      Alert.alert('Validation Error', 'DOB and SSN are required.');
+      return;
+    }
+    if (!screeningDocFile) {
+      Alert.alert('Document Required', 'Please select an Identity/Income verification document.');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+
+      // 1. Save details (dob, ssn, authorized)
+      await apiClient.put(`/portal/screening/reports/${selectedScreening.id}`, {
+        dob: screeningDob.trim(),
+        ssn: screeningSsn.trim(),
+        authorized: true,
+        status: 'Pending Documents',
+      }, logout, refreshAccessToken);
+
+      // 2. Upload document file
+      const formData = new FormData();
+      formData.append('document', {
+        uri: Platform.OS === 'ios' ? screeningDocFile.uri.replace('file://', '') : screeningDocFile.uri,
+        name: screeningDocFile.name || 'screening_doc.pdf',
+        type: screeningDocFile.mimeType || 'application/pdf',
+      });
+
+      await apiClient.post(`/portal/screening/reports/${selectedScreening.id}/upload`, formData, logout, refreshAccessToken);
+
+      Alert.alert('Success', 'Screening documents uploaded and submitted for review.');
+      setSelectedScreening(null);
+      fetchScreening(true);
+    } catch (e) {
+      Alert.alert('Error', e.message || 'Failed to submit screening documents.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // G. Document Picker for screening
+  const handlePickScreeningDocument = async () => {
+    try {
+      const res = await DocumentPicker.getDocumentAsync({
+        type: '*/*',
+        copyToCacheDirectory: true,
+      });
+
+      if (!res.canceled && res.assets && res.assets.length > 0) {
+        setScreeningDocFile(res.assets[0]);
+      }
+    } catch (err) {
+      console.log('DocumentPicker Error:', err);
     }
   };
 
   // D. Create Lease agreement
   const handleCreateLease = async () => {
-    if (!leaseTenantId || !leaseUnitId || !leaseMonthlyRent.trim()) {
-      Alert.alert('Validation Error', 'Resident, Unit and Rent value are required.');
+    setLeaseErrors({});
+
+    const validationData = {
+      tenantId: leaseTenantId,
+      unitId: leaseUnitId,
+      startDate: leaseStartDate,
+      endDate: leaseEndDate,
+      monthlyRent: parseFloat(leaseMonthlyRent || '0'),
+    };
+
+    const valRes = leaseSchema.safeParse(validationData);
+    if (!valRes.success) {
+      const errs = {};
+      valRes.error.issues.forEach(issue => {
+        errs[issue.path[0]] = issue.message;
+      });
+      setLeaseErrors(errs);
       return;
     }
 
     try {
       setSubmitting(true);
       const payload = {
-        tenantId: leaseTenantId,
-        unitId: leaseUnitId,
-        startDate: leaseStartDate ? new Date(leaseStartDate).toISOString() : new Date().toISOString(),
-        endDate: leaseEndDate ? new Date(leaseEndDate).toISOString() : new Date().toISOString(),
-        rent: parseFloat(leaseMonthlyRent),
+        tenantId: valRes.data.tenantId,
+        unitId: valRes.data.unitId,
+        startDate: new Date(valRes.data.startDate).toISOString(),
+        endDate: new Date(valRes.data.endDate).toISOString(),
+        rent: valRes.data.monthlyRent,
         status: 'Active'
       };
 
@@ -502,44 +621,38 @@ export const LeadsScreen = () => {
       setLeaseMonthlyRent('');
       fetchLeases(true);
     } catch (e) {
-      const chosenTenant = tenants.find(t => t.id === leaseTenantId);
-      const chosenUnit = units.find(u => u.id === leaseUnitId);
-      setLeasesList(prev => [
-        {
-          id: String(Date.now()),
-          leaseNumber: String(prev.length + 1),
-          tenantName: chosenTenant ? `${chosenTenant.firstName} ${chosenTenant.lastName}` : 'Resident',
-          propertyName: chosenUnit?.property?.name || 'Property',
-          unitNumber: chosenUnit?.unitNumber || 'Unassigned',
-          startDate: leaseStartDate || new Date().toISOString().split('T')[0],
-          endDate: leaseEndDate || new Date().toISOString().split('T')[0],
-          monthlyRent: Number(leaseMonthlyRent)
-        },
-        ...prev
-      ]);
-      Alert.alert('Success', 'Lease Agreement wizard configured.');
-      setRecordLeaseOpen(false);
-      setLeaseMonthlyRent('');
+      Alert.alert('Error', e.message || 'Failed to create lease agreement.');
+    } finally {
       setSubmitting(false);
-      runEntryAnimation();
     }
   };
 
   // E. Schedule Move In
   const handleCreateMoveIn = async () => {
+    setAppErrors({});
     if (!moveTenantId) {
-      Alert.alert('Validation Error', 'Resident is required.');
+      Alert.alert('Validation Error', 'Resident selection is required.');
+      return;
+    }
+
+    const valRes = moveInSchema.safeParse({ tenantId: moveTenantId, date: moveDate });
+    if (!valRes.success) {
+      const errs = {};
+      valRes.error.issues.forEach(issue => {
+        errs[issue.path[0]] = issue.message;
+      });
+      setAppErrors(errs);
       return;
     }
 
     try {
       setSubmitting(true);
-      const chosenTenant = tenants.find(t => t.id === moveTenantId);
+      const chosenTenant = tenants.find(t => t.id === valRes.data.tenantId);
       const payload = {
-        tenantId: moveTenantId,
+        tenantId: valRes.data.tenantId,
         propertyId: chosenTenant?.unit?.property?.id,
         unitId: chosenTenant?.unit?.id,
-        scheduledDate: moveDate ? new Date(moveDate).toISOString() : new Date().toISOString(),
+        scheduledDate: valRes.data.date ? new Date(valRes.data.date).toISOString() : new Date().toISOString(),
         status: 'Scheduled'
       };
 
@@ -548,38 +661,35 @@ export const LeadsScreen = () => {
       setRecordMoveInOpen(false);
       fetchMoveIns(true);
     } catch (e) {
-      const chosenTenant = tenants.find(t => t.id === moveTenantId);
-      setMoveInList(prev => [
-        {
-          id: String(Date.now()),
-          tenantName: chosenTenant ? `${chosenTenant.firstName} ${chosenTenant.lastName}` : 'Resident',
-          propertyName: chosenTenant?.unit?.property?.name || 'Property',
-          unitNumber: chosenTenant?.unit?.unitNumber || 'Unassigned',
-          scheduledDate: moveDate || new Date().toISOString().split('T')[0],
-          workflowStatus: 'Scheduled'
-        },
-        ...prev
-      ]);
-      Alert.alert('Success', 'Move In workflow registry created.');
-      setRecordMoveInOpen(false);
+      Alert.alert('Error', e.message || 'Failed to schedule move in.');
+    } finally {
       setSubmitting(false);
-      runEntryAnimation();
     }
   };
 
   // F. Schedule Move Out
   const handleCreateMoveOut = async () => {
+    setAppErrors({});
     if (!outTenantId) {
-      Alert.alert('Validation Error', 'Resident is required.');
+      Alert.alert('Validation Error', 'Resident selection is required.');
+      return;
+    }
+
+    const valRes = moveOutSchema.safeParse({ tenantId: outTenantId, date: outDate });
+    if (!valRes.success) {
+      const errs = {};
+      valRes.error.issues.forEach(issue => {
+        errs[issue.path[0]] = issue.message;
+      });
+      setAppErrors(errs);
       return;
     }
 
     try {
       setSubmitting(true);
-      const chosenTenant = tenants.find(t => t.id === outTenantId);
       const payload = {
-        tenantId: outTenantId,
-        scheduledDate: outDate ? new Date(outDate).toISOString() : new Date().toISOString(),
+        tenantId: valRes.data.tenantId,
+        scheduledDate: valRes.data.date ? new Date(valRes.data.date).toISOString() : new Date().toISOString(),
         status: 'Scheduled'
       };
 
@@ -588,22 +698,9 @@ export const LeadsScreen = () => {
       setRecordMoveOutOpen(false);
       fetchMoveOuts(true);
     } catch (e) {
-      const chosenTenant = tenants.find(t => t.id === outTenantId);
-      setMoveOutList(prev => [
-        {
-          id: String(Date.now()),
-          tenantName: chosenTenant ? `${chosenTenant.firstName} ${chosenTenant.lastName}` : 'Resident',
-          propertyName: chosenTenant?.unit?.property?.name || 'Property 1',
-          unitNumber: chosenTenant?.unit?.unitNumber || 'Room 1A',
-          scheduledDate: outDate || new Date().toISOString().split('T')[0],
-          workflowStatus: 'Scheduled'
-        },
-        ...prev
-      ]);
-      Alert.alert('Success', 'Move Out workflow registry created.');
-      setRecordMoveOutOpen(false);
+      Alert.alert('Error', e.message || 'Failed to schedule move out.');
+    } finally {
       setSubmitting(false);
-      runEntryAnimation();
     }
   };
 
@@ -627,20 +724,9 @@ export const LeadsScreen = () => {
       setTemplateName('');
       fetchTemplates(true);
     } catch (e) {
-      setTemplatesList(prev => [
-        {
-          id: String(Date.now()),
-          name: templateName.trim(),
-          roomsCount: parseInt(templateRooms || '4'),
-          createdBy: 'companyb@gmail.com',
-        },
-        ...prev
-      ]);
-      Alert.alert('Success', 'Inspection checklist template created.');
-      setRecordTemplateOpen(false);
-      setTemplateName('');
+      Alert.alert('Error', e.message || 'Failed to create template.');
+    } finally {
       setSubmitting(false);
-      runEntryAnimation();
     }
   };
 
@@ -652,22 +738,41 @@ export const LeadsScreen = () => {
       Alert.alert('Success', 'Inspection checklist template duplicated successfully.');
       fetchTemplates(true);
     } catch (e) {
-      console.log('Duplication failed:', e.message);
-      const match = templatesList.find(t => t.id === id);
-      if (match) {
-        setTemplatesList(prev => [
-          ...prev,
-          {
-            id: String(Date.now()),
-            name: `${match.name} (Copy)`,
-            roomsCount: match.roomsCount,
-            createdBy: match.createdBy,
-          }
-        ]);
-      }
-      Alert.alert('Success', 'Inspection checklist template duplicated successfully.');
+      Alert.alert('Error', e.message || 'Failed to duplicate template.');
+    } finally {
       setLoading(false);
-      runEntryAnimation();
+    }
+  };
+
+  // I. Start Inspection Flow
+  const handleStartInspectionFlow = async () => {
+    if (!startInspectionTemplateId) {
+      Alert.alert('Validation Error', 'Please select an inspection template.');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      const isMoveIn = selectedMoveInOrOut.type === 'movein';
+      const endpoint = isMoveIn 
+        ? `/move-ins/${selectedMoveInOrOut.id}/start-inspection`
+        : `/move-outs/${selectedMoveInOrOut.id}/start-inspection`;
+
+      const res = await apiClient.post(endpoint, { templateId: startInspectionTemplateId }, logout, refreshAccessToken);
+      const inspection = res?.data || res;
+      if (inspection && inspection.id) {
+        Alert.alert('Success', 'Inspection started successfully.');
+        setStartInspectionModalOpen(false);
+        if (onNavigate) {
+          onNavigate('inspection', { inspectionId: inspection.id });
+        }
+      } else {
+        throw new Error('Failed to retrieve started inspection details.');
+      }
+    } catch (e) {
+      Alert.alert('Error', e.message || 'Failed to start inspection.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -926,7 +1031,9 @@ export const LeadsScreen = () => {
                         <View style={styles.divider} />
                         <View style={styles.rowBetween}>
                           <Text style={styles.recordSubText} allowFontScaling={false}>Submission Date</Text>
-                          <Text style={styles.recordSubTextVal} allowFontScaling={false}>{item.submissionDate}</Text>
+                          <Text style={styles.recordSubTextVal} allowFontScaling={false}>
+                            {item.submissionDate ? (item.submissionDate.includes('T') ? item.submissionDate.split('T')[0] : item.submissionDate) : 'N/A'}
+                          </Text>
                         </View>
                         <View style={styles.rowBetween}>
                           <Text style={styles.recordSubText} allowFontScaling={false}>Credit Score Index</Text>
@@ -938,23 +1045,6 @@ export const LeadsScreen = () => {
                             ${Number(item.proposedRent).toLocaleString()}
                           </Text>
                         </View>
-
-                        {item.status === 'Under Review' && (
-                          <View style={styles.actionRowContainer}>
-                            <TouchableOpacity
-                              style={[styles.smallActionBtn, { backgroundColor: 'rgba(16, 185, 129, 0.15)' }]}
-                              onPress={() => handleUpdateApplicationStatus(item.id, 'Approved')}
-                            >
-                              <Text style={[styles.smallActionText, { color: '#10b981' }]} allowFontScaling={false}>Approve</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                              style={[styles.smallActionBtn, { backgroundColor: 'rgba(239, 68, 68, 0.15)' }]}
-                              onPress={() => handleUpdateApplicationStatus(item.id, 'Declined')}
-                            >
-                              <Text style={[styles.smallActionText, { color: '#ef4444' }]} allowFontScaling={false}>Decline</Text>
-                            </TouchableOpacity>
-                          </View>
-                        )}
                       </View>
                     );
                   })
@@ -973,7 +1063,7 @@ export const LeadsScreen = () => {
                   filteredScreening.map((item) => {
                     const statusColor = item.screeningStatus === 'Approved' ? '#10b981' : item.screeningStatus === 'Declined' ? '#ef4444' : '#f59e0b';
                     return (
-                      <View key={item.id} style={styles.recordsCard}>
+                      <TouchableOpacity key={item.id} style={styles.recordsCard} onPress={() => handleSelectScreening(item)}>
                         <View style={styles.rowBetween}>
                           <View style={{ flex: 1, marginRight: 10 }}>
                             <Text style={styles.recordLabel} allowFontScaling={false}>{item.applicantName}</Text>
@@ -992,7 +1082,7 @@ export const LeadsScreen = () => {
                           <Text style={styles.recordSubText} allowFontScaling={false}>Screening Package</Text>
                           <Text style={[styles.recordSubTextVal, { color: '#38bdf8' }]} allowFontScaling={false}>{item.screeningPackage}</Text>
                         </View>
-                      </View>
+                      </TouchableOpacity>
                     );
                   })
                 )}
@@ -1045,6 +1135,7 @@ export const LeadsScreen = () => {
                 ) : (
                   filteredMoveIns.map((item) => {
                     const statusColor = item.workflowStatus === 'Completed' ? '#10b981' : item.workflowStatus === 'Inspection in Progress' ? '#a855f7' : '#f59e0b';
+                    const inspectionId = item.inspectionId || item.inspection?.id;
                     return (
                       <View key={item.id} style={styles.recordsCard}>
                         <View style={styles.rowBetween}>
@@ -1061,6 +1152,29 @@ export const LeadsScreen = () => {
                           <Text style={styles.recordSubText} allowFontScaling={false}>Move In Target Date</Text>
                           <Text style={styles.recordSubTextVal} allowFontScaling={false}>{item.scheduledDate}</Text>
                         </View>
+                        {item.workflowStatus !== 'Completed' && (
+                          <View style={[styles.actionRowContainer, { marginTop: 10 }]}>
+                            {item.workflowStatus === 'Inspection in Progress' && inspectionId ? (
+                              <TouchableOpacity
+                                style={[styles.smallActionBtn, { backgroundColor: 'rgba(168, 85, 247, 0.15)', flex: 1 }]}
+                                onPress={() => onNavigate && onNavigate('inspection', { inspectionId })}
+                              >
+                                <Text style={[styles.smallActionText, { color: '#a855f7' }]} allowFontScaling={false}>Continue Inspection</Text>
+                              </TouchableOpacity>
+                            ) : (
+                              <TouchableOpacity
+                                style={[styles.smallActionBtn, { backgroundColor: 'rgba(56, 189, 248, 0.15)', flex: 1 }]}
+                                onPress={() => {
+                                  setSelectedMoveInOrOut({ type: 'movein', id: item.id });
+                                  setStartInspectionTemplateId('');
+                                  setStartInspectionModalOpen(true);
+                                }}
+                              >
+                                <Text style={[styles.smallActionText, { color: '#38bdf8' }]} allowFontScaling={false}>Start Inspection</Text>
+                              </TouchableOpacity>
+                            )}
+                          </View>
+                        )}
                       </View>
                     );
                   })
@@ -1082,6 +1196,7 @@ export const LeadsScreen = () => {
                 ) : (
                   filteredMoveOuts.map((item) => {
                     const statusColor = item.workflowStatus === 'Completed' ? '#10b981' : item.workflowStatus === 'Inspection in Progress' ? '#a855f7' : '#f59e0b';
+                    const inspectionId = item.inspectionId || item.inspection?.id;
                     return (
                       <View key={item.id} style={styles.recordsCard}>
                         <View style={styles.rowBetween}>
@@ -1098,6 +1213,29 @@ export const LeadsScreen = () => {
                           <Text style={styles.recordSubText} allowFontScaling={false}>Move Out Date</Text>
                           <Text style={styles.recordSubTextVal} allowFontScaling={false}>{item.scheduledDate}</Text>
                         </View>
+                        {item.workflowStatus !== 'Completed' && (
+                          <View style={[styles.actionRowContainer, { marginTop: 10 }]}>
+                            {item.workflowStatus === 'Inspection in Progress' && inspectionId ? (
+                              <TouchableOpacity
+                                style={[styles.smallActionBtn, { backgroundColor: 'rgba(168, 85, 247, 0.15)', flex: 1 }]}
+                                onPress={() => onNavigate && onNavigate('inspection', { inspectionId })}
+                              >
+                                <Text style={[styles.smallActionText, { color: '#a855f7' }]} allowFontScaling={false}>Continue Inspection</Text>
+                              </TouchableOpacity>
+                            ) : (
+                              <TouchableOpacity
+                                style={[styles.smallActionBtn, { backgroundColor: 'rgba(56, 189, 248, 0.15)', flex: 1 }]}
+                                onPress={() => {
+                                  setSelectedMoveInOrOut({ type: 'moveout', id: item.id });
+                                  setStartInspectionTemplateId('');
+                                  setStartInspectionModalOpen(true);
+                                }}
+                              >
+                                <Text style={[styles.smallActionText, { color: '#38bdf8' }]} allowFontScaling={false}>Start Inspection</Text>
+                              </TouchableOpacity>
+                            )}
+                          </View>
+                        )}
                       </View>
                     );
                   })
@@ -1174,7 +1312,7 @@ export const LeadsScreen = () => {
               </View>
 
               <ScrollView style={styles.modalForm} showsVerticalScrollIndicator={false}>
-                <Text style={styles.formLabel} allowFontScaling={false}>PROSPECT NAME</Text>
+                 <Text style={styles.formLabel} allowFontScaling={false}>PROSPECT NAME</Text>
                 <TextInput
                   style={styles.formInput}
                   placeholder="E.g. John Doe"
@@ -1182,24 +1320,30 @@ export const LeadsScreen = () => {
                   value={leadName}
                   onChangeText={setLeadName}
                 />
+                {leadErrors.name && <Text style={styles.errorLabel} allowFontScaling={false}>{leadErrors.name}</Text>}
 
                 <Text style={styles.formLabel} allowFontScaling={false}>EMAIL ADDRESS</Text>
                 <TextInput
                   style={styles.formInput}
                   placeholder="johndoe@example.com"
                   placeholderTextColor="#64748b"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
                   value={leadEmail}
                   onChangeText={setLeadEmail}
                 />
+                {leadErrors.email && <Text style={styles.errorLabel} allowFontScaling={false}>{leadErrors.email}</Text>}
 
                 <Text style={styles.formLabel} allowFontScaling={false}>PHONE NUMBER</Text>
                 <TextInput
                   style={styles.formInput}
                   placeholder="555-0101"
                   placeholderTextColor="#64748b"
+                  keyboardType="phone-pad"
                   value={leadPhone}
                   onChangeText={setLeadPhone}
                 />
+                {leadErrors.phone && <Text style={styles.errorLabel} allowFontScaling={false}>{leadErrors.phone}</Text>}
 
                 <Text style={styles.formLabel} allowFontScaling={false}>INTERESTED PROPERTY</Text>
                 <TouchableOpacity
@@ -1232,8 +1376,12 @@ export const LeadsScreen = () => {
                 <TouchableOpacity style={styles.cancelBtn} onPress={() => setRecordLeadOpen(false)}>
                   <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.submitBtn} onPress={handleSaveLead}>
-                  <Text style={styles.submitBtnText} allowFontScaling={false}>Add Lead</Text>
+                <TouchableOpacity style={[styles.submitBtn, submitting && { opacity: 0.5 }]} onPress={handleSaveLead} disabled={submitting}>
+                  {submitting ? (
+                    <ActivityIndicator size="small" color="#ffffff" />
+                  ) : (
+                    <Text style={styles.submitBtnText} allowFontScaling={false}>Add Lead</Text>
+                  )}
                 </TouchableOpacity>
               </View>
             </View>
@@ -1262,15 +1410,19 @@ export const LeadsScreen = () => {
                   value={screenName}
                   onChangeText={setScreenName}
                 />
+                {scrErrors.applicantName && <Text style={styles.errorLabel} allowFontScaling={false}>{scrErrors.applicantName}</Text>}
 
                 <Text style={styles.formLabel} allowFontScaling={false}>APPLICANT EMAIL</Text>
                 <TextInput
                   style={styles.formInput}
                   placeholder="applicant@example.com"
                   placeholderTextColor="#64748b"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
                   value={screenEmail}
                   onChangeText={setScreenEmail}
                 />
+                {scrErrors.email && <Text style={styles.errorLabel} allowFontScaling={false}>{scrErrors.email}</Text>}
 
                 <Text style={styles.formLabel} allowFontScaling={false}>PROPERTY</Text>
                 <TouchableOpacity
@@ -1317,8 +1469,12 @@ export const LeadsScreen = () => {
                 <TouchableOpacity style={styles.cancelBtn} onPress={() => setRecordScreeningOpen(false)}>
                   <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.submitBtn} onPress={handleRequestScreening}>
-                  <Text style={styles.submitBtnText} allowFontScaling={false}>Request Check</Text>
+                <TouchableOpacity style={[styles.submitBtn, submitting && { opacity: 0.5 }]} onPress={handleRequestScreening} disabled={submitting}>
+                  {submitting ? (
+                    <ActivityIndicator size="small" color="#ffffff" />
+                  ) : (
+                    <Text style={styles.submitBtnText} allowFontScaling={false}>Request Check</Text>
+                  )}
                 </TouchableOpacity>
               </View>
             </View>
@@ -1353,6 +1509,8 @@ export const LeadsScreen = () => {
                   <Ionicons name="chevron-down" size={16} color="#cbd5e1" />
                 </TouchableOpacity>
 
+                {leaseErrors.tenantId && <Text style={styles.errorLabel} allowFontScaling={false}>{leaseErrors.tenantId}</Text>}
+
                 <Text style={styles.formLabel} allowFontScaling={false}>UNIT LOCATION</Text>
                 <TouchableOpacity
                   style={styles.formPickerSelector}
@@ -1366,23 +1524,32 @@ export const LeadsScreen = () => {
                   </Text>
                   <Ionicons name="chevron-down" size={16} color="#cbd5e1" />
                 </TouchableOpacity>
+                {leaseErrors.unitId && <Text style={styles.errorLabel} allowFontScaling={false}>{leaseErrors.unitId}</Text>}
 
-                <Text style={styles.formLabel} allowFontScaling={false}>START DATE (YYYY-MM-DD)</Text>
-                <TextInput
-                  style={styles.formInput}
-                  placeholder="E.g. 2026-08-01"
-                  placeholderTextColor="#64748b"
+                <Text style={styles.formLabel} allowFontScaling={false}>START DATE</Text>
+                <TouchableOpacity style={styles.formPickerSelector} onPress={() => setShowLeaseStartPicker(true)}>
+                  <Text style={styles.formPickerText} allowFontScaling={false}>{leaseStartDate || 'Select Start Date...'}</Text>
+                  <Ionicons name="calendar-outline" size={16} color="#cbd5e1" />
+                </TouchableOpacity>
+                {leaseErrors.startDate && <Text style={styles.errorLabel} allowFontScaling={false}>{leaseErrors.startDate}</Text>}
+                <CustomDatePicker
+                  visible={showLeaseStartPicker}
                   value={leaseStartDate}
-                  onChangeText={setLeaseStartDate}
+                  onSelect={(date) => setLeaseStartDate(date)}
+                  onClose={() => setShowLeaseStartPicker(false)}
                 />
 
-                <Text style={styles.formLabel} allowFontScaling={false}>END DATE (YYYY-MM-DD)</Text>
-                <TextInput
-                  style={styles.formInput}
-                  placeholder="E.g. 2027-08-01"
-                  placeholderTextColor="#64748b"
+                <Text style={styles.formLabel} allowFontScaling={false}>END DATE</Text>
+                <TouchableOpacity style={styles.formPickerSelector} onPress={() => setShowLeaseEndPicker(true)}>
+                  <Text style={styles.formPickerText} allowFontScaling={false}>{leaseEndDate || 'Select End Date...'}</Text>
+                  <Ionicons name="calendar-outline" size={16} color="#cbd5e1" />
+                </TouchableOpacity>
+                {leaseErrors.endDate && <Text style={styles.errorLabel} allowFontScaling={false}>{leaseErrors.endDate}</Text>}
+                <CustomDatePicker
+                  visible={showLeaseEndPicker}
                   value={leaseEndDate}
-                  onChangeText={setLeaseEndDate}
+                  onSelect={(date) => setLeaseEndDate(date)}
+                  onClose={() => setShowLeaseEndPicker(false)}
                 />
 
                 <Text style={styles.formLabel} allowFontScaling={false}>MONTHLY RENT AMOUNT ($)</Text>
@@ -1390,18 +1557,23 @@ export const LeadsScreen = () => {
                   style={styles.formInput}
                   placeholder="$ 1500"
                   placeholderTextColor="#64748b"
-                  keyboardType="numeric"
+                  keyboardType="decimal-pad"
                   value={leaseMonthlyRent}
                   onChangeText={setLeaseMonthlyRent}
                 />
+                {leaseErrors.monthlyRent && <Text style={styles.errorLabel} allowFontScaling={false}>{leaseErrors.monthlyRent}</Text>}
               </ScrollView>
 
               <View style={styles.modalActions}>
                 <TouchableOpacity style={styles.cancelBtn} onPress={() => setRecordLeaseOpen(false)}>
                   <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.submitBtn} onPress={handleCreateLease}>
-                  <Text style={styles.submitBtnText} allowFontScaling={false}>Create Lease</Text>
+                <TouchableOpacity style={[styles.submitBtn, submitting && { opacity: 0.5 }]} onPress={handleCreateLease} disabled={submitting}>
+                  {submitting ? (
+                    <ActivityIndicator size="small" color="#ffffff" />
+                  ) : (
+                    <Text style={styles.submitBtnText} allowFontScaling={false}>Create Lease</Text>
+                  )}
                 </TouchableOpacity>
               </View>
             </View>
@@ -1436,13 +1608,19 @@ export const LeadsScreen = () => {
                   <Ionicons name="chevron-down" size={16} color="#cbd5e1" />
                 </TouchableOpacity>
 
-                <Text style={styles.formLabel} allowFontScaling={false}>MOVE IN DATE (YYYY-MM-DD)</Text>
-                <TextInput
-                  style={styles.formInput}
-                  placeholder="E.g. 2026-08-01"
-                  placeholderTextColor="#64748b"
+                {appErrors.tenantId && <Text style={styles.errorLabel} allowFontScaling={false}>{appErrors.tenantId}</Text>}
+
+                <Text style={styles.formLabel} allowFontScaling={false}>MOVE IN DATE</Text>
+                <TouchableOpacity style={styles.formPickerSelector} onPress={() => setShowInDatePicker(true)}>
+                  <Text style={styles.formPickerText} allowFontScaling={false}>{moveDate || 'Select Date...'}</Text>
+                  <Ionicons name="calendar-outline" size={16} color="#cbd5e1" />
+                </TouchableOpacity>
+                {appErrors.date && <Text style={styles.errorLabel} allowFontScaling={false}>{appErrors.date}</Text>}
+                <CustomDatePicker
+                  visible={showInDatePicker}
                   value={moveDate}
-                  onChangeText={setMoveDate}
+                  onSelect={(date) => setMoveDate(date)}
+                  onClose={() => setShowInDatePicker(false)}
                 />
               </ScrollView>
 
@@ -1450,8 +1628,12 @@ export const LeadsScreen = () => {
                 <TouchableOpacity style={styles.cancelBtn} onPress={() => setRecordMoveInOpen(false)}>
                   <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.submitBtn} onPress={handleCreateMoveIn}>
-                  <Text style={styles.submitBtnText} allowFontScaling={false}>Schedule Move In</Text>
+                <TouchableOpacity style={[styles.submitBtn, submitting && { opacity: 0.5 }]} onPress={handleCreateMoveIn} disabled={submitting}>
+                  {submitting ? (
+                    <ActivityIndicator size="small" color="#ffffff" />
+                  ) : (
+                    <Text style={styles.submitBtnText} allowFontScaling={false}>Schedule Move In</Text>
+                  )}
                 </TouchableOpacity>
               </View>
             </View>
@@ -1486,13 +1668,19 @@ export const LeadsScreen = () => {
                   <Ionicons name="chevron-down" size={16} color="#cbd5e1" />
                 </TouchableOpacity>
 
-                <Text style={styles.formLabel} allowFontScaling={false}>MOVE OUT DATE (YYYY-MM-DD)</Text>
-                <TextInput
-                  style={styles.formInput}
-                  placeholder="E.g. 2026-08-01"
-                  placeholderTextColor="#64748b"
+                {appErrors.tenantId && <Text style={styles.errorLabel} allowFontScaling={false}>{appErrors.tenantId}</Text>}
+
+                <Text style={styles.formLabel} allowFontScaling={false}>MOVE OUT DATE</Text>
+                <TouchableOpacity style={styles.formPickerSelector} onPress={() => setShowOutDatePicker(true)}>
+                  <Text style={styles.formPickerText} allowFontScaling={false}>{outDate || 'Select Date...'}</Text>
+                  <Ionicons name="calendar-outline" size={16} color="#cbd5e1" />
+                </TouchableOpacity>
+                {appErrors.date && <Text style={styles.errorLabel} allowFontScaling={false}>{appErrors.date}</Text>}
+                <CustomDatePicker
+                  visible={showOutDatePicker}
                   value={outDate}
-                  onChangeText={setOutDate}
+                  onSelect={(date) => setOutDate(date)}
+                  onClose={() => setShowOutDatePicker(false)}
                 />
               </ScrollView>
 
@@ -1500,8 +1688,12 @@ export const LeadsScreen = () => {
                 <TouchableOpacity style={styles.cancelBtn} onPress={() => setRecordMoveOutOpen(false)}>
                   <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.submitBtn} onPress={handleCreateMoveOut}>
-                  <Text style={styles.submitBtnText} allowFontScaling={false}>Schedule Move Out</Text>
+                <TouchableOpacity style={[styles.submitBtn, submitting && { opacity: 0.5 }]} onPress={handleCreateMoveOut} disabled={submitting}>
+                  {submitting ? (
+                    <ActivityIndicator size="small" color="#ffffff" />
+                  ) : (
+                    <Text style={styles.submitBtnText} allowFontScaling={false}>Schedule Move Out</Text>
+                  )}
                 </TouchableOpacity>
               </View>
             </View>
@@ -1555,6 +1747,272 @@ export const LeadsScreen = () => {
         </TouchableWithoutFeedback>
       </Modal>
 
+      {/* --- BACKGROUND SCREENING DETAILS MODAL --- */}
+      <Modal visible={!!selectedScreening} animationType="slide" transparent>
+        <TouchableWithoutFeedback onPress={() => setSelectedScreening(null)}>
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, { maxHeight: '90%' }]}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle} allowFontScaling={false}>Screening Check Details</Text>
+                <TouchableOpacity onPress={() => setSelectedScreening(null)}>
+                  <Ionicons name="close" size={20} color={colors.textPrimary} />
+                </TouchableOpacity>
+              </View>
+
+              {loadingDetail ? (
+                <View style={{ paddingVertical: 40, alignItems: 'center' }}>
+                  <ActivityIndicator size="large" color="#38bdf8" />
+                  <Text style={{ color: colors.textSecondary, fontSize: 13, marginTop: 8 }} allowFontScaling={false}>
+                    Fetching live screening details...
+                  </Text>
+                </View>
+              ) : selectedScreening && (
+                <ScrollView style={{ marginBottom: 10 }} showsVerticalScrollIndicator={false}>
+                  <View style={styles.modalForm}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>APPLICANT NAME</Text>
+                    <Text style={styles.formPickerText} allowFontScaling={false}>{selectedScreening.applicantName}</Text>
+
+                    <Text style={styles.formLabel} allowFontScaling={false}>EMAIL ADDRESS</Text>
+                    <Text style={styles.formPickerText} allowFontScaling={false}>{selectedScreening.email}</Text>
+
+                    <Text style={styles.formLabel} allowFontScaling={false}>PROPERTY & UNIT</Text>
+                    <Text style={styles.formPickerText} allowFontScaling={false}>
+                      {selectedScreening.propertyName} · {selectedScreening.unitNumber}
+                    </Text>
+
+                    <Text style={styles.formLabel} allowFontScaling={false}>SCREENING PACKAGE</Text>
+                    <Text style={styles.formPickerText} allowFontScaling={false}>{selectedScreening.screeningPackage}</Text>
+
+                    <Text style={styles.formLabel} allowFontScaling={false}>STATUS</Text>
+                    <View style={[styles.badge, { alignSelf: 'flex-start', marginTop: 4, borderColor: selectedScreening.screeningStatus === 'Approved' ? '#10b981' : selectedScreening.screeningStatus === 'Declined' ? '#ef4444' : '#f59e0b', backgroundColor: 'rgba(56, 189, 248, 0.05)' }]}>
+                      <Text style={{ color: selectedScreening.screeningStatus === 'Approved' ? '#10b981' : selectedScreening.screeningStatus === 'Declined' ? '#ef4444' : '#f59e0b', fontSize: 11, fontWeight: '800' }} allowFontScaling={false}>
+                        {selectedScreening.screeningStatus}
+                      </Text>
+                    </View>
+
+                    <Text style={styles.formLabel} allowFontScaling={false}>DATE OF BIRTH (DOB)</Text>
+                    <Text style={styles.formPickerText} allowFontScaling={false}>{selectedScreening.dob || '—'}</Text>
+
+                    <Text style={styles.formLabel} allowFontScaling={false}>SOCIAL SECURITY NUMBER (SSN)</Text>
+                    <Text style={styles.formPickerText} allowFontScaling={false}>
+                      {selectedScreening.ssn ? (selectedScreening.ssn.length > 4 ? `***-**-${selectedScreening.ssn.slice(-4)}` : selectedScreening.ssn) : '—'}
+                    </Text>
+
+                    <Text style={styles.formLabel} allowFontScaling={false}>CREDIT SCORE INDEX</Text>
+                    <Text style={styles.formPickerText} allowFontScaling={false}>{selectedScreening.creditScore}</Text>
+
+                    <Text style={styles.formLabel} allowFontScaling={false}>CRIMINAL BACKGROUND</Text>
+                    <Text style={styles.formPickerText} allowFontScaling={false}>{selectedScreening.criminalBackground}</Text>
+
+                    <Text style={styles.formLabel} allowFontScaling={false}>EVICTION HISTORY</Text>
+                    <Text style={styles.formPickerText} allowFontScaling={false}>{selectedScreening.evictionHistory}</Text>
+
+                    {selectedScreening.documentUrl ? (
+                      <>
+                        <Text style={styles.formLabel} allowFontScaling={false}>VERIFICATION DOCUMENT</Text>
+                        <TouchableOpacity 
+                          style={styles.formPickerSelector}
+                          onPress={() => Linking.openURL(selectedScreening.documentUrl)}
+                        >
+                          <Text style={{ color: '#38bdf8', fontSize: 12, fontWeight: '700' }} allowFontScaling={false}>
+                            📄 {selectedScreening.documentName || 'Download Document'}
+                          </Text>
+                          <Ionicons name="download-outline" size={16} color="#38bdf8" />
+                        </TouchableOpacity>
+                      </>
+                    ) : null}
+
+                    {/* Document Uploader flow for Manager if Pending Consent/Documents */}
+                    {(selectedScreening.screeningStatus === 'Pending Documents' || selectedScreening.screeningStatus === 'Pending Consent' || selectedScreening.screeningStatus === 'Processing') && (
+                      <View style={{ marginTop: 16, borderTopWidth: 1, borderTopColor: colors.cardBorder, paddingTop: 16 }}>
+                        <Text style={{ fontSize: 13, fontWeight: '800', color: '#f8fafc', marginBottom: 12 }} allowFontScaling={false}>
+                          Upload Missing Verification Documents
+                        </Text>
+
+                        <Text style={styles.formLabel} allowFontScaling={false}>DATE OF BIRTH (DOB) *</Text>
+                        <TouchableOpacity style={styles.formPickerSelector} onPress={() => setShowScrDobPicker(true)}>
+                          <Text style={styles.formPickerText} allowFontScaling={false}>{screeningDob || 'Select Date...'}</Text>
+                          <Ionicons name="calendar-outline" size={16} color="#cbd5e1" />
+                        </TouchableOpacity>
+                        <CustomDatePicker
+                          visible={showScrDobPicker}
+                          value={screeningDob}
+                          onSelect={(date) => setScreeningDob(date)}
+                          onClose={() => setShowScrDobPicker(false)}
+                        />
+
+                        <Text style={styles.formLabel} allowFontScaling={false}>SOCIAL SECURITY NUMBER (SSN) *</Text>
+                        <TextInput
+                          style={styles.formInput}
+                          placeholder="XXX-XX-XXXX"
+                          placeholderTextColor="#64748b"
+                          value={screeningSsn}
+                          onChangeText={setScreeningSsn}
+                        />
+
+                        <TouchableOpacity 
+                          style={[styles.formPickerSelector, { marginTop: 8 }]} 
+                          onPress={handlePickScreeningDocument}
+                        >
+                          <Text style={styles.formPickerText} allowFontScaling={false}>
+                            {screeningDocFile ? `📄 ${screeningDocFile.name}` : 'Choose ID / W2 Proof Document...'}
+                          </Text>
+                          <Ionicons name="document-attach-outline" size={16} color={colors.textSecondary} />
+                        </TouchableOpacity>
+
+                        <TouchableOpacity 
+                          style={{ flexDirection: 'row', alignItems: 'center', marginTop: 14, marginBottom: 8 }}
+                          onPress={() => setScreeningConsent(!screeningConsent)}
+                        >
+                          <Ionicons 
+                            name={screeningConsent ? 'checkbox' : 'square-outline'} 
+                            size={18} 
+                            color={screeningConsent ? '#38bdf8' : colors.textSecondary} 
+                            style={{ marginRight: 8 }}
+                          />
+                          <Text style={{ fontSize: 11.5, color: colors.textSecondary, fontWeight: '600' }} allowFontScaling={false}>
+                            I certify that the applicant has authorized this background check.
+                          </Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity 
+                          style={[styles.submitBtn, { width: '100%', marginTop: 12, backgroundColor: '#38bdf8' }]}
+                          onPress={handleCompleteScreeningFlow}
+                          disabled={submitting}
+                        >
+                          {submitting ? (
+                            <ActivityIndicator size="small" color="#0f172a" />
+                          ) : (
+                            <Text style={styles.submitBtnText} allowFontScaling={false}>Submit Screening Documents</Text>
+                          )}
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  </View>
+                </ScrollView>
+              )}
+
+              {/* Modal actions */}
+              {!loadingDetail && selectedScreening && (
+                <View style={styles.modalActions}>
+                  <TouchableOpacity style={styles.cancelBtn} onPress={() => setSelectedScreening(null)}>
+                    <Text style={styles.cancelBtnText} allowFontScaling={false}>Close</Text>
+                  </TouchableOpacity>
+
+                  {/* Generate / Run check button */}
+                  {(selectedScreening.screeningStatus === 'Processing' || selectedScreening.screeningStatus === 'Pending Approval') && (
+                    <TouchableOpacity 
+                      style={[styles.submitBtn, { backgroundColor: '#10b981' }]} 
+                      onPress={() => handleUpdateScreeningStatus(selectedScreening.id, 'Completed')}
+                      disabled={submitting}
+                    >
+                      {submitting ? (
+                        <ActivityIndicator size="small" color="#ffffff" />
+                      ) : (
+                        <Text style={[styles.submitBtnText, { color: '#ffffff' }]} allowFontScaling={false}>Run Check</Text>
+                      )}
+                    </TouchableOpacity>
+                  )}
+
+                  {/* Approve & Decline buttons */}
+                  {selectedScreening.screeningStatus === 'Completed' && (
+                    <View style={{ flexDirection: 'row', gap: 8, flex: 2 }}>
+                      <TouchableOpacity 
+                        style={[styles.submitBtn, { flex: 1, backgroundColor: '#ef4444' }]} 
+                        onPress={() => handleUpdateScreeningStatus(selectedScreening.id, 'Declined')}
+                        disabled={submitting}
+                      >
+                        {submitting ? (
+                          <ActivityIndicator size="small" color="#ffffff" />
+                        ) : (
+                          <Text style={[styles.submitBtnText, { color: '#ffffff' }]} allowFontScaling={false}>Decline</Text>
+                        )}
+                      </TouchableOpacity>
+                      <TouchableOpacity 
+                        style={[styles.submitBtn, { flex: 1, backgroundColor: '#10b981' }]} 
+                        onPress={() => handleUpdateScreeningStatus(selectedScreening.id, 'Approved')}
+                        disabled={submitting}
+                      >
+                        {submitting ? (
+                          <ActivityIndicator size="small" color="#ffffff" />
+                        ) : (
+                          <Text style={[styles.submitBtnText, { color: '#ffffff' }]} allowFontScaling={false}>Approve</Text>
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </View>
+              )}
+            </View>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+
+      {/* --- START INSPECTION TEMPLATE SELECTOR MODAL --- */}
+      <Modal visible={startInspectionModalOpen} animationType="slide" transparent>
+        <TouchableWithoutFeedback onPress={() => setStartInspectionModalOpen(false)}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle} allowFontScaling={false}>Select Inspection Template</Text>
+                <TouchableOpacity onPress={() => setStartInspectionModalOpen(false)}>
+                  <Ionicons name="close" size={20} color={colors.textPrimary} />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.modalForm}>
+                <Text style={styles.formLabel} allowFontScaling={false}>CHOOSE TEMPLATE *</Text>
+                {templatesList.length === 0 ? (
+                  <Text style={[styles.formPickerText, { color: '#ef4444' }]} allowFontScaling={false}>
+                    No templates available. Please create a template first under the "Checklist Templates" tab.
+                  </Text>
+                ) : (
+                  <ScrollView style={{ maxHeight: 200, marginVertical: 10 }}>
+                    {templatesList.map((t) => (
+                      <TouchableOpacity
+                        key={t.id}
+                        style={[
+                          styles.pickerOptionRow,
+                          startInspectionTemplateId === t.id && { backgroundColor: 'rgba(56, 189, 248, 0.15)' }
+                        ]}
+                        onPress={() => setStartInspectionTemplateId(t.id)}
+                      >
+                        <Text 
+                          style={[
+                            styles.pickerOptionText, 
+                            startInspectionTemplateId === t.id && { color: '#38bdf8', fontWeight: '800' }
+                          ]} 
+                          allowFontScaling={false}
+                        >
+                          {t.name} ({t.roomsCount || 4} rooms)
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                )}
+              </View>
+
+              <View style={styles.modalActions}>
+                <TouchableOpacity style={styles.cancelBtn} onPress={() => setStartInspectionModalOpen(false)}>
+                  <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.submitBtn, { backgroundColor: '#38bdf8' }]} 
+                  onPress={handleStartInspectionFlow}
+                  disabled={submitting || !startInspectionTemplateId}
+                >
+                  {submitting ? (
+                    <ActivityIndicator size="small" color="#0f172a" />
+                  ) : (
+                    <Text style={styles.submitBtnText} allowFontScaling={false}>Start</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+
       {/* --- SELECTION DROP DOWN PICKER SELECTOR OPTIONS --- */}
       <Modal visible={pickerModalOpen} animationType="fade" transparent>
         <View style={styles.modalOverlay}>
@@ -1582,6 +2040,7 @@ export const LeadsScreen = () => {
 };
 
 const getStyles = (colors, isDarkMode) => StyleSheet.create({
+  errorLabel: { color: '#ef4444', fontSize: 10.5, marginTop: 4, fontWeight: '700' },
   mainWrapper: { flex: 1, backgroundColor: colors.background },
   container: { flex: 1 },
   scrollContent: { paddingHorizontal: 16, paddingBottom: 60 },

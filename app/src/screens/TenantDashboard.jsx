@@ -15,6 +15,7 @@ import apiClient from '../api/client';
 import { useAuthStore, useThemeStore } from '../store/useStore';
 import { useThemeColors } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
+import * as DocumentPicker from 'expo-document-picker';
 
 export const TenantDashboard = ({ onNavigate }) => {
   const { user, logout, refreshAccessToken } = useAuthStore();
@@ -25,14 +26,14 @@ export const TenantDashboard = ({ onNavigate }) => {
 
   const [loading, setLoading] = useState(true);
   const [tenantData, setTenantData] = useState({
-    name: 'person 1',
-    unitName: 'property 1 — Unit room 1b',
-    balance: 1000,
+    name: user?.name || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'Tenant',
+    unitName: 'Loading unit info...',
+    balance: 0,
     outstandingBalance: 0,
     activeVisitors: 0,
     packagesWaiting: 0,
-    dueDate: '2027-08-01',
-    leaseExpiration: '2027-08-01',
+    dueDate: 'N/A',
+    leaseExpiration: 'N/A',
   });
 
   // Modals visibility
@@ -46,26 +47,62 @@ export const TenantDashboard = ({ onNavigate }) => {
   const [ticketDesc, setTicketDesc] = useState('');
   const [messageText, setMessageText] = useState('');
 
+  // Screening details
+  const [screeningReport, setScreeningReport] = useState(null);
+  const [screeningModalOpen, setScreeningModalOpen] = useState(false);
+  const [screeningDob, setScreeningDob] = useState('');
+  const [screeningSsn, setScreeningSsn] = useState('');
+  const [docFile, setDocFile] = useState(null);
+  const [consent, setConsent] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
   const fetchLiveTenantDashboard = async () => {
     try {
       setLoading(true);
-      const res = await apiClient.get('/tenants', logout, refreshAccessToken);
-      if (res && res.data && Array.isArray(res.data) && res.data.length > 0) {
-        const item = res.data[0];
-        setTenantData({
-          name: item.name || `${item.firstName || ''} ${item.lastName || ''}`.trim() || 'person 1',
-          unitName: `${item.property?.name || 'property 1'} · Unit ${item.unit?.unitNumber || 'room 1b'}`,
-          balance: item.unit?.rentAmount || item.lease?.rentAmount || 1000,
-          outstandingBalance: 0,
-          activeVisitors: 0,
-          packagesWaiting: 0,
-          dueDate: '2027-08-01',
-          leaseExpiration: item.lease?.endDate ? item.lease.endDate.split('T')[0] : '2027-08-01',
-        });
-        return;
-      }
+      const [leasesRes, metricsRes, screeningRes] = await Promise.all([
+        apiClient.get('/portal/tenant/leases', logout, refreshAccessToken),
+        apiClient.get('/portal/tenant/metrics', logout, refreshAccessToken),
+        apiClient.get('/portal/screening/reports', logout, refreshAccessToken),
+      ]);
+
+      const leases = leasesRes?.data || leasesRes || [];
+      const metrics = metricsRes?.data || metricsRes || {};
+      const reports = screeningRes?.data || screeningRes || [];
+
+      const lease = leases.length > 0 ? leases[0] : null;
+      const propName = lease?.property?.name || lease?.propertyName || 'Property';
+      const unitNum = lease?.unit?.unitNumber || lease?.unitNumber || 'Unassigned';
+
+      // Match tenant report by user email
+      const myEmail = user?.email || '';
+      const myReport = reports.find(r => 
+        (r.email && r.email.toLowerCase() === myEmail.toLowerCase()) || 
+        (r.tenant?.email && r.tenant.email.toLowerCase() === myEmail.toLowerCase())
+      );
+      setScreeningReport(myReport || null);
+
+      setTenantData({
+        name: user?.name || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'Tenant',
+        unitName: `${propName} · Unit ${unitNum}`,
+        balance: metrics.currentRent || lease?.rentAmount || 0,
+        outstandingBalance: metrics.outstandingBalance || 0,
+        activeVisitors: metrics.activeVisitors || 0,
+        packagesWaiting: metrics.packagesWaiting || 0,
+        dueDate: metrics.nextDueDate || 'N/A',
+        leaseExpiration: metrics.leaseExpiration || lease?.endDate?.split('T')[0] || 'N/A',
+      });
     } catch (e) {
       console.log('Error fetching live tenant dashboard:', e.message);
+      setTenantData({
+        name: user?.name || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'Tenant',
+        unitName: 'Property · Unit Unassigned',
+        balance: 0,
+        outstandingBalance: 0,
+        activeVisitors: 0,
+        packagesWaiting: 0,
+        dueDate: 'N/A',
+        leaseExpiration: 'N/A',
+      });
     } finally {
       setLoading(false);
     }
@@ -103,6 +140,64 @@ export const TenantDashboard = ({ onNavigate }) => {
     setContactModalVisible(false);
     setMessageText('');
     Alert.alert(es ? 'Mensaje Enviado' : 'Message Sent', es ? 'Su mensaje fue enviado a la administración.' : 'Your message has been sent to Property Management.');
+  };
+
+  const handlePickDocument = async () => {
+    try {
+      const res = await DocumentPicker.getDocumentAsync({
+        type: '*/*',
+        copyToCacheDirectory: true,
+      });
+      if (!res.canceled && res.assets && res.assets.length > 0) {
+        setDocFile(res.assets[0]);
+      }
+    } catch (err) {
+      console.log('DocumentPicker Error:', err);
+    }
+  };
+
+  const handleSubmitDocuments = async () => {
+    if (!consent) {
+      Alert.alert('Consent Required', 'You must authorize the background check.');
+      return;
+    }
+    if (!screeningDob.trim() || !screeningSsn.trim()) {
+      Alert.alert('Validation Error', 'DOB and SSN are required.');
+      return;
+    }
+    if (!docFile) {
+      Alert.alert('Document Required', 'Please choose your ID or W2 verification document.');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      // 1. Submit consent details
+      await apiClient.put(`/portal/screening/reports/${screeningReport.id}`, {
+        dob: screeningDob.trim(),
+        ssn: screeningSsn.trim(),
+        authorized: true,
+        status: 'Pending Documents',
+      }, logout, refreshAccessToken);
+
+      // 2. Upload document file
+      const formData = new FormData();
+      formData.append('document', {
+        uri: Platform.OS === 'ios' ? docFile.uri.replace('file://', '') : docFile.uri,
+        name: docFile.name || 'screening_proof.pdf',
+        type: docFile.mimeType || 'application/pdf',
+      });
+
+      await apiClient.post(`/portal/screening/reports/${screeningReport.id}/upload`, formData, logout, refreshAccessToken);
+
+      Alert.alert('Success', 'Screening documents uploaded and submitted successfully.');
+      setScreeningModalOpen(false);
+      fetchLiveTenantDashboard();
+    } catch (e) {
+      Alert.alert('Error', e.message || 'Failed to submit screening documents.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (loading) {
@@ -150,6 +245,27 @@ export const TenantDashboard = ({ onNavigate }) => {
           📍 {tenantData.unitName}
         </Text>
       </View>
+
+      {/* Tenant screening pending documents uploader alert card */}
+      {screeningReport && (screeningReport.status === 'Pending Documents' || screeningReport.status === 'Pending Consent' || screeningReport.status === 'Processing') && (
+        <TouchableOpacity 
+          style={[styles.alertCard, { backgroundColor: '#ef4444', marginHorizontal: 16 }]} 
+          onPress={() => setScreeningModalOpen(true)}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Ionicons name="alert-circle-outline" size={24} color="#ffffff" style={{ marginRight: 10 }} />
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 13 }} allowFontScaling={false}>
+                {es ? 'Documentos de Verificación Requeridos' : 'Screening Documents Required'}
+              </Text>
+              <Text style={{ color: 'rgba(255,255,255,0.85)', fontSize: 11, marginTop: 2 }} allowFontScaling={false}>
+                {es ? 'Complete consentimiento, DOB, SSN y suba prueba de ID/W2.' : 'Please authorize consent, enter DOB & SSN, and upload verification proof.'}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color="#ffffff" />
+          </View>
+        </TouchableOpacity>
+      )}
 
       {/* Quick Action Tiles */}
       <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
@@ -418,6 +534,95 @@ export const TenantDashboard = ({ onNavigate }) => {
           </View>
         </View>
       </Modal>
+
+      {/* --- TENANT SCREENING UPLOADER MODAL --- */}
+      <Modal visible={screeningModalOpen} animationType="slide" transparent>
+        <View style={styles.modalBg}>
+          <View style={styles.modalCard}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <Text style={{ fontSize: 16, fontWeight: '800', color: colors.textPrimary }} allowFontScaling={false}>
+                {es ? 'Complete Documentos de Verificación' : 'Complete Screening Documents'}
+              </Text>
+              <TouchableOpacity onPress={() => setScreeningModalOpen(false)}>
+                <Ionicons name="close" size={20} color={colors.textPrimary} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <Text style={{ fontSize: 11, fontWeight: '800', color: colors.textSecondary, marginBottom: 6 }} allowFontScaling={false}>
+                {es ? 'FECHA DE NACIMIENTO (DOB) *' : 'DATE OF BIRTH (DOB) *'}
+              </Text>
+              <TextInput
+                style={styles.input}
+                placeholder="YYYY-MM-DD"
+                placeholderTextColor="#64748b"
+                value={screeningDob}
+                onChangeText={setScreeningDob}
+              />
+
+              <Text style={{ fontSize: 11, fontWeight: '800', color: colors.textSecondary, marginBottom: 6 }} allowFontScaling={false}>
+                {es ? 'NÚMERO DE SEGURO SOCIAL (SSN) *' : 'SOCIAL SECURITY NUMBER (SSN) *'}
+              </Text>
+              <TextInput
+                style={styles.input}
+                placeholder="XXX-XX-XXXX"
+                placeholderTextColor="#64748b"
+                value={screeningSsn}
+                onChangeText={setScreeningSsn}
+              />
+
+              <Text style={{ fontSize: 11, fontWeight: '800', color: colors.textSecondary, marginBottom: 6 }} allowFontScaling={false}>
+                {es ? 'COMPROBANTE DE IDENTIDAD / INGRESO W2 *' : 'GOVERNMENT ID / W2 VERIFICATION PROOF *'}
+              </Text>
+              <TouchableOpacity 
+                style={[styles.input, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]} 
+                onPress={handlePickDocument}
+              >
+                <Text style={{ color: docFile ? colors.textPrimary : colors.textSecondary, fontSize: 13 }} allowFontScaling={false}>
+                  {docFile ? `📄 ${docFile.name}` : (es ? 'Seleccionar archivo...' : 'Choose W2/ID proof...')}
+                </Text>
+                <Ionicons name="document-attach-outline" size={16} color={colors.textSecondary} />
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 14 }}
+                onPress={() => setConsent(!consent)}
+              >
+                <Ionicons 
+                  name={consent ? 'checkbox' : 'square-outline'} 
+                  size={18} 
+                  color={consent ? '#38bdf8' : colors.textSecondary} 
+                  style={{ marginRight: 8 }}
+                />
+                <Text style={{ fontSize: 11.5, color: colors.textSecondary, fontWeight: '600', flex: 1 }} allowFontScaling={false}>
+                  {es 
+                    ? 'Autorizo a WhatsLandlord a realizar una verificación de antecedentes y verificar mis documentos.' 
+                    : 'I authorize WhatsLandlord to conduct a background check and verify my identity/income documents.'}
+                </Text>
+              </TouchableOpacity>
+
+              <View style={[styles.modalButtons, { marginTop: 10 }]}>
+                <TouchableOpacity style={[styles.modalButton, styles.cancelBtn]} onPress={() => setScreeningModalOpen(false)}>
+                  <Text style={styles.cancelBtnText} allowFontScaling={false}>{es ? 'Cancelar' : 'Cancel'}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.modalButton, styles.submitBtn, { backgroundColor: '#38bdf8' }]} 
+                  onPress={handleSubmitDocuments}
+                  disabled={submitting}
+                >
+                  {submitting ? (
+                    <ActivityIndicator size="small" color="#0f172a" />
+                  ) : (
+                    <Text style={[styles.submitBtnText, { color: '#0f172a', fontWeight: '800' }]} allowFontScaling={false}>
+                      {es ? 'Enviar' : 'Submit'}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
@@ -425,6 +630,15 @@ export const TenantDashboard = ({ onNavigate }) => {
 const getStyles = (colors, isDarkMode) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   scrollContent: { padding: 16 },
+  alertCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 14,
+    padding: 14,
+    marginVertical: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.3)',
+  },
   center: { flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' },
   loadingText: { color: colors.textSecondary, marginTop: 8 },
   header: { marginBottom: 20 },

@@ -73,7 +73,7 @@ export const OwnerServicesScreen = ({ onNavigate }) => {
           </View>
           <View style={styles.profileInfo}>
             <Text style={styles.profileName} allowFontScaling={false}>
-              {user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'owner 1'}
+              {user?.name || (user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'Owner')}
             </Text>
             <Text style={styles.profileRole} allowFontScaling={false}>
               Owner · Portfolio Investor

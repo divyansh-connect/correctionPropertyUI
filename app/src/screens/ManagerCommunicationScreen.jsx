@@ -142,11 +142,7 @@ export const ManagerCommunicationScreen = () => {
       setAnnouncements(list);
     } catch (e) {
       console.log('Failed fetching announcements:', e.message);
-      // Fallback mocks matching Web Screenshot list
-      setAnnouncements([
-        { id: '1', title: 'HVAC Seasonal Inspection Check', content: 'Annual inspection across building complexes starts tomorrow.', category: 'Maintenance Alert', createdAt: '2026-08-04T12:00:00Z', isPinned: true },
-        { id: '2', title: 'Community Pool Reopening Gala', content: 'Join us at the clubhouse pool area this Saturday!', category: 'Community Events', createdAt: '2026-08-02T10:00:00Z', isPinned: false },
-      ]);
+      setAnnouncements([]);
     } finally {
       setLoading(false);
       setRefreshing(false);

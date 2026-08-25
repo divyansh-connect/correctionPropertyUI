@@ -32,6 +32,13 @@ export const ManagerServicesScreen = ({ onNavigate }) => {
       color: '#f43f5e',
     },
     {
+      id: 'rent',
+      label: 'Rent & Payments',
+      subtitle: 'Track rent payments, invoices, and ledger statuses',
+      icon: 'cash-outline',
+      color: '#10b981',
+    },
+    {
       id: 'accounting',
       label: 'Accounting & Ledgers',
       subtitle: 'General double-entry bookkeeping journal entries',
@@ -65,6 +72,13 @@ export const ManagerServicesScreen = ({ onNavigate }) => {
       subtitle: 'Configure default branding logo assets, regional date format templates, timezone offsets, and currency types.',
       icon: 'settings-outline',
       color: '#64748b',
+    },
+    {
+      id: 'integrations',
+      label: 'Third-party Integrations',
+      subtitle: 'Configure Stripe, Meta Cloud WhatsApp, and Twilio SMS',
+      icon: 'apps-outline',
+      color: '#10b981',
     },
   ];
 

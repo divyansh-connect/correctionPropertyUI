@@ -187,28 +187,8 @@ export const RentScreen = () => {
         setLedger(mapped);
         setOutstandingBalance(Math.max(0, runningBalance));
       } else {
-        // Fallback default mock data matching Web portal 1-to-1
-        const mockList = [
-          { id: 'inv-1', date: '2026-07-01', type: 'Invoice', desc: 'Monthly Rent Assessment', ref: 'INV-459DABAD', invoiceAmt: 1100, paymentAmt: 0, additionalChg: 0, status: 'Unpaid' },
-          { id: 'inv-2', date: '2026-08-01', type: 'Invoice', desc: 'Monthly Rent Assessment', ref: 'INV-D784D6BE', invoiceAmt: 1100, paymentAmt: 0, additionalChg: 0, status: 'Unpaid' },
-          { id: 'pay-1', date: '2026-08-01', type: 'Payment', desc: 'Rent Payment - ACH', ref: 'PAY-1E53FF68', invoiceAmt: 0, paymentAmt: 1131.9, additionalChg: 0, status: 'Cleared' },
-          { id: 'pay-2', date: '2026-08-01', type: 'Payment', desc: 'Rent Payment - ACH', ref: 'PAY-782BAE44', invoiceAmt: 0, paymentAmt: 1068.1, additionalChg: 0, status: 'Cleared' },
-        ];
-        const sorted = [...mockList].sort((a, b) => a.date.localeCompare(b.date));
-        let runningBalance = 0;
-        const mapped = sorted.map((tx) => {
-          if (tx.type === 'Invoice') {
-            runningBalance += tx.invoiceAmt;
-          } else {
-            runningBalance -= tx.paymentAmt;
-          }
-          return {
-            ...tx,
-            runningBal: runningBalance,
-          };
-        });
-        setLedger(mapped);
-        setOutstandingBalance(Math.max(0, runningBalance));
+        setLedger([]);
+        setOutstandingBalance(0);
       }
     } catch (e) {
       console.log('Error fetching GET /payments & GET /invoices:', e.message);
@@ -251,8 +231,7 @@ export const RentScreen = () => {
       Alert.alert(es ? 'Pago Exitoso' : 'Payment Successful', es ? `Pago de $${totalCharge.toFixed(2)} vía ${paymentMethod} enviado!` : `Rent payment of $${totalCharge.toFixed(2)} via ${paymentMethod} submitted!`);
     } catch (e) {
       console.log('Post payment error:', e.message);
-      setIsPayModalOpen(false);
-      Alert.alert(es ? 'Pago Registrado' : 'Payment Recorded', es ? `Pago de $${totalCharge.toFixed(2)} enviado.` : `Payment of $${totalCharge.toFixed(2)} submitted.`);
+      Alert.alert('Payment Error', e.message || 'Payment processing failed. Please try again.');
     } finally {
       setSubmittingPay(false);
     }
@@ -679,11 +658,11 @@ export const RentScreen = () => {
               </View>
 
               <View style={styles.modalButtons}>
-                <TouchableOpacity style={[styles.modalBtn, styles.cancelBtn]} onPress={() => setIsPayModalOpen(false)}>
+                <TouchableOpacity style={[styles.modalBtn, styles.cancelBtn]} onPress={() => setIsPayModalOpen(false)} disabled={submittingPay}>
                   <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={[styles.modalBtn, styles.saveBtn]} onPress={handleSubmitPayment} disabled={submittingPay}>
+                <TouchableOpacity style={[styles.modalBtn, styles.saveBtn, submittingPay && { opacity: 0.5 }]} onPress={handleSubmitPayment} disabled={submittingPay}>
                   <Text style={styles.saveBtnText} allowFontScaling={false}>
                     {submittingPay ? 'Processing...' : 'Pay Rent'}
                   </Text>

@@ -26,9 +26,9 @@ export const OwnerDashboard = ({ onNavigate }) => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [metrics, setMetrics] = useState({
-    totalProperties: 2,
-    occupancyRate: '95%',
-    netIncome: '$1,980',
+    totalProperties: 0,
+    occupancyRate: '0%',
+    netIncome: '$0',
     pendingMaintenance: 0,
   });
   const [properties, setProperties] = useState([]);
@@ -54,9 +54,9 @@ export const OwnerDashboard = ({ onNavigate }) => {
       if (metricsRes && metricsRes.data) {
         const m = metricsRes.data;
         setMetrics({
-          totalProperties: m.totalProperties || 2,
-          occupancyRate: typeof m.occupancyRate === 'number' ? `${m.occupancyRate}%` : m.occupancyRate || '95%',
-          netIncome: m.netIncome ? `$${Number(m.netIncome).toLocaleString()}` : '$1,980',
+          totalProperties: m.totalProperties !== undefined ? m.totalProperties : 0,
+          occupancyRate: typeof m.occupancyRate === 'number' ? `${m.occupancyRate}%` : (m.occupancyRate || '0%'),
+          netIncome: m.netIncome !== undefined ? `$${Number(m.netIncome).toLocaleString()}` : '$0',
           pendingMaintenance: m.pendingMaintenance || 0,
         });
       }

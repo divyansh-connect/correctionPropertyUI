@@ -41,7 +41,7 @@ export const ManagerAccountingScreen = () => {
   const [buildings, setBuildings] = useState([]);
   const [units, setUnits] = useState([]);
   const [tenants, setTenants] = useState([]);
-  const [vendors, setVendors] = useState([]);
+  const [staff, setStaff] = useState([]);
 
   // Loading states
   const [loading, setLoading] = useState(false);
@@ -115,15 +115,7 @@ export const ManagerAccountingScreen = () => {
       setCoaList(list);
     } catch (e) {
       console.log('Failed fetching CoA:', e.message);
-      setCoaList([
-        { id: '1', accountNumber: '1010', accountName: 'Operating Checking Account', type: 'Assets', balance: 150000, status: 'Active' },
-        { id: '2', accountNumber: '1020', accountName: 'Security Deposit Escrow Account', type: 'Assets', balance: 45000, status: 'Active' },
-        { id: '3', accountNumber: '2010', accountName: 'Accounts Payable (AP)', type: 'Liability', balance: 12000, status: 'Active' },
-        { id: '4', accountNumber: '2020', accountName: 'Tenant Security Deposit Liability', type: 'Liability', balance: 45000, status: 'Active' },
-        { id: '5', accountNumber: '3010', accountName: 'Owner\'s Equity Capital', type: 'Equity', balance: 500000, status: 'Active' },
-        { id: '6', accountNumber: '4010', accountName: 'Rental Revenue Income', type: 'Income', balance: 220000, status: 'Active' },
-        { id: '7', accountNumber: '4020', accountName: 'Late Fee & Penalty Income', type: 'Income', balance: 4500, status: 'Active' },
-      ]);
+      setCoaList([]);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -158,15 +150,7 @@ export const ManagerAccountingScreen = () => {
       setIncomeList(parsedList);
     } catch (e) {
       console.log('Failed fetching incomes:', e.message);
-      setIncomeList([
-        { id: '1', clearingDate: '2026-07-29', residentName: 'Resident', propertyLocation: 'Property', category: 'UTILITIES', amount: 150, status: 'Cleared' },
-        { id: '2', clearingDate: '2026-07-29', residentName: 'saewdw', propertyLocation: 'Diya Jain', category: 'PET FEES', amount: 150, status: 'Cleared' },
-        { id: '3', clearingDate: '2026-07-29', residentName: 'asedg', propertyLocation: 'Diya Jain', category: 'RENT', amount: 150, status: 'Cleared' },
-        { id: '4', clearingDate: '2026-07-29', residentName: 'azse', propertyLocation: 'Sunset Villas', category: 'LATE FEES', amount: 150, status: 'Cleared' },
-        { id: '5', clearingDate: '2026-07-29', residentName: 'qsdfgbtr', propertyLocation: 'Diya Jain', category: 'RENT', amount: 150, status: 'Cleared' },
-        { id: '6', clearingDate: '2026-07-29', residentName: 'fdrfhy', propertyLocation: 'Sunset Villas', category: 'STORAGE', amount: 150, status: 'Cleared' },
-        { id: '7', clearingDate: '2026-07-29', residentName: 'Resident', propertyLocation: 'Property', category: 'RENT', amount: 150, status: 'Cleared' },
-      ]);
+      setIncomeList([]);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -202,14 +186,7 @@ export const ManagerAccountingScreen = () => {
       setExpenseList(parsedList);
     } catch (e) {
       console.log('Failed fetching expenses:', e.message);
-      setExpenseList([
-        { id: '1', expenseDate: '2026-08-04', vendorPartner: 'owner 2 (Owner)', propertyLocation: 'Property 2', category: 'MAINTENANCE', amountPaid: 250, status: 'Cleared', approvalAction: 'Audited' },
-        { id: '2', expenseDate: '2026-08-04', vendorPartner: 'owner 2 (Owner)', propertyLocation: 'Property 2', category: 'UTILITIES', amountPaid: 250, status: 'Cleared', approvalAction: 'Audited' },
-        { id: '3', expenseDate: '2026-07-30', vendorPartner: 'OwnerA (Owner)', propertyLocation: 'ownertest', category: 'PROPERTY TAXES', amountPaid: 1000, status: 'Cleared', approvalAction: 'Audited' },
-        { id: '4', expenseDate: '2026-07-30', vendorPartner: 'demo owner (Owner)', propertyLocation: 'demo', category: 'MAINTENANCE', amountPaid: 250, status: 'Cleared', approvalAction: 'Audited' },
-        { id: '5', expenseDate: '2026-07-30', vendorPartner: 'demo owner (Owner)', propertyLocation: 'demo', category: 'MAINTENANCE', amountPaid: 250, status: 'Cleared', approvalAction: 'Audited' },
-        { id: '6', expenseDate: '2026-07-29', vendorPartner: 'cdgyrev', propertyLocation: 'Diya Jain', category: 'INSURANCE', amountPaid: 250, status: 'Cleared', approvalAction: 'Audited' },
-      ]);
+      setExpenseList([]);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -220,18 +197,21 @@ export const ManagerAccountingScreen = () => {
   // 4. Fetch dropdown choices (Cascasding selections)
   const fetchOptions = async () => {
     try {
-      const [props, bldgs, unts, tnts, vnds] = await Promise.all([
+      const [props, bldgs, unts, tnts, staffRes] = await Promise.all([
         apiClient.get('/properties', logout, refreshAccessToken).catch(() => null),
         apiClient.get('/buildings', logout, refreshAccessToken).catch(() => null),
         apiClient.get('/units', logout, refreshAccessToken).catch(() => null),
         apiClient.get('/tenants', logout, refreshAccessToken).catch(() => null),
-        apiClient.get('/vendors', logout, refreshAccessToken).catch(() => null),
+        apiClient.get('/superadmin/company-users', logout, refreshAccessToken).catch(() => null),
       ]);
       if (props?.data || props) setProperties(props?.data || props || []);
       if (bldgs?.data || bldgs) setBuildings(bldgs?.data || bldgs || []);
       if (unts?.data || unts) setUnits(unts?.data || unts || []);
       if (tnts?.data || tnts) setTenants(tnts?.data || tnts || []);
-      if (vnds?.data || vnds) setVendors(vnds?.data || vnds || []);
+      
+      const staffList = staffRes?.data || staffRes || [];
+      const filteredStaff = staffList.filter(u => u.role === 'Maintenance Staff' || u.role === 'Maintenance');
+      setStaff(filteredStaff);
     } catch (e) {
       console.log('Failed loading selections:', e.message);
     }
@@ -281,24 +261,9 @@ export const ManagerAccountingScreen = () => {
       setCoaBalance('');
       fetchCoaList(true);
     } catch (e) {
-      setCoaList(prev => [
-        ...prev,
-        {
-          id: String(Date.now()),
-          accountNumber: coaNumber.trim(),
-          accountName: coaName.trim(),
-          type: coaType,
-          balance: Number(coaBalance || 0),
-          status: 'Active',
-        }
-      ]);
-      Alert.alert('Success', 'Chart of Account created successfully.');
-      setCreateCoaOpen(false);
-      setCoaNumber('');
-      setCoaName('');
-      setCoaBalance('');
+      Alert.alert('Error', e.message || 'Failed to create chart of account.');
+    } finally {
       setSubmitting(false);
-      runEntryAnimation();
     }
   };
 
@@ -317,8 +282,7 @@ export const ManagerAccountingScreen = () => {
               await apiClient.delete(`/accounts/${id}`, logout, refreshAccessToken);
               fetchCoaList(true);
             } catch (e) {
-              setCoaList(prev => prev.filter(item => item.id !== id));
-              Alert.alert('Success', 'Account removed successfully.');
+              Alert.alert('Error', e.message || 'Failed to delete account.');
             }
           }
         }
@@ -374,25 +338,9 @@ export const ManagerAccountingScreen = () => {
       setIncomeAmount('');
       fetchIncomeTransactions(true);
     } catch (e) {
-      const chosenProp = properties.find(p => p.id === incomePropertyId)?.name || 'Property';
-      const chosenTenant = tenants.find(t => t.id === incomeTenantId)?.name || 'Resident';
-      setIncomeList(prev => [
-        {
-          id: String(Date.now()),
-          clearingDate: new Date().toISOString().split('T')[0],
-          residentName: chosenTenant,
-          propertyLocation: chosenProp,
-          category: incomeCategory.toUpperCase(),
-          amount: Number(incomeAmount),
-          status: 'Cleared'
-        },
-        ...prev
-      ]);
-      Alert.alert('Success', 'Miscellaneous Income recorded successfully.');
-      setCreateIncomeOpen(false);
-      setIncomeAmount('');
+      Alert.alert('Error', e.message || 'Failed to record income.');
+    } finally {
       setSubmitting(false);
-      runEntryAnimation();
     }
   };
 
@@ -406,18 +354,19 @@ export const ManagerAccountingScreen = () => {
     try {
       setSubmitting(true);
       const chosenProp = properties.find(p => p.id === expensePropertyId)?.name || 'Property';
-      const chosenVendor = vendors.find(v => v.id === expenseVendorId)?.name || 'Vendor';
+      const chosenStaff = staff.find(s => s.id === expenseVendorId);
+      const staffName = chosenStaff ? `${chosenStaff.firstName || ''} ${chosenStaff.lastName || ''}`.trim() : 'Staff';
 
       const payload = {
         category: expenseCategory,
         amount: parseFloat(expenseAmount),
         date: new Date().toISOString(),
-        vendorName: chosenVendor,
+        vendorName: staffName,
         propertyName: chosenProp,
         propertyId: expensePropertyId,
         buildingId: expenseBuildingId,
         unitId: expenseUnitId,
-        payeeType: 'Vendor',
+        payeeType: 'Staff',
         payeeId: expenseVendorId,
       };
 
@@ -444,26 +393,9 @@ export const ManagerAccountingScreen = () => {
       setExpenseAmount('');
       fetchExpensesList(true);
     } catch (e) {
-      const chosenProp = properties.find(p => p.id === expensePropertyId)?.name || 'Property';
-      const chosenVendor = vendors.find(v => v.id === expenseVendorId)?.name || 'Vendor';
-      setExpenseList(prev => [
-        {
-          id: String(Date.now()),
-          expenseDate: new Date().toISOString().split('T')[0],
-          vendorPartner: chosenVendor,
-          propertyLocation: chosenProp,
-          category: expenseCategory.toUpperCase(),
-          amountPaid: Number(expenseAmount),
-          status: 'Cleared',
-          approvalAction: 'Audited'
-        },
-        ...prev
-      ]);
-      Alert.alert('Success', 'Expense recorded successfully.');
-      setCreateExpenseOpen(false);
-      setExpenseAmount('');
+      Alert.alert('Error', e.message || 'Failed to record expense.');
+    } finally {
       setSubmitting(false);
-      runEntryAnimation();
     }
   };
 
@@ -492,13 +424,16 @@ export const ManagerAccountingScreen = () => {
         return filteredUnits.map(u => ({ value: u.id, label: `Unit ${u.unitNumber} (${u.property?.name || 'Property'})` }));
 
       case 'tenant':
-        // Filter tenants by chosen unit or show all
+        // Filter tenants by chosen unit and make sure unitId is present
         const actUnitId = activeTab === 'income' ? incomeUnitId : expenseUnitId;
-        const filteredTenants = actUnitId ? tenants.filter(t => t.unitId === actUnitId) : tenants;
+        let filteredTenants = tenants.filter(t => !!t.unitId);
+        if (actUnitId) {
+          filteredTenants = filteredTenants.filter(t => t.unitId === actUnitId);
+        }
         return filteredTenants.map(t => ({ value: t.id, label: t.name || `${t.firstName || ''} ${t.lastName || ''}`.trim() }));
 
       case 'vendor':
-        return vendors.map(v => ({ value: v.id, label: v.name || v.companyName || 'Vendor' }));
+        return staff.map(s => ({ value: s.id, label: `${s.firstName || ''} ${s.lastName || ''}`.trim() || s.name || 'Staff' }));
 
       case 'coaType':
         return ['Assets', 'Liability', 'Equity', 'Income', 'Expenses'].map(t => ({ value: t, label: t }));
@@ -964,11 +899,15 @@ export const ManagerAccountingScreen = () => {
               </ScrollView>
 
               <View style={styles.modalActions}>
-                <TouchableOpacity style={styles.cancelBtn} onPress={() => setCreateIncomeOpen(false)}>
+                <TouchableOpacity style={styles.cancelBtn} onPress={() => setCreateIncomeOpen(false)} disabled={submitting}>
                   <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.submitBtn} onPress={handleSaveIncome}>
-                  <Text style={styles.submitBtnText} allowFontScaling={false}>Save Income</Text>
+                <TouchableOpacity style={[styles.submitBtn, submitting && { opacity: 0.5 }]} onPress={handleSaveIncome} disabled={submitting}>
+                  {submitting ? (
+                    <ActivityIndicator size="small" color="#0f172a" />
+                  ) : (
+                    <Text style={styles.submitBtnText} allowFontScaling={false}>Save Income</Text>
+                  )}
                 </TouchableOpacity>
               </View>
             </View>
@@ -1037,7 +976,7 @@ export const ManagerAccountingScreen = () => {
                   <Ionicons name="chevron-down" size={16} color="#cbd5e1" />
                 </TouchableOpacity>
 
-                <Text style={styles.formLabel} allowFontScaling={false}>VENDOR PAYEE</Text>
+                <Text style={styles.formLabel} allowFontScaling={false}>MAINTENANCE STAFF</Text>
                 <TouchableOpacity
                   style={styles.formPickerSelector}
                   onPress={() => {
@@ -1046,7 +985,7 @@ export const ManagerAccountingScreen = () => {
                   }}
                 >
                   <Text style={styles.formPickerText} allowFontScaling={false}>
-                    {expenseVendorId ? vendors.find(v => v.id === expenseVendorId)?.name : 'Select Vendor...'}
+                    {expenseVendorId ? staff.find(s => s.id === expenseVendorId) ? `${staff.find(s => s.id === expenseVendorId).firstName || ''} ${staff.find(s => s.id === expenseVendorId).lastName || ''}`.trim() : 'Select Maintenance Staff...' : 'Select Maintenance Staff...'}
                   </Text>
                   <Ionicons name="chevron-down" size={16} color="#cbd5e1" />
                 </TouchableOpacity>
@@ -1075,11 +1014,15 @@ export const ManagerAccountingScreen = () => {
               </ScrollView>
 
               <View style={styles.modalActions}>
-                <TouchableOpacity style={styles.cancelBtn} onPress={() => setCreateExpenseOpen(false)}>
+                <TouchableOpacity style={styles.cancelBtn} onPress={() => setCreateExpenseOpen(false)} disabled={submitting}>
                   <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.submitBtn} onPress={handleSaveExpense}>
-                  <Text style={styles.submitBtnText} allowFontScaling={false}>Save Expense</Text>
+                <TouchableOpacity style={[styles.submitBtn, submitting && { opacity: 0.5 }]} onPress={handleSaveExpense} disabled={submitting}>
+                  {submitting ? (
+                    <ActivityIndicator size="small" color="#0f172a" />
+                  ) : (
+                    <Text style={styles.submitBtnText} allowFontScaling={false}>Save Expense</Text>
+                  )}
                 </TouchableOpacity>
               </View>
             </View>

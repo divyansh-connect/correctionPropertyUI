@@ -101,7 +101,7 @@ export const useAuthStore = create((set, get) => ({
     try {
       const resData = await apiClient.post(
         '/auth/login',
-        { email, password: password || '123456' },
+        { email, password: password || 'admin123' },
         () => get().logout(),
         () => get().refreshAccessToken()
       );
@@ -112,12 +112,12 @@ export const useAuthStore = create((set, get) => ({
         const refreshToken = resData.data.refreshToken;
 
         const loggedInUser = {
-          id: apiUser.id || 'user-1',
+          id: apiUser.id,
           firstName: apiUser.firstName || 'User',
           lastName: apiUser.lastName || '',
           name: `${apiUser.firstName || ''} ${apiUser.lastName || ''}`.trim() || 'User',
-          email: apiUser.email || email,
-          role: apiUser.roleName || getRoleFromEmail(email),
+          email: apiUser.email,
+          role: apiUser.roleName,
           token: token,
           refreshToken: refreshToken,
         };
@@ -126,26 +126,11 @@ export const useAuthStore = create((set, get) => ({
         set({ user: loggedInUser, isAuthenticated: true });
         return true;
       }
+      return false;
     } catch (e) {
-      console.log('Backend login failed, using role fallback:', e.message);
+      console.log('Backend login failed:', e.message);
+      return false;
     }
-
-    // Role-Based Fallback User Login (Matches Project Database Credentials)
-    const resolvedRole = getRoleFromEmail(email);
-    const fallbackUser = {
-      id: `usr-${Date.now()}`,
-      firstName: email.split('@')[0].toUpperCase(),
-      lastName: 'User',
-      name: `${email.split('@')[0]}`,
-      email: email,
-      role: resolvedRole,
-      token: 'demo-token-jwt',
-      refreshToken: 'demo-refresh-token',
-    };
-
-    await safeStorage.setItem('user', JSON.stringify(fallbackUser));
-    set({ user: fallbackUser, isAuthenticated: true });
-    return true;
   },
   logout: async () => {
     await safeStorage.removeItem('user');

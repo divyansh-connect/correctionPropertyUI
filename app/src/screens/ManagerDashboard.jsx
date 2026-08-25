@@ -24,14 +24,14 @@ export const ManagerDashboard = ({ onNavigate }) => {
   const styles = getStyles(isDarkMode);
 
   const [metrics, setMetrics] = useState({
-    totalProperties: 3,
-    totalUnits: 4,
-    occupiedUnits: 2,
-    vacantUnits: 2,
-    occupancyRate: 50,
-    monthlyRevenue: 6000,
+    totalProperties: 0,
+    totalUnits: 0,
+    occupiedUnits: 0,
+    vacantUnits: 0,
+    occupancyRate: 0,
+    monthlyRevenue: 0,
     pendingRent: 0,
-    expenses: 3500,
+    expenses: 0,
     openMaintenance: 0,
     leasesExpiringSoon: 0,
   });
@@ -66,41 +66,39 @@ export const ManagerDashboard = ({ onNavigate }) => {
       const rawExpenses = expensesRes?.data || expensesRes || [];
       const rawInvoices = invoicesRes?.data || invoicesRes || [];
 
-      if (rawProps.length > 0) {
-        // Calculate units from properties dynamically
-        let unitsSum = 0;
-        let occupiedSum = 0;
-        rawProps.forEach((p) => {
-          const uCount = p.units && p.units.length > 0 ? p.units.length : (p.unitsCount || 0);
-          const oCount = p.units && p.units.length > 0 
-            ? p.units.filter((u) => String(u.status).toLowerCase() === 'occupied' || u.tenant || u.tenantId).length
-            : (p.occupiedUnits || 0);
-          unitsSum += uCount;
-          occupiedSum += oCount;
-        });
+      // Calculate units from properties dynamically
+      let unitsSum = 0;
+      let occupiedSum = 0;
+      rawProps.forEach((p) => {
+        const uCount = p.units && p.units.length > 0 ? p.units.length : (p.unitsCount || 0);
+        const oCount = p.units && p.units.length > 0 
+          ? p.units.filter((u) => String(u.status).toLowerCase() === 'occupied' || u.tenant || u.tenantId).length
+          : (p.occupiedUnits || 0);
+        unitsSum += uCount;
+        occupiedSum += oCount;
+      });
 
-        // Sum revenue
-        const revenueSum = rawPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
-        // Sum expenses
-        const expensesSum = rawExpenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
-        // Sum pending rent (unpaid invoices)
-        const pendingSum = rawInvoices.reduce((sum, i) => sum + (i.status !== 'Paid' ? (Number(i.amount) || 0) : 0), 0);
-        // Count open maintenance
-        const maintCount = rawMaint.filter((m) => m.status !== 'Completed' && m.status !== 'Resolved').length;
+      // Sum revenue
+      const revenueSum = rawPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+      // Sum expenses
+      const expensesSum = rawExpenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+      // Sum pending rent (unpaid invoices)
+      const pendingSum = rawInvoices.reduce((sum, i) => sum + (i.status !== 'Paid' ? (Number(i.amount) || 0) : 0), 0);
+      // Count open maintenance
+      const maintCount = rawMaint.filter((m) => m.status !== 'Completed' && m.status !== 'Resolved').length;
 
-        setMetrics({
-          totalProperties: rawProps.length,
-          totalUnits: unitsSum || 4,
-          occupiedUnits: occupiedSum || 2,
-          vacantUnits: Math.max(0, unitsSum - occupiedSum) || 2,
-          occupancyRate: unitsSum > 0 ? Math.round((occupiedSum / unitsSum) * 100) : 50,
-          monthlyRevenue: revenueSum || 6000,
-          pendingRent: pendingSum || 0,
-          expenses: expensesSum || 3500,
-          openMaintenance: maintCount || 0,
-          leasesExpiringSoon: 0,
-        });
-      }
+      setMetrics({
+        totalProperties: rawProps.length,
+        totalUnits: unitsSum,
+        occupiedUnits: occupiedSum,
+        vacantUnits: Math.max(0, unitsSum - occupiedSum),
+        occupancyRate: unitsSum > 0 ? Math.round((occupiedSum / unitsSum) * 100) : 0,
+        monthlyRevenue: revenueSum,
+        pendingRent: pendingSum,
+        expenses: expensesSum,
+        openMaintenance: maintCount,
+        leasesExpiringSoon: 0,
+      });
     } catch (e) {
       console.log('Error fetching manager dashboard metrics:', e.message);
     } finally {

@@ -19,6 +19,7 @@ import { MaintenanceStaffDashboard } from './screens/MaintenanceStaffDashboard';
 import { PropertiesScreen } from './screens/PropertiesScreen';
 import { LeadsScreen } from './screens/LeadsScreen';
 import { TenantsScreen } from './screens/TenantsScreen';
+import { InspectionDetailsScreen } from './screens/InspectionDetailsScreen';
 import { RentScreen } from './screens/RentScreen';
 import { MaintenanceScreen } from './screens/MaintenanceScreen';
 import { CompaniesScreen } from './screens/CompaniesScreen';
@@ -39,6 +40,8 @@ import { OwnerFinancialsScreen } from './screens/OwnerFinancialsScreen';
 import { OwnerMaintenanceScreen } from './screens/OwnerMaintenanceScreen';
 import { OwnerServicesScreen } from './screens/OwnerServicesScreen';
 import { ManagerServicesScreen } from './screens/ManagerServicesScreen';
+import { IntegrationsScreen } from './screens/IntegrationsScreen';
+import { AIAssistantScreen } from './screens/AIAssistantScreen';
 import { ManagerCommunicationScreen } from './screens/ManagerCommunicationScreen';
 import { ManagerAccountingScreen } from './screens/ManagerAccountingScreen';
 import { ManagerRentPaymentsScreen } from './screens/ManagerRentPaymentsScreen';
@@ -49,7 +52,15 @@ export default function App() {
   const { theme, language } = useThemeStore();
   const [showSplash, setShowSplash] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [currentInspectionId, setCurrentInspectionId] = useState(null);
   const [drawerVisible, setDrawerVisible] = useState(false);
+
+  const handleNavigate = (tabId, params) => {
+    if (tabId === 'inspection' && params && params.inspectionId) {
+      setCurrentInspectionId(params.inspectionId);
+    }
+    setActiveTab(tabId);
+  };
 
   useEffect(() => {
     initializeAuth();
@@ -144,7 +155,7 @@ export default function App() {
         { id: 'dashboard', label: language === 'es' ? 'Tablero' : 'Dashboard', icon: 'grid-outline', activeIcon: 'grid' },
         { id: 'lease', label: language === 'es' ? 'Contrato' : 'Lease', icon: 'document-text-outline', activeIcon: 'document-text' },
         { id: 'rent', label: language === 'es' ? 'Pagos' : 'Payments', icon: 'card-outline', activeIcon: 'card' },
-        { id: 'messages', label: language === 'es' ? 'Mensajes' : 'Messages', icon: 'chatbubbles-outline', activeIcon: 'chatbubbles' },
+        { id: 'ai', label: language === 'es' ? 'Asistente IA' : 'AI Assistant', icon: 'chatbubble-ellipses-outline', activeIcon: 'chatbubble-ellipses' },
         { id: 'more', label: language === 'es' ? 'Servicios' : 'Services', icon: 'apps-outline', activeIcon: 'apps' },
       ];
       break;
@@ -154,9 +165,9 @@ export default function App() {
       moduleTabs = [
         { id: 'dashboard', label: language === 'es' ? 'Tablero' : 'Dashboard', icon: 'grid-outline', activeIcon: 'grid' },
         { id: 'properties', label: language === 'es' ? 'Propiedades' : 'Properties', icon: 'business-outline', activeIcon: 'business' },
+        { id: 'ai', label: language === 'es' ? 'Asistente IA' : 'AI Assistant', icon: 'chatbubble-ellipses-outline', activeIcon: 'chatbubble-ellipses' },
         { id: 'owners', label: language === 'es' ? 'Propietarios' : 'Owners', icon: 'person-add-outline', activeIcon: 'person-add' },
         { id: 'tenants', label: language === 'es' ? 'Inquilinos' : 'Tenants', icon: 'people-outline', activeIcon: 'people' },
-        { id: 'rent', label: language === 'es' ? 'Alquiler' : 'Rent', icon: 'cash-outline', activeIcon: 'cash' },
         { id: 'more', label: language === 'es' ? 'Servicios' : 'Services', icon: 'apps-outline', activeIcon: 'apps' },
       ];
       break;
@@ -168,17 +179,17 @@ export default function App() {
       case 'Super Admin':
         return <AdminDashboard onNavigate={(screenId) => setActiveTab(screenId)} />;
       case 'Property Manager':
-        return <ManagerDashboard onNavigate={(screenId) => setActiveTab(screenId)} />;
+        return <ManagerDashboard onNavigate={handleNavigate} />;
       case 'Collection Manager':
-        return <CollectionDashboard onNavigate={(screenId) => setActiveTab(screenId)} />;
+        return <CollectionDashboard onNavigate={handleNavigate} />;
       case 'Maintenance Staff':
         return <StaffDashboard />;
       case 'Owner':
-        return <OwnerDashboard onNavigate={(screenId) => setActiveTab(screenId)} />;
+        return <OwnerDashboard onNavigate={handleNavigate} />;
       case 'Tenant':
-        return <TenantDashboard onNavigate={(screenId) => setActiveTab(screenId)} />;
+        return <TenantDashboard onNavigate={handleNavigate} />;
       default:
-        return <ManagerDashboard onNavigate={(screenId) => setActiveTab(screenId)} />;
+        return <ManagerDashboard onNavigate={handleNavigate} />;
     }
   };
 
@@ -197,13 +208,17 @@ export default function App() {
         return <SubscriptionsScreen />;
       case 'platform-users':
         return <PlatformUsersScreen />;
+      case 'integrations':
+        return <IntegrationsScreen onNavigate={handleNavigate} />;
       case 'lease':
-        return role === 'Tenant' ? <TenantLeaseScreen /> : <LeadsScreen />;
+        return role === 'Tenant' ? <TenantLeaseScreen /> : <LeadsScreen onNavigate={handleNavigate} />;
       case 'properties':
         return <PropertiesScreen />;
       case 'leads':
       case 'applications':
-        return <LeadsScreen />;
+        return <LeadsScreen onNavigate={handleNavigate} />;
+      case 'inspection':
+        return <InspectionDetailsScreen inspectionId={currentInspectionId} onNavigate={handleNavigate} />;
       case 'tenants':
         return <TenantsScreen />;
       case 'owners':
@@ -238,7 +253,7 @@ export default function App() {
       case 'distributions':
         return <DistributionsScreen />;
       case 'ai':
-        return renderDashboardByRole();
+        return <AIAssistantScreen onNavigate={handleNavigate} />;
       case 'profile':
         return <ProfileScreen />;
       case 'more':
@@ -249,7 +264,7 @@ export default function App() {
                 if (screenId === 'logout') {
                   useAuthStore.getState().logout();
                 } else {
-                  setActiveTab(screenId);
+                  handleNavigate(screenId);
                 }
               }}
             />
@@ -262,7 +277,7 @@ export default function App() {
                 if (screenId === 'logout') {
                   useAuthStore.getState().logout();
                 } else {
-                  setActiveTab(screenId);
+                  handleNavigate(screenId);
                 }
               }}
             />
@@ -275,7 +290,7 @@ export default function App() {
                 if (screenId === 'logout') {
                   useAuthStore.getState().logout();
                 } else {
-                  setActiveTab(screenId);
+                  handleNavigate(screenId);
                 }
               }}
             />

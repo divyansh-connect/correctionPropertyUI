@@ -19,8 +19,8 @@ export const LoginScreen = () => {
   const { colors, isDarkMode } = useThemeColors();
   const styles = getStyles(colors, isDarkMode);
   
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('manager@apexpm.com');
+  const [password, setPassword] = useState('admin123');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -34,7 +34,7 @@ export const LoginScreen = () => {
     }
     setError('');
     setLoading(true);
-    const success = await login(targetEmail, password || '123456');
+    const success = await login(targetEmail, password || 'admin123');
     setLoading(false);
     if (!success) {
       setError('Login failed. Please check your credentials.');
@@ -43,10 +43,10 @@ export const LoginScreen = () => {
 
   const mockUsers = [
     { label: 'Super Admin', email: 'admin@apexpm.com', icon: '👑' },
-    { label: 'Manager', email: 'companyB@gmail.com', icon: '🏢' },
-    { label: 'Tenant', email: 'person1b@gmail.com', icon: '🔑' },
-    { label: 'Owner', email: 'owner1b@gmail.com', icon: '💼' },
-    { label: 'Staff', email: 'vendor1b@gmail.com', icon: '🛠️' },
+    { label: 'Manager', email: 'manager@apexpm.com', icon: '🏢' },
+    { label: 'Tenant', email: 'tenant@apexpm.com', icon: '🔑' },
+    { label: 'Owner', email: 'owner@apexpm.com', icon: '💼' },
+    { label: 'Staff', email: 'staff@apexpm.com', icon: '🛠️' },
     { label: 'Collection', email: 'collection@apexpm.com', icon: '📊' },
   ];
 
@@ -130,7 +130,7 @@ export const LoginScreen = () => {
                     style={styles.compactChip}
                     onPress={() => {
                       setEmail(u.email);
-                      setPassword('123456');
+                      setPassword('admin123');
                       handleLogin(u.email);
                     }}
                     activeOpacity={0.7}

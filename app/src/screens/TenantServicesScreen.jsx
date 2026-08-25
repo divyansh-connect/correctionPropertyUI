@@ -61,7 +61,7 @@ export const TenantServicesScreen = ({ onNavigate }) => {
           </View>
           <View style={styles.profileInfo}>
             <Text style={styles.profileName} allowFontScaling={false}>
-              {user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'person 1'}
+              {user?.name || (user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'Tenant')}
             </Text>
             <Text style={styles.profileRole} allowFontScaling={false}>
               {es ? 'Inquilino · Residente Activo' : 'Tenant · Active Resident'}

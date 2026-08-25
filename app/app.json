@@ -9,16 +9,17 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.essencedivine.whatslandlord"
     },
-    "extra": {
-      "eas": {
-        "projectId": "fff899c8-7ceb-4c4b-a2e4-6a50a56097a4"
-      }
-    },
     "android": {
       "package": "com.essencedivine.whatslandlord"
     },
     "plugins": [
       "expo-font"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "f155f302-3b4e-452f-b3c4-842f2f71695d"
+      }
+    },
+    "owner": "essence-divine"
   }
 }

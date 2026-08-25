@@ -74,6 +74,35 @@ async function handleUnauthorized(logoutFn, refreshFn) {
   }
 }
 
+async function handleResponseError(response) {
+  let message = 'API request failed';
+  let code = 'API_ERROR';
+  let details = undefined;
+  
+  try {
+    const errData = await response.json();
+    if (errData) {
+      if (errData.error && typeof errData.error === 'object') {
+        message = errData.error.message || message;
+        code = errData.error.code || code;
+        details = errData.error.details || details;
+      } else if (errData.message) {
+        message = errData.message;
+      } else if (typeof errData.error === 'string') {
+        message = errData.error;
+      }
+    }
+  } catch (e) {
+    // Ignore JSON parsing failure
+  }
+
+  const err = new Error(message);
+  err.status = response.status;
+  err.code = code;
+  err.details = details;
+  throw err;
+}
+
 export const apiClient = {
   getHeaders: async () => {
     const userStr = await safeStorage.getItem('user');
@@ -118,12 +147,12 @@ export const apiClient = {
       }
 
       if (!response.ok) {
-        return null;
+        await handleResponseError(response);
       }
       return await response.json();
     } catch (e) {
       console.log(`GET ${url} error:`, e.message);
-      return null;
+      throw e;
     }
   },
 
@@ -151,12 +180,12 @@ export const apiClient = {
       }
 
       if (!response.ok) {
-        return null;
+        await handleResponseError(response);
       }
       return await response.json();
     } catch (e) {
       console.log(`POST ${url} error:`, e.message);
-      return null;
+      throw e;
     }
   },
 
@@ -184,12 +213,12 @@ export const apiClient = {
       }
 
       if (!response.ok) {
-        return null;
+        await handleResponseError(response);
       }
       return await response.json();
     } catch (e) {
       console.log(`PUT ${url} error:`, e.message);
-      return null;
+      throw e;
     }
   },
 
@@ -213,12 +242,12 @@ export const apiClient = {
       }
 
       if (!response.ok) {
-        return null;
+        await handleResponseError(response);
       }
       return await response.json();
     } catch (e) {
       console.log(`DELETE ${url} error:`, e.message);
-      return null;
+      throw e;
     }
   },
 };

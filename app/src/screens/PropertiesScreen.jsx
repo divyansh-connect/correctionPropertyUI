@@ -21,6 +21,12 @@ import apiClient from '../api/client';
 import { useAuthStore, useThemeStore } from '../store/useStore';
 import { useThemeColors } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
+import { propertySchema, buildingSchema, unitSchema } from '../validations/mobile.validation';
+import { CustomDatePicker } from '../components/CustomDatePicker';
+
+const pTypes = ['Multifamily', 'Commercial', 'Single Family', 'Industrial', 'Condo'];
+const pStatuses = ['Active', 'Inactive', 'Pending'];
+const unitStatuses = ['Vacant', 'Occupied', 'Maintenance'];
 
 // Animated Touchable Component
 const AnimatedTouchable = ({ children, onPress, style, disabled }) => {
@@ -95,6 +101,11 @@ export const PropertiesScreen = () => {
   const [isAddBuildingOpen, setIsAddBuildingOpen] = useState(false);
   const [isAddUnitOpen, setIsAddUnitOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  const [propErrors, setPropErrors] = useState({});
+  const [bldErrors, setBldErrors] = useState({});
+  const [unitErrors, setUnitErrors] = useState({});
+  const [showAvailDatePicker, setShowAvailDatePicker] = useState(false);
 
   // --- Add Property Form State ---
   const [pName, setPName] = useState('');
@@ -320,33 +331,40 @@ export const PropertiesScreen = () => {
 
   // --- Creation Handlers ---
   const handleCreateProperty = async () => {
-    if (!pName.trim()) {
-      Alert.alert('Validation Error', 'Property Name is required.');
+    setPropErrors({});
+
+    const payload = {
+      name: pName.trim(),
+      type: pType,
+      status: pStatus,
+      streetAddress: pStreet.trim() || undefined,
+      city: pCity.trim() || undefined,
+      state: pState.trim() || undefined,
+      country: pCountry.trim() || undefined,
+      zip: pZip.trim() || undefined,
+      address: pStreet.trim() ? `${pStreet.trim()}, ${pCity.trim()}, ${pState.trim()}` : 'Austin, TX',
+      ownerId: pOwnerId || undefined,
+      ownershipPercentage: Number(pShare) || 0,
+      managementCompany: pMgtCo.trim() || 'Apex Property Management',
+      yearBuilt: Number(pYearBuilt) || 0,
+      squareFootage: Number(pSqft) || 0,
+      purchasePrice: Number(pPurchasePrice) || 0,
+      currentValue: Number(pCurrentValue) || 0,
+    };
+
+    const valRes = propertySchema.safeParse(payload);
+    if (!valRes.success) {
+      const errs = {};
+      valRes.error.issues.forEach(issue => {
+        errs[issue.path[0]] = issue.message;
+      });
+      setPropErrors(errs);
       return;
     }
 
     try {
       setSubmitting(true);
-      const payload = {
-        name: pName.trim(),
-        type: pType,
-        status: pStatus,
-        streetAddress: pStreet.trim() || undefined,
-        city: pCity.trim() || undefined,
-        state: pState.trim() || undefined,
-        country: pCountry.trim() || undefined,
-        zip: pZip.trim() || undefined,
-        address: pStreet.trim() ? `${pStreet.trim()}, ${pCity.trim()}, ${pState.trim()}` : 'Austin, TX',
-        ownerId: pOwnerId || undefined,
-        ownershipPercentage: Number(pShare) || 100,
-        managementCompany: pMgtCo.trim() || 'Apex Property Management',
-        yearBuilt: Number(pYearBuilt) || 2020,
-        squareFootage: Number(pSqft) || 10000,
-        purchasePrice: Number(pPurchasePrice) || 1000000,
-        currentValue: Number(pCurrentValue) || 1200000,
-      };
-
-      await apiClient.post('/properties', payload, logout, refreshAccessToken);
+      await apiClient.post('/properties', valRes.data, logout, refreshAccessToken);
       Alert.alert('Success', 'Property created successfully.');
       setIsAddPropOpen(false);
       setPName('');
@@ -361,23 +379,34 @@ export const PropertiesScreen = () => {
   };
 
   const handleCreateBuilding = async () => {
-    if (!bPropId || !bName.trim()) {
-      Alert.alert('Validation Error', 'Associated Property and Building Name are required.');
+    setBldErrors({});
+    if (!bPropId) {
+      Alert.alert('Validation Error', 'Associated Property is required.');
+      return;
+    }
+
+    const payload = {
+      propertyId: bPropId,
+      name: bName.trim(),
+      floors: Number(bFloors) || 0,
+      unitsCount: Number(bUnitsCount) || 0,
+      streetAddress: bStreetAddress.trim() || undefined,
+      status: bStatus,
+    };
+
+    const valRes = buildingSchema.safeParse(payload);
+    if (!valRes.success) {
+      const errs = {};
+      valRes.error.issues.forEach(issue => {
+        errs[issue.path[0]] = issue.message;
+      });
+      setBldErrors(errs);
       return;
     }
 
     try {
       setSubmitting(true);
-      const payload = {
-        propertyId: bPropId,
-        name: bName.trim(),
-        floors: Number(bFloors) || 3,
-        unitsCount: Number(bUnitsCount) || 12,
-        streetAddress: bStreetAddress.trim() || undefined,
-        status: bStatus,
-      };
-
-      await apiClient.post('/buildings', payload, logout, refreshAccessToken);
+      await apiClient.post('/buildings', valRes.data, logout, refreshAccessToken);
       Alert.alert('Success', 'Building created successfully.');
       setIsAddBuildingOpen(false);
       setBName('');
@@ -391,28 +420,39 @@ export const PropertiesScreen = () => {
   };
 
   const handleCreateUnit = async () => {
-    if (!uPropId || !uNumber.trim()) {
-      Alert.alert('Validation Error', 'Associated Property and Unit Number are required.');
+    setUnitErrors({});
+    if (!uPropId) {
+      Alert.alert('Validation Error', 'Associated Property is required.');
+      return;
+    }
+
+    const payload = {
+      propertyId: uPropId,
+      buildingId: uBuildingId || undefined,
+      unitNumber: uNumber.trim(),
+      floor: Number(uFloor) || 0,
+      squareFootage: Number(uSqft) || 0,
+      bedrooms: Number(uBeds) || 0,
+      bathrooms: Number(uBaths) || 0,
+      rentAmount: Number(uRent) || 0,
+      securityDeposit: Number(uDeposit) || 0,
+      availabilityDate: uAvailDate,
+      status: uStatus,
+    };
+
+    const valRes = unitSchema.safeParse(payload);
+    if (!valRes.success) {
+      const errs = {};
+      valRes.error.issues.forEach(issue => {
+        errs[issue.path[0]] = issue.message;
+      });
+      setUnitErrors(errs);
       return;
     }
 
     try {
       setSubmitting(true);
-      const payload = {
-        propertyId: uPropId,
-        buildingId: uBuildingId || undefined,
-        unitNumber: uNumber.trim(),
-        floor: Number(uFloor) || 1,
-        squareFootage: Number(uSqft) || 850,
-        bedrooms: Number(uBeds) || 2,
-        bathrooms: Number(uBaths) || 2,
-        rentAmount: Number(uRent) || 1500,
-        securityDeposit: Number(uDeposit) || 1500,
-        availabilityDate: uAvailDate,
-        status: uStatus,
-      };
-
-      await apiClient.post('/units', payload, logout, refreshAccessToken);
+      await apiClient.post('/units', valRes.data, logout, refreshAccessToken);
       Alert.alert('Success', 'Unit created successfully.');
       setIsAddUnitOpen(false);
       setUNumber('');
@@ -876,6 +916,7 @@ export const PropertiesScreen = () => {
                 <View style={styles.formGroup}>
                   <Text style={styles.formLabel} allowFontScaling={false}>PROPERTY NAME</Text>
                   <TextInput style={styles.formInput} placeholder="e.g. Oakridge Heights" placeholderTextColor="#64748b" value={pName} onChangeText={setPName} />
+                  {propErrors.name && <Text style={styles.errorLabel} allowFontScaling={false}>{propErrors.name}</Text>}
                 </View>
 
                 {/* Property Type Dropdown */}
@@ -963,24 +1004,27 @@ export const PropertiesScreen = () => {
                     </View>
                   )}
                 </View>
-                <View style={styles.formGroup}>
+                 <View style={styles.formGroup}>
                   <Text style={styles.formLabel} allowFontScaling={false}>OWNERSHIP PERCENTAGE (%)</Text>
-                  <TextInput style={styles.formInput} placeholder="100" keyboardType="numeric" placeholderTextColor="#64748b" value={pShare} onChangeText={setPShare} />
+                  <TextInput style={styles.formInput} placeholder="100" keyboardType="decimal-pad" placeholderTextColor="#64748b" value={pShare} onChangeText={setPShare} />
+                  {propErrors.ownershipPercentage && <Text style={styles.errorLabel} allowFontScaling={false}>{propErrors.ownershipPercentage}</Text>}
                 </View>
                 <View style={styles.formGroup}>
                   <Text style={styles.formLabel} allowFontScaling={false}>MANAGEMENT COMPANY</Text>
                   <TextInput style={styles.formInput} placeholder="Apex Property Management" placeholderTextColor="#64748b" value={pMgtCo} onChangeText={setPMgtCo} />
                 </View>
 
-                <Text style={styles.modalSubHeader} allowFontScaling={false}>PROPERTY PARAMETERS</Text>
+                 <Text style={styles.modalSubHeader} allowFontScaling={false}>PROPERTY PARAMETERS</Text>
                 <View style={styles.formRow}>
                   <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
                     <Text style={styles.formLabel} allowFontScaling={false}>YEAR BUILT</Text>
                     <TextInput style={styles.formInput} placeholder="2010" keyboardType="numeric" placeholderTextColor="#64748b" value={pYearBuilt} onChangeText={setPYearBuilt} />
+                    {propErrors.yearBuilt && <Text style={styles.errorLabel} allowFontScaling={false}>{propErrors.yearBuilt}</Text>}
                   </View>
                   <View style={[styles.formGroup, { flex: 1 }]}>
                     <Text style={styles.formLabel} allowFontScaling={false}>SQUARE FOOTAGE</Text>
-                    <TextInput style={styles.formInput} placeholder="8500" keyboardType="numeric" placeholderTextColor="#64748b" value={pSqft} onChangeText={setPSqft} />
+                    <TextInput style={styles.formInput} placeholder="8500" keyboardType="decimal-pad" placeholderTextColor="#64748b" value={pSqft} onChangeText={setPSqft} />
+                    {propErrors.squareFootage && <Text style={styles.errorLabel} allowFontScaling={false}>{propErrors.squareFootage}</Text>}
                   </View>
                 </View>
 
@@ -988,11 +1032,13 @@ export const PropertiesScreen = () => {
                 <View style={styles.formRow}>
                   <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
                     <Text style={styles.formLabel} allowFontScaling={false}>PURCHASE PRICE ($)</Text>
-                    <TextInput style={styles.formInput} placeholder="2000000" keyboardType="numeric" placeholderTextColor="#64748b" value={pPurchasePrice} onChangeText={setPPurchasePrice} />
+                    <TextInput style={styles.formInput} placeholder="2000000" keyboardType="decimal-pad" placeholderTextColor="#64748b" value={pPurchasePrice} onChangeText={setPPurchasePrice} />
+                    {propErrors.purchasePrice && <Text style={styles.errorLabel} allowFontScaling={false}>{propErrors.purchasePrice}</Text>}
                   </View>
                   <View style={[styles.formGroup, { flex: 1 }]}>
                     <Text style={styles.formLabel} allowFontScaling={false}>CURRENT VALUE ($)</Text>
-                    <TextInput style={styles.formInput} placeholder="2200000" keyboardType="numeric" placeholderTextColor="#64748b" value={pCurrentValue} onChangeText={setPCurrentValue} />
+                    <TextInput style={styles.formInput} placeholder="2200000" keyboardType="decimal-pad" placeholderTextColor="#64748b" value={pCurrentValue} onChangeText={setPCurrentValue} />
+                    {propErrors.currentValue && <Text style={styles.errorLabel} allowFontScaling={false}>{propErrors.currentValue}</Text>}
                   </View>
                 </View>
 
@@ -1044,19 +1090,22 @@ export const PropertiesScreen = () => {
                   )}
                 </View>
 
-                <View style={styles.formGroup}>
+                 <View style={styles.formGroup}>
                   <Text style={styles.formLabel} allowFontScaling={false}>BUILDING NAME</Text>
                   <TextInput style={styles.formInput} placeholder="Building B / Block C" placeholderTextColor="#64748b" value={bName} onChangeText={setBName} />
+                  {bldErrors.name && <Text style={styles.errorLabel} allowFontScaling={false}>{bldErrors.name}</Text>}
                 </View>
 
                 <View style={styles.formRow}>
                   <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
                     <Text style={styles.formLabel} allowFontScaling={false}>NUMBER OF FLOORS</Text>
                     <TextInput style={styles.formInput} placeholder="3" keyboardType="numeric" placeholderTextColor="#64748b" value={bFloors} onChangeText={setBFloors} />
+                    {bldErrors.floors && <Text style={styles.errorLabel} allowFontScaling={false}>{bldErrors.floors}</Text>}
                   </View>
                   <View style={[styles.formGroup, { flex: 1 }]}>
                     <Text style={styles.formLabel} allowFontScaling={false}>TOTAL UNITS</Text>
                     <TextInput style={styles.formInput} placeholder="12" keyboardType="numeric" placeholderTextColor="#64748b" value={bUnitsCount} onChangeText={setBUnitsCount} />
+                    {bldErrors.unitsCount && <Text style={styles.errorLabel} allowFontScaling={false}>{bldErrors.unitsCount}</Text>}
                   </View>
                 </View>
 
@@ -1153,19 +1202,22 @@ export const PropertiesScreen = () => {
                   )}
                 </View>
 
-                <View style={styles.formGroup}>
+                 <View style={styles.formGroup}>
                   <Text style={styles.formLabel} allowFontScaling={false}>UNIT NUMBER</Text>
                   <TextInput style={styles.formInput} placeholder="Suite B / 204" placeholderTextColor="#64748b" value={uNumber} onChangeText={setUNumber} />
+                  {unitErrors.unitNumber && <Text style={styles.errorLabel} allowFontScaling={false}>{unitErrors.unitNumber}</Text>}
                 </View>
 
                 <View style={styles.formRow}>
                   <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
                     <Text style={styles.formLabel} allowFontScaling={false}>FLOOR</Text>
                     <TextInput style={styles.formInput} placeholder="1" keyboardType="numeric" placeholderTextColor="#64748b" value={uFloor} onChangeText={setUFloor} />
+                    {unitErrors.floor && <Text style={styles.errorLabel} allowFontScaling={false}>{unitErrors.floor}</Text>}
                   </View>
                   <View style={[styles.formGroup, { flex: 1 }]}>
                     <Text style={styles.formLabel} allowFontScaling={false}>SQUARE FOOTAGE</Text>
-                    <TextInput style={styles.formInput} placeholder="850" keyboardType="numeric" placeholderTextColor="#64748b" value={uSqft} onChangeText={setUSqft} />
+                    <TextInput style={styles.formInput} placeholder="850" keyboardType="decimal-pad" placeholderTextColor="#64748b" value={uSqft} onChangeText={setUSqft} />
+                    {unitErrors.squareFootage && <Text style={styles.errorLabel} allowFontScaling={false}>{unitErrors.squareFootage}</Text>}
                   </View>
                 </View>
 
@@ -1173,27 +1225,41 @@ export const PropertiesScreen = () => {
                   <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
                     <Text style={styles.formLabel} allowFontScaling={false}>BEDROOMS</Text>
                     <TextInput style={styles.formInput} placeholder="2" keyboardType="numeric" placeholderTextColor="#64748b" value={uBeds} onChangeText={setUBeds} />
+                    {unitErrors.bedrooms && <Text style={styles.errorLabel} allowFontScaling={false}>{unitErrors.bedrooms}</Text>}
                   </View>
                   <View style={[styles.formGroup, { flex: 1 }]}>
                     <Text style={styles.formLabel} allowFontScaling={false}>BATHROOMS</Text>
-                    <TextInput style={styles.formInput} placeholder="2" keyboardType="numeric" placeholderTextColor="#64748b" value={uBaths} onChangeText={setUBaths} />
+                    <TextInput style={styles.formInput} placeholder="2" keyboardType="decimal-pad" placeholderTextColor="#64748b" value={uBaths} onChangeText={setUBaths} />
+                    {unitErrors.bathrooms && <Text style={styles.errorLabel} allowFontScaling={false}>{unitErrors.bathrooms}</Text>}
                   </View>
                 </View>
 
                 <View style={styles.formRow}>
                   <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
                     <Text style={styles.formLabel} allowFontScaling={false}>MONTHLY RENT ($)</Text>
-                    <TextInput style={styles.formInput} placeholder="1500" keyboardType="numeric" placeholderTextColor="#64748b" value={uRent} onChangeText={setURent} />
+                    <TextInput style={styles.formInput} placeholder="1500" keyboardType="decimal-pad" placeholderTextColor="#64748b" value={uRent} onChangeText={setURent} />
+                    {unitErrors.rentAmount && <Text style={styles.errorLabel} allowFontScaling={false}>{unitErrors.rentAmount}</Text>}
                   </View>
                   <View style={[styles.formGroup, { flex: 1 }]}>
                     <Text style={styles.formLabel} allowFontScaling={false}>SECURITY DEPOSIT ($)</Text>
-                    <TextInput style={styles.formInput} placeholder="1500" keyboardType="numeric" placeholderTextColor="#64748b" value={uDeposit} onChangeText={setUDeposit} />
+                    <TextInput style={styles.formInput} placeholder="1500" keyboardType="decimal-pad" placeholderTextColor="#64748b" value={uDeposit} onChangeText={setUDeposit} />
+                    {unitErrors.securityDeposit && <Text style={styles.errorLabel} allowFontScaling={false}>{unitErrors.securityDeposit}</Text>}
                   </View>
                 </View>
 
-                <View style={styles.formGroup}>
+                 <View style={styles.formGroup}>
                   <Text style={styles.formLabel} allowFontScaling={false}>AVAILABILITY DATE</Text>
-                  <TextInput style={styles.formInput} placeholder="YYYY-MM-DD" placeholderTextColor="#64748b" value={uAvailDate} onChangeText={setUAvailDate} />
+                  <TouchableOpacity style={styles.dropdownTrigger} onPress={() => setShowAvailDatePicker(true)}>
+                    <Text style={styles.dropdownTriggerText} allowFontScaling={false}>{uAvailDate || 'Select Date...'}</Text>
+                    <Ionicons name="calendar-outline" size={16} color="#cbd5e1" />
+                  </TouchableOpacity>
+                  {unitErrors.availabilityDate && <Text style={styles.errorLabel} allowFontScaling={false}>{unitErrors.availabilityDate}</Text>}
+                  <CustomDatePicker
+                    visible={showAvailDatePicker}
+                    value={uAvailDate}
+                    onSelect={(date) => setUAvailDate(date)}
+                    onClose={() => setShowAvailDatePicker(false)}
+                  />
                 </View>
 
                 {/* Unit Initial Status Dropdown */}
@@ -1519,6 +1585,7 @@ export const PropertiesScreen = () => {
 };
 
 const getStyles = (colors, isDarkMode) => StyleSheet.create({
+  errorLabel: { color: '#ef4444', fontSize: 10.5, marginTop: 4, fontWeight: '700' },
   mainWrapper: { flex: 1, backgroundColor: colors.background },
   container: { flex: 1 },
   scrollContent: { padding: 16, paddingBottom: 60 },

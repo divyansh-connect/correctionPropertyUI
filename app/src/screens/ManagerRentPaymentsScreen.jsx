@@ -20,6 +20,8 @@ import {
 import { useAuthStore, useThemeStore } from '../store/useStore';
 import { useThemeColors } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
+import { paymentSchema, invoiceSchema } from '../validations/mobile.validation';
+import { CustomDatePicker } from '../components/CustomDatePicker';
 
 export const ManagerRentPaymentsScreen = () => {
   const { logout, refreshAccessToken } = useAuthStore();
@@ -77,6 +79,12 @@ export const ManagerRentPaymentsScreen = () => {
     { id: 2, description: 'Utility Reimbursement', amount: '100' }
   ]);
   const [invNotes, setInvNotes] = useState('');
+
+  const [payErrors, setPayErrors] = useState({});
+  const [invErrors, setInvErrors] = useState({});
+  const [showPayDatePicker, setShowPayDatePicker] = useState(false);
+  const [showPayDueDateRefPicker, setShowPayDueDateRefPicker] = useState(false);
+  const [showInvDatePicker, setShowInvDatePicker] = useState(false);
 
   // Eye statement view states
   const [selectedStatementTenant, setSelectedStatementTenant] = useState(null);
@@ -147,13 +155,7 @@ export const ManagerRentPaymentsScreen = () => {
       setPaymentsList(parsedList);
     } catch (e) {
       console.log('Payments fetch failed:', e.message);
-      // Fallback mocks
-      setPaymentsList([
-        { id: '1', receiptNumber: '#1', tenantName: 'person 2', propertyName: 'Property 2', unitNumber: 'Room 2B', paidDate: '2026-08-01', amount: 2550, paymentMethod: 'ACH', status: 'Paid' },
-        { id: '2', receiptNumber: '#2', tenantName: 'person 1', propertyName: 'Property 1', unitNumber: 'room 1b', paidDate: '2026-08-01', amount: 1131.9, paymentMethod: 'ACH', status: 'Paid' },
-        { id: '3', receiptNumber: '#3', tenantName: 'person 1', propertyName: 'Property 1', unitNumber: 'room 1b', paidDate: '2026-08-01', amount: 1068.1, paymentMethod: 'ACH', status: 'Paid' },
-        { id: '4', receiptNumber: '#4', tenantName: 'person 2', propertyName: 'Property 2', unitNumber: 'Room 2B', paidDate: '2026-08-01', amount: 5247.9, paymentMethod: 'ACH', status: 'Paid' },
-      ]);
+      setPaymentsList([]);
     } finally {
       if (activeTab === 'payments') {
         setLoading(false);
@@ -184,11 +186,7 @@ export const ManagerRentPaymentsScreen = () => {
       setInvoicesList(parsedList);
     } catch (e) {
       console.log('Invoices fetch failed:', e.message);
-      setInvoicesList([
-        { id: '1', invoiceNumber: 'INV-0001', tenantName: 'person 1', propertyName: 'property 1', dueDate: '2026-08-01', amount: 1100, outstandingBalance: 31.9, status: 'Partially Paid' },
-        { id: '2', invoiceNumber: 'INV-0002', tenantName: 'person 1', propertyName: 'property 1', dueDate: '2026-08-01', amount: 1100, outstandingBalance: 0, status: 'Paid' },
-        { id: '3', invoiceNumber: 'INV-0003', tenantName: 'person 2', propertyName: 'property 2', dueDate: '2026-08-01', amount: 5100, outstandingBalance: 5100, status: 'Draft' },
-      ]);
+      setInvoicesList([]);
     } finally {
       if (activeTab === 'invoices') {
         setLoading(false);
@@ -308,27 +306,47 @@ export const ManagerRentPaymentsScreen = () => {
 
   // A. Record Payment (uses same API path: /payments)
   const handleRecordPayment = async () => {
-    if (!payTenantId || !payAmount.trim()) {
-      Alert.alert('Validation Error', 'Tenant and Payment Amount are required.');
+    setPayErrors({});
+    if (!payTenantId) {
+      Alert.alert('Validation Error', 'Tenant selection is required.');
+      return;
+    }
+
+    const validationData = {
+      amount: parseFloat(payAmount || '0'),
+      date: payDate,
+      dueDate: payDueDateRef,
+      allocRent: parseFloat(allocRent || '0'),
+      allocUtilities: parseFloat(allocUtilities || '0'),
+      allocParking: parseFloat(allocParking || '0'),
+      allocPet: parseFloat(allocPet || '0'),
+    };
+
+    const valRes = paymentSchema.safeParse(validationData);
+    if (!valRes.success) {
+      const errs = {};
+      valRes.error.issues.forEach(issue => {
+        errs[issue.path[0]] = issue.message;
+      });
+      setPayErrors(errs);
       return;
     }
 
     try {
       setSubmitting(true);
-      const chosenTenant = tenants.find(t => t.id === payTenantId);
       const payload = {
         tenantId: payTenantId,
-        amount: parseFloat(payAmount),
+        amount: valRes.data.amount,
         paymentMethod: payChannel,
-        paidDate: payDate ? new Date(payDate).toISOString() : new Date().toISOString(),
+        paidDate: valRes.data.date ? new Date(valRes.data.date).toISOString() : new Date().toISOString(),
         referenceNumber: payRefNo || `REF-${Date.now()}`,
         status: 'Paid',
         notes: payNotes,
         billingAllocations: {
-          rent: parseFloat(allocRent || '0'),
-          utilities: parseFloat(allocUtilities || '0'),
-          parking: parseFloat(allocParking || '0'),
-          pet: parseFloat(allocPet || '0'),
+          rent: valRes.data.allocRent || 0,
+          utilities: valRes.data.allocUtilities || 0,
+          parking: valRes.data.allocParking || 0,
+          pet: valRes.data.allocPet || 0,
         }
       };
 
@@ -350,7 +368,7 @@ export const ManagerRentPaymentsScreen = () => {
           propertyName: chosenTenant?.unit?.property?.name || 'Property',
           unitNumber: chosenTenant?.unit?.unitNumber || 'Unassigned',
           paidDate: payDate || new Date().toISOString().split('T')[0],
-          amount: Number(payAmount),
+          amount: valRes.data.amount,
           paymentMethod: payChannel,
           status: 'Paid'
         },
@@ -368,8 +386,20 @@ export const ManagerRentPaymentsScreen = () => {
 
   // B. Create Invoice (uses same API path: /invoices)
   const handleCreateInvoice = async () => {
-    if (!invTenantId) {
-      Alert.alert('Validation Error', 'Tenant is required.');
+    setInvErrors({});
+    
+    const validationData = {
+      tenantId: invTenantId,
+      dueDate: invDueDate,
+    };
+
+    const valRes = invoiceSchema.safeParse(validationData);
+    if (!valRes.success) {
+      const errs = {};
+      valRes.error.issues.forEach(issue => {
+        errs[issue.path[0]] = issue.message;
+      });
+      setInvErrors(errs);
       return;
     }
 
@@ -377,8 +407,8 @@ export const ManagerRentPaymentsScreen = () => {
       setSubmitting(true);
       const totalAmount = invLineItems.reduce((sum, item) => sum + parseFloat(item.amount || '0'), 0);
       const payload = {
-        tenantId: invTenantId,
-        dueDate: invDueDate ? new Date(invDueDate).toISOString() : new Date().toISOString(),
+        tenantId: valRes.data.tenantId,
+        dueDate: valRes.data.dueDate ? new Date(valRes.data.dueDate).toISOString() : new Date().toISOString(),
         amount: totalAmount,
         notes: invNotes,
         lineItems: invLineItems,
@@ -400,7 +430,7 @@ export const ManagerRentPaymentsScreen = () => {
           invoiceNumber: `INV-${String(Date.now()).substring(7)}`,
           tenantName: chosenTenant ? `${chosenTenant.firstName} ${chosenTenant.lastName}` : 'Resident',
           propertyName: chosenTenant?.unit?.property?.name || 'Property',
-          dueDate: invDueDate || new Date().toISOString().split('T')[0],
+          dueDate: valRes.data.dueDate || new Date().toISOString().split('T')[0],
           amount: totalAmount,
           outstandingBalance: totalAmount,
           status: 'Draft'
@@ -874,10 +904,11 @@ export const ManagerRentPaymentsScreen = () => {
                   style={styles.formInput}
                   placeholder="$ 1500"
                   placeholderTextColor="#64748b"
-                  keyboardType="numeric"
+                  keyboardType="decimal-pad"
                   value={payAmount}
                   onChangeText={setPayAmount}
                 />
+                {payErrors.amount && <Text style={styles.errorLabel} allowFontScaling={false}>{payErrors.amount}</Text>}
 
                 <Text style={styles.formLabel} allowFontScaling={false}>PAYMENT CHANNEL</Text>
                 <TouchableOpacity
@@ -910,22 +941,30 @@ export const ManagerRentPaymentsScreen = () => {
                   </View>
                 )}
 
-                <Text style={styles.formLabel} allowFontScaling={false}>PAYMENT DATE (YYYY-MM-DD)</Text>
-                <TextInput
-                  style={styles.formInput}
-                  placeholder="e.g. 2026-08-05"
-                  placeholderTextColor="#64748b"
+                <Text style={styles.formLabel} allowFontScaling={false}>PAYMENT DATE</Text>
+                <TouchableOpacity style={styles.formPickerSelector} onPress={() => setShowPayDatePicker(true)}>
+                  <Text style={styles.formPickerText} allowFontScaling={false}>{payDate || 'Select Date...'}</Text>
+                  <Ionicons name="calendar-outline" size={16} color="#cbd5e1" />
+                </TouchableOpacity>
+                {payErrors.date && <Text style={styles.errorLabel} allowFontScaling={false}>{payErrors.date}</Text>}
+                <CustomDatePicker
+                  visible={showPayDatePicker}
                   value={payDate}
-                  onChangeText={setPayDate}
+                  onSelect={(date) => setPayDate(date)}
+                  onClose={() => setShowPayDatePicker(false)}
                 />
 
-                <Text style={styles.formLabel} allowFontScaling={false}>DUE DATE REFERENCE (YYYY-MM-DD)</Text>
-                <TextInput
-                  style={styles.formInput}
-                  placeholder="e.g. 2026-08-05"
-                  placeholderTextColor="#64748b"
+                <Text style={styles.formLabel} allowFontScaling={false}>DUE DATE REFERENCE</Text>
+                <TouchableOpacity style={styles.formPickerSelector} onPress={() => setShowPayDueDateRefPicker(true)}>
+                  <Text style={styles.formPickerText} allowFontScaling={false}>{payDueDateRef || 'Select Date...'}</Text>
+                  <Ionicons name="calendar-outline" size={16} color="#cbd5e1" />
+                </TouchableOpacity>
+                {payErrors.dueDate && <Text style={styles.errorLabel} allowFontScaling={false}>{payErrors.dueDate}</Text>}
+                <CustomDatePicker
+                  visible={showPayDueDateRefPicker}
                   value={payDueDateRef}
-                  onChangeText={setPayDueDateRef}
+                  onSelect={(date) => setPayDueDateRef(date)}
+                  onClose={() => setShowPayDueDateRefPicker(false)}
                 />
 
                 <Text style={styles.formLabel} allowFontScaling={false}>REFERENCE NUMBER</Text>
@@ -942,22 +981,22 @@ export const ManagerRentPaymentsScreen = () => {
                 <View style={styles.rowFormGroup}>
                   <View style={{ flex: 1, marginRight: 8 }}>
                     <Text style={styles.formLabel} allowFontScaling={false}>RENT ($)</Text>
-                    <TextInput style={styles.formInput} placeholder="$ 1400" placeholderTextColor="#64748b" keyboardType="numeric" value={allocRent} onChangeText={setAllocRent} />
+                    <TextInput style={styles.formInput} placeholder="$ 1400" placeholderTextColor="#64748b" keyboardType="decimal-pad" value={allocRent} onChangeText={setAllocRent} />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.formLabel} allowFontScaling={false}>UTILITIES ($)</Text>
-                    <TextInput style={styles.formInput} placeholder="$ 100" placeholderTextColor="#64748b" keyboardType="numeric" value={allocUtilities} onChangeText={setAllocUtilities} />
+                    <TextInput style={styles.formInput} placeholder="$ 100" placeholderTextColor="#64748b" keyboardType="decimal-pad" value={allocUtilities} onChangeText={setAllocUtilities} />
                   </View>
                 </View>
 
                 <View style={styles.rowFormGroup}>
                   <View style={{ flex: 1, marginRight: 8 }}>
                     <Text style={styles.formLabel} allowFontScaling={false}>PARKING ($)</Text>
-                    <TextInput style={styles.formInput} placeholder="$ 0" placeholderTextColor="#64748b" keyboardType="numeric" value={allocParking} onChangeText={setAllocParking} />
+                    <TextInput style={styles.formInput} placeholder="$ 0" placeholderTextColor="#64748b" keyboardType="decimal-pad" value={allocParking} onChangeText={setAllocParking} />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.formLabel} allowFontScaling={false}>PET FEE ($)</Text>
-                    <TextInput style={styles.formInput} placeholder="$ 0" placeholderTextColor="#64748b" keyboardType="numeric" value={allocPet} onChangeText={setAllocPet} />
+                    <TextInput style={styles.formInput} placeholder="$ 0" placeholderTextColor="#64748b" keyboardType="decimal-pad" value={allocPet} onChangeText={setAllocPet} />
                   </View>
                 </View>
 
@@ -976,8 +1015,12 @@ export const ManagerRentPaymentsScreen = () => {
                 <TouchableOpacity style={styles.cancelBtn} onPress={() => setRecordPaymentOpen(false)}>
                   <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.submitBtn} onPress={handleRecordPayment}>
-                  <Text style={styles.submitBtnText} allowFontScaling={false}>Record Payment Receipt</Text>
+                <TouchableOpacity style={[styles.submitBtn, submitting && { opacity: 0.5 }]} onPress={handleRecordPayment} disabled={submitting}>
+                  {submitting ? (
+                    <ActivityIndicator size="small" color="#ffffff" />
+                  ) : (
+                    <Text style={styles.submitBtnText} allowFontScaling={false}>Record Payment Receipt</Text>
+                  )}
                 </TouchableOpacity>
               </View>
             </View>
@@ -1032,13 +1075,17 @@ export const ManagerRentPaymentsScreen = () => {
                   </View>
                 )}
 
-                <Text style={styles.formLabel} allowFontScaling={false}>DUE DATE (YYYY-MM-DD)</Text>
-                <TextInput
-                  style={styles.formInput}
-                  placeholder="e.g. 2026-08-05"
-                  placeholderTextColor="#64748b"
+                <Text style={styles.formLabel} allowFontScaling={false}>DUE DATE</Text>
+                <TouchableOpacity style={styles.formPickerSelector} onPress={() => setShowInvDatePicker(true)}>
+                  <Text style={styles.formPickerText} allowFontScaling={false}>{invDueDate || 'Select Date...'}</Text>
+                  <Ionicons name="calendar-outline" size={16} color="#cbd5e1" />
+                </TouchableOpacity>
+                {invErrors.dueDate && <Text style={styles.errorLabel} allowFontScaling={false}>{invErrors.dueDate}</Text>}
+                <CustomDatePicker
+                  visible={showInvDatePicker}
                   value={invDueDate}
-                  onChangeText={setInvDueDate}
+                  onSelect={(date) => setInvDueDate(date)}
+                  onClose={() => setShowInvDatePicker(false)}
                 />
 
                 <View style={[styles.rowBetween, { marginTop: 16, marginBottom: 8 }]}>
@@ -1063,7 +1110,7 @@ export const ManagerRentPaymentsScreen = () => {
                       <Text style={styles.formLabel} allowFontScaling={false}>CHARGE AMOUNT ($)</Text>
                       <TextInput
                         style={styles.formInput}
-                        keyboardType="numeric"
+                        keyboardType="decimal-pad"
                         value={item.amount}
                         onChangeText={(val) => handleUpdateLineItem(item.id, 'amount', val)}
                       />
@@ -1100,8 +1147,12 @@ export const ManagerRentPaymentsScreen = () => {
                 <TouchableOpacity style={styles.cancelBtn} onPress={() => setCreateInvoiceOpen(false)}>
                   <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.submitBtn} onPress={handleCreateInvoice}>
-                  <Text style={styles.submitBtnText} allowFontScaling={false}>Save & Send Invoice</Text>
+                <TouchableOpacity style={[styles.submitBtn, submitting && { opacity: 0.5 }]} onPress={handleCreateInvoice} disabled={submitting}>
+                  {submitting ? (
+                    <ActivityIndicator size="small" color="#ffffff" />
+                  ) : (
+                    <Text style={styles.submitBtnText} allowFontScaling={false}>Save & Send Invoice</Text>
+                  )}
                 </TouchableOpacity>
               </View>
             </View>
@@ -1137,7 +1188,7 @@ export const ManagerRentPaymentsScreen = () => {
                         <Text style={styles.stmtRecipientLabel} allowFontScaling={false}>STATEMENT RECIPIENT</Text>
                         <Text style={styles.stmtRecipientName} allowFontScaling={false}>{selectedStatementTenant.tenantName}</Text>
                         <Text style={styles.stmtRecipientContact} allowFontScaling={false}>Phone: {tenant.phone || '344232'}</Text>
-                        <Text style={styles.stmtRecipientContact} allowFontScaling={false}>Email: {tenant.email || 'person1b@gmail.com'}</Text>
+                        <Text style={styles.stmtRecipientContact} allowFontScaling={false}>Email: {tenant.email || 'tenant@apexpm.com'}</Text>
                         <Text style={styles.stmtRecipientLocation} allowFontScaling={false}>
                           {tenant.unit ? `${tenant.unit.property?.name || 'Property'} - Unit ${tenant.unit.unitNumber}` : selectedStatementTenant.propertyName}
                         </Text>
@@ -1202,6 +1253,7 @@ export const ManagerRentPaymentsScreen = () => {
 };
 
 const getStyles = (colors, isDarkMode) => StyleSheet.create({
+  errorLabel: { color: '#ef4444', fontSize: 10.5, marginTop: 4, fontWeight: '700' },
   mainWrapper: { flex: 1, backgroundColor: colors.background },
   container: { flex: 1 },
   scrollContent: { paddingHorizontal: 16, paddingBottom: 60 },

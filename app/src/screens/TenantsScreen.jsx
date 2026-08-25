@@ -21,6 +21,8 @@ import apiClient from '../api/client';
 import { useAuthStore, useThemeStore } from '../store/useStore';
 import { useThemeColors } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
+import { tenantSchema } from '../validations/mobile.validation';
+import { CustomDatePicker } from '../components/CustomDatePicker';
 
 // Animated Touchable Wrapper Component
 const AnimatedTouchable = ({ children, onPress, style, disabled }) => {
@@ -93,6 +95,9 @@ export const TenantsScreen = () => {
   const [empIncome, setEmpIncome] = useState('');
   const [empStatus, setEmpStatus] = useState('Full-Time');
   const [tStatus, setTStatus] = useState('Active');
+
+  const [tenantErrors, setTenantErrors] = useState({});
+  const [showDobPicker, setShowDobPicker] = useState(false);
 
   // Dropdowns active states
   const [showGenderDropdown, setShowGenderDropdown] = useState(false);
@@ -182,34 +187,41 @@ export const TenantsScreen = () => {
   };
 
   const handleCreateTenant = async () => {
-    if (!firstName.trim() || !lastName.trim() || !email.trim()) {
-      Alert.alert('Validation Error', 'First Name, Last Name and Email are required.');
+    setTenantErrors({});
+
+    const payload = {
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      email: email.trim(),
+      phone: phone.trim(),
+      password: password.trim() || undefined,
+      unitId: unitId || undefined,
+      status: tStatus,
+      // Web fields mapped:
+      preferredName: preferredName.trim() || undefined,
+      dob: dob.trim() || undefined,
+      gender,
+      nationality: nationality.trim() || undefined,
+      idType,
+      idNumber: idNumber.trim() || undefined,
+      employerName: empName.trim() || undefined,
+      position: empPosition.trim() || undefined,
+      monthlyIncome: empIncome ? Number(empIncome) : undefined,
+      employmentStatus: empStatus,
+    };
+
+    const valRes = tenantSchema.safeParse(payload);
+    if (!valRes.success) {
+      const errs = {};
+      valRes.error.issues.forEach(issue => {
+        errs[issue.path[0]] = issue.message;
+      });
+      setTenantErrors(errs);
       return;
     }
 
     try {
       setSubmitting(true);
-      const payload = {
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-        email: email.trim(),
-        phone: phone.trim() || undefined,
-        password: password.trim() || undefined,
-        unitId: unitId || undefined,
-        status: tStatus,
-        // Web fields mapped:
-        preferredName: preferredName.trim() || undefined,
-        dob: dob.trim() || undefined,
-        gender,
-        nationality: nationality.trim() || undefined,
-        idType,
-        idNumber: idNumber.trim() || undefined,
-        employerName: empName.trim() || undefined,
-        position: empPosition.trim() || undefined,
-        monthlyIncome: Number(empIncome) || undefined,
-        employmentStatus: empStatus,
-      };
-
       await apiClient.post('/tenants', payload, logout, refreshAccessToken);
       Alert.alert('Success', 'Tenant profile registered successfully.');
       setIsAddOpen(false);
@@ -418,10 +430,12 @@ export const TenantsScreen = () => {
                   <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
                     <Text style={styles.formLabel} allowFontScaling={false}>FIRST NAME *</Text>
                     <TextInput style={styles.formInput} placeholder="John" placeholderTextColor="#64748b" value={firstName} onChangeText={setFirstName} />
+                    {tenantErrors.firstName && <Text style={styles.errorLabel} allowFontScaling={false}>{tenantErrors.firstName}</Text>}
                   </View>
                   <View style={[styles.formGroup, { flex: 1 }]}>
                     <Text style={styles.formLabel} allowFontScaling={false}>LAST NAME *</Text>
                     <TextInput style={styles.formInput} placeholder="Doe" placeholderTextColor="#64748b" value={lastName} onChangeText={setLastName} />
+                    {tenantErrors.lastName && <Text style={styles.errorLabel} allowFontScaling={false}>{tenantErrors.lastName}</Text>}
                   </View>
                 </View>
 
@@ -433,7 +447,16 @@ export const TenantsScreen = () => {
                 <View style={styles.formRow}>
                   <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
                     <Text style={styles.formLabel} allowFontScaling={false}>DATE OF BIRTH</Text>
-                    <TextInput style={styles.formInput} placeholder="YYYY-MM-DD" placeholderTextColor="#64748b" value={dob} onChangeText={setDob} />
+                    <TouchableOpacity style={styles.dropdownTrigger} onPress={() => setShowDobPicker(true)}>
+                      <Text style={styles.dropdownTriggerText} allowFontScaling={false}>{dob || 'Select Date...'}</Text>
+                      <Ionicons name="calendar-outline" size={14} color="#cbd5e1" />
+                    </TouchableOpacity>
+                    <CustomDatePicker
+                      visible={showDobPicker}
+                      value={dob}
+                      onSelect={(date) => setDob(date)}
+                      onClose={() => setShowDobPicker(false)}
+                    />
                   </View>
 
                   {/* Gender dropdown */}
@@ -465,16 +488,19 @@ export const TenantsScreen = () => {
                 <View style={styles.formGroup}>
                   <Text style={styles.formLabel} allowFontScaling={false}>EMAIL ADDRESS *</Text>
                   <TextInput style={styles.formInput} placeholder="staff@gmail.com" placeholderTextColor="#64748b" keyboardType="email-address" autoCapitalize="none" value={email} onChangeText={setEmail} />
+                  {tenantErrors.email && <Text style={styles.errorLabel} allowFontScaling={false}>{tenantErrors.email}</Text>}
                 </View>
 
                 <View style={styles.formGroup}>
                   <Text style={styles.formLabel} allowFontScaling={false}>MOBILE PHONE</Text>
                   <TextInput style={styles.formInput} placeholder="(512) 555-0199" placeholderTextColor="#64748b" keyboardType="phone-pad" value={phone} onChangeText={setPhone} />
+                  {tenantErrors.phone && <Text style={styles.errorLabel} allowFontScaling={false}>{tenantErrors.phone}</Text>}
                 </View>
 
                 <View style={styles.formGroup}>
                   <Text style={styles.formLabel} allowFontScaling={false}>PASSWORD</Text>
                   <TextInput style={styles.formInput} placeholder="••••••••" placeholderTextColor="#64748b" secureTextEntry autoCapitalize="none" value={password} onChangeText={setPassword} />
+                  {tenantErrors.password && <Text style={styles.errorLabel} allowFontScaling={false}>{tenantErrors.password}</Text>}
                 </View>
 
                 <Text style={styles.modalSubHeader} allowFontScaling={false}>UNIT ASSIGNMENT</Text>
@@ -535,7 +561,8 @@ export const TenantsScreen = () => {
                   </View>
                   <View style={[styles.formGroup, { flex: 1 }]}>
                     <Text style={styles.formLabel} allowFontScaling={false}>MONTHLY INCOME ($)</Text>
-                    <TextInput style={styles.formInput} placeholder="3500" keyboardType="numeric" placeholderTextColor="#64748b" value={empIncome} onChangeText={setEmpIncome} />
+                    <TextInput style={styles.formInput} placeholder="3500" keyboardType="decimal-pad" placeholderTextColor="#64748b" value={empIncome} onChangeText={setEmpIncome} />
+                    {tenantErrors.monthlyIncome && <Text style={styles.errorLabel} allowFontScaling={false}>{tenantErrors.monthlyIncome}</Text>}
                   </View>
                 </View>
 
@@ -690,6 +717,7 @@ export const TenantsScreen = () => {
 };
 
 const getStyles = (colors, isDarkMode) => StyleSheet.create({
+  errorLabel: { color: '#ef4444', fontSize: 10.5, marginTop: 4, fontWeight: '700' },
   mainWrapper: { flex: 1, backgroundColor: colors.background },
   container: { flex: 1 },
   scrollContent: { padding: 16, paddingBottom: 60 },

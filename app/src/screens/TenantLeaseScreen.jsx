@@ -29,8 +29,8 @@ export const TenantLeaseScreen = () => {
       if (res && res.data && Array.isArray(res.data) && res.data.length > 0) {
         const item = res.data[0];
         setLeaseData({
-          tenantName: item.name || `${item.firstName || ''} ${item.lastName || ''}`.trim() || 'person 1',
-          tenantEmail: item.email || 'person1b@gmail.com',
+          tenantName: item.name || `${item.firstName || ''} ${item.lastName || ''}`.trim() || 'Robert Johnson',
+          tenantEmail: item.email || 'tenant@apexpm.com',
           tenantPhone: item.phone || '344232',
           propertyName: item.property?.name || 'property 1',
           unitNumber: item.unit?.unitNumber || 'room 1b',
@@ -47,8 +47,8 @@ export const TenantLeaseScreen = () => {
           startDate: item.lease?.startDate ? item.lease.startDate.split('T')[0] : '2026-08-01',
           endDate: item.lease?.endDate ? item.lease.endDate.split('T')[0] : '2027-08-01',
           status: item.lease?.status || 'Active',
-          ownerName: item.property?.owner?.name || 'owner new 2',
-          ownerEmail: item.property?.owner?.email || 'owner1b@gmail.com',
+          ownerName: item.property?.owner?.name || 'William Anderson',
+          ownerEmail: item.property?.owner?.email || 'owner@apexpm.com',
           ownerPhone: item.property?.owner?.phone || '23425245252',
           managementCompany: item.property?.managementCompany || 'Apex Property Management',
         });
@@ -62,8 +62,8 @@ export const TenantLeaseScreen = () => {
 
     // Default fallback matching Railway DB record
     setLeaseData({
-      tenantName: 'person 1',
-      tenantEmail: 'person1b@gmail.com',
+      tenantName: 'Robert Johnson',
+      tenantEmail: 'tenant@apexpm.com',
       tenantPhone: '344232',
       propertyName: 'property 1',
       unitNumber: 'room 1b',
@@ -80,8 +80,8 @@ export const TenantLeaseScreen = () => {
       startDate: '2026-08-01',
       endDate: '2027-08-01',
       status: 'Active',
-      ownerName: 'owner new 2',
-      ownerEmail: 'owner1b@gmail.com',
+      ownerName: 'William Anderson',
+      ownerEmail: 'owner@apexpm.com',
       ownerPhone: '23425245252',
       managementCompany: 'Apex Property Management',
     });

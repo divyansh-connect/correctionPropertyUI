@@ -448,12 +448,12 @@ export const InvoicesScreen = () => {
               onChangeText={setAmount}
             />
 
-            <View style={styles.modalButtons}>
-              <TouchableOpacity style={[styles.modalBtn, styles.cancelBtn]} onPress={() => setIsCreateOpen(false)}>
+             <View style={styles.modalButtons}>
+              <TouchableOpacity style={[styles.modalBtn, styles.cancelBtn]} onPress={() => setIsCreateOpen(false)} disabled={submitting}>
                 <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={[styles.modalBtn, styles.saveBtn]} onPress={handleCreateSubmit} disabled={submitting}>
+              <TouchableOpacity style={[styles.modalBtn, styles.saveBtn, submitting && { opacity: 0.5 }]} onPress={handleCreateSubmit} disabled={submitting}>
                 <Text style={styles.saveBtnText} allowFontScaling={false}>
                   {submitting ? 'Creating...' : 'Issue Invoice'}
                 </Text>

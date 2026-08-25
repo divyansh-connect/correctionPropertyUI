@@ -77,6 +77,7 @@ export const NavigationDrawer = ({ visible, onClose, activeScreen, onSelectScree
       { id: 'maintenance', label: language === 'es' ? '🛠️ Mantenimiento' : '🛠️ Maintenance' },
       { id: 'documents', label: language === 'es' ? '📄 Documentos' : '📄 Documents' },
       { id: 'communication', label: language === 'es' ? '👤 Mensajes' : '👤 Messages' },
+      { id: 'ai', label: language === 'es' ? '🤖 Asistente IA' : '🤖 AI Assistant' },
     ];
   }
 
