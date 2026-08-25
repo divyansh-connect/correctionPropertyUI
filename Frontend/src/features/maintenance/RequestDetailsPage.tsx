@@ -113,7 +113,7 @@ export const RequestDetailsPage: React.FC = () => {
 
         <div className="flex space-x-2 items-center">
           {request.status === 'New' && (
-            <Button size="sm" onClick={() => approveMutation.mutate()}>Approve Ticket</Button>
+            <Button size="sm" onClick={() => approveMutation.mutate()} loading={approveMutation.isPending}>Approve Ticket</Button>
           )}
           {request.status === 'Approved' && (
             <div className="flex items-center space-x-2">
@@ -144,7 +144,8 @@ export const RequestDetailsPage: React.FC = () => {
                     });
                   }
                 }}
-                disabled={!selectedVendorId || !assignedCost}
+                disabled={!selectedVendorId || !assignedCost || assignMutation.isPending}
+                loading={assignMutation.isPending}
                 className="bg-primary hover:bg-primary/95 text-white font-bold h-8 text-[11px]"
               >
                 Assign & Dispatch

@@ -9,18 +9,23 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { Loader2 } from 'lucide-react';
-interface RequestFormValues {
-  propertyId: string;
-  buildingId: string;
-  unitId: string;
-  tenantName: string;
-  category: string;
-  priority: 'Low' | 'Medium' | 'High' | 'Urgent';
-  description: string;
-  preferredTime: string;
-  permissionToEnter: boolean;
-  notes?: string;
-}
+import * as zod from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { mapBackendErrors } from '../../utils/errorMapping';
+
+const newRequestFormSchema = zod.object({
+  propertyId: zod.string().min(1, 'Property is required'),
+  buildingId: zod.string().min(1, 'Building is required'),
+  unitId: zod.string().min(1, 'Unit is required'),
+  tenantName: zod.string().min(1, 'Resident name is required'),
+  category: zod.string().min(1, 'Category is required'),
+  priority: zod.enum(['Low', 'Medium', 'High', 'Urgent']),
+  description: zod.string().min(1, 'Description of issue is required'),
+  preferredTime: zod.string().optional().or(zod.literal('')),
+  permissionToEnter: zod.boolean(),
+  notes: zod.string().optional().or(zod.literal('')),
+});
+type RequestFormValues = zod.infer<typeof newRequestFormSchema>;
 
 export const NewRequestPage: React.FC = () => {
   const navigate = useNavigate();
@@ -31,7 +36,8 @@ export const NewRequestPage: React.FC = () => {
   const { data: buildings = [] } = useQuery({ queryKey: ['buildings'], queryFn: () => api.building.getAll() });
   const { data: units = [] } = useQuery({ queryKey: ['units'], queryFn: () => api.unit.getAll() });
 
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<RequestFormValues>({
+  const { register, handleSubmit, watch, setValue, setError, formState: { errors } } = useForm<RequestFormValues>({
+    resolver: zodResolver(newRequestFormSchema),
     defaultValues: {
       priority: 'Medium',
       permissionToEnter: true,
@@ -39,6 +45,9 @@ export const NewRequestPage: React.FC = () => {
       propertyId: '',
       buildingId: '',
       unitId: '',
+      tenantName: '',
+      preferredTime: '',
+      notes: '',
     }
   });
 
@@ -104,6 +113,9 @@ export const NewRequestPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['service-requests-list'] });
       navigate({ to: '/maintenance/requests' });
     },
+    onError: (err: any) => {
+      mapBackendErrors(err, setError);
+    }
   });
 
   const onSubmit = (data: RequestFormValues) => {
@@ -129,7 +141,7 @@ export const NewRequestPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Property Portfolio</label>
-              <Select {...register('propertyId', { required: 'Property required' })}>
+              <Select {...register('propertyId')}>
                 <option value="">Select Property...</option>
                 {properties.map((p) => (
                   <option key={p.id} value={p.id}>{p.name}</option>
@@ -140,7 +152,7 @@ export const NewRequestPage: React.FC = () => {
 
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Building</label>
-              <Select {...register('buildingId', { required: 'Building required' })} disabled={!selectedPropertyId}>
+              <Select {...register('buildingId')} disabled={!selectedPropertyId}>
                 <option value="">Select Building...</option>
                 {filteredBuildings.map((b) => (
                   <option key={b.id} value={b.id}>{b.name}</option>
@@ -151,7 +163,7 @@ export const NewRequestPage: React.FC = () => {
 
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Unit</label>
-              <Select {...register('unitId', { required: 'Unit required' })} disabled={!selectedBuildingId && filteredBuildings.length > 0}>
+              <Select {...register('unitId')} disabled={!selectedBuildingId && filteredBuildings.length > 0}>
                 <option value="">Select Unit...</option>
                 {filteredUnits.map((u) => (
                   <option key={u.id} value={u.id}>Unit {u.unitNumber}</option>
@@ -163,7 +175,7 @@ export const NewRequestPage: React.FC = () => {
 
           <div className="space-y-1">
             <label className="text-xs font-bold text-muted-foreground uppercase">Resident Payee Name</label>
-            <Input placeholder="Resident contact name..." {...register('tenantName', { required: 'Resident name required' })} />
+            <Input placeholder="Resident contact name..." {...register('tenantName')} />
             {errors.tenantName && <p className="text-rose-500">{errors.tenantName.message}</p>}
           </div>
 
@@ -214,7 +226,7 @@ export const NewRequestPage: React.FC = () => {
             <textarea
               className="w-full min-h-[90px] p-3 rounded-lg border border-border bg-card text-foreground"
               placeholder="Describe the issue, leak rates, or equipment behaviors..."
-              {...register('description', { required: 'Description required' })}
+              {...register('description')}
             />
             {errors.description && <p className="text-rose-500">{errors.description.message}</p>}
           </div>

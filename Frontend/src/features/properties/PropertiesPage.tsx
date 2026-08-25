@@ -300,6 +300,7 @@ export const PropertiesPage: React.FC = () => {
         description={t('properties.deleteDialog.desc')}
         confirmText={t('properties.deleteDialog.confirm')}
         variant="destructive"
+        loading={deleteMutation.isPending}
         onConfirm={() => deleteId && deleteMutation.mutate(deleteId)}
       />
     </div>

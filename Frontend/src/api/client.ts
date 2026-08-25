@@ -55,8 +55,32 @@ export const apiClient = {
   },
 
   handleResponseError: async (response: Response) => {
-    const errData = await response.json().catch(() => ({}));
-    throw new Error(errData.message || 'API request failed');
+    let message = 'API request failed';
+    let code = 'API_ERROR';
+    let details = undefined;
+    
+    try {
+      const errData = await response.json();
+      if (errData) {
+        if (errData.error && typeof errData.error === 'object') {
+          message = errData.error.message || message;
+          code = errData.error.code || code;
+          details = errData.error.details || details;
+        } else if (errData.message) {
+          message = errData.message;
+        } else if (typeof errData.error === 'string') {
+          message = errData.error;
+        }
+      }
+    } catch (e) {
+      // Ignore JSON parsing failure
+    }
+
+    const err = new Error(message) as any;
+    err.status = response.status;
+    err.code = code;
+    err.details = details;
+    throw err;
   },
 
   get: async <T>(url: string): Promise<T> => {

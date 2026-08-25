@@ -106,9 +106,10 @@ export const WorkOrderDetailsPage: React.FC = () => {
             <div className="flex items-center space-x-1">
               <span className="text-xs text-muted-foreground mr-2">Assign Maintenance Staff:</span>
               <select
-                className="text-xs p-1.5 rounded-lg border bg-card text-foreground"
+                className="text-xs p-1.5 rounded-lg border bg-card text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
                 onChange={(e) => assignMutation.mutate(e.target.value)}
                 defaultValue=""
+                disabled={assignMutation.isPending}
               >
                 <option value="" disabled>Select Maintenance Staff...</option>
                 {vendorsList.slice(0, 15).map((v) => (
@@ -118,10 +119,10 @@ export const WorkOrderDetailsPage: React.FC = () => {
             </div>
           )}
           {wo.status === 'Assigned' && (
-            <Button size="sm" onClick={() => completeMutation.mutate()}>Mark Complete</Button>
+            <Button size="sm" onClick={() => completeMutation.mutate()} loading={completeMutation.isPending}>Mark Complete</Button>
           )}
           {wo.status === 'Completed' && (
-            <Button size="sm" onClick={() => closeMutation.mutate()} className="bg-emerald-500 hover:bg-emerald-600">
+            <Button size="sm" onClick={() => closeMutation.mutate()} loading={closeMutation.isPending} className="bg-emerald-500 hover:bg-emerald-600">
               Close Work Order
             </Button>
           )}

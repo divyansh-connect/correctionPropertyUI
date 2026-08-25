@@ -262,7 +262,7 @@ export const TenantMaintenancePage: React.FC = () => {
                   <span>{t('tenantMaintenance.email')}</span>
                 </a>
                 <a 
-                  href={`https://wa.me/${(selectedRequest.managerPhone || selectedRequest.phone || '').replace(/\D/g, '') || '15550199'}?text=${encodeURIComponent(`Hi Property Manager, I am contacting you regarding maintenance request: ${selectedRequest.title}`)}`} 
+                  href={`https://wa.me/${((selectedRequest as any).managerPhone || (selectedRequest as any).phone || '').replace(/\D/g, '') || '15550199'}?text=${encodeURIComponent(`Hi Property Manager, I am contacting you regarding maintenance request: ${selectedRequest.title}`)}`} 
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className="flex-1 flex items-center justify-center gap-1.5 p-2 bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/10 rounded-xl transition text-foreground"

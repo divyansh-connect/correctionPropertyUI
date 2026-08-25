@@ -215,6 +215,7 @@ export const BuildingsPage: React.FC = () => {
         description="Are you sure you want to delete this building? This cannot be undone."
         confirmText="Delete Building"
         variant="destructive"
+        loading={deleteMutation.isPending}
         onConfirm={() => deleteId && deleteMutation.mutate(deleteId)}
       />
     </div>

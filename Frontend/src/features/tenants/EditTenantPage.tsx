@@ -10,6 +10,7 @@ import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { Button } from '../../components/ui/Button';
 import { Loader2, ArrowLeft } from 'lucide-react';
+import { mapBackendErrors } from '../../utils/errorMapping';
 
 const tenantFormSchema = zod.object({
   firstName: zod.string().min(1, 'First Name is required'),
@@ -41,11 +42,15 @@ export const EditTenantPage: React.FC = () => {
       setSuccess(true);
       setTimeout(() => navigate({ to: '/tenants' }), 2000);
     },
+    onError: (err: any) => {
+      mapBackendErrors(err, setError);
+    }
   });
 
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors },
   } = useForm<TenantFormInputs>({
     resolver: zodResolver(tenantFormSchema),
@@ -104,7 +109,7 @@ export const EditTenantPage: React.FC = () => {
           </div>
           <div className="space-y-1">
             <label className="text-xs font-bold text-muted-foreground uppercase">Mobile Phone</label>
-            <Input {...register('phone')} />
+            <Input type="tel" {...register('phone')} />
             {errors.phone && <p className="text-rose-500 text-xs">{errors.phone.message}</p>}
           </div>
         </div>

@@ -173,6 +173,7 @@ export const UnitsPage: React.FC = () => {
             variant="ghost"
             size="icon"
             onClick={() => deleteMutation.mutate(row.original.id)}
+            disabled={deleteMutation.isPending}
             className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
             title="Delete"
           >

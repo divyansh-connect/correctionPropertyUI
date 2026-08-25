@@ -23,6 +23,7 @@ import { StatusBadge } from '../components/StatusBadge';
 import { PageHeader } from '../components/PageHeader';
 import { Input } from '../components/ui/Input';
 import { FormDialog } from '../components/FormDialog';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 
 // Layouts
 import { AuthLayout } from '../layouts/AuthLayout';
@@ -1971,6 +1972,7 @@ const CompaniesPage: React.FC = () => {
   const [companies, setCompanies] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState<boolean>(true);
   const [searchQuery, setSearchQuery] = React.useState<string>('');
+  const [deleteCompanyId, setDeleteCompanyId] = React.useState<string | null>(null);
 
   const fetchCompanies = React.useCallback(async () => {
     try {
@@ -1997,14 +1999,19 @@ const CompaniesPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this company?')) {
+  const handleDelete = (id: string) => {
+    setDeleteCompanyId(id);
+  };
+
+  const confirmDeleteCompany = async () => {
+    if (deleteCompanyId) {
       try {
-        await api.companies.delete(id);
+        await api.companies.delete(deleteCompanyId);
         fetchCompanies();
       } catch (e) {
         console.error(e);
       }
+      setDeleteCompanyId(null);
     }
   };
 
@@ -2107,6 +2114,17 @@ const CompaniesPage: React.FC = () => {
           )}
         </div>
       </div>
+      <ConfirmDialog
+        open={deleteCompanyId !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteCompanyId(null);
+        }}
+        title="Delete Company"
+        description="Are you sure you want to delete this company? This action cannot be undone."
+        onConfirm={confirmDeleteCompany}
+        confirmText="Delete"
+        variant="destructive"
+      />
     </div>
   );
 };
@@ -2147,15 +2165,6 @@ const NewCompanyPage: React.FC = () => {
         planName: plan,
         password,
       });
-
-      if (company && company.id) {
-        await api.companyUsers.create({
-          companyId: company.id,
-          name: contact,
-          email,
-          role: 'Property Manager',
-        });
-      }
 
       setSuccess(true);
       setTimeout(() => {
@@ -3319,6 +3328,7 @@ const PlatformUsersPage: React.FC = () => {
   const [loading, setLoading] = React.useState<boolean>(true);
   const [showCreate, setShowCreate] = React.useState<boolean>(false);
   const [newUser, setNewUser] = React.useState({ name: '', email: '', role: 'Admin', companyId: '' });
+  const [deleteUserId, setDeleteUserId] = React.useState<string | null>(null);
 
   const fetchUsers = React.useCallback(async () => {
     try {
@@ -3371,14 +3381,19 @@ const PlatformUsersPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (window.confirm('Delete platform user?')) {
+  const handleDelete = (id: string) => {
+    setDeleteUserId(id);
+  };
+
+  const confirmDeleteUser = async () => {
+    if (deleteUserId) {
       try {
-        await api.companyUsers.delete(id);
+        await api.companyUsers.delete(deleteUserId);
         fetchUsers();
       } catch (err) {
         console.error(err);
       }
+      setDeleteUserId(null);
     }
   };
 
@@ -3509,6 +3524,17 @@ const PlatformUsersPage: React.FC = () => {
           </div>
         )}
       </div>
+      <ConfirmDialog
+        open={deleteUserId !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteUserId(null);
+        }}
+        title="Delete Platform User"
+        description="Are you sure you want to delete this platform user? This action cannot be undone."
+        onConfirm={confirmDeleteUser}
+        confirmText="Delete"
+        variant="destructive"
+      />
     </div>
   );
 };

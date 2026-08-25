@@ -11,6 +11,7 @@ interface ConfirmDialogProps {
   confirmText?: string;
   cancelText?: string;
   variant?: 'default' | 'destructive';
+  loading?: boolean;
 }
 
 export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
@@ -22,6 +23,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   confirmText = 'Confirm',
   cancelText = 'Cancel',
   variant = 'default',
+  loading = false,
 }) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -31,14 +33,18 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           <DialogDescription className="text-sm text-muted-foreground">{description}</DialogDescription>
         </DialogHeader>
         <DialogFooter className="mt-4 flex space-x-2 justify-end">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
             {cancelText}
           </Button>
           <Button
             variant={variant === 'destructive' ? 'destructive' : 'default'}
+            loading={loading}
             onClick={() => {
               onConfirm();
-              onOpenChange(false);
+              if (!loading) {
+                // If not loading, auto-close
+                onOpenChange(false);
+              }
             }}
           >
             {confirmText}

@@ -10,6 +10,7 @@ import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { Button } from '../../components/ui/Button';
 import { Loader2, Check } from 'lucide-react';
+import { mapBackendErrors } from '../../utils/errorMapping';
 
 const leaseFormSchemaBase = zod.object({
   propertyId: zod.string().min(1, 'Property is required'),
@@ -43,6 +44,17 @@ export const NewLeasePage: React.FC = () => {
           path: ['unitId'],
         });
       }
+      if (data.startDate && data.endDate) {
+        const start = new Date(data.startDate);
+        const end = new Date(data.endDate);
+        if (start >= end) {
+          ctx.addIssue({
+            code: zod.ZodIssueCode.custom,
+            message: 'Lease Start Date must be before End Date',
+            path: ['endDate'],
+          });
+        }
+      }
     });
   }, [units]);
 
@@ -51,6 +63,7 @@ export const NewLeasePage: React.FC = () => {
     handleSubmit,
     watch,
     setValue,
+    setError,
     formState: { errors },
   } = useForm<LeaseFormInputs>({
     resolver: zodResolver(leaseFormSchema),
@@ -108,6 +121,9 @@ export const NewLeasePage: React.FC = () => {
       setSuccess(true);
       setTimeout(() => navigate({ to: '/leasing/move-in' }), 1500);
     },
+    onError: (err: any) => {
+      mapBackendErrors(err, setError);
+    }
   });
 
   const onSubmit = (values: LeaseFormInputs) => {

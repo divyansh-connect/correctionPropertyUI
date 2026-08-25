@@ -11,6 +11,7 @@ import { Select } from '../../components/ui/Select';
 import { Button } from '../../components/ui/Button';
 import { FileUploader } from '../../components/FileUploader';
 import { Loader2, ArrowLeft, Plus, Trash2 } from 'lucide-react';
+import { mapBackendErrors } from '../../utils/errorMapping';
 
 const tenantFormSchema = zod.object({
   firstName: zod.string().min(1, 'First Name is required'),
@@ -50,7 +51,7 @@ const tenantFormSchema = zod.object({
     model: zod.string().min(1, 'Model is required'),
     plate: zod.string().min(1, 'License Plate is required'),
   })),
-  password: zod.string().optional().or(zod.literal('')),
+  password: zod.string().min(6, 'Password must be at least 6 characters'),
 });
 
 type TenantFormInputs = zod.infer<typeof tenantFormSchema>;
@@ -70,12 +71,16 @@ export const NewTenantPage: React.FC = () => {
       setSuccess(true);
       setTimeout(() => navigate({ to: '/tenants' }), 2000);
     },
+    onError: (err: any) => {
+      mapBackendErrors(err, setError);
+    }
   });
 
   const {
     register,
     control,
     handleSubmit,
+    setError,
     formState: { errors },
   } = useForm<TenantFormInputs>({
     resolver: zodResolver(tenantFormSchema),
@@ -180,12 +185,12 @@ export const NewTenantPage: React.FC = () => {
             </div>
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Mobile Phone</label>
-              <Input placeholder="(512) 555-0199" {...register('phone')} />
+              <Input type="tel" placeholder="(512) 555-0199" {...register('phone')} />
               {errors.phone && <p className="text-rose-500 text-xs">{errors.phone.message}</p>}
             </div>
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Alternate Phone</label>
-              <Input placeholder="(512) 555-4321" {...register('altPhone')} />
+              <Input type="tel" placeholder="(512) 555-4321" {...register('altPhone')} />
             </div>
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Password</label>
@@ -232,7 +237,7 @@ export const NewTenantPage: React.FC = () => {
             </div>
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Emergency Phone</label>
-              <Input placeholder="(512) 555-9876" {...register('emergencyPhone')} />
+              <Input type="tel" placeholder="(512) 555-9876" {...register('emergencyPhone')} />
               {errors.emergencyPhone && <p className="text-rose-500 text-xs">{errors.emergencyPhone.message}</p>}
             </div>
           </div>

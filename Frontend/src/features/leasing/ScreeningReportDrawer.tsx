@@ -69,7 +69,7 @@ export const ScreeningReportDrawer: React.FC<ScreeningReportDrawerProps> = ({ sc
       <div className="p-4 border-b flex justify-between items-center bg-secondary/10 shrink-0">
         <div>
           <h3 className="font-extrabold text-sm uppercase tracking-wide">Screening Report Statement</h3>
-          <p className="text-[10px] text-muted-foreground font-mono mt-0.5">CHECK ID: {screening.id} • PROVIDER: {screening.screeningProvider || 'TransUnion'}</p>
+          <p className="text-[10px] text-muted-foreground font-mono mt-0.5">APPLICANT: {screening.applicantName} • PROVIDER: {screening.screeningProvider || 'TransUnion'}</p>
         </div>
         <button onClick={onClose} className="p-1 rounded-lg hover:bg-secondary/20 transition">
           <X className="w-5 h-5 text-muted-foreground" />
@@ -201,9 +201,9 @@ export const ScreeningReportDrawer: React.FC<ScreeningReportDrawerProps> = ({ sc
             <h4 className="font-extrabold text-[10px] text-muted-foreground uppercase tracking-wider border-b pb-1">Criminal History</h4>
             <div className="p-4 bg-secondary/15 border border-border/40 rounded-xl flex flex-col justify-between h-28">
               <div className="flex items-start gap-2">
-                {screening.criminalStatus === 'No Records Found' ? (
+                {(screening as any).criminalBackground === 'Passed' || screening.criminalStatus === 'No Records Found' ? (
                   <Shield className="w-5 h-5 text-emerald-500 shrink-0" />
-                ) : screening.criminalStatus === 'Records Found' ? (
+                ) : (screening as any).criminalBackground === 'Flagged' || screening.criminalStatus === 'Records Found' ? (
                   <ShieldAlert className="w-5 h-5 text-rose-500 shrink-0" />
                 ) : (
                   <Loader2 className="w-5 h-5 text-muted-foreground animate-spin shrink-0" />
@@ -213,7 +213,7 @@ export const ScreeningReportDrawer: React.FC<ScreeningReportDrawerProps> = ({ sc
                   <p className="text-[10px] text-muted-foreground font-medium mt-0.5">National databases scan.</p>
                 </div>
               </div>
-              <p className="text-[10px] font-bold text-foreground">{screening.criminalStatus}</p>
+              <p className="text-[10px] font-bold text-foreground">{screening.criminalStatus || ((screening as any).criminalBackground === 'Passed' ? 'No Records Found' : 'Records Found')}</p>
             </div>
           </div>
 
@@ -222,9 +222,9 @@ export const ScreeningReportDrawer: React.FC<ScreeningReportDrawerProps> = ({ sc
             <h4 className="font-extrabold text-[10px] text-muted-foreground uppercase tracking-wider border-b pb-1">Eviction History</h4>
             <div className="p-4 bg-secondary/15 border border-border/40 rounded-xl flex flex-col justify-between h-28">
               <div className="flex items-start gap-2">
-                {screening.evictionStatus === 'No Records Found' ? (
+                {(screening as any).evictionHistory === 'No Records' || screening.evictionStatus === 'No Records Found' ? (
                   <Shield className="w-5 h-5 text-emerald-500 shrink-0" />
-                ) : screening.evictionStatus === 'Records Found' ? (
+                ) : (screening as any).evictionHistory === 'Flagged' || screening.evictionStatus === 'Records Found' ? (
                   <ShieldAlert className="w-5 h-5 text-rose-500 shrink-0" />
                 ) : (
                   <Loader2 className="w-5 h-5 text-muted-foreground animate-spin shrink-0" />
@@ -234,7 +234,7 @@ export const ScreeningReportDrawer: React.FC<ScreeningReportDrawerProps> = ({ sc
                   <p className="text-[10px] text-muted-foreground font-medium mt-0.5">Past landlord court logs.</p>
                 </div>
               </div>
-              <p className="text-[10px] font-bold text-foreground">{screening.evictionStatus}</p>
+              <p className="text-[10px] font-bold text-foreground">{screening.evictionStatus || ((screening as any).evictionHistory === 'No Records' ? 'No Records Found' : 'Records Found')}</p>
             </div>
           </div>
         </div>
@@ -298,7 +298,7 @@ export const ScreeningReportDrawer: React.FC<ScreeningReportDrawerProps> = ({ sc
       {/* DRAWER FOOTER ACTIONS */}
       <div className="p-4 border-t bg-secondary/15 flex justify-end gap-2 shrink-0">
         <Button variant="outline" onClick={onClose} disabled={approveMutation.isPending || declineMutation.isPending || generateReportMutation.isPending}>Close</Button>
-        {(screening.screeningStatus === 'Processing' || screening.screeningStatus === 'Pending Approval') && (
+        {(screening.screeningStatus === 'Processing' || screening.screeningStatus === 'Pending Approval' || (screening as any).status === 'Processing' || (screening as any).status === 'Pending Approval') && (
           <Button
             onClick={() => generateReportMutation.mutate()}
             className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold flex items-center gap-1"
@@ -312,7 +312,7 @@ export const ScreeningReportDrawer: React.FC<ScreeningReportDrawerProps> = ({ sc
             Run Check & Generate Report
           </Button>
         )}
-        {screening.screeningStatus === 'Completed' && (
+        {(screening.screeningStatus === 'Completed' || (screening as any).status === 'Completed') && (
           <>
             <Button
               onClick={() => declineMutation.mutate()}

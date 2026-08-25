@@ -12,6 +12,7 @@ import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { Button } from '../../components/ui/Button';
 import { Loader2, ArrowLeft } from 'lucide-react';
+import { mapBackendErrors } from '../../utils/errorMapping';
 
 const propertyFormSchema = zod.object({
   name: zod.string().min(1, 'Property Name is required'),
@@ -62,11 +63,15 @@ export const NewPropertyPage: React.FC = () => {
       setSuccess(true);
       setTimeout(() => navigate({ to: '/properties' }), 2000);
     },
+    onError: (err: any) => {
+      mapBackendErrors(err, setError);
+    }
   });
 
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors },
   } = useForm<PropertyFormInputs>({
     resolver: zodResolver(propertyFormSchema),
@@ -206,21 +211,25 @@ export const NewPropertyPage: React.FC = () => {
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Year Built</label>
               <Input type="number" {...register('yearBuilt', { valueAsNumber: true })} />
+              {errors.yearBuilt && <p className="text-rose-500 text-xs font-semibold">{errors.yearBuilt.message}</p>}
             </div>
 
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Total Buildings</label>
               <Input type="number" {...register('totalBuildings', { valueAsNumber: true })} />
+              {errors.totalBuildings && <p className="text-rose-500 text-xs font-semibold">{errors.totalBuildings.message}</p>}
             </div>
 
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Total Units</label>
               <Input type="number" {...register('totalUnits', { valueAsNumber: true })} />
+              {errors.totalUnits && <p className="text-rose-500 text-xs font-semibold">{errors.totalUnits.message}</p>}
             </div>
 
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Square Footage</label>
               <Input type="number" {...register('squareFootage', { valueAsNumber: true })} />
+              {errors.squareFootage && <p className="text-rose-500 text-xs font-semibold">{errors.squareFootage.message}</p>}
             </div>
           </div>
         </div>
@@ -232,16 +241,19 @@ export const NewPropertyPage: React.FC = () => {
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Purchase Price ($)</label>
               <Input type="number" {...register('purchasePrice', { valueAsNumber: true })} />
+              {errors.purchasePrice && <p className="text-rose-500 text-xs font-semibold">{errors.purchasePrice.message}</p>}
             </div>
 
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Current Value ($)</label>
               <Input type="number" {...register('currentValue', { valueAsNumber: true })} />
+              {errors.currentValue && <p className="text-rose-500 text-xs font-semibold">{errors.currentValue.message}</p>}
             </div>
 
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Monthly Expenses ($)</label>
               <Input type="number" {...register('monthlyExpenses', { valueAsNumber: true })} />
+              {errors.monthlyExpenses && <p className="text-rose-500 text-xs font-semibold">{errors.monthlyExpenses.message}</p>}
             </div>
           </div>
         </div>

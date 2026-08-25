@@ -7,10 +7,13 @@ import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { PermissionMatrix } from '../components/PermissionMatrix';
 import { ShieldCheck, Trash2, Settings, UserPlus } from 'lucide-react';
+import { ConfirmDialog } from '../../../components/ConfirmDialog';
 
 export const RolesPage: React.FC = () => {
   const queryClient = useQueryClient();
   const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
+  const [deleteManagerId, setDeleteManagerId] = useState<string | null>(null);
+  const [deleteManagerName, setDeleteManagerName] = useState<string>('');
 
   // Manager Form State
   const [managerForm, setManagerForm] = useState({
@@ -88,6 +91,13 @@ export const RolesPage: React.FC = () => {
       triggerNotification(err.message || 'Failed to delete manager.', 'info');
     }
   });
+
+  const confirmDeleteManager = () => {
+    if (deleteManagerId) {
+      deleteManagerMutation.mutate(deleteManagerId);
+      setDeleteManagerId(null);
+    }
+  };
 
   // Mutations
   const createRoleMutation = useMutation({
@@ -341,9 +351,8 @@ export const RolesPage: React.FC = () => {
                         </button>
                         <button
                           onClick={() => {
-                            if (window.confirm(`Are you sure you want to delete manager "${r.name}"?`)) {
-                              deleteManagerMutation.mutate(r.id);
-                            }
+                            setDeleteManagerId(r.id);
+                            setDeleteManagerName(r.name);
                           }}
                           className="p-1 hover:bg-rose-500/10 rounded text-rose-500 hover:text-rose-600 text-[10px] font-bold flex items-center gap-0.5"
                           title="Delete Manager"
@@ -374,6 +383,17 @@ export const RolesPage: React.FC = () => {
       </div>
 
 
+      <ConfirmDialog
+        open={deleteManagerId !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteManagerId(null);
+        }}
+        title="Delete Property Manager"
+        description={`Are you sure you want to delete manager "${deleteManagerName}"? This action cannot be undone.`}
+        onConfirm={confirmDeleteManager}
+        confirmText="Delete"
+        variant="destructive"
+      />
     </div>
   );
 };

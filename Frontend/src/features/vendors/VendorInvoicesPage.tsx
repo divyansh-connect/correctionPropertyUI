@@ -82,6 +82,7 @@ export const VendorInvoicesPage: React.FC = () => {
                 variant="ghost"
                 size="icon"
                 onClick={() => approveMutation.mutate(row.original.id)}
+                disabled={approveMutation.isPending || rejectMutation.isPending}
                 className="text-emerald-500 hover:bg-emerald-500/10 h-8 w-8"
                 title="Approve Invoice"
               >
@@ -91,6 +92,7 @@ export const VendorInvoicesPage: React.FC = () => {
                 variant="ghost"
                 size="icon"
                 onClick={() => rejectMutation.mutate(row.original.id)}
+                disabled={approveMutation.isPending || rejectMutation.isPending}
                 className="text-rose-500 hover:bg-rose-500/10 h-8 w-8"
                 title="Reject Invoice"
               >
@@ -169,9 +171,9 @@ export const VendorInvoicesPage: React.FC = () => {
             </div>
 
             <div className="flex justify-end space-x-2 pt-4 border-t">
-              <Button variant="outline" onClick={() => setSelectedInvoice(null)}>Close</Button>
+              <Button variant="outline" onClick={() => setSelectedInvoice(null)} disabled={approveMutation.isPending}>Close</Button>
               {selectedInvoice.status !== 'Paid' && selectedInvoice.status !== 'Approved' && (
-                <Button onClick={() => approveMutation.mutate(selectedInvoice.id)}>Approve Invoice</Button>
+                <Button onClick={() => approveMutation.mutate(selectedInvoice.id)} loading={approveMutation.isPending}>Approve Invoice</Button>
               )}
             </div>
           </div>

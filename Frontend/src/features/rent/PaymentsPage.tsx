@@ -229,6 +229,7 @@ export const PaymentsPage: React.FC = () => {
         title={t('rentPaymentsPage.refundTitle')}
         description={t('rentPaymentsPage.refundDesc')}
         confirmText={t('rentPaymentsPage.confirmRefund')}
+        loading={refundMutation.isPending}
         onConfirm={() => refundId && refundMutation.mutate(refundId)}
       />
 
@@ -239,6 +240,7 @@ export const PaymentsPage: React.FC = () => {
         description={t('rentPaymentsPage.voidDesc')}
         confirmText={t('rentPaymentsPage.voidPayment')}
         variant="destructive"
+        loading={voidMutation.isPending}
         onConfirm={() => voidId && voidMutation.mutate(voidId)}
       />
     </div>

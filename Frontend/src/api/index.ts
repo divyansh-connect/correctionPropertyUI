@@ -1047,15 +1047,23 @@ export const api = {
           id: s.id,
           applicantName: s.tenant ? `${s.tenant.firstName || ''} ${s.tenant.lastName || ''}`.trim() : 'Unknown Tenant',
           applicantEmail: s.tenant?.email || '',
+          applicantPhone: s.tenant?.phone || '',
           propertyName: s.tenant?.unit?.property?.name || 'N/A',
           unitNumber: s.tenant?.unit?.unitNumber ? `Unit ${s.tenant.unit.unitNumber}` : 'N/A',
           creditScore: s.creditScore,
           criminalBackground: s.criminalPass ? 'Passed' : 'Flagged',
           evictionHistory: s.evictionPass ? 'No Records' : 'Flagged',
+          criminalStatus: s.criminalPass ? 'No Records Found' : 'Records Found',
+          evictionStatus: s.evictionPass ? 'No Records Found' : 'Records Found',
           status: s.status,
           screeningStatus: s.status || 'Processing',
           screeningPackage: 'Basic',
           date: s.createdAt,
+          dob: s.dob,
+          ssn: s.ssn,
+          authorized: s.authorized,
+          documentUrl: s.documentUrl,
+          documentName: s.documentName,
         }));
       } catch (e) {
         console.error('Screening reports fetch failed:', e);
@@ -1344,17 +1352,26 @@ export const api = {
         const leases = res.data || [];
         const activeLease = leases[0];
         return {
-          currentRent: activeLease ? activeLease.rentAmount : 1250,
+          currentRent: activeLease ? activeLease.rentAmount : 0,
           outstandingBalance: 0,
-          nextDueDate: activeLease ? activeLease.endDate.split('T')[0] : '2026-08-01',
+          nextDueDate: activeLease ? activeLease.endDate.split('T')[0] : 'N/A',
           unreadMessages: 0,
           packagesWaiting: 0,
           activeVisitors: 0,
-          leaseExpiration: activeLease ? activeLease.endDate.split('T')[0] : '2027-04-30',
+          leaseExpiration: activeLease ? activeLease.endDate.split('T')[0] : 'N/A',
           openMaintenanceRequests: 0,
         };
       } catch (e) {
-        return mockApi.tenantPortal.getMetrics();
+        return {
+          currentRent: 0,
+          outstandingBalance: 0,
+          nextDueDate: 'N/A',
+          unreadMessages: 0,
+          packagesWaiting: 0,
+          activeVisitors: 0,
+          leaseExpiration: 'N/A',
+          openMaintenanceRequests: 0,
+        };
       }
     },
   },
@@ -2028,30 +2045,10 @@ export const api = {
     get: async () => {
       try {
         const res: any = await apiClient.get('/portal/tenant/lease');
-        return res.data || {
-          id: 'lease-101',
-          propertyName: 'Oakridge Heights',
-          unitNumber: 'Unit 402',
-          rentAmount: 2400,
-          securityDeposit: 2400,
-          leaseStart: '2025-08-01',
-          leaseEnd: '2026-07-31',
-          status: 'Active',
-          tenantName: 'Alex Mercer',
-        };
+        return res.data || null;
       } catch (e) {
         console.error('Tenant lease fetch failed:', e);
-        return {
-          id: 'lease-101',
-          propertyName: 'Oakridge Heights',
-          unitNumber: 'Unit 402',
-          rentAmount: 2400,
-          securityDeposit: 2400,
-          leaseStart: '2025-08-01',
-          leaseEnd: '2026-07-31',
-          status: 'Active',
-          tenantName: 'Alex Mercer',
-        };
+        return null;
       }
     },
     getAll: async () => {
@@ -2060,39 +2057,9 @@ export const api = {
         if (Array.isArray(res.data) && res.data.length > 0) {
           return res.data;
         }
-        return [{
-          id: 'lease-101',
-          propertyName: 'Apex Heights Apartments',
-          unitNumber: 'Unit 204',
-          rentAmount: 1850,
-          securityDeposit: 1850,
-          leaseStart: '2025-08-01',
-          leaseEnd: '2026-07-31',
-          startDate: '2025-08-01',
-          endDate: '2026-07-31',
-          status: 'Active',
-          tenantName: 'Sarah Connor',
-          tenant: { firstName: 'Sarah', lastName: 'Connor', email: 'sarah.connor@tenant.com' },
-          property: { name: 'Apex Heights Apartments', streetAddress: '123 Harbor View Dr', city: 'Austin', state: 'TX', zip: '78701' },
-          unit: { unitNumber: '204', bedrooms: 2, bathrooms: 2, squareFootage: 1100, floor: 2 },
-        }];
+        return [];
       } catch (e) {
-        return [{
-          id: 'lease-101',
-          propertyName: 'Apex Heights Apartments',
-          unitNumber: 'Unit 204',
-          rentAmount: 1850,
-          securityDeposit: 1850,
-          leaseStart: '2025-08-01',
-          leaseEnd: '2026-07-31',
-          startDate: '2025-08-01',
-          endDate: '2026-07-31',
-          status: 'Active',
-          tenantName: 'Sarah Connor',
-          tenant: { firstName: 'Sarah', lastName: 'Connor', email: 'sarah.connor@tenant.com' },
-          property: { name: 'Apex Heights Apartments', streetAddress: '123 Harbor View Dr', city: 'Austin', state: 'TX', zip: '78701' },
-          unit: { unitNumber: '204', bedrooms: 2, bathrooms: 2, squareFootage: 1100, floor: 2 },
-        }];
+        return [];
       }
     },
     askAi: async (question: string) => {
@@ -2461,6 +2428,14 @@ export const api = {
       } catch (e) {
         return { success: true, message: 'Password updated successfully' };
       }
+    },
+    getPublicProperties: async () => {
+      const res: any = await apiClient.get('/auth/public-properties');
+      return res.data;
+    },
+    tenantSignup: async (data: any) => {
+      const res: any = await apiClient.post('/auth/tenant-signup', data);
+      return res.data;
     },
   },
   integrations: {

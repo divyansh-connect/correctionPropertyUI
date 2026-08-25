@@ -14,6 +14,8 @@ import { ColumnDef } from '@tanstack/react-table';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { Button } from '../../components/ui/Button';
+import { mapBackendErrors } from '../../utils/errorMapping';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 
 const ownerFormSchema = zod.object({
   name: zod.string().min(1, 'Full Name is required'),
@@ -34,6 +36,7 @@ export const OwnersPage: React.FC = () => {
   const [editingOwner, setEditingOwner] = useState<Owner | null>(null);
   const [viewingOwner, setViewingOwner] = useState<Owner | null>(null);
   const [selectedProperties, setSelectedProperties] = useState<string[]>([]);
+  const [deleteOwnerId, setDeleteOwnerId] = useState<string | null>(null);
 
   const { data: owners = [], isLoading } = useQuery({
     queryKey: ['owners'],
@@ -49,6 +52,7 @@ export const OwnersPage: React.FC = () => {
     register,
     handleSubmit,
     reset,
+    setError,
     formState: { errors },
   } = useForm<OwnerFormInputs>({
     resolver: zodResolver(ownerFormSchema),
@@ -67,6 +71,9 @@ export const OwnersPage: React.FC = () => {
       reset();
       setSelectedProperties([]);
     },
+    onError: (err: any) => {
+      mapBackendErrors(err, setError);
+    }
   });
 
   const updateMutation = useMutation({
@@ -80,6 +87,9 @@ export const OwnersPage: React.FC = () => {
       reset();
       setSelectedProperties([]);
     },
+    onError: (err: any) => {
+      mapBackendErrors(err, setError);
+    }
   });
 
   const deleteMutation = useMutation({
@@ -109,8 +119,13 @@ export const OwnersPage: React.FC = () => {
   };
 
   const handleDeleteClick = (id: string) => {
-    if (window.confirm('Are you sure you want to delete this owner?')) {
-      deleteMutation.mutate(id);
+    setDeleteOwnerId(id);
+  };
+
+  const confirmDeleteOwner = () => {
+    if (deleteOwnerId) {
+      deleteMutation.mutate(deleteOwnerId);
+      setDeleteOwnerId(null);
     }
   };
 
@@ -278,6 +293,7 @@ export const OwnersPage: React.FC = () => {
               <div className="space-y-1">
                 <label className="text-xs font-bold text-muted-foreground uppercase">Phone</label>
                 <Input
+                  type="tel"
                   placeholder="(555) 555-0100"
                   {...register('phone')}
                 />
@@ -423,6 +439,17 @@ export const OwnersPage: React.FC = () => {
           </div>
         </div>
       )}
+      <ConfirmDialog
+        open={deleteOwnerId !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteOwnerId(null);
+        }}
+        title="Delete Owner"
+        description="Are you sure you want to delete this owner? This action cannot be undone."
+        onConfirm={confirmDeleteOwner}
+        confirmText="Delete"
+        variant="destructive"
+      />
     </div>
   );
 };

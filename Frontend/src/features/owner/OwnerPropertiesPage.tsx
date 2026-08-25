@@ -10,7 +10,7 @@ import { StatusBadge } from '../../components/StatusBadge';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
-import { Building, MapPin, Plus, Trash2, Home, DollarSign, Users, Layers, ShieldCheck, Mail, Phone, Calendar } from 'lucide-react';
+import { Building, MapPin, Trash2, Home, DollarSign, Users, Layers, ShieldCheck, Mail, Phone, Calendar } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 export const OwnerPropertiesPage: React.FC = () => {
@@ -78,11 +78,6 @@ export const OwnerPropertiesPage: React.FC = () => {
           { label: t('header.home'), href: '/owner' },
           { label: t('owner.ownerProperties.title') },
         ]}
-        action={{
-          label: t('owner.ownerProperties.addProperty'),
-          onClick: () => setIsCreateOpen(true),
-          icon: <Plus className="w-4.5 h-4.5" />,
-        }}
       />
 
       <div className="flex flex-col gap-4 w-full">
