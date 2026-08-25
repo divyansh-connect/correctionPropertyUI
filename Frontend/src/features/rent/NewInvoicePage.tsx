@@ -46,7 +46,6 @@ export const NewInvoicePage: React.FC = () => {
       dueDate: new Date().toISOString().split('T')[0],
       lineItems: [
         { description: 'Rent Charge', amount: 0 },
-        { description: 'Utility Reimbursement', amount: 100 },
       ],
     },
   });

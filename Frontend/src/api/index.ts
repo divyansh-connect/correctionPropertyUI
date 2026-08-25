@@ -1348,18 +1348,16 @@ export const api = {
     ...mockApi.tenantPortal,
     getMetrics: async () => {
       try {
-        const res: any = await apiClient.get('/portal/tenant/leases');
-        const leases = res.data || [];
-        const activeLease = leases[0];
+        const res: any = await apiClient.get('/portal/tenant/metrics');
         return {
-          currentRent: activeLease ? activeLease.rentAmount : 0,
-          outstandingBalance: 0,
-          nextDueDate: activeLease ? activeLease.endDate.split('T')[0] : 'N/A',
-          unreadMessages: 0,
-          packagesWaiting: 0,
-          activeVisitors: 0,
-          leaseExpiration: activeLease ? activeLease.endDate.split('T')[0] : 'N/A',
-          openMaintenanceRequests: 0,
+          currentRent: res.data?.currentRent || 0,
+          outstandingBalance: res.data?.outstandingBalance || 0,
+          nextDueDate: res.data?.nextDueDate || 'N/A',
+          unreadMessages: res.data?.unreadMessages || 0,
+          packagesWaiting: res.data?.packagesWaiting || 0,
+          activeVisitors: res.data?.activeVisitors || 0,
+          leaseExpiration: res.data?.leaseExpiration || 'N/A',
+          openMaintenanceRequests: res.data?.openMaintenanceRequests || 0,
         };
       } catch (e) {
         return {
