@@ -58,10 +58,15 @@ export const RentLedgerPage: React.FC = () => {
     queryFn: () => api.tenant.getAll(),
   });
 
+  const { data: profile } = useQuery({
+    queryKey: ['user-profile'],
+    queryFn: () => api.userProfile.get(),
+  });
+
   const selectedTenant = tenants.find((t) => t.id === selectedTenantId);
   const tenantProperty = selectedTenant ? properties.find((p) => p.id === selectedTenant.propertyId) : null;
   const propertyAddress = tenantProperty ? tenantProperty.address : (selectedTenant?.propertyName ? `${selectedTenant.propertyName}, Austin, TX` : 'N/A');
-  const managementCompany = tenantProperty?.managementCompany || 'Apex Property Management';
+  const managementCompany = profile?.company || tenantProperty?.managementCompany || 'Astoria Group';
 
   const selectedTenantLedger = React.useMemo(() => {
     if (!selectedTenant) return [];
@@ -181,6 +186,53 @@ export const RentLedgerPage: React.FC = () => {
 
   return (
     <div>
+      <style>{`
+        @page {
+          size: A4 portrait;
+          margin: 15mm 15mm 15mm 15mm;
+        }
+        @media print {
+          body {
+            background: white !important;
+            color: black !important;
+          }
+          body * {
+            visibility: hidden !important;
+          }
+          #printable-rent-ledger, #printable-rent-ledger *,
+          #printable-full-ledger, #printable-full-ledger * {
+            visibility: visible !important;
+          }
+          #printable-rent-ledger, #printable-full-ledger {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            border: none !important;
+            box-shadow: none !important;
+            background: white !important;
+            color: black !important;
+            padding: 0 !important;
+            margin: 0 !important;
+          }
+          .no-print {
+            display: none !important;
+          }
+          table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+          }
+          th, td {
+            border-bottom: 1px solid #e2e8f0 !important;
+            padding: 8px 4px !important;
+            color: black !important;
+          }
+          th {
+            font-weight: 800 !important;
+          }
+        }
+      `}</style>
+
       <PageHeader
         title={t('rentLedgerPage.title')}
         description={t('rentLedgerPage.desc')}
@@ -197,7 +249,7 @@ export const RentLedgerPage: React.FC = () => {
             <span className="text-xs font-bold text-muted-foreground uppercase">
               {t('rentLedgerPage.showingItems', { count: filteredLedger.length })}
             </span>
-            <Button variant="outline" size="sm" onClick={handleExport} className="text-xs font-semibold flex items-center gap-1.5">
+            <Button variant="outline" size="sm" onClick={() => window.print()} className="text-xs font-semibold flex items-center gap-1.5 cursor-pointer">
               <Download className="w-3.5 h-3.5" />
               {t('rentLedgerPage.exportCsv')}
             </Button>
@@ -251,71 +303,34 @@ export const RentLedgerPage: React.FC = () => {
               {t('rentLedgerPage.backToLedger')}
             </Button>
           </div>
-          <style>{`
-            @page {
-              size: A4 portrait;
-              margin: 15mm 15mm 15mm 15mm;
-            }
-            @media print {
-              body {
-                background: white !important;
-                color: black !important;
-              }
-              body * {
-                visibility: hidden !important;
-              }
-              #printable-rent-ledger, #printable-rent-ledger * {
-                visibility: visible !important;
-              }
-              #printable-rent-ledger {
-                position: absolute !important;
-                left: 0 !important;
-                top: 0 !important;
-                width: 100% !important;
-                border: none !important;
-                box-shadow: none !important;
-                background: white !important;
-                color: black !important;
-                padding: 0 !important;
-                margin: 0 !important;
-              }
-              .no-print {
-                display: none !important;
-              }
-              table {
-                width: 100% !important;
-                border-collapse: collapse !important;
-              }
-              th, td {
-                border-bottom: 1px solid #e2e8f0 !important;
-                padding: 8px 4px !important;
-                color: black !important;
-              }
-              th {
-                font-weight: 800 !important;
-              }
-            }
-          `}</style>
-          
           <div id="printable-rent-ledger" className="space-y-6">
             {/* Ledger Header */}
-            <div className="flex justify-between items-start border-b pb-4">
-              <div className="space-y-1">
-                <span className="text-[10px] font-extrabold uppercase bg-primary/10 text-primary px-2 py-0.5 rounded no-print">
-                  {t('rentLedgerPage.officialStatement')}
-                </span>
-                <h3 className="font-extrabold text-base text-foreground mt-1">{managementCompany}</h3>
-                <p className="text-muted-foreground text-[10px] leading-relaxed">
-                  {propertyAddress}
-                </p>
+            <div className="border-b pb-4 space-y-4 text-foreground">
+              <div className="flex justify-between items-start">
+                <div>
+                  <span className="text-[10px] font-extrabold uppercase bg-primary/10 text-primary px-2 py-0.5 rounded no-print">
+                    {t('rentLedgerPage.officialStatement')}
+                  </span>
+                  <h2 className="font-black text-xl text-primary mt-1">{managementCompany}</h2>
+                </div>
+                <div className="text-[10px] text-muted-foreground uppercase font-bold text-right no-print">
+                  Generated: {new Date().toLocaleDateString()}
+                </div>
               </div>
-              <div className="text-right space-y-1">
-                <p className="text-muted-foreground text-[10px] uppercase font-bold">{t('rentLedgerPage.statementRecipient')}</p>
-                <p className="font-extrabold text-foreground text-sm">{selectedTenant.firstName} {selectedTenant.lastName}</p>
-                <p className="text-muted-foreground text-[10px] leading-relaxed">
-                  Phone: {selectedTenant.phone || 'N/A'} • Email: {selectedTenant.email || 'N/A'}<br />
-                  {selectedTenant.propertyName ? `${selectedTenant.propertyName} • Unit ${selectedTenant.unitNumber}` : 'Unassigned Portfolio Resident'}
-                </p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-secondary/10 p-4 rounded-xl border border-border/80 text-xs font-semibold">
+                <div className="space-y-1.5">
+                  <p className="text-muted-foreground uppercase text-[9px] font-bold tracking-wider">Tenant Information</p>
+                  <p className="text-foreground text-sm font-extrabold">{selectedTenant.firstName} {selectedTenant.lastName}</p>
+                  <p className="text-muted-foreground">Phone: <span className="text-foreground">{selectedTenant.phone || 'N/A'}</span></p>
+                  <p className="text-muted-foreground">Email: <span className="text-foreground">{selectedTenant.email || 'N/A'}</span></p>
+                </div>
+                <div className="space-y-1.5 md:text-right">
+                  <p className="text-muted-foreground uppercase text-[9px] font-bold tracking-wider">Location & Unit Details</p>
+                  <p className="text-foreground text-sm font-extrabold">Unit {selectedTenant.unitNumber || 'N/A'}</p>
+                  <p className="text-muted-foreground">Property: <span className="text-foreground">{selectedTenant.propertyName || 'Property'}</span></p>
+                  <p className="text-muted-foreground">Address: <span className="text-foreground">{propertyAddress}</span></p>
+                </div>
               </div>
             </div>
 
@@ -383,7 +398,69 @@ export const RentLedgerPage: React.FC = () => {
           </div>
         </div>
       ) : (
-        <DataTable columns={columns} data={filteredLedger} loading={isLoading} error={error ? error.message : null} />
+        <>
+          <DataTable columns={columns} data={filteredLedger} loading={isLoading} error={error ? error.message : null} />
+          
+          <div id="printable-full-ledger" className="hidden print:block space-y-6">
+            {/* Ledger Header */}
+            <div className="border-b pb-4 space-y-2 text-foreground">
+              <div className="flex justify-between items-start">
+                <div>
+                  <span className="text-[10px] font-extrabold uppercase bg-primary/10 text-primary px-2 py-0.5 rounded no-print">
+                    Official Portfolio Ledger Statement
+                  </span>
+                  <h2 className="font-black text-xl text-primary mt-1">{managementCompany}</h2>
+                </div>
+                <div className="text-[10px] text-muted-foreground uppercase font-bold text-right">
+                  Generated: {new Date().toLocaleDateString()}
+                </div>
+              </div>
+            </div>
+
+            {/* Ledger Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="border-b border-border text-muted-foreground uppercase text-[10px] tracking-wider font-bold">
+                    <th className="py-2.5">Date</th>
+                    <th className="py-2.5">Tenant</th>
+                    <th className="py-2.5">Property (Unit)</th>
+                    <th className="py-2.5">Description</th>
+                    <th className="py-2.5 text-right">Debit (Charges)</th>
+                    <th className="py-2.5 text-right">Credit (Payments)</th>
+                    <th className="py-2.5 text-right">Running Balance</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/40">
+                  {filteredLedger.map((entry, idx) => (
+                    <tr key={idx} className="hover:bg-secondary/10">
+                      <td className="py-2.5 font-semibold text-muted-foreground">{entry.date}</td>
+                      <td className="py-2.5 text-foreground font-extrabold">{entry.tenantName}</td>
+                      <td className="py-2.5 text-foreground font-semibold">{entry.propertyName} (Unit {entry.unitNumber})</td>
+                      <td className="py-2.5 text-foreground font-semibold">{entry.description}</td>
+                      <td className="py-2.5 text-right text-rose-500 font-bold">
+                        {entry.debit > 0 ? `$${entry.debit.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '-'}
+                      </td>
+                      <td className="py-2.5 text-right text-emerald-500 font-bold">
+                        {entry.credit > 0 ? `$${entry.credit.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '-'}
+                      </td>
+                      <td className={`py-2.5 text-right font-black ${entry.balance > 0 ? 'text-rose-500' : 'text-emerald-500'}`}>
+                        ${entry.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      </td>
+                    </tr>
+                  ))}
+                  {filteredLedger.length === 0 && (
+                    <tr>
+                      <td colSpan={7} className="py-8 text-center text-muted-foreground italic font-medium">
+                        No ledger transactions found.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );

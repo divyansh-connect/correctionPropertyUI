@@ -55,12 +55,12 @@ const detailsSchema = zod.object({
   
   employer: zod.string().min(1, 'Employer Name is required'),
   position: zod.string().min(1, 'Position/Title is required'),
-  monthlyIncome: zod.number({ invalid_type_error: 'Income must be a number' }).min(1, 'Monthly Income must be positive'),
+  monthlyIncome: zod.number().min(1, 'Monthly Income must be positive'),
   employmentStatus: zod.enum(['Full-Time', 'Part-Time', 'Self-Employed', 'Unemployed', 'Retired']),
   
   currentAddress: zod.string().min(1, 'Current Address is required'),
   
-  budget: zod.number({ invalid_type_error: 'Budget must be a number' }).min(1, 'Monthly Budget must be positive'),
+  budget: zod.number().min(1, 'Monthly Budget must be positive'),
   moveInDate: zod.string().min(1, 'Desired Move-in Date is required'),
   priority: zod.enum(['Low', 'Medium', 'High']),
   notes: zod.string().optional().or(zod.literal('')),
@@ -80,6 +80,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ navigate }) => {
   const [signupStep1Data, setSignupStep1Data] = useState<CredentialsFormInputs | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
   const [isSubmittingSignup, setIsSubmittingSignup] = useState(false);
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
 
   // Queries for public properties list
   const { data: properties = [], isLoading: isLoadingProperties } = useQuery({
@@ -165,10 +166,22 @@ export const LoginPage: React.FC<LoginPageProps> = ({ navigate }) => {
   };
 
   // Action: Step 1 Next
-  const onStep1NextSubmit = (data: CredentialsFormInputs) => {
+  const onStep1NextSubmit = async (data: CredentialsFormInputs) => {
     setApiError(null);
-    setSignupStep1Data(data);
-    setMode('signup-step2');
+    setIsCheckingEmail(true);
+    try {
+      const checkRes = await api.auth.checkEmail(data.email);
+      if (checkRes.exists) {
+        setApiError('This email address is already registered. Please sign in instead.');
+        return;
+      }
+      setSignupStep1Data(data);
+      setMode('signup-step2');
+    } catch (err: any) {
+      setApiError(err.message || 'Error checking email availability. Please try again.');
+    } finally {
+      setIsCheckingEmail(false);
+    }
   };
 
   // Action: Step 2 Next
@@ -348,7 +361,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ navigate }) => {
             <label className="text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">Email Address</label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
-              <Input placeholder="john.doe@gmail.com" type="email" {...registerStep1('email')} className="pl-9 h-9 text-xs" />
+              <Input placeholder="john.doe@gmail.com" type="email" {...registerStep1('email')} className="pl-10 h-9 text-xs" />
             </div>
             {step1Errors.email && <p className="text-rose-500 text-[10px]">{step1Errors.email.message}</p>}
           </div>
@@ -357,7 +370,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ navigate }) => {
             <label className="text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">Phone Number</label>
             <div className="relative">
               <Phone className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
-              <Input placeholder="(512) 555-0199" type="tel" {...registerStep1('phone')} className="pl-9 h-9 text-xs" />
+              <Input placeholder="(512) 555-0199" type="tel" {...registerStep1('phone')} className="pl-10 h-9 text-xs" />
             </div>
             {step1Errors.phone && <p className="text-rose-500 text-[10px]">{step1Errors.phone.message}</p>}
           </div>
@@ -366,7 +379,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ navigate }) => {
             <label className="text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">Choose Password</label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
-              <Input placeholder="••••••••" type="password" {...registerStep1('password')} className="pl-9 h-9 text-xs" />
+              <Input placeholder="••••••••" type="password" {...registerStep1('password')} className="pl-10 h-9 text-xs" />
             </div>
             {step1Errors.password && <p className="text-rose-500 text-[10px]">{step1Errors.password.message}</p>}
           </div>
@@ -374,7 +387,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ navigate }) => {
           <Button
             type="submit"
             className="w-full flex items-center justify-center h-10 font-bold bg-primary text-white hover:bg-primary/90 mt-4"
+            disabled={isCheckingEmail}
           >
+            {isCheckingEmail ? (
+              <Loader2 className="w-4 h-4 animate-spin mr-2" />
+            ) : null}
             Next: Select Property <ArrowRight className="w-4 h-4 ml-1" />
           </Button>
         </form>
@@ -577,7 +594,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ navigate }) => {
                 <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase">Nationality</label>
                 <div className="relative">
                   <Globe className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-                  <Input placeholder="American" {...registerStep3('nationality')} className="pl-8.5 h-9" />
+                  <Input placeholder="American" {...registerStep3('nationality')} className="pl-10 h-9" />
                 </div>
                 {step3Errors.nationality && <p className="text-rose-500 text-[9px] mt-0.5">{step3Errors.nationality.message}</p>}
               </div>
@@ -620,7 +637,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ navigate }) => {
                 <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase">Employer Name</label>
                 <div className="relative">
                   <Briefcase className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-                  <Input placeholder="Google Inc." {...registerStep3('employer')} className="pl-8.5 h-9" />
+                  <Input placeholder="Google Inc." {...registerStep3('employer')} className="pl-10 h-9" />
                 </div>
                 {step3Errors.employer && <p className="text-rose-500 text-[9px] mt-0.5">{step3Errors.employer.message}</p>}
               </div>
@@ -636,7 +653,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ navigate }) => {
                 <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase">Monthly Income ($)</label>
                 <div className="relative">
                   <DollarSign className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-                  <Input type="number" {...registerStep3('monthlyIncome', { valueAsNumber: true })} className="pl-8.5 h-9" />
+                  <Input type="number" {...registerStep3('monthlyIncome', { valueAsNumber: true })} className="pl-10 h-9" />
                 </div>
                 {step3Errors.monthlyIncome && <p className="text-rose-500 text-[9px] mt-0.5">{step3Errors.monthlyIncome.message}</p>}
               </div>
@@ -684,7 +701,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ navigate }) => {
                 <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase">Monthly Budget ($)</label>
                 <div className="relative">
                   <DollarSign className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-                  <Input type="number" {...registerStep3('budget', { valueAsNumber: true })} className="pl-8.5 h-9" />
+                  <Input type="number" {...registerStep3('budget', { valueAsNumber: true })} className="pl-10 h-9" />
                 </div>
                 {step3Errors.budget && <p className="text-rose-500 text-[9px] mt-0.5">{step3Errors.budget.message}</p>}
               </div>
@@ -692,7 +709,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ navigate }) => {
                 <label className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase font-semibold">Desired Move-In</label>
                 <div className="relative">
                   <Calendar className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-                  <Input type="date" {...registerStep3('moveInDate')} className="pl-8.5 h-9" />
+                  <Input type="date" {...registerStep3('moveInDate')} className="pl-10 h-9" />
                 </div>
                 {step3Errors.moveInDate && <p className="text-rose-500 text-[9px] mt-0.5">{step3Errors.moveInDate.message}</p>}
               </div>

@@ -1172,7 +1172,7 @@ export const es = {
     desc: "Verifique pagos de crédito cronológicos, evaluaciones de facturación y totales de saldo acumulado.",
     rentCollection: "Cobranza de Renta",
     showingItems: "El libro mayor contiene {{count}} elementos",
-    exportCsv: "Exportar CSV",
+    exportCsv: "Exportar PDF",
     searchPlaceholder: "Buscar en el libro mayor por nombre de inquilino...",
     allProperties: "Todas las Propiedades",
     transactionType: "Tipo de Transacción",
@@ -1195,7 +1195,7 @@ export const es = {
     generatedOn: "Generado el {{date}} • Libro Mayor Auditado por el Sistema",
     outstandingBalance: "Saldo Pendiente",
     closeStatement: "Cerrar Estado",
-    printStatement: "Imprimir Estado"
+    printStatement: "Exportar PDF"
   },
   staffLayout: {
     portalTitle: "Portal de Personal",

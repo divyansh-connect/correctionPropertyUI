@@ -17,7 +17,7 @@ const payFormSchema = zod.object({
   amount: zod.number().min(1, 'Amount must be positive'),
   dueDate: zod.string().min(1, 'Due Date is required'),
   paidDate: zod.string().min(1, 'Payment Date is required'),
-  paymentMethod: zod.enum(['ACH', 'Credit Card', 'Debit Card', 'Bank Transfer', 'Cash', 'Check', 'Money Order']),
+  paymentMethod: zod.enum(['ACH', 'CreditCard', 'DebitCard', 'BankTransfer', 'WireTransfer', 'Cash', 'Check', 'MoneyOrder', 'Zelle']),
   referenceNumber: zod.string().optional(),
   
   allocRent: zod.number().min(0),
@@ -89,16 +89,20 @@ export const NewPaymentPage: React.FC = () => {
       // Save data for modal
       setReceiptData({
         receiptNumber: data.referenceNumber,
-        tenantName: data.tenantName,
-        propertyName: data.propertyName,
-        unitNumber: data.unitNumber,
+        tenantName: data.tenant ? `${data.tenant.firstName} ${data.tenant.lastName}` : (data.tenantName || 'Tenant'),
+        propertyName: data.property?.name || data.propertyName || 'Property',
+        unitNumber: data.unit?.unitNumber || data.unitNumber || 'Unassigned',
+        tenantPhone: data.tenant?.phone || 'N/A',
+        companyName: data.company?.name || 'Astoria Group',
+        companyPhone: data.company?.phone || '+1 (800) 555-0199',
         amount: data.amount,
         paidDate: data.paidDate,
         paymentMethod: data.paymentMethod,
       });
 
-      // If Cash is selected, wait for manager interactions. Otherwise do regular redirect.
-      if (data.paymentMethod === 'Cash') {
+      // If Cash, Zelle, or other manual method is selected, wait for manager interactions. Otherwise do regular redirect.
+      const isManualMethod = ['Cash', 'Zelle', 'WireTransfer', 'Check', 'MoneyOrder', 'BankTransfer'].includes(data.paymentMethod);
+      if (isManualMethod) {
         setShowReceiptModal(true);
         if (sendEmailToggle) {
           setIsEmailSent(true);
@@ -216,7 +220,7 @@ export const NewPaymentPage: React.FC = () => {
         <body>
           <div class="receipt-card">
             <div class="header">
-              <div class="logo">Door<span>Loop</span></div>
+              <div class="logo" style="color: #1e3a8a; font-family: 'Segoe UI', sans-serif; font-size: 24px; font-weight: 800; text-transform: uppercase;">${receiptData.companyName}</div>
               <h1>Official Rent Receipt</h1>
               <p>Thank you for settling your balance</p>
               <div class="success-stamp">PAID & CLEARED</div>
@@ -231,8 +235,16 @@ export const NewPaymentPage: React.FC = () => {
                 <td class="value">${receiptData.tenantName}</td>
               </tr>
               <tr>
-                <td class="label">Unit Location</td>
-                <td class="value">${receiptData.propertyName} • Unit ${receiptData.unitNumber}</td>
+                <td class="label">Apartment Number</td>
+                <td class="value">Unit ${receiptData.unitNumber}</td>
+              </tr>
+              <tr>
+                <td class="label">Phone Number</td>
+                <td class="value">${receiptData.tenantPhone}</td>
+              </tr>
+              <tr>
+                <td class="label">Company Contact Number</td>
+                <td class="value">${receiptData.companyPhone}</td>
               </tr>
               <tr>
                 <td class="label">Payment Method</td>
@@ -248,8 +260,8 @@ export const NewPaymentPage: React.FC = () => {
               </tr>
             </table>
             <div class="footer">
-              WhatsLandlord Payments Gateway • Recorded by Manager<br>
-              © 2026 WhatsLandlord, Inc. All rights reserved.
+              ${receiptData.companyName} Payments Gateway • Recorded by Manager<br>
+              © 2026 ${receiptData.companyName}. All rights reserved.
             </div>
           </div>
           <script>
@@ -279,7 +291,7 @@ export const NewPaymentPage: React.FC = () => {
 
       {success && (
         <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 p-4 rounded-xl text-sm font-semibold mb-6">
-          Payment logged successfully! {paymentMethod === 'Cash' ? 'Receipt generated.' : 'Redirecting...'}
+          Payment logged successfully! {['Cash', 'Zelle', 'WireTransfer', 'Check', 'MoneyOrder', 'BankTransfer'].includes(paymentMethod) ? 'Receipt generated.' : 'Redirecting...'}
         </div>
       )}
 
@@ -326,17 +338,19 @@ export const NewPaymentPage: React.FC = () => {
               <label className="text-xs font-bold text-muted-foreground uppercase">Payment Channel</label>
               <Select {...register('paymentMethod')}>
                 <option value="ACH">ACH Direct</option>
-                <option value="Credit Card">Credit Card</option>
-                <option value="Debit Card">Debit Card</option>
-                <option value="Bank Transfer">Bank Wire</option>
+                <option value="CreditCard">Credit Card</option>
+                <option value="DebitCard">Debit Card</option>
+                <option value="BankTransfer">Bank Wire</option>
+                <option value="WireTransfer">Wire Transfer</option>
                 <option value="Check">Check</option>
                 <option value="Cash">Cash</option>
-                <option value="Money Order">Money Order</option>
+                <option value="MoneyOrder">Money Order</option>
+                <option value="Zelle">Zelle</option>
               </Select>
             </div>
 
-            {/* Cash Received Flow Options */}
-            {paymentMethod === 'Cash' && (
+            {/* Offline Payment Flow Options */}
+            {['Cash', 'Zelle', 'WireTransfer', 'Check', 'MoneyOrder', 'BankTransfer'].includes(paymentMethod) && (
               <div className="col-span-2 flex items-center space-x-2.5 bg-emerald-500/5 border border-emerald-500/20 p-3.5 rounded-2xl animate-in fade-in duration-200">
                 <input 
                   type="checkbox" 
@@ -346,7 +360,7 @@ export const NewPaymentPage: React.FC = () => {
                   className="w-4 h-4 rounded text-primary focus:ring-primary border-slate-300 cursor-pointer"
                 />
                 <label htmlFor="sendEmail" className="text-xs font-bold text-emerald-600 uppercase cursor-pointer select-none">
-                  Auto-generate and send Cash Receipt to tenant
+                  Auto-generate and send payment receipt to tenant
                 </label>
               </div>
             )}
@@ -424,7 +438,8 @@ export const NewPaymentPage: React.FC = () => {
               <div className="w-12 h-12 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mx-auto border border-emerald-500/20">
                 <Check className="w-6 h-6 stroke-[3]" />
               </div>
-              <h3 className="font-extrabold text-base text-emerald-500">Rent Payment Successful!</h3>
+              <h3 className="font-extrabold text-base text-primary uppercase">{receiptData.companyName}</h3>
+              <h4 className="font-bold text-sm text-emerald-500">Rent Payment Successful!</h4>
               <p className="text-[10px] text-muted-foreground">The transaction has been successfully recorded.</p>
             </div>
 
@@ -438,8 +453,16 @@ export const NewPaymentPage: React.FC = () => {
                 <span className="text-foreground font-bold">{receiptData.tenantName}</span>
               </div>
               <div className="flex justify-between border-b pb-2">
-                <span className="text-muted-foreground">Unit Location</span>
-                <span>Unit {receiptData.unitNumber}</span>
+                <span className="text-muted-foreground">Apartment Number</span>
+                <span className="text-foreground font-bold">Unit {receiptData.unitNumber}</span>
+              </div>
+              <div className="flex justify-between border-b pb-2">
+                <span className="text-muted-foreground">Phone Number</span>
+                <span className="text-foreground font-bold">{receiptData.tenantPhone}</span>
+              </div>
+              <div className="flex justify-between border-b pb-2">
+                <span className="text-muted-foreground">Company Contact Number</span>
+                <span className="text-foreground font-bold">{receiptData.companyPhone}</span>
               </div>
               <div className="flex justify-between border-b pb-2">
                 <span className="text-muted-foreground">Payment Method</span>

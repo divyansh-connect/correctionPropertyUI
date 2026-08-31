@@ -1179,7 +1179,7 @@ export const api = {
             date: inv.dueDate || inv.createdAt,
             amount: inv.amount,
             tenantId: inv.tenant?.id || inv.tenantId || '',
-            tenantName: inv.tenant ? `${inv.tenant.firstName} ${inv.tenant.lastName}` : 'Resident',
+            tenantName: inv.tenant ? `${inv.tenant.firstName} ${inv.tenant.lastName}` : (inv.tenantName || 'Resident'),
             propertyName: inv.propertyName || 'Property',
             unitNumber: inv.unitNumber || 'Unassigned',
             description: 'Rent Assessment Charge',
@@ -1195,9 +1195,9 @@ export const api = {
               date: pay.paidDate || pay.dueDate || pay.createdAt,
               amount: pay.amount,
               tenantId: pay.tenant?.id || pay.tenantId || '',
-              tenantName: pay.tenant ? `${pay.tenant.firstName} ${pay.tenant.lastName}` : 'Resident',
-              propertyName: pay.property?.name || 'Property',
-              unitNumber: pay.unit?.unitNumber || 'Unassigned',
+              tenantName: pay.tenant ? `${pay.tenant.firstName} ${pay.tenant.lastName}` : (pay.tenantName || 'Resident'),
+              propertyName: pay.property?.name || pay.propertyName || 'Property',
+              unitNumber: pay.unit?.unitNumber || pay.unitNumber || 'Unassigned',
               description: `Payment Received - Ref ${pay.referenceNumber || 'N/A'}`,
               transactionType: 'Payment',
               id: `led-pay-${pay.id}`,
@@ -2433,6 +2433,10 @@ export const api = {
     },
     tenantSignup: async (data: any) => {
       const res: any = await apiClient.post('/auth/tenant-signup', data);
+      return res.data;
+    },
+    checkEmail: async (email: string) => {
+      const res: any = await apiClient.post('/auth/check-email', { email });
       return res.data;
     },
   },

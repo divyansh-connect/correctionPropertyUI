@@ -76,7 +76,7 @@ export const PaymentHistoryReport: React.FC = () => {
         showStatusFilter={true}
         statusOptions={['Paid', 'Pending', 'PartiallyPaid', 'Failed', 'Refunded']}
         showPaymentMethodFilter={true}
-        paymentMethodOptions={['ACH', 'CreditCard', 'BankTransfer', 'Cash', 'Check']}
+        paymentMethodOptions={['ACH', 'CreditCard', 'DebitCard', 'BankTransfer', 'WireTransfer', 'Cash', 'Check', 'MoneyOrder', 'Zelle']}
       />
 
       <ReportTable

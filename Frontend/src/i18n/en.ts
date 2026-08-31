@@ -1172,7 +1172,7 @@ export const en = {
     desc: "Verify chronological credit payments, billing assessments, and running balance totals.",
     rentCollection: "Rent Collection",
     showingItems: "Ledger contains {{count}} Line Items",
-    exportCsv: "Export CSV",
+    exportCsv: "Export PDF",
     searchPlaceholder: "Search ledger by tenant name...",
     allProperties: "All Properties",
     transactionType: "Transaction Type",
@@ -1195,7 +1195,7 @@ export const en = {
     generatedOn: "Generated on {{date}} • System Audited Ledger",
     outstandingBalance: "Outstanding Balance",
     closeStatement: "Close Statement",
-    printStatement: "Print Statement"
+    printStatement: "Export PDF"
   },
   staffLayout: {
     portalTitle: "Staff Portal",
