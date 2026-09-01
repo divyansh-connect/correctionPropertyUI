@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import api from '../api';
 import { useAuthStore, useThemeStore, useNotificationStore } from '../store/useStore';
 import { getNotificationRedirectPath } from '../utils/navigation';
 import { 
@@ -32,12 +34,25 @@ export const TenantLayout: React.FC<TenantLayoutProps> = ({
 }) => {
   const { user, logout } = useAuthStore();
   const { theme, toggleTheme } = useThemeStore();
-  const { notifications, markAsRead, markAllAsRead, clearAll } = useNotificationStore();
+  const { notifications, setNotifications, markAsRead, markAllAsRead, clearAll } = useNotificationStore();
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+
+  // Fetch real backend notifications strictly for Tenant
+  const { data: realTenantNotifications = [] } = useQuery({
+    queryKey: ['notifications-list', 'Tenant'],
+    queryFn: () => api.notifications.getAll({ role: 'Tenant' }),
+    refetchInterval: 15000,
+  });
+
+  useEffect(() => {
+    if (realTenantNotifications) {
+      setNotifications(realTenantNotifications);
+    }
+  }, [realTenantNotifications, setNotifications]);
 
   const roleNotifications = notifications.filter((n) => n.role === 'Tenant');
   const unreadCount = roleNotifications.filter((n) => !n.read).length;

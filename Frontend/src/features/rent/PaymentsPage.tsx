@@ -10,9 +10,10 @@ import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { Button } from '../../components/ui/Button';
 import { StatusBadge } from '../../components/StatusBadge';
 import { PaymentMethodBadge } from '../../components/Phase4Components';
-import { Plus, Eye, AlertOctagon, RefreshCw, Trash2, Download } from 'lucide-react';
+import { Plus, Eye, Pencil, Trash2, Download } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
 import { useTranslation } from 'react-i18next';
+import { EditPaymentModal } from './EditPaymentModal';
 
 export const PaymentsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -25,8 +26,8 @@ export const PaymentsPage: React.FC = () => {
   const [methodFilter, setMethodFilter] = useState('');
 
   // Dialog triggers
-  const [refundId, setRefundId] = useState<string | null>(null);
-  const [voidId, setVoidId] = useState<string | null>(null);
+  const [editingPayment, setEditingPayment] = useState<any | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   // Queries
   const { data: payments = [], isLoading, error } = useQuery({
@@ -40,19 +41,11 @@ export const PaymentsPage: React.FC = () => {
   });
 
   // Mutations
-  const refundMutation = useMutation({
-    mutationFn: (id: string) => api.payments.refund(id),
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => api.payments.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['payments-list'] });
-      setRefundId(null);
-    },
-  });
-
-  const voidMutation = useMutation({
-    mutationFn: (id: string) => api.payments.void(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['payments-list'] });
-      setVoidId(null);
+      setDeleteId(null);
     },
   });
 
@@ -132,28 +125,24 @@ export const PaymentsPage: React.FC = () => {
           <Button variant="ghost" size="icon" onClick={() => navigate({ to: `/payments/${row.original.id}` })} title={t('rentPaymentsPage.viewReceipt')}>
             <Eye className="w-4 h-4" />
           </Button>
-          {row.original.status === 'Paid' && (
-            <>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setRefundId(row.original.id)}
-                className="text-amber-500 hover:bg-amber-500/10"
-                title={t('rentPaymentsPage.refundPayment')}
-              >
-                <RefreshCw className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setVoidId(row.original.id)}
-                className="text-rose-500 hover:bg-rose-500/10"
-                title={t('rentPaymentsPage.voidTransaction')}
-              >
-                <AlertOctagon className="w-4 h-4" />
-              </Button>
-            </>
-          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setEditingPayment(row.original)}
+            className="text-blue-500 hover:bg-blue-500/10"
+            title="Edit Payment"
+          >
+            <Pencil className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setDeleteId(row.original.id)}
+            className="text-rose-500 hover:bg-rose-500/10"
+            title="Delete Payment"
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
         </div>
       ),
     },
@@ -223,25 +212,21 @@ export const PaymentsPage: React.FC = () => {
 
       <DataTable columns={columns} data={filteredPayments} loading={isLoading} error={error ? error.message : null} />
 
-      <ConfirmDialog
-        open={!!refundId}
-        onOpenChange={(open) => !open && setRefundId(null)}
-        title={t('rentPaymentsPage.refundTitle')}
-        description={t('rentPaymentsPage.refundDesc')}
-        confirmText={t('rentPaymentsPage.confirmRefund')}
-        loading={refundMutation.isPending}
-        onConfirm={() => refundId && refundMutation.mutate(refundId)}
+      <EditPaymentModal
+        payment={editingPayment}
+        open={!!editingPayment}
+        onOpenChange={(open) => !open && setEditingPayment(null)}
       />
 
       <ConfirmDialog
-        open={!!voidId}
-        onOpenChange={(open) => !open && setVoidId(null)}
-        title={t('rentPaymentsPage.voidTitle')}
-        description={t('rentPaymentsPage.voidDesc')}
-        confirmText={t('rentPaymentsPage.voidPayment')}
+        open={!!deleteId}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        title="Delete Payment"
+        description="Are you sure you want to delete this payment? This will revert any invoice balances and account entries associated with this transaction."
+        confirmText="Delete Payment"
         variant="destructive"
-        loading={voidMutation.isPending}
-        onConfirm={() => voidId && voidMutation.mutate(voidId)}
+        loading={deleteMutation.isPending}
+        onConfirm={() => deleteId && deleteMutation.mutate(deleteId)}
       />
     </div>
   );

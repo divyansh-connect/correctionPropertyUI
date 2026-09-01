@@ -32,13 +32,18 @@ export const RequestScreeningModal: React.FC<RequestScreeningModalProps> = ({ op
   const { data: units = [] } = useQuery({ queryKey: ['units-list'], queryFn: () => api.unit.getAll() });
   const { data: tenants = [] } = useQuery({ queryKey: ['tenants-list'], queryFn: () => api.tenant.getAll() });
 
-  const unassignedTenants = tenants.filter((t: any) => !t.unitId);
-  const activeUnits = units.filter((u) => u.propertyId === propertyId && u.status === 'Vacant');
+  // Show all applicants & tenants
+  const selectableTenants = tenants;
+  // Show all units for the selected property with status indicator
+  const propertyUnits = units.filter((u: any) => u.propertyId === propertyId);
+
+  const selectedUnitObj = units.find((u: any) => u.id === unitId);
+  const isSelectedUnitOccupied = selectedUnitObj ? (selectedUnitObj.status && selectedUnitObj.status !== 'Vacant') : false;
 
   const requestMutation = useMutation({
     mutationFn: () => {
-      const selectedProp = properties.find(p => p.id === propertyId);
-      const selectedUnit = units.find(u => u.id === unitId);
+      const selectedProp = properties.find((p: any) => p.id === propertyId);
+      const selectedUnit = units.find((u: any) => u.id === unitId);
       return api.screening.create({
         tenantId,
         firstName,
@@ -72,7 +77,7 @@ export const RequestScreeningModal: React.FC<RequestScreeningModalProps> = ({ op
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (tenantId && propertyId && unitId) {
+    if (tenantId && propertyId && unitId && !isSelectedUnitOccupied) {
       requestMutation.mutate();
     }
   };
@@ -91,23 +96,45 @@ export const RequestScreeningModal: React.FC<RequestScreeningModalProps> = ({ op
               onChange={(e) => {
                 const tId = e.target.value;
                 setTenantId(tId);
-                const selectedT = unassignedTenants.find((t: any) => t.id === tId);
+                const selectedT = selectableTenants.find((t: any) => t.id === tId);
                 if (selectedT) {
-                  setFirstName(selectedT.firstName);
-                  setLastName(selectedT.lastName);
-                  setEmail(selectedT.email);
+                  setFirstName(selectedT.firstName || '');
+                  setLastName(selectedT.lastName || '');
+                  setEmail(selectedT.email || '');
                   setPhoneNumber(selectedT.phone || '');
+                  
+                  // Auto-fill property and unit if tenant has an assigned unit
+                  if (selectedT.unitId) {
+                    const matchedUnit = units.find((u: any) => u.id === selectedT.unitId);
+                    if (matchedUnit) {
+                      setPropertyId(matchedUnit.propertyId);
+                      setUnitId(matchedUnit.id);
+                    } else {
+                      setPropertyId('');
+                      setUnitId('');
+                    }
+                  } else if (selectedT.propertyId) {
+                    setPropertyId(selectedT.propertyId);
+                    setUnitId('');
+                  } else {
+                    // Reset inputs to blank for new/unassigned tenant
+                    setPropertyId('');
+                    setUnitId('');
+                  }
                 } else {
+                  // Reset form to blank when unselected
                   setFirstName('');
                   setLastName('');
                   setEmail('');
                   setPhoneNumber('');
+                  setPropertyId('');
+                  setUnitId('');
                 }
               }} 
               required
             >
               <option value="">Choose Applicant...</option>
-              {unassignedTenants.map((t: any) => (
+              {selectableTenants.map((t: any) => (
                 <option key={t.id} value={t.id}>
                   {t.firstName} {t.lastName} ({t.email})
                 </option>
@@ -124,7 +151,7 @@ export const RequestScreeningModal: React.FC<RequestScreeningModalProps> = ({ op
               <label className="text-muted-foreground text-[10px] uppercase font-bold">Select Property *</label>
               <Select value={propertyId} onChange={(e) => { setPropertyId(e.target.value); setUnitId(''); }} required>
                 <option value="">Choose Property...</option>
-                {properties.map((p) => (
+                {properties.map((p: any) => (
                   <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
               </Select>
@@ -133,12 +160,22 @@ export const RequestScreeningModal: React.FC<RequestScreeningModalProps> = ({ op
               <label className="text-muted-foreground text-[10px] uppercase font-bold">Select Unit *</label>
               <Select value={unitId} onChange={(e) => setUnitId(e.target.value)} disabled={!propertyId} required>
                 <option value="">Choose Unit...</option>
-                {activeUnits.map((u) => (
-                  <option key={u.id} value={u.id}>Unit {u.unitNumber}</option>
-                ))}
+                {propertyUnits.map((u: any) => {
+                  const isOccupied = u.status && u.status !== 'Vacant';
+                  return (
+                    <option key={u.id} value={u.id} disabled={isOccupied}>
+                      Unit {u.unitNumber} {u.status ? `(${u.status})` : ''}
+                    </option>
+                  );
+                })}
               </Select>
             </div>
           </div>
+          {isSelectedUnitOccupied && (
+            <p className="text-[11px] text-amber-500 font-semibold mt-1">
+              ⚠️ Unit {selectedUnitObj?.unitNumber} is currently {selectedUnitObj?.status}. Screening requests are disabled for occupied units.
+            </p>
+          )}
         </div>
 
         {/* Screening parameters */}
@@ -166,8 +203,8 @@ export const RequestScreeningModal: React.FC<RequestScreeningModalProps> = ({ op
           <Button variant="outline" type="button" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button
             type="submit"
-            className="bg-primary hover:bg-primary/95 text-white font-bold flex items-center gap-1.5"
-            disabled={requestMutation.isPending || !tenantId || !propertyId || !unitId}
+            className="bg-primary hover:bg-primary/95 text-white font-bold flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={requestMutation.isPending || !tenantId || !propertyId || !unitId || isSelectedUnitOccupied}
           >
             {requestMutation.isPending ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />

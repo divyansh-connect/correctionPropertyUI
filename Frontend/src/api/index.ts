@@ -1156,6 +1156,58 @@ export const api = {
       const res: any = await apiClient.post('/payments', data);
       return res.data;
     },
+    getById: async (id: string) => {
+      try {
+        const res: any = await apiClient.get(`/payments/${id}`);
+        const p = res.data;
+        if (!p) return mockApi.payments.getById(id);
+        return {
+          ...p,
+          id: p.id,
+          receiptNumber: p.receiptNumber || `#${p.id.replace(/-/g, '').slice(0, 6).toUpperCase()}`,
+          tenantName: p.tenant ? `${p.tenant.firstName} ${p.tenant.lastName}` : (p.tenantName || 'Unknown Tenant'),
+          propertyName: p.property?.name || p.propertyName || 'Property',
+          unitNumber: p.unit?.unitNumber || p.unitNumber || 'Unassigned',
+          amount: p.amount,
+          paidDate: p.paidDate ? p.paidDate.split('T')[0] : (p.createdAt ? p.createdAt.split('T')[0] : ''),
+          paymentMethod: p.paymentMethod || 'ACH',
+          status: p.status || 'Paid',
+          propertyId: p.propertyId,
+          referenceNumber: p.referenceNumber,
+          createdBy: p.createdBy || 'System',
+        };
+      } catch (e) {
+        console.error('Fetch payment by ID failed, falling back to mock:', e);
+        return mockApi.payments.getById(id);
+      }
+    },
+    update: async (id: string, data: any) => {
+      try {
+        const res: any = await apiClient.put(`/payments/${id}`, data);
+        return res.data;
+      } catch (e) {
+        console.error('Update payment failed:', e);
+        return mockApi.payments.update(id, data);
+      }
+    },
+    delete: async (id: string) => {
+      try {
+        await apiClient.delete(`/payments/${id}`);
+        return true;
+      } catch (e) {
+        console.error('Delete payment failed:', e);
+        return mockApi.payments.delete(id);
+      }
+    },
+    void: async (id: string) => {
+      try {
+        await apiClient.delete(`/payments/${id}`);
+        return true;
+      } catch (e) {
+        console.error('Void payment failed:', e);
+        return mockApi.payments.void(id);
+      }
+    },
   },
 
   rentLedger: {
@@ -1695,10 +1747,20 @@ export const api = {
   },
 
   notifications: {
-    getAll: async () => {
+    getAll: async (params?: { role?: string }) => {
       try {
-        const res: any = await apiClient.get('/notifications');
-        return res.data || [];
+        const query = params?.role ? `?role=${encodeURIComponent(params.role)}` : '';
+        const res: any = await apiClient.get(`/notifications${query}`);
+        return (res.data || []).map((n: any) => ({
+          ...n,
+          id: n.id,
+          title: n.title,
+          message: n.message,
+          type: n.type || 'info',
+          role: n.role || 'Property Manager',
+          read: Boolean(n.read),
+          time: n.createdAt ? new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recent',
+        }));
       } catch (e) {
         return [];
       }
@@ -1706,6 +1768,24 @@ export const api = {
     markAsRead: async (id: string) => {
       try {
         const res: any = await apiClient.put(`/notifications/${id}/read`, {});
+        return res.data;
+      } catch (e) {
+        return true;
+      }
+    },
+    markAllAsRead: async (role?: string) => {
+      try {
+        const query = role ? `?role=${encodeURIComponent(role)}` : '';
+        const res: any = await apiClient.put(`/notifications/read-all${query}`, {});
+        return res.data;
+      } catch (e) {
+        return true;
+      }
+    },
+    clearAll: async (role?: string) => {
+      try {
+        const query = role ? `?role=${encodeURIComponent(role)}` : '';
+        const res: any = await apiClient.delete(`/notifications${query}`);
         return res.data;
       } catch (e) {
         return true;

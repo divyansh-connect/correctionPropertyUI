@@ -168,6 +168,8 @@ export const DueDateBadge: React.FC<{ date: string; overdue?: boolean }> = ({ da
 interface ReceiptPreviewProps {
   id: string;
   tenantName: string;
+  tenantPhone?: string;
+  tenantEmail?: string;
   propertyName: string;
   unitNumber: string;
   amount: number;
@@ -175,11 +177,16 @@ interface ReceiptPreviewProps {
   method: string;
   refNumber?: string;
   createdBy: string;
+  companyName?: string;
+  companyPhone?: string;
+  companyEmail?: string;
 }
 
 export const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({
   id,
   tenantName,
+  tenantPhone,
+  tenantEmail,
   propertyName,
   unitNumber,
   amount,
@@ -187,51 +194,79 @@ export const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({
   method,
   refNumber,
   createdBy,
+  companyName = 'Apex Property Management',
+  companyPhone = '+1 (555) 234-5678',
+  companyEmail = 'support@whatslandlord.com',
 }) => {
   return (
-    <div className="border border-border/80 rounded-2xl p-6 bg-card text-foreground max-w-md mx-auto space-y-6 shadow-sm">
+    <div id="printable-payment-receipt" className="border border-border/80 rounded-2xl p-6 bg-card text-foreground max-w-lg mx-auto space-y-5 shadow-md">
+      {/* COMPANY HIGHLIGHTED HEADER */}
       <div className="text-center border-b pb-4 space-y-1">
-        <h4 className="font-extrabold text-lg tracking-tight">PAYMENT RECEIPT</h4>
-        <p className="text-[10px] text-muted-foreground font-bold uppercase">Transaction ID: {id}</p>
+        <div className="inline-block px-3 py-1 bg-primary/10 rounded-full mb-1">
+          <span className="font-black text-sm uppercase tracking-wider text-primary">
+            {companyName}
+          </span>
+        </div>
+        <p className="text-[11px] text-muted-foreground font-semibold">
+          Phone: {companyPhone} {companyEmail ? `• Email: ${companyEmail}` : ''}
+        </p>
+        <h3 className="font-extrabold text-base tracking-tight pt-1 text-foreground">
+          OFFICIAL PAYMENT RECEIPT
+        </h3>
+        <p className="text-[10px] text-muted-foreground font-mono font-bold uppercase">
+          Receipt ID: #{id.replace(/-/g, '').slice(0, 8).toUpperCase()}
+        </p>
       </div>
 
-      <div className="space-y-4 text-xs font-semibold">
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Received From</span>
-          <span>{tenantName}</span>
+      {/* TENANT & TRANSACTION DETAILS */}
+      <div className="grid grid-cols-2 gap-4 bg-secondary/10 p-3.5 rounded-xl border border-border/60 text-xs font-semibold">
+        <div className="space-y-1">
+          <p className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider">Tenant Details</p>
+          <p className="font-extrabold text-foreground">{tenantName}</p>
+          {tenantPhone && <p className="text-[11px] text-muted-foreground">Phone: <span className="text-foreground font-bold">{tenantPhone}</span></p>}
+          {tenantEmail && <p className="text-[11px] text-muted-foreground">Email: <span className="text-foreground font-bold">{tenantEmail}</span></p>}
         </div>
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Property Unit</span>
-          <span>{propertyName} • Unit {unitNumber}</span>
+
+        <div className="space-y-1 text-right">
+          <p className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider">Property & Unit</p>
+          <p className="font-extrabold text-foreground">{propertyName}</p>
+          <p className="text-[11px] text-muted-foreground">Unit: <span className="text-foreground font-bold">{unitNumber}</span></p>
         </div>
-        <div className="flex justify-between">
+      </div>
+
+      <div className="space-y-2.5 text-xs font-semibold pt-1">
+        <div className="flex justify-between border-b pb-2 border-border/40">
           <span className="text-muted-foreground">Payment Date</span>
-          <span>{date}</span>
+          <span className="text-foreground font-extrabold">{date}</span>
         </div>
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Method Channel</span>
-          <span>{method}</span>
+        <div className="flex justify-between border-b pb-2 border-border/40">
+          <span className="text-muted-foreground">Payment Method</span>
+          <span className="text-foreground font-extrabold">{method}</span>
         </div>
         {refNumber && (
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Reference No.</span>
-            <span>{refNumber}</span>
+          <div className="flex justify-between border-b pb-2 border-border/40">
+            <span className="text-muted-foreground">Reference Number</span>
+            <span className="text-foreground font-mono">{refNumber}</span>
           </div>
         )}
-        <div className="flex justify-between">
+        <div className="flex justify-between border-b pb-2 border-border/40">
           <span className="text-muted-foreground">Issued By</span>
-          <span>{createdBy}</span>
+          <span className="text-foreground font-bold">{createdBy}</span>
         </div>
       </div>
 
-      <div className="border-t border-dashed pt-4 flex justify-between items-center">
-        <span className="text-sm font-black uppercase text-muted-foreground">Total Paid</span>
-        <span className="text-2xl font-black text-emerald-500">${amount.toLocaleString()}</span>
+      {/* TOTAL AMOUNT CLEARED */}
+      <div className="border-t border-b border-dashed py-3 flex justify-between items-center bg-emerald-500/5 px-4 rounded-xl">
+        <span className="text-xs font-black uppercase text-muted-foreground tracking-wide">Total Amount Paid</span>
+        <span className="text-2xl font-black text-emerald-500">${amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
       </div>
 
-      <div className="flex justify-center text-muted-foreground/60 text-[9px] font-bold border-t pt-3 flex-col items-center gap-1">
-        <CheckCircle className="w-5 h-5 text-emerald-500" />
-        <span>Thank you for your payment. Safe transaction confirmed.</span>
+      <div className="flex justify-center text-muted-foreground/70 text-[10px] font-bold pt-1 flex-col items-center gap-1 text-center">
+        <div className="flex items-center gap-1.5 text-emerald-500 font-extrabold">
+          <CheckCircle className="w-4 h-4" />
+          <span>Payment Cleared & Confirmed</span>
+        </div>
+        <span>Thank you for your payment. Please keep this receipt for your financial records.</span>
       </div>
     </div>
   );

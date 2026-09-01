@@ -308,12 +308,15 @@ export const RentLedgerPage: React.FC = () => {
             <div className="border-b pb-4 space-y-4 text-foreground">
               <div className="flex justify-between items-start">
                 <div>
-                  <span className="text-[10px] font-extrabold uppercase bg-primary/10 text-primary px-2 py-0.5 rounded no-print">
+                  <span className="text-[10px] font-extrabold uppercase bg-primary/10 text-primary px-2.5 py-1 rounded-md no-print">
                     {t('rentLedgerPage.officialStatement')}
                   </span>
-                  <h2 className="font-black text-xl text-primary mt-1">{managementCompany}</h2>
+                  <h2 className="font-black text-2xl text-primary mt-1.5">{managementCompany}</h2>
+                  <p className="text-xs text-muted-foreground font-semibold">
+                    Phone: <span className="text-foreground font-bold">{profile?.phone || '+1 (555) 234-5678'}</span> • Email: <span className="text-foreground font-bold">{profile?.email || 'support@whatslandlord.com'}</span>
+                  </p>
                 </div>
-                <div className="text-[10px] text-muted-foreground uppercase font-bold text-right no-print">
+                <div className="text-[10px] text-muted-foreground uppercase font-bold text-right">
                   Generated: {new Date().toLocaleDateString()}
                 </div>
               </div>
@@ -322,14 +325,14 @@ export const RentLedgerPage: React.FC = () => {
                 <div className="space-y-1.5">
                   <p className="text-muted-foreground uppercase text-[9px] font-bold tracking-wider">Tenant Information</p>
                   <p className="text-foreground text-sm font-extrabold">{selectedTenant.firstName} {selectedTenant.lastName}</p>
-                  <p className="text-muted-foreground">Phone: <span className="text-foreground">{selectedTenant.phone || 'N/A'}</span></p>
-                  <p className="text-muted-foreground">Email: <span className="text-foreground">{selectedTenant.email || 'N/A'}</span></p>
+                  <p className="text-muted-foreground">Phone: <span className="text-foreground font-bold">{selectedTenant.phone || 'N/A'}</span></p>
+                  <p className="text-muted-foreground">Email: <span className="text-foreground font-bold">{selectedTenant.email || 'N/A'}</span></p>
                 </div>
                 <div className="space-y-1.5 md:text-right">
                   <p className="text-muted-foreground uppercase text-[9px] font-bold tracking-wider">Location & Unit Details</p>
                   <p className="text-foreground text-sm font-extrabold">Unit {selectedTenant.unitNumber || 'N/A'}</p>
-                  <p className="text-muted-foreground">Property: <span className="text-foreground">{selectedTenant.propertyName || 'Property'}</span></p>
-                  <p className="text-muted-foreground">Address: <span className="text-foreground">{propertyAddress}</span></p>
+                  <p className="text-muted-foreground">Property: <span className="text-foreground font-bold">{selectedTenant.propertyName || 'Property'}</span></p>
+                  <p className="text-muted-foreground">Address: <span className="text-foreground font-bold">{propertyAddress}</span></p>
                 </div>
               </div>
             </div>
@@ -388,6 +391,17 @@ export const RentLedgerPage: React.FC = () => {
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" onClick={() => setSelectedTenantId('')} className="no-print h-9 font-bold">
                     {t('rentLedgerPage.closeStatement')}
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => {
+                      // Trigger clean PDF export print dialog
+                      window.print();
+                    }} 
+                    className="no-print flex items-center gap-1.5 h-9 font-bold border-primary/30 text-primary hover:bg-primary/10"
+                  >
+                    <Download className="w-4 h-4 text-primary" /> Download PDF
                   </Button>
                   <Button variant="default" size="sm" onClick={() => window.print()} className="no-print flex items-center gap-1.5 h-9 font-bold bg-primary text-primary-foreground hover:bg-primary/95">
                     <Printer className="w-4 h-4" /> {t('rentLedgerPage.printStatement')}

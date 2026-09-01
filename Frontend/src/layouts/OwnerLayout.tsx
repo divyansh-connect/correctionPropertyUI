@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import api from '../api';
 import { useAuthStore, useThemeStore, useNotificationStore } from '../store/useStore';
 import { getNotificationRedirectPath } from '../utils/navigation';
 import { 
   Menu, Bell, Sun, Moon, LogOut, ChevronDown, ChevronRight, User,
-  LayoutDashboard, Building2, CreditCard, BookOpen, Wrench, FileText, 
-  MessageSquare, BarChart3, ShieldAlert, LifeBuoy, Settings, X, Loader2
+  Building2, CreditCard, BookOpen, Wrench, FileText, 
+  MessageSquare, BarChart3, ShieldAlert, LifeBuoy, Settings, X, Loader2,
+  LayoutDashboard
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { StatusBadge } from '../components/StatusBadge';
@@ -32,12 +35,25 @@ export const OwnerLayout: React.FC<OwnerLayoutProps> = ({
 }) => {
   const { user, logout } = useAuthStore();
   const { theme, toggleTheme } = useThemeStore();
-  const { notifications, markAsRead, markAllAsRead, clearAll } = useNotificationStore();
+  const { notifications, setNotifications, markAsRead, markAllAsRead, clearAll } = useNotificationStore();
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+
+  // Fetch real backend notifications strictly for Owner
+  const { data: realOwnerNotifications = [] } = useQuery({
+    queryKey: ['notifications-list', 'Owner'],
+    queryFn: () => api.notifications.getAll({ role: 'Owner' }),
+    refetchInterval: 15000,
+  });
+
+  useEffect(() => {
+    if (realOwnerNotifications) {
+      setNotifications(realOwnerNotifications);
+    }
+  }, [realOwnerNotifications, setNotifications]);
 
   const roleNotifications = notifications.filter((n) => n.role === 'Owner');
   const unreadCount = roleNotifications.filter((n) => !n.read).length;

@@ -285,6 +285,22 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   const displayRole = user?.role || 'Property Manager';
+
+  // Fetch real backend notifications filtered strictly for Property Manager / User Role
+  const { data: realNotifications = [] } = useQuery({
+    queryKey: ['notifications-list', displayRole],
+    queryFn: () => api.notifications.getAll({ role: displayRole }),
+    refetchInterval: 15000,
+  });
+
+  const { setNotifications } = useNotificationStore();
+
+  useEffect(() => {
+    if (realNotifications) {
+      setNotifications(realNotifications);
+    }
+  }, [realNotifications, setNotifications]);
+
   const roleNotifications = notifications.filter(
     (n) => n.role === displayRole
   );

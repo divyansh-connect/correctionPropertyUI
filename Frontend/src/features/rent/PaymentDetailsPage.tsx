@@ -8,39 +8,22 @@ import { Button } from '../../components/ui/Button';
 import { StatusBadge } from '../../components/StatusBadge';
 import { ReceiptPreview } from '../../components/Phase4Components';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/Tabs';
-import { ArrowLeft, Loader2, Printer, Download, RefreshCw, AlertOctagon, Mail, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Loader2, Printer } from 'lucide-react';
 
 export const PaymentDetailsPage: React.FC = () => {
   const { id } = useParams({ from: '/payments/$id' });
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const [msg, setMsg] = useState('');
+
+  const { data: profile } = useQuery({
+    queryKey: ['user-profile'],
+    queryFn: () => api.userProfile.get(),
+  });
 
   // Queries
   const { data: payment, isLoading } = useQuery({
     queryKey: ['payment-detail', id],
     queryFn: () => api.payments.getById(id),
-  });
-
-  // Mutations
-  const refundMutation = useMutation({
-    mutationFn: () => api.payments.refund(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['payment-detail', id] });
-      queryClient.invalidateQueries({ queryKey: ['payments-list'] });
-      setMsg('Refund issued successfully.');
-      setTimeout(() => setMsg(''), 3000);
-    },
-  });
-
-  const voidMutation = useMutation({
-    mutationFn: () => api.payments.void(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['payment-detail', id] });
-      queryClient.invalidateQueries({ queryKey: ['payments-list'] });
-      setMsg('Transaction voided successfully.');
-      setTimeout(() => setMsg(''), 3000);
-    },
   });
 
   if (isLoading || !payment) {
@@ -88,58 +71,6 @@ export const PaymentDetailsPage: React.FC = () => {
           <Button variant="outline" size="sm" onClick={handlePrint} className="flex items-center gap-1">
             <Printer className="w-4 h-4" /> Print Receipt
           </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => {
-              setMsg(`Receipt ${payment.id} dispatched to ${payment.tenantName}'s registered email.`);
-              setTimeout(() => setMsg(''), 3000);
-            }} 
-            className="flex items-center gap-1.5"
-          >
-            <Mail className="w-4 h-4 text-primary" /> Email Receipt
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => {
-              setMsg(`SMS payment receipt alert sent to ${payment.tenantName}'s phone number.`);
-              setTimeout(() => setMsg(''), 3000);
-            }} 
-            className="flex items-center gap-1.5"
-          >
-            <MessageSquare className="w-4 h-4 text-primary" /> SMS Receipt
-          </Button>
-          <a 
-            href={`https://wa.me/${((payment as any).tenantPhone || (payment as any).phone || '').replace(/\D/g, '') || '15550199'}?text=${encodeURIComponent(`Thank you ${payment.tenantName}! Your payment of $${payment.amount.toLocaleString()} for ${payment.propertyName} Unit ${payment.unitNumber} has been received. Receipt ID: ${payment.id}. Payment Method: ${payment.paymentMethod}.`)}`} 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/5 hover:bg-emerald-500/10 border border-emerald-500/10 rounded-lg text-xs font-semibold transition text-foreground"
-          >
-            <MessageSquare className="w-4 h-4 text-emerald-500" /> WhatsApp
-          </a>
-          {payment.status === 'Paid' && (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => refundMutation.mutate()}
-                loading={refundMutation.isPending}
-                className="text-amber-500 hover:bg-amber-500/10 border-amber-500/30 flex items-center gap-1"
-              >
-                <RefreshCw className="w-4 h-4" /> Refund
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => voidMutation.mutate()}
-                loading={voidMutation.isPending}
-                className="text-rose-500 hover:bg-rose-500/10 border-rose-500/30 flex items-center gap-1"
-              >
-                <AlertOctagon className="w-4 h-4" /> Void Transaction
-              </Button>
-            </>
-          )}
         </div>
       </div>
 
@@ -156,6 +87,8 @@ export const PaymentDetailsPage: React.FC = () => {
           <ReceiptPreview
             id={payment.id}
             tenantName={payment.tenantName}
+            tenantPhone={payment.tenant?.phone || (payment as any).tenantPhone || (payment as any).phone}
+            tenantEmail={payment.tenant?.email || (payment as any).tenantEmail || (payment as any).email}
             propertyName={payment.propertyName}
             unitNumber={payment.unitNumber}
             amount={payment.amount}
@@ -163,6 +96,9 @@ export const PaymentDetailsPage: React.FC = () => {
             method={payment.paymentMethod}
             refNumber={payment.referenceNumber}
             createdBy={payment.createdBy}
+            companyName={profile?.company || (payment as any).company?.name || 'Apex Property Management'}
+            companyPhone={profile?.phone || (payment as any).company?.phone || '+1 (555) 234-5678'}
+            companyEmail={profile?.email || (payment as any).company?.email || 'support@whatslandlord.com'}
           />
         </TabsContent>
 

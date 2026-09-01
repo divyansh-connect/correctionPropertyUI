@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import api from '../api';
 import { useAuthStore, useThemeStore, useNotificationStore } from '../store/useStore';
 import { getNotificationRedirectPath } from '../utils/navigation';
 import { 
-  Menu, Bell, Sun, Moon, LogOut, ChevronDown, User,
-  LayoutDashboard, Wrench, X, Loader2, CheckSquare
+  Menu, Bell, Sun, Moon, LogOut, ChevronDown, ChevronRight, User,
+  LayoutDashboard, Wrench, CheckSquare, ShieldAlert, LifeBuoy, Settings, X, Loader2
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
+import { StatusBadge } from '../components/StatusBadge';
 import { clsx } from 'clsx';
 import { LanguageSelector } from '../components/LanguageSelector';
 import { useTranslation } from 'react-i18next';
@@ -29,12 +32,25 @@ export const StaffLayout: React.FC<StaffLayoutProps> = ({
 }) => {
   const { user, logout } = useAuthStore();
   const { theme, toggleTheme } = useThemeStore();
-  const { notifications, markAsRead, markAllAsRead, clearAll } = useNotificationStore();
+  const { notifications, setNotifications, markAsRead, markAllAsRead, clearAll } = useNotificationStore();
   const { t } = useTranslation();
 
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+
+  // Fetch real backend notifications strictly for Maintenance Staff
+  const { data: realStaffNotifications = [] } = useQuery({
+    queryKey: ['notifications-list', 'Maintenance Staff'],
+    queryFn: () => api.notifications.getAll({ role: 'Maintenance Staff' }),
+    refetchInterval: 15000,
+  });
+
+  useEffect(() => {
+    if (realStaffNotifications) {
+      setNotifications(realStaffNotifications);
+    }
+  }, [realStaffNotifications, setNotifications]);
 
   const roleNotifications = notifications.filter((n) => n.role === 'Maintenance Staff');
   const unreadCount = roleNotifications.filter((n) => !n.read).length;
