@@ -48,13 +48,10 @@ export const TenantLayout: React.FC<TenantLayoutProps> = ({
     refetchInterval: 15000,
   });
 
-  useEffect(() => {
-    if (realTenantNotifications) {
-      setNotifications(realTenantNotifications);
-    }
-  }, [realTenantNotifications, setNotifications]);
+  const roleNotifications = realTenantNotifications.length > 0
+    ? realTenantNotifications
+    : notifications.filter((n) => n.role === 'Tenant');
 
-  const roleNotifications = notifications.filter((n) => n.role === 'Tenant');
   const unreadCount = roleNotifications.filter((n) => !n.read).length;
 
   const { t } = useTranslation();

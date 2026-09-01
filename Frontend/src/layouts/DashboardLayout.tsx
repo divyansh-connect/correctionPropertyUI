@@ -293,17 +293,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     refetchInterval: 15000,
   });
 
-  const { setNotifications } = useNotificationStore();
+  const roleNotifications = realNotifications.length > 0 
+    ? realNotifications 
+    : notifications.filter((n) => n.role === displayRole);
 
-  useEffect(() => {
-    if (realNotifications) {
-      setNotifications(realNotifications);
-    }
-  }, [realNotifications, setNotifications]);
-
-  const roleNotifications = notifications.filter(
-    (n) => n.role === displayRole
-  );
   const unreadCount = roleNotifications.filter((n) => !n.read).length;
 
   useEffect(() => {

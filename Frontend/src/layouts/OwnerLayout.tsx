@@ -49,13 +49,10 @@ export const OwnerLayout: React.FC<OwnerLayoutProps> = ({
     refetchInterval: 15000,
   });
 
-  useEffect(() => {
-    if (realOwnerNotifications) {
-      setNotifications(realOwnerNotifications);
-    }
-  }, [realOwnerNotifications, setNotifications]);
+  const roleNotifications = realOwnerNotifications.length > 0
+    ? realOwnerNotifications
+    : notifications.filter((n) => n.role === 'Owner');
 
-  const roleNotifications = notifications.filter((n) => n.role === 'Owner');
   const unreadCount = roleNotifications.filter((n) => !n.read).length;
 
   const { t } = useTranslation();

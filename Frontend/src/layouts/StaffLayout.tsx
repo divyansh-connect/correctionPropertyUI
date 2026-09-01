@@ -46,13 +46,10 @@ export const StaffLayout: React.FC<StaffLayoutProps> = ({
     refetchInterval: 15000,
   });
 
-  useEffect(() => {
-    if (realStaffNotifications) {
-      setNotifications(realStaffNotifications);
-    }
-  }, [realStaffNotifications, setNotifications]);
+  const roleNotifications = realStaffNotifications.length > 0
+    ? realStaffNotifications
+    : notifications.filter((n) => n.role === 'Maintenance Staff');
 
-  const roleNotifications = notifications.filter((n) => n.role === 'Maintenance Staff');
   const unreadCount = roleNotifications.filter((n) => !n.read).length;
 
   const menuItems: MenuItem[] = [
