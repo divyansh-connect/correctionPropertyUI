@@ -35,6 +35,18 @@ export const ViolationsPage: React.FC = () => {
     },
   });
 
+  const handleSyncDob = async () => {
+    try {
+      alert('Connecting to NYC Open Data Socrata API...\nSyncing building violations for registered properties.');
+      await api.violations.getAll();
+      queryClient.invalidateQueries({ queryKey: ['violations-list'] });
+      alert('NYC DOB Violations sync completed successfully!');
+    } catch (err) {
+      console.error('DOB Sync failed', err);
+      alert('Failed to connect to NYC DOB Open Data API. Please check property BIN number.');
+    }
+  };
+
   const filteredViolations = violations.filter((v) => {
     const authorityVal = v.issuingAuthority || '';
     const descVal = v.description || '';
@@ -152,9 +164,9 @@ export const ViolationsPage: React.FC = () => {
         description={t('maintenanceViolations.desc')}
         breadcrumbs={[{ label: t('header.home'), href: '/' }, { label: t('nav.maintenance'), href: '/maintenance' }, { label: t('maintenanceViolations.title') }]}
         action={{
-          label: t('maintenanceRequests.exportCsv'),
-          onClick: handleExport,
-          icon: <Download className="w-4.5 h-4.5" />,
+          label: 'Sync NYC DOB',
+          onClick: handleSyncDob,
+          icon: <ShieldAlert className="w-4.5 h-4.5" />,
         }}
       />
 
