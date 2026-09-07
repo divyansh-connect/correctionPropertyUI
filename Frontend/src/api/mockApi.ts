@@ -2641,6 +2641,7 @@ export const mockApi = {
           requestNumber: `REQ-${5000 + maintenanceRequests.length + 1}`,
           propertyId: violation.propertyId || 'prop-1',
           propertyName: violation.propertyName || 'NYC Property Asset',
+          unitId: 'unit-1',
           unitNumber: violation.unitNumber || 'Building Wide',
           tenantName: 'NYC DOB Compliance Auditor',
           category: 'Building Code Compliance',
@@ -2649,6 +2650,7 @@ export const mockApi = {
           priority: 'Emergency' as const,
           status: 'Approved' as const,
           submittedDate: new Date().toISOString().split('T')[0],
+          createdAt: new Date().toISOString().split('T')[0],
           assignedVendorId: undefined,
           assignedVendorName: undefined,
         };
