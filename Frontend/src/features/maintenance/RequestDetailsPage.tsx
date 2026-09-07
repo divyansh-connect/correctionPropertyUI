@@ -156,8 +156,8 @@ export const RequestDetailsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* AI AUTO VENDOR RECOMMENDATION BANNER */}
-      {recommendedVendor && request.status !== 'Completed' && (
+      {/* AI AUTO VENDOR RECOMMENDATION BANNER (Tenant Requests Only) */}
+      {recommendedVendor && request.status !== 'Completed' && request.category !== 'Building Code Compliance' && (
         <Card className="p-4 bg-gradient-to-r from-primary/10 via-emerald-500/5 to-amber-500/10 border border-primary/30 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-sm">
           <div className="space-y-1 flex-1">
             <div className="flex items-center space-x-2">

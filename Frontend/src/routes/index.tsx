@@ -43,6 +43,7 @@ import { PropertiesPage } from '../features/properties/PropertiesPage';
 import { NewPropertyPage } from '../features/properties/NewPropertyPage';
 import { EditPropertyPage } from '../features/properties/EditPropertyPage';
 import { PropertyDetailsPage } from '../features/properties/PropertyDetailsPage';
+import { DraftPropertiesPage } from '../features/properties/DraftPropertiesPage';
 import { BuildingsPage } from '../features/properties/BuildingsPage';
 import { UnitsPage } from '../features/units/UnitsPage';
 import { NewUnitPage } from '../features/units/NewUnitPage';
@@ -524,6 +525,16 @@ const propertyDetailsRoute = createRoute({
   component: () => (
     <ProtectedWrapper>
       <PropertyDetailsPage />
+    </ProtectedWrapper>
+  ),
+});
+
+const draftPropertiesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/properties/drafts',
+  component: () => (
+    <ProtectedWrapper>
+      <DraftPropertiesPage />
     </ProtectedWrapper>
   ),
 });
@@ -5725,6 +5736,7 @@ const routeTree = rootRoute.addChildren([
   newPropertyRoute,
   editPropertyRoute,
   propertyDetailsRoute,
+  draftPropertiesRoute,
   buildingsRoute,
   unitsRoute,
   newUnitRoute,

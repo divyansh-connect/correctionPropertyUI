@@ -23,6 +23,7 @@ const propertyFormSchema = zod.object({
   state: zod.string().min(2, 'State is required'),
   country: zod.string().min(1, 'Country is required'),
   zip: zod.string().min(5, 'ZIP Code is required'),
+  nycBin: zod.string().optional(),
   
   owner: zod.string().min(1, 'Owner is required'),
   ownershipPercentage: zod.number().min(1).max(100),
@@ -85,6 +86,7 @@ export const EditPropertyPage: React.FC = () => {
               state: data.state || '',
               country: data.country || 'USA',
               zip: data.zip || '',
+              nycBin: data.nycBin || (data as any).bin || '',
               owner: ownerName,
               ownershipPercentage: data.ownershipPercentage || 100,
               managementCompany: data.managementCompany || 'Apex Property Management',
@@ -115,7 +117,11 @@ export const EditPropertyPage: React.FC = () => {
   });
 
   const onSubmit = (values: PropertyFormInputs) => {
-    const selectedOwner = owners.find((o) => `${o.firstName} ${o.lastName}` === values.owner);
+    const selectedOwner = owners.find((o) => 
+      o.name === values.owner || 
+      `${o.firstName} ${o.lastName}`.trim() === values.owner ||
+      o.id === values.owner
+    );
     const ownerId = selectedOwner ? selectedOwner.id : '';
 
     updateMutation.mutate({
@@ -131,6 +137,7 @@ export const EditPropertyPage: React.FC = () => {
       state: values.state,
       country: values.country,
       zip: values.zip,
+      nycBin: values.nycBin,
       yearBuilt: values.yearBuilt,
       totalBuildings: values.totalBuildings,
       squareFootage: values.squareFootage,
@@ -209,11 +216,14 @@ export const EditPropertyPage: React.FC = () => {
               <label className="text-xs font-bold text-muted-foreground uppercase">Owner</label>
               <Select {...register('owner')}>
                 <option value="">Select Owner...</option>
-                {owners.map((o) => (
-                  <option key={o.id} value={`${o.firstName} ${o.lastName}`}>
-                    {o.firstName} {o.lastName}
-                  </option>
-                ))}
+                {owners.map((o) => {
+                  const displayName = o.name || `${o.firstName || ''} ${o.lastName || ''}`.trim();
+                  return (
+                    <option key={o.id} value={displayName}>
+                      {displayName}
+                    </option>
+                  );
+                })}
               </Select>
               {errors.owner && <p className="text-rose-500 text-xs">{errors.owner.message}</p>}
             </div>

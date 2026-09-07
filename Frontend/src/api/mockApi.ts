@@ -1583,47 +1583,7 @@ let propertyAssignments: any[] = [];
 let unitAssignments: any[] = [];
 let maintenanceAssignments: any[] = [];
 
-let violationsList: Violation[] = [
-  {
-    id: 'viol-1',
-    propertyId: 'prop-1',
-    propertyName: 'Oakridge Heights',
-    unitNumber: '101',
-    violationCode: 'DOB-3829-S',
-    issuingAuthority: 'Department of Buildings',
-    description: 'Blocked second floor emergency fire escape walkway due to trash bin storage.',
-    fineAmount: 250.00,
-    dueDate: '2026-08-15',
-    severity: 'Critical',
-    status: 'Open'
-  },
-  {
-    id: 'viol-2',
-    propertyId: 'prop-2',
-    propertyName: 'Sycamore Gardens',
-    unitNumber: '402',
-    violationCode: 'FIRE-9083-B',
-    issuingAuthority: 'State Fire Marshal Office',
-    description: 'Exposed wiring detected in electrical panel room next to main HVAC riser.',
-    fineAmount: 500.00,
-    dueDate: '2026-08-10',
-    severity: 'Critical',
-    status: 'Open'
-  },
-  {
-    id: 'viol-3',
-    propertyId: 'prop-1',
-    propertyName: 'Oakridge Heights',
-    unitNumber: '205',
-    violationCode: 'HLTH-4491-A',
-    issuingAuthority: 'City Health Department',
-    description: 'Minor mold residue identified near hot water tank ventilation outlets.',
-    fineAmount: 100.00,
-    dueDate: '2026-08-25',
-    severity: 'Warning',
-    status: 'Disputed'
-  }
-];
+let violationsList: Violation[] = [];
 
 let screeningChecksList: ScreeningCheck[] = [
   {
@@ -2649,35 +2609,60 @@ export const mockApi = {
   violations: {
     getAll: async () => { await delay(150); return [...violationsList]; },
     getById: async (id: string) => { await delay(50); return violationsList.find(v => v.id === id); },
+    addSynced: (syncedItems: any[], bin?: string) => {
+      const formatted: Violation[] = syncedItems.map((item, idx) => ({
+        id: item.id || `viol-dob-${Date.now()}-${idx}`,
+        propertyId: 'prop-nyc-dob',
+        propertyName: `NYC Property (BIN: ${bin || item.bin || '4115368'})`,
+        unitNumber: item.deviceNumber || 'Building Wide',
+        violationCode: item.violationNumber || item.number || item.isn_dob_bis_viol || 'DOB-UNK',
+        issuingAuthority: 'NYC Department of Buildings (DOB)',
+        description: item.description || item.dispositionComments || 'NYC DOB Building Code Violation Notice',
+        fineAmount: item.fineAmount || 250,
+        dueDate: item.issueDate || new Date().toISOString().split('T')[0],
+        severity: (item.severity === 'Critical' || item.severity === 'Warning') ? item.severity : 'Warning',
+        status: (item.status === 'Resolved' || item.status === 'Open' || item.status === 'Disputed') ? item.status : 'Open',
+      }));
+      // Filter out duplicates by violationCode
+      const existingCodes = new Set(violationsList.map(v => v.violationCode));
+      const newUnique = formatted.filter(v => !existingCodes.has(v.violationCode));
+      violationsList = [...newUnique, ...violationsList];
+      return violationsList;
+    },
     createWorkOrder: async (id: string) => {
-      await delay(200);
-      const vIdx = violationsList.findIndex(v => v.id === id);
+      await delay(100);
+      const vIdx = violationsList.findIndex(v => v.id === id || v.violationCode === id || (v.id && id && v.id.toString() === id.toString()));
       if (vIdx !== -1) {
         const violation = violationsList[vIdx];
-        const newWoId = `wo-viol-${Date.now()}`;
+        const newReqId = `req-viol-${Date.now()}`;
         
-        // Spawn a corrective work order
-        const newWo = {
-          id: newWoId,
-          workOrderNumber: `WO-${40000 + workOrders.length + 1}`,
-          propertyId: violation.propertyId,
-          propertyName: violation.propertyName,
-          unitNumber: violation.unitNumber || 'All Building',
-          vendorId: 'vend-1', // Default first vendor
-          vendorName: 'Service Pro Contracting',
-          assignedTechnician: 'Compliance Inspector Spec',
-          scheduledDate: new Date().toISOString().split('T')[0],
-          estimatedCost: violation.fineAmount * 0.8, // Estimate repair cost
-          actualCost: 0,
-          status: 'Assigned' as const,
-          issue: `Fix Violation: ${violation.violationCode}`,
-          description: `Corrective actions to address violation: ${violation.description}. Authority: ${violation.issuingAuthority}. compliance target: ${violation.dueDate}`,
-          priority: 'Urgent' as const,
+        const newReq = {
+          id: newReqId,
+          requestNumber: `REQ-${5000 + maintenanceRequests.length + 1}`,
+          propertyId: violation.propertyId || 'prop-1',
+          propertyName: violation.propertyName || 'NYC Property Asset',
+          unitNumber: violation.unitNumber || 'Building Wide',
+          tenantName: 'NYC DOB Compliance Auditor',
+          category: 'Building Code Compliance',
+          title: `NYC DOB Violation: ${violation.violationCode}`,
+          description: `NYC DOB Code Citation: ${violation.description}. Authority: ${violation.issuingAuthority}. compliance target: ${violation.dueDate}`,
+          priority: 'Emergency' as const,
+          status: 'Approved' as const,
+          submittedDate: new Date().toISOString().split('T')[0],
+          assignedVendorId: undefined,
+          assignedVendorName: undefined,
         };
 
-        workOrders.unshift(newWo);
-        violationsList[vIdx].workOrderId = newWoId;
-        violationsList[vIdx].status = 'Resolved'; // Marks resolved once work order is created and dispatched
+        maintenanceRequests.unshift(newReq);
+        violationsList[vIdx].workOrderId = newReqId;
+        violationsList[vIdx].status = 'Resolved'; // Settled on violations table
+      } else {
+        // If not in local array index, try to mark matching item or push resolved item
+        const item = violationsList.find(v => v.id === id || v.violationCode === id);
+        if (item) {
+          item.status = 'Resolved';
+          item.workOrderId = `req-viol-${Date.now()}`;
+        }
       }
       return true;
     }

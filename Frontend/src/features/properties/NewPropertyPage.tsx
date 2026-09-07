@@ -17,13 +17,14 @@ import { mapBackendErrors } from '../../utils/errorMapping';
 const propertyFormSchema = zod.object({
   name: zod.string().min(1, 'Property Name is required'),
   type: zod.enum(['Apartment', 'Commercial', 'Single Family', 'Multi Family', 'HOA']),
-  status: zod.enum(['Active', 'Inactive', 'Under Review', 'Archived']),
+  status: zod.enum(['Active', 'Inactive', 'Under Review', 'Archived', 'Draft']),
   
   streetAddress: zod.string().min(1, 'Street Address is required'),
   city: zod.string().min(1, 'City is required'),
   state: zod.string().min(2, 'State is required'),
   country: zod.string().min(1, 'Country is required'),
   zip: zod.string().min(5, 'ZIP Code is required'),
+  nycBin: zod.string().optional(),
   
   owner: zod.string().min(1, 'Owner is required'),
   ownershipPercentage: zod.number().min(1).max(100),
@@ -91,8 +92,12 @@ export const NewPropertyPage: React.FC = () => {
   });
 
   const onSubmit = (values: PropertyFormInputs) => {
-    const selectedOwner = owners.find((o) => o.name === values.owner);
-    const ownerId = selectedOwner ? selectedOwner.id : '';
+    const selectedOwner = owners.find((o) =>
+      o.id === values.owner ||
+      o.name === values.owner ||
+      `${o.firstName || ''} ${o.lastName || ''}`.trim() === values.owner
+    );
+    const ownerId = selectedOwner ? selectedOwner.id : values.owner;
 
     createMutation.mutate({
       name: values.name,
@@ -107,6 +112,7 @@ export const NewPropertyPage: React.FC = () => {
       state: values.state,
       country: values.country,
       zip: values.zip,
+      nycBin: values.nycBin,
       yearBuilt: values.yearBuilt,
       totalBuildings: values.totalBuildings,
       squareFootage: values.squareFootage,
@@ -115,6 +121,42 @@ export const NewPropertyPage: React.FC = () => {
       monthlyExpenses: values.monthlyExpenses,
       image: imageFile || undefined,
     });
+  };
+
+  const handleSaveDraft = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const values = handleSubmit((formValues) => {
+      const selectedOwner = owners.find((o) =>
+        o.id === formValues.owner ||
+        o.name === formValues.owner ||
+        `${o.firstName || ''} ${o.lastName || ''}`.trim() === formValues.owner
+      );
+      const ownerId = selectedOwner ? selectedOwner.id : formValues.owner;
+
+      createMutation.mutate({
+        name: formValues.name || 'Untitled Draft Property',
+        type: formValues.type || 'Apartment',
+        status: 'Draft',
+        ownerId,
+        ownershipPercentage: formValues.ownershipPercentage || 100,
+        managementCompany: formValues.managementCompany || 'Apex Property Management',
+        address: `${formValues.streetAddress || ''}, ${formValues.city || ''}, ${formValues.state || ''}, ${formValues.country || 'USA'}, ${formValues.zip || ''}`,
+        streetAddress: formValues.streetAddress || '',
+        city: formValues.city || '',
+        state: formValues.state || '',
+        country: formValues.country || 'USA',
+        zip: formValues.zip || '',
+        nycBin: formValues.nycBin,
+        yearBuilt: formValues.yearBuilt || 2020,
+        totalBuildings: formValues.totalBuildings || 1,
+        squareFootage: formValues.squareFootage || 5000,
+        purchasePrice: formValues.purchasePrice || 0,
+        currentValue: formValues.currentValue || 0,
+        monthlyExpenses: formValues.monthlyExpenses || 0,
+        image: imageFile || undefined,
+      });
+      navigate({ to: '/properties/drafts' });
+    })();
   };
 
   return (
@@ -131,7 +173,7 @@ export const NewPropertyPage: React.FC = () => {
 
       {success && (
         <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 p-4 rounded-xl text-sm font-semibold mb-6 animate-fade-in">
-          Property created successfully! Redirecting back to portfolio...
+          Property saved successfully! Redirecting back to portfolio...
         </div>
       )}
 
@@ -144,7 +186,7 @@ export const NewPropertyPage: React.FC = () => {
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Property Name</label>
               <Input placeholder="Oakridge Heights" {...register('name')} />
-              {errors.name && <p className="text-rose-500 text-xs">{errors.name.message}</p>}
+              {errors.name && <p className="text-rose-500 text-xs font-semibold">{errors.name.message}</p>}
             </div>
 
             <div className="space-y-1">
@@ -159,12 +201,13 @@ export const NewPropertyPage: React.FC = () => {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-bold text-muted-foreground uppercase">Initial Status</label>
+              <label className="text-xs font-bold text-muted-foreground uppercase">Status</label>
               <Select {...register('status')}>
                 <option value="Active">Active</option>
                 <option value="Inactive">Inactive</option>
                 <option value="Under Review">Under Review</option>
                 <option value="Archived">Archived</option>
+                <option value="Draft">Draft</option>
               </Select>
             </div>
           </div>
@@ -181,25 +224,28 @@ export const NewPropertyPage: React.FC = () => {
               <label className="text-xs font-bold text-muted-foreground uppercase">Owner</label>
               <Select {...register('owner')}>
                 <option value="">Select Owner...</option>
-                {owners.map((o) => (
-                  <option key={o.id} value={o.name}>
-                    {o.name}
-                  </option>
-                ))}
+                {owners.map((o) => {
+                  const displayName = o.name || `${o.firstName || ''} ${o.lastName || ''}`.trim() || o.id;
+                  return (
+                    <option key={o.id} value={displayName}>
+                      {displayName}
+                    </option>
+                  );
+                })}
               </Select>
-              {errors.owner && <p className="text-rose-500 text-xs">{errors.owner.message}</p>}
+              {errors.owner && <p className="text-rose-500 text-xs font-semibold">{errors.owner.message}</p>}
             </div>
 
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Ownership Percentage (%)</label>
               <Input type="number" {...register('ownershipPercentage', { valueAsNumber: true })} />
-              {errors.ownershipPercentage && <p className="text-rose-500 text-xs">{errors.ownershipPercentage.message}</p>}
+              {errors.ownershipPercentage && <p className="text-rose-500 text-xs font-semibold">{errors.ownershipPercentage.message}</p>}
             </div>
 
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Management Company</label>
               <Input {...register('managementCompany')} />
-              {errors.managementCompany && <p className="text-rose-500 text-xs">{errors.managementCompany.message}</p>}
+              {errors.managementCompany && <p className="text-rose-500 text-xs font-semibold">{errors.managementCompany.message}</p>}
             </div>
           </div>
         </div>
@@ -211,49 +257,42 @@ export const NewPropertyPage: React.FC = () => {
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Year Built</label>
               <Input type="number" {...register('yearBuilt', { valueAsNumber: true })} />
-              {errors.yearBuilt && <p className="text-rose-500 text-xs font-semibold">{errors.yearBuilt.message}</p>}
             </div>
 
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Total Buildings</label>
               <Input type="number" {...register('totalBuildings', { valueAsNumber: true })} />
-              {errors.totalBuildings && <p className="text-rose-500 text-xs font-semibold">{errors.totalBuildings.message}</p>}
             </div>
 
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Total Units</label>
               <Input type="number" {...register('totalUnits', { valueAsNumber: true })} />
-              {errors.totalUnits && <p className="text-rose-500 text-xs font-semibold">{errors.totalUnits.message}</p>}
             </div>
 
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Square Footage</label>
               <Input type="number" {...register('squareFootage', { valueAsNumber: true })} />
-              {errors.squareFootage && <p className="text-rose-500 text-xs font-semibold">{errors.squareFootage.message}</p>}
             </div>
           </div>
         </div>
 
-        {/* --- SECTION 5: FINANCIAL INFORMATION --- */}
+        {/* --- SECTION 5: FINANCIAL DATA --- */}
         <div className="space-y-4">
           <h3 className="font-bold text-sm text-foreground uppercase border-b pb-2">Financial Valuation</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Purchase Price ($)</label>
               <Input type="number" {...register('purchasePrice', { valueAsNumber: true })} />
-              {errors.purchasePrice && <p className="text-rose-500 text-xs font-semibold">{errors.purchasePrice.message}</p>}
             </div>
 
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Current Value ($)</label>
               <Input type="number" {...register('currentValue', { valueAsNumber: true })} />
-              {errors.currentValue && <p className="text-rose-500 text-xs font-semibold">{errors.currentValue.message}</p>}
             </div>
 
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Monthly Expenses ($)</label>
               <Input type="number" {...register('monthlyExpenses', { valueAsNumber: true })} />
-              {errors.monthlyExpenses && <p className="text-rose-500 text-xs font-semibold">{errors.monthlyExpenses.message}</p>}
             </div>
           </div>
         </div>
@@ -290,7 +329,7 @@ export const NewPropertyPage: React.FC = () => {
           </Button>
 
           <div className="flex space-x-2">
-            <Button type="button" variant="outline" onClick={() => navigate({ to: '/properties' })}>
+            <Button type="button" variant="outline" onClick={handleSaveDraft}>
               Save Draft
             </Button>
             <Button type="submit" disabled={createMutation.isPending}>

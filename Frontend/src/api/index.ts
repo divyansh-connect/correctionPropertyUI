@@ -22,6 +22,7 @@ export const api = {
           status: p.status,
           ownerId: p.ownerId,
           owner: p.owner,
+          nycBin: p.nycBin || p.bin || '',
           createdAt: p.createdAt ? p.createdAt.split('T')[0] : '',
         }));
       } catch (e) {
@@ -60,6 +61,10 @@ export const api = {
         }
       });
       const res: any = await apiClient.put(`/properties/${id}`, formData);
+      return res.data;
+    },
+    delete: async (id: string) => {
+      const res: any = await apiClient.delete(`/properties/${id}`);
       return res.data;
     },
   },
@@ -1304,28 +1309,47 @@ export const api = {
   },
 
   violations: {
-    ...mockApi.violations,
     getAll: async () => {
       try {
         const res: any = await apiClient.get('/portal/violations');
-        return (res.data || []).map((v: any) => ({
-          id: v.id,
-          unitNumber: v.unit?.unitNumber || 'Unassigned',
-          propertyName: v.unit?.property?.name || 'Property',
-          title: v.title,
-          description: v.description,
-          fineAmount: v.fineAmount,
-          status: v.status,
-          date: v.createdAt,
-        }));
+        if (res?.data && Array.isArray(res.data)) {
+          return res.data.map((v: any) => ({
+            id: v.id,
+            propertyId: v.unit?.propertyId || v.propertyId || 'prop-1',
+            propertyName: v.unit?.property?.name || v.propertyName || 'NYC Property Asset',
+            unitNumber: v.unit?.unitNumber || 'Building Wide',
+            violationCode: v.title || v.violationCode || 'DOB Citation',
+            issuingAuthority: 'NYC Department of Buildings (DOB)',
+            description: v.description || 'DOB Building Compliance Notice',
+            fineAmount: v.fineAmount || 250,
+            dueDate: v.dueDate || v.createdAt?.split('T')[0] || new Date().toISOString().split('T')[0],
+            severity: v.severity || 'Warning',
+            status: v.status || 'Open',
+          }));
+        }
+        return [];
       } catch (e) {
-        console.error('Violations fetch failed:', e);
+        console.error('Violations DB fetch failed:', e);
         return [];
       }
     },
     create: async (data: any) => {
       const res: any = await apiClient.post('/portal/violations', data);
       return res.data;
+    },
+    createWorkOrder: async (id: string) => {
+      const res: any = await apiClient.post('/portal/violations/dispatch', { violationId: id });
+      return res.data;
+    },
+    syncDob: async (bin?: string) => {
+      const cleanBin = (bin || '4115368').trim();
+      try {
+        const res: any = await apiClient.get(`/portal/violations/sync-nyc-dob?bin=${encodeURIComponent(cleanBin)}`);
+        return res.data;
+      } catch (err1) {
+        const res: any = await apiClient.post('/portal/violations/sync-dob', { bin: cleanBin });
+        return res.data;
+      }
     },
   },
 

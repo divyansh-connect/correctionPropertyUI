@@ -247,6 +247,10 @@ export const PropertyDetailsPage: React.FC = () => {
                   <p className="text-foreground mt-0.5">{property.managementCompany}</p>
                 </div>
                 <div>
+                  <p className="text-muted-foreground">NYC BIN #</p>
+                  <p className="text-foreground mt-0.5 font-mono font-bold text-amber-500">{property.nycBin || 'Not Specified'}</p>
+                </div>
+                <div>
                   <p className="text-muted-foreground">Square Footage</p>
                   <p className="text-foreground mt-0.5">{property.squareFootage.toLocaleString()} sqft</p>
                 </div>

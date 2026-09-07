@@ -73,8 +73,9 @@ export const PropertiesPage: React.FC = () => {
     },
   });
 
-  // Filters
+  // Filters (Exclude Drafts & Inactive from main Properties page)
   const filteredProperties = properties.filter((prop) => {
+    if (prop.status === 'Draft' || prop.status === 'Inactive') return false;
     const matchesSearch =
       prop.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       prop.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -134,6 +135,19 @@ export const PropertiesPage: React.FC = () => {
       header: t('properties.columns.address'),
       id: 'address',
       cell: ({ row }) => <span className="text-muted-foreground text-xs truncate max-w-[150px] inline-block">{row.original.address}</span>,
+    },
+    {
+      id: 'nycBin',
+      header: 'NYC BIN #',
+      accessorFn: (row) => row.nycBin || (row as any).bin || '',
+      cell: ({ row }) => {
+        const binValue = row.original.nycBin || (row.original as any).bin;
+        return (
+          <span className="font-mono text-xs font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+            {binValue ? binValue : 'N/A'}
+          </span>
+        );
+      },
     },
     {
       accessorKey: 'unitsCount',

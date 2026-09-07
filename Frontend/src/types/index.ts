@@ -2,7 +2,7 @@ export interface Property {
   id: string;
   name: string;
   type: 'Apartment' | 'Commercial' | 'Single Family' | 'Multi Family' | 'HOA';
-  status: 'Active' | 'Inactive' | 'Under Review' | 'Archived';
+  status: 'Active' | 'Inactive' | 'Under Review' | 'Archived' | 'Draft';
   owner: any;
   ownershipPercentage: number;
   managementCompany: string;
@@ -23,6 +23,7 @@ export interface Property {
   currentValue: number;
   monthlyExpenses: number;
   createdAt: string;
+  nycBin?: string;
   imageUrl?: string;
   photos?: string[];
   documents?: string[];
@@ -1009,7 +1010,7 @@ export interface Violation {
   fineAmount: number;
   dueDate: string;
   severity: 'Critical' | 'Warning';
-  status: 'Open' | 'Resolved' | 'Disputed';
+  status: 'Open' | 'Resolved' | 'Disputed' | 'Settled';
   workOrderId?: string;
 }
 
