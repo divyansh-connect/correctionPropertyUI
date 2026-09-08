@@ -1313,19 +1313,31 @@ export const api = {
       try {
         const res: any = await apiClient.get('/portal/violations');
         if (res?.data && Array.isArray(res.data)) {
-          return res.data.map((v: any) => ({
-            id: v.id,
-            propertyId: v.unit?.propertyId || v.propertyId || 'prop-1',
-            propertyName: v.unit?.property?.name || v.propertyName || 'NYC Property Asset',
-            unitNumber: v.unit?.unitNumber || 'Building Wide',
-            violationCode: v.title || v.violationCode || 'DOB Citation',
-            issuingAuthority: 'NYC Department of Buildings (DOB)',
-            description: v.description || 'DOB Building Compliance Notice',
-            fineAmount: v.fineAmount || 250,
-            dueDate: v.dueDate || v.createdAt?.split('T')[0] || new Date().toISOString().split('T')[0],
-            severity: v.severity || 'Warning',
-            status: v.status || 'Open',
-          }));
+          return res.data.map((v: any) => {
+            let rawPropName = v.unit?.property?.name || v.propertyName || 'NYC Building Asset';
+            if (rawPropName.includes('4115368')) {
+              rawPropName = '13324 Sanford Ave, Flushing, NY 11355';
+            } else if (rawPropName.includes('1000000')) {
+              rawPropName = '3858 Broadway, New York, NY';
+            }
+            let unitStr = v.unit?.unitNumber || 'Building Wide';
+            if (v.deviceNumber) {
+              unitStr = `Device #${v.deviceNumber}`;
+            }
+            return {
+              id: v.id,
+              propertyId: v.unit?.propertyId || v.propertyId || 'prop-1',
+              propertyName: rawPropName,
+              unitNumber: unitStr,
+              violationCode: v.title || v.violationCode || 'DOB Citation',
+              issuingAuthority: 'NYC Department of Buildings (DOB)',
+              description: v.description || 'DOB Building Compliance Notice',
+              fineAmount: v.fineAmount || 250,
+              dueDate: v.dueDate || v.createdAt?.split('T')[0] || new Date().toISOString().split('T')[0],
+              severity: v.severity || 'Warning',
+              status: v.status || 'Open',
+            };
+          });
         }
         return [];
       } catch (e) {
@@ -1349,6 +1361,14 @@ export const api = {
       } catch (err1) {
         const res: any = await apiClient.post('/portal/violations/sync-dob', { bin: cleanBin });
         return res.data;
+      }
+    },
+    syncAllDob: async () => {
+      try {
+        const res: any = await apiClient.get('/portal/violations/sync-all-nyc-dob');
+        return res.data;
+      } catch (err) {
+        return await mockApi.violations.syncAllDob();
       }
     },
   },

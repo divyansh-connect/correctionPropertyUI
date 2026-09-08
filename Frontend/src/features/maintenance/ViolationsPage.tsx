@@ -26,17 +26,29 @@ export const ViolationsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [severityFilter, setSeverityFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [propertyFilter, setPropertyFilter] = useState('');
 
   // Sync Modal states
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
   const [binNumber, setBinNumber] = useState('4115368');
   const [isSyncing, setIsSyncing] = useState(false);
-  const [syncResult, setSyncResult] = useState<{ success?: boolean; message?: string; count?: number } | null>(null);
+  const [syncMode, setSyncMode] = useState<'bulk' | 'single'>('bulk');
+  const [syncResult, setSyncResult] = useState<{ 
+    success?: boolean; 
+    message?: string; 
+    count?: number;
+    details?: Array<{ propertyName: string; bin: string; count: number }>;
+  } | null>(null);
 
   // Queries
   const { data: violations = [], isLoading } = useQuery({ 
     queryKey: ['violations-list'], 
     queryFn: () => api.violations.getAll() 
+  });
+
+  const { data: properties = [] } = useQuery({
+    queryKey: ['properties-list'],
+    queryFn: () => api.property.getAll()
   });
 
   const createWorkOrderMutation = useMutation({
@@ -54,7 +66,39 @@ export const ViolationsPage: React.FC = () => {
     setIsSyncModalOpen(true);
   };
 
-  const handleExecuteSync = async (e?: React.FormEvent) => {
+  const handleExecuteBulkSync = async () => {
+    setIsSyncing(true);
+    setSyncResult(null);
+
+    try {
+      const result: any = await api.violations.syncAllDob();
+      queryClient.invalidateQueries({ queryKey: ['violations-list'] });
+      
+      const totalCount = result?.totalSyncedCount ?? 0;
+      const details = result?.syncedProperties || [];
+
+      setSyncResult({
+        success: true,
+        message: `Successfully synced ${totalCount} violation(s) across all registered NYC properties!`,
+        count: totalCount,
+        details: details.map((d: any) => ({
+          propertyName: d.propertyName || d.address || `Property BIN ${d.bin}`,
+          bin: d.bin,
+          count: d.syncedCount ?? d.fetchedCount ?? d.count ?? 0,
+        })),
+      });
+    } catch (err: any) {
+      console.error('Bulk DOB Sync failed', err);
+      setSyncResult({
+        success: false,
+        message: err?.response?.data?.message || 'Failed to bulk-sync NYC DOB Open Data. Please try again.',
+      });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleExecuteSingleSync = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const cleanBin = binNumber.trim();
     if (!cleanBin) return;
@@ -85,14 +129,18 @@ export const ViolationsPage: React.FC = () => {
   const filteredViolations = violations.filter((v) => {
     const authorityVal = v.issuingAuthority || '';
     const descVal = v.description || '';
+    const propNameVal = v.propertyName || '';
     const searchMatch = 
       authorityVal.toLowerCase().includes(searchQuery.toLowerCase()) || 
       descVal.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      propNameVal.toLowerCase().includes(searchQuery.toLowerCase()) ||
       v.violationCode.toLowerCase().includes(searchQuery.toLowerCase());
     
     const severityMatch = severityFilter === '' || v.severity === severityFilter;
     const statusMatch = statusFilter === '' || v.status === statusFilter;
-    return searchMatch && severityMatch && statusMatch;
+    const propertyMatch = propertyFilter === '' || v.propertyId === propertyFilter || propNameVal.toLowerCase().includes(propertyFilter.toLowerCase());
+    
+    return searchMatch && severityMatch && statusMatch && propertyMatch;
   });
 
   const columns: ColumnDef<Violation>[] = [
@@ -109,12 +157,26 @@ export const ViolationsPage: React.FC = () => {
     {
       accessorKey: 'propertyName',
       header: 'Property / Location',
-      cell: ({ row }) => (
-        <div className="flex flex-col">
-          <span className="font-medium text-foreground">{row.original.propertyName || 'Building Asset'}</span>
-          <span className="text-xs text-muted-foreground">Unit: {row.original.unitNumber || 'All Units'}</span>
-        </div>
-      ),
+      cell: ({ row }) => {
+        let name = row.original.propertyName || 'Building Asset';
+        if (name.includes('4115368')) {
+          name = '13324 Sanford Ave, Flushing, NY 11355';
+        } else if (name.includes('1000000')) {
+          name = '3858 Broadway, New York, NY';
+        } else if (name.startsWith('NYC Building Asset') || name.startsWith('NYC Property Asset')) {
+          const matched = name.match(/\(BIN (\d+)\)/);
+          name = matched ? `NYC Property (BIN: ${matched[1]})` : name;
+        }
+        return (
+          <div className="flex flex-col">
+            <span className="font-semibold text-foreground flex items-center gap-1.5">
+              <Building2 className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+              {name}
+            </span>
+            <span className="text-xs text-muted-foreground">Unit: {row.original.unitNumber || 'Building Wide'}</span>
+          </div>
+        );
+      },
     },
     {
       accessorKey: 'description',
@@ -200,8 +262,17 @@ export const ViolationsPage: React.FC = () => {
       <FilterBar
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
-        searchPlaceholder="Search violations by authority, description, code..."
+        searchPlaceholder="Search violations by property address, authority, description, code..."
         filters={[
+          {
+            key: 'property',
+            value: propertyFilter,
+            placeholder: 'All Properties',
+            options: properties.map((p) => ({
+              label: `${p.name} ${p.nycBin ? `(BIN: ${p.nycBin})` : ''}`,
+              value: p.id,
+            })),
+          },
           {
             key: 'severity',
             value: severityFilter,
@@ -223,13 +294,17 @@ export const ViolationsPage: React.FC = () => {
           },
         ]}
         onFilterChange={(key, val) => {
+          if (key === 'property') setPropertyFilter(val);
           if (key === 'severity') setSeverityFilter(val);
           if (key === 'status') setStatusFilter(val);
         }}
         onReset={() => {
           setSearchQuery('');
+          setPropertyFilter('');
           setSeverityFilter('');
           setStatusFilter('');
+          queryClient.invalidateQueries({ queryKey: ['violations-list'] });
+          queryClient.invalidateQueries({ queryKey: ['properties-list'] });
         }}
       />
 
@@ -237,50 +312,137 @@ export const ViolationsPage: React.FC = () => {
 
       {/* Sync NYC DOB React Modal Popup */}
       <Dialog open={isSyncModalOpen} onOpenChange={setIsSyncModalOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <div className="flex items-center gap-2 text-primary mb-1">
               <Building2 className="w-5 h-5 text-indigo-500" />
               <DialogTitle className="text-lg font-bold">Sync NYC DOB Violations</DialogTitle>
             </div>
             <DialogDescription className="text-xs text-muted-foreground">
-              Enter the NYC Building Identification Number (BIN) to fetch live violations directly from NYC Open Data (Socrata API).
+              Fetch live violations directly from NYC Open Data (Socrata API). You can bulk-sync all registered company properties or enter a single BIN manually.
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleExecuteSync} className="space-y-4 py-2">
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-foreground flex items-center justify-between">
-                <span>NYC BIN (Building Identification Number)</span>
-                <span className="text-[10px] text-muted-foreground font-normal">7-Digit NYC Code</span>
-              </label>
-              <Input
-                type="text"
-                placeholder="e.g. 4115368"
-                value={binNumber}
-                onChange={(e) => setBinNumber(e.target.value)}
-                className="font-mono text-sm"
-                autoFocus
-              />
+          <div className="space-y-4 py-2">
+            {/* Sync Mode Selector */}
+            <div className="grid grid-cols-2 gap-2 bg-muted p-1 rounded-lg">
+              <button
+                type="button"
+                onClick={() => setSyncMode('bulk')}
+                className={`py-1.5 px-3 text-xs font-semibold rounded-md transition-all ${
+                  syncMode === 'bulk'
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                ⚡ Sync All Properties (Bulk)
+              </button>
+              <button
+                type="button"
+                onClick={() => setSyncMode('single')}
+                className={`py-1.5 px-3 text-xs font-semibold rounded-md transition-all ${
+                  syncMode === 'single'
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                🔍 Manual Single BIN
+              </button>
             </div>
+
+            {syncMode === 'single' ? (
+              <form onSubmit={handleExecuteSingleSync} className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-foreground flex items-center justify-between">
+                    <span>NYC BIN (Building Identification Number)</span>
+                    <span className="text-[10px] text-muted-foreground font-normal">7-Digit NYC Code</span>
+                  </label>
+                  <Input
+                    type="text"
+                    placeholder="e.g. 4115368"
+                    value={binNumber}
+                    onChange={(e) => setBinNumber(e.target.value)}
+                    className="font-mono text-sm"
+                    autoFocus
+                  />
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button type="button" variant="outline" onClick={() => setIsSyncModalOpen(false)}>Cancel</Button>
+                  <Button type="submit" disabled={isSyncing || !binNumber.trim()} className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white">
+                    {isSyncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                    Sync Single BIN
+                  </Button>
+                </div>
+              </form>
+            ) : (
+              <div className="space-y-3">
+                <div className="bg-indigo-500/10 border border-indigo-500/20 p-3 rounded-lg text-xs space-y-1 text-indigo-700 dark:text-indigo-300">
+                  <p className="font-semibold flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-indigo-500 shrink-0" />
+                    Auto-Sync All Configured Properties
+                  </p>
+                  <p className="opacity-90">
+                    This will scan all properties in your portal with an assigned NYC BIN number and automatically fetch & attach their latest violations.
+                  </p>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button type="button" variant="outline" onClick={() => setIsSyncModalOpen(false)}>Cancel</Button>
+                  <Button
+                    type="button"
+                    onClick={handleExecuteBulkSync}
+                    disabled={isSyncing}
+                    className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold"
+                  >
+                    {isSyncing ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Syncing All Properties...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="w-4 h-4" />
+                        Start Bulk Auto-Sync
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            )}
 
             {syncResult && (
               <div
-                className={`p-3 rounded-lg text-xs flex items-start gap-2 border ${
+                className={`p-3 rounded-lg text-xs space-y-2 border ${
                   syncResult.success
                     ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20 dark:text-emerald-400'
                     : 'bg-rose-500/10 text-rose-600 border-rose-500/20 dark:text-rose-400'
                 }`}
               >
-                {syncResult.success ? (
-                  <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-emerald-500" />
-                ) : (
-                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-500" />
-                )}
-                <div>
-                  <p className="font-semibold">{syncResult.success ? 'Sync Successful' : 'Sync Failed'}</p>
-                  <p className="mt-0.5 opacity-90">{syncResult.message}</p>
+                <div className="flex items-start gap-2">
+                  {syncResult.success ? (
+                    <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-emerald-500" />
+                  ) : (
+                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-500" />
+                  )}
+                  <div>
+                    <p className="font-semibold">{syncResult.success ? 'Sync Completed Successfully' : 'Sync Failed'}</p>
+                    <p className="mt-0.5 opacity-90">{syncResult.message}</p>
+                  </div>
                 </div>
+
+                {syncResult.details && syncResult.details.length > 0 && (
+                  <div className="pt-2 border-t border-emerald-500/20 space-y-1">
+                    <p className="font-semibold text-[11px] uppercase tracking-wider text-emerald-700 dark:text-emerald-300">Synced Properties Breakdown:</p>
+                    <ul className="space-y-1 max-h-32 overflow-y-auto">
+                      {syncResult.details.map((d, i) => (
+                        <li key={i} className="flex justify-between items-center bg-emerald-500/5 px-2 py-1 rounded font-mono text-[11px]">
+                          <span>{d.propertyName} {d.bin ? `(BIN: ${d.bin})` : ''}</span>
+                          <span className="font-bold text-emerald-600 dark:text-emerald-400">{d.count} violation(s)</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             )}
 
@@ -288,35 +450,7 @@ export const ViolationsPage: React.FC = () => {
               <Info className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
               <span>Dataset ID: <code className="font-mono text-foreground font-semibold">3h2n-5cm9</code> (NYC DOB Open Data)</span>
             </div>
-
-            <DialogFooter className="pt-2 gap-2 sm:gap-0">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsSyncModalOpen(false)}
-                disabled={isSyncing}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={isSyncing || !binNumber.trim()}
-                className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white"
-              >
-                {isSyncing ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Syncing...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="w-4 h-4" />
-                    Sync Violations
-                  </>
-                )}
-              </Button>
-            </DialogFooter>
-          </form>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

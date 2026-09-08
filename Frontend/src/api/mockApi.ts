@@ -2610,11 +2610,28 @@ export const mockApi = {
     getAll: async () => { await delay(150); return [...violationsList]; },
     getById: async (id: string) => { await delay(50); return violationsList.find(v => v.id === id); },
     addSynced: (syncedItems: any[], bin?: string) => {
+      const cleanBin = bin?.trim();
+      const firstItem = syncedItems[0];
+      const streetName = (firstItem?.street || '').trim();
+      const houseNum = (firstItem?.houseNumber || '').trim();
+      const realAddr = (houseNum && streetName) ? `${houseNum} ${streetName}` : streetName;
+
+      const matchedProp = properties.find(p => 
+        p.nycBin === cleanBin || 
+        (p as any).bin === cleanBin ||
+        (realAddr && (p.name.toLowerCase().includes(realAddr.toLowerCase()) || p.address.toLowerCase().includes(realAddr.toLowerCase())))
+      );
+
+      const propId = matchedProp ? matchedProp.id : (cleanBin ? `prop-bin-${cleanBin}` : 'prop-nyc-dob');
+      const propName = matchedProp 
+        ? matchedProp.name 
+        : (realAddr ? realAddr : `NYC Building (BIN ${cleanBin})`);
+
       const formatted: Violation[] = syncedItems.map((item, idx) => ({
         id: item.id || `viol-dob-${Date.now()}-${idx}`,
-        propertyId: 'prop-nyc-dob',
-        propertyName: `NYC Property (BIN: ${bin || item.bin || '4115368'})`,
-        unitNumber: item.deviceNumber || 'Building Wide',
+        propertyId: propId,
+        propertyName: propName,
+        unitNumber: item.deviceNumber ? `Elevator #${item.deviceNumber}` : (item.unitNumber || 'Building Wide'),
         violationCode: item.violationNumber || item.number || item.isn_dob_bis_viol || 'DOB-UNK',
         issuingAuthority: 'NYC Department of Buildings (DOB)',
         description: item.description || item.dispositionComments || 'NYC DOB Building Code Violation Notice',
@@ -2628,6 +2645,48 @@ export const mockApi = {
       const newUnique = formatted.filter(v => !existingCodes.has(v.violationCode));
       violationsList = [...newUnique, ...violationsList];
       return violationsList;
+    },
+    syncDob: async (bin?: string) => {
+      await delay(200);
+      const cleanBin = bin ? bin.trim() : '4115368';
+      const mockSynced = [
+        {
+          id: `viol-nyc-${cleanBin}-1`,
+          violationNumber: `V*${cleanBin.slice(-4)}01`,
+          issueDate: new Date().toISOString().split('T')[0],
+          description: `NYC DOB Building Code Compliance Citation (BIN: ${cleanBin})`,
+          severity: 'Critical',
+          status: 'Open',
+        },
+        {
+          id: `viol-nyc-${cleanBin}-2`,
+          violationNumber: `V*${cleanBin.slice(-4)}02`,
+          issueDate: new Date().toISOString().split('T')[0],
+          description: `Boiler & Elevator Safety Compliance Notice (BIN: ${cleanBin})`,
+          severity: 'Warning',
+          status: 'Open',
+        }
+      ];
+      return mockApi.violations.addSynced(mockSynced, cleanBin);
+    },
+    syncAllDob: async () => {
+      await delay(250);
+      const propsWithBin = properties.filter(p => p.nycBin || (p as any).bin);
+      const syncedSummary: any[] = [];
+      let totalSynced = 0;
+      for (const p of propsWithBin) {
+        const binVal = p.nycBin || (p as any).bin;
+        if (!binVal) continue;
+        const res = await mockApi.violations.syncDob(binVal);
+        syncedSummary.push({
+          propertyId: p.id,
+          propertyName: p.name,
+          bin: binVal,
+          count: res?.length || 0,
+        });
+        totalSynced += (res?.length || 0);
+      }
+      return { totalSyncedCount: totalSynced, syncedProperties: syncedSummary, violations: violationsList };
     },
     createWorkOrder: async (id: string) => {
       await delay(100);
