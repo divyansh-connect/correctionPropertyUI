@@ -8,6 +8,7 @@ import { PageHeader } from '../../components/PageHeader';
 import { DataTable } from '../../components/DataTable';
 import { FilterBar } from '../../components/FilterBar';
 import { FormDialog } from '../../components/FormDialog';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { Button } from '../../components/ui/Button';
 import { StatusBadge } from '../../components/StatusBadge';
 import { InspectionChecklist } from '../../components/MaintenanceComponents';
@@ -22,6 +23,7 @@ export const InspectionsPage: React.FC = () => {
   
   // Dialog state
   const [selectedIns, setSelectedIns] = useState<InspectionRecord | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   // Queries
   const { data: inspections = [], isLoading } = useQuery({ queryKey: ['inspections-list'], queryFn: () => api.inspections.getAll() });
@@ -30,6 +32,7 @@ export const InspectionsPage: React.FC = () => {
     mutationFn: (id: string) => api.inspections.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inspections-list'] });
+      setDeleteId(null);
     },
   });
 
@@ -73,7 +76,7 @@ export const InspectionsPage: React.FC = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => deleteMutation.mutate(row.original.id)}
+            onClick={() => setDeleteId(row.original.id)}
             className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
             title="Delete Record"
           >
@@ -128,6 +131,18 @@ export const InspectionsPage: React.FC = () => {
           </div>
         )}
       </FormDialog>
+
+      <ConfirmDialog
+        open={!!deleteId}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        title="Delete Inspection Record"
+        description="Are you sure you want to delete this inspection record? Click Yes to confirm or No to cancel."
+        confirmText="Yes, Delete"
+        cancelText="No, Cancel"
+        variant="destructive"
+        loading={deleteMutation.isPending}
+        onConfirm={() => deleteId && deleteMutation.mutate(deleteId)}
+      />
     </div>
   );
 };

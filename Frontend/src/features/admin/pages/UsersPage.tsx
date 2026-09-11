@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../../api';
 import { PageHeader } from '../../../components/PageHeader';
+import { ConfirmDialog } from '../../../components/ConfirmDialog';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
@@ -14,6 +15,7 @@ export const UsersPage: React.FC = () => {
   const [roleFilter, setRoleFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   // Modal States
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -153,6 +155,7 @@ export const UsersPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users-list'] });
       setSelectedUser(null);
+      setDeleteId(null);
       triggerNotification('User access revoked successfully.', 'info');
     },
   });
@@ -351,7 +354,7 @@ export const UsersPage: React.FC = () => {
                           {u.status === 'Active' ? 'Suspend' : 'Activate'}
                         </button>
                         <button
-                          onClick={() => deleteMutation.mutate(u.id)}
+                          onClick={() => setDeleteId(u.id)}
                           className="p-1 text-rose-500 hover:bg-rose-500/10 rounded transition"
                           title="Revoke User Access"
                         >
@@ -377,7 +380,7 @@ export const UsersPage: React.FC = () => {
                   {selectedUser.phone && <span className="text-[10px] text-muted-foreground block">{selectedUser.phone}</span>}
                 </div>
                 <button
-                  onClick={() => deleteMutation.mutate(selectedUser.id)}
+                  onClick={() => setDeleteId(selectedUser.id)}
                   className="text-rose-500 hover:text-rose-650 transition p-1 hover:bg-rose-50 rounded"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -698,6 +701,18 @@ export const UsersPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!deleteId}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        title="Revoke User Access"
+        description="Are you sure you want to revoke access and delete this user? Click Yes to confirm or No to cancel."
+        confirmText="Yes, Revoke Access"
+        cancelText="No, Cancel"
+        variant="destructive"
+        loading={deleteMutation.isPending}
+        onConfirm={() => deleteId && deleteMutation.mutate(deleteId)}
+      />
     </div>
   );
 };

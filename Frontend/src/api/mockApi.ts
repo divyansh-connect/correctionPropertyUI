@@ -2619,7 +2619,7 @@ export const mockApi = {
       const matchedProp = properties.find(p => 
         p.nycBin === cleanBin || 
         (p as any).bin === cleanBin ||
-        (realAddr && (p.name.toLowerCase().includes(realAddr.toLowerCase()) || p.address.toLowerCase().includes(realAddr.toLowerCase())))
+        (realAddr && (p.name.toLowerCase() === realAddr.toLowerCase() || p.address.toLowerCase() === realAddr.toLowerCase()))
       );
 
       const propId = matchedProp ? matchedProp.id : (cleanBin ? `prop-bin-${cleanBin}` : 'prop-nyc-dob');

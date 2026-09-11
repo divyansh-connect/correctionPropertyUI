@@ -72,7 +72,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           className="flex items-center gap-1.5 font-semibold"
         >
           <RotateCcw className="w-4 h-4" />
-          Reset
+          Unfilter
         </Button>
       )}
     </div>

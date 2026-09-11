@@ -190,6 +190,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       path: '/admin',
       submenu: [
         { title: t('nav.companyProfile'), path: '/admin/company-settings' },
+        { title: t('nav.unitDeletionSettings'), path: '/admin/unit-deletion' },
         { title: t('nav.usersAndRoles'), path: '/admin/users' },
         { title: t('nav.rolesAndPermissions'), path: '/admin/roles' },
         { title: t('nav.paymentSettings'), path: '/admin/payment-settings' },

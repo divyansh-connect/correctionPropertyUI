@@ -15,7 +15,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { StatusBadge } from '../../components/StatusBadge';
-import { Plus, Trash2, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Pencil, Loader2, Lock } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
 
 const buildingSchema = zod.object({
@@ -34,7 +34,7 @@ export const BuildingsPage: React.FC = () => {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [editingBuilding, setEditingBuilding] = useState<Building | null>(null);
 
   // Queries
   const { data: buildings = [], isLoading } = useQuery({
@@ -45,6 +45,17 @@ export const BuildingsPage: React.FC = () => {
   const { data: properties = [] } = useQuery({
     queryKey: ['properties'],
     queryFn: () => api.property.getAll(),
+  });
+
+  // Form Setup
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<BuildingFormValues>({
+    resolver: zodResolver(buildingSchema),
+    defaultValues: { floors: 3, unitsCount: 12, status: 'Active' },
   });
 
   // Mutations
@@ -63,28 +74,60 @@ export const BuildingsPage: React.FC = () => {
     },
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => api.building.delete(id),
+  const updateMutation = useMutation({
+    mutationFn: (updatedBld: BuildingFormValues) => {
+      if (!editingBuilding) throw new Error('No building selected for update');
+      const prop = properties.find((p) => p.id === updatedBld.propertyId);
+      return api.building.update(editingBuilding.id, {
+        ...updatedBld,
+        propertyName: prop ? prop.name : 'Unknown Property',
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['buildings'] });
-      setDeleteId(null);
+      setIsFormOpen(false);
+      setEditingBuilding(null);
+      reset();
     },
   });
 
-  // Form Setup
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<BuildingFormValues>({
-    resolver: zodResolver(buildingSchema),
-    defaultValues: { floors: 3, unitsCount: 12, status: 'Active' },
-  });
+
+
+  const handleOpenAddModal = () => {
+    setEditingBuilding(null);
+    reset({
+      propertyId: properties[0]?.id || '',
+      name: '',
+      floors: 3,
+      unitsCount: 12,
+      address: '',
+      status: 'Active',
+    });
+    setIsFormOpen(true);
+  };
+
+  const handleOpenEditModal = (building: Building) => {
+    setEditingBuilding(building);
+    reset({
+      propertyId: building.propertyId || '',
+      name: building.name || '',
+      floors: building.floors || 1,
+      unitsCount: building.unitsCount || 0,
+      address: building.address || '',
+      status: (building.status === 'Inactive' ? 'Inactive' : 'Active') as 'Active' | 'Inactive',
+    });
+    setIsFormOpen(true);
+  };
 
   const onSubmit = (values: BuildingFormValues) => {
-    createMutation.mutate(values);
+    if (editingBuilding) {
+      updateMutation.mutate(values);
+    } else {
+      createMutation.mutate(values);
+    }
   };
+
+  const isSubmitting = createMutation.isPending || updateMutation.isPending;
 
   const filteredBuildings = buildings.filter((bld) =>
     bld.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -112,14 +155,17 @@ export const BuildingsPage: React.FC = () => {
       id: 'actions',
       header: t('pmCoa.actions'),
       cell: ({ row }) => (
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setDeleteId(row.original.id)}
-          className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-        >
-          <Trash2 className="w-4 h-4" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => handleOpenEditModal(row.original)}
+            className="text-muted-foreground hover:text-primary hover:bg-primary/10"
+            title="Edit Building"
+          >
+            <Pencil className="w-4 h-4" />
+          </Button>
+        </div>
       ),
     },
   ];
@@ -136,7 +182,7 @@ export const BuildingsPage: React.FC = () => {
         ]}
         action={{
           label: t('pmProperties.addBuilding'),
-          onClick: () => setIsFormOpen(true),
+          onClick: handleOpenAddModal,
           icon: <Plus className="w-4.5 h-4.5" />,
         }}
       />
@@ -150,8 +196,15 @@ export const BuildingsPage: React.FC = () => {
 
       <DataTable columns={columns} data={filteredBuildings} loading={isLoading} />
 
-      {/* ADD BUILDING DIALOG */}
-      <FormDialog open={isFormOpen} onOpenChange={setIsFormOpen} title="Add New Building">
+      {/* ADD / EDIT BUILDING DIALOG */}
+      <FormDialog 
+        open={isFormOpen} 
+        onOpenChange={(open) => {
+          setIsFormOpen(open);
+          if (!open) setEditingBuilding(null);
+        }} 
+        title={editingBuilding ? "Edit Building" : "Add New Building"}
+      >
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-1">
             <label className="text-xs font-bold text-muted-foreground uppercase">Associated Property</label>
@@ -197,27 +250,19 @@ export const BuildingsPage: React.FC = () => {
           </div>
 
           <div className="flex justify-end space-x-2 pt-4">
-            <Button variant="outline" type="button" onClick={() => setIsFormOpen(false)}>
+            <Button variant="outline" type="button" onClick={() => {
+              setIsFormOpen(false);
+              setEditingBuilding(null);
+            }}>
               Cancel
             </Button>
-            <Button type="submit" disabled={createMutation.isPending}>
-              {createMutation.isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-              Save Building
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+              {editingBuilding ? "Update Building" : "Save Building"}
             </Button>
           </div>
         </form>
       </FormDialog>
-
-      <ConfirmDialog
-        open={!!deleteId}
-        onOpenChange={(open) => !open && setDeleteId(null)}
-        title="Delete Building"
-        description="Are you sure you want to delete this building? This cannot be undone."
-        confirmText="Delete Building"
-        variant="destructive"
-        loading={deleteMutation.isPending}
-        onConfirm={() => deleteId && deleteMutation.mutate(deleteId)}
-      />
     </div>
   );
 };

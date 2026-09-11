@@ -8,6 +8,7 @@ import { PageHeader } from '../../components/PageHeader';
 import { DataTable } from '../../components/DataTable';
 import { FilterBar } from '../../components/FilterBar';
 import { Button } from '../../components/ui/Button';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { RequestPriorityBadge } from '../../components/MaintenanceComponents';
 import { StatusBadge } from '../../components/StatusBadge';
 import { Plus, Eye, Trash2, Download } from 'lucide-react';
@@ -22,6 +23,7 @@ export const RequestsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [priorityFilter, setPriorityFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   // Queries
   const { data: requests = [], isLoading } = useQuery({ queryKey: ['service-requests-list'], queryFn: () => api.serviceRequests.getAll() });
@@ -30,6 +32,7 @@ export const RequestsPage: React.FC = () => {
     mutationFn: (id: string) => api.serviceRequests.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-requests-list'] });
+      setDeleteId(null);
     },
   });
 
@@ -97,7 +100,7 @@ export const RequestsPage: React.FC = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => deleteMutation.mutate(row.original.id)}
+            onClick={() => setDeleteId(row.original.id)}
             className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
             title="Archive Request"
           >
@@ -179,6 +182,18 @@ export const RequestsPage: React.FC = () => {
       />
 
       <DataTable columns={columns} data={filteredRequests.slice(0, 100)} loading={isLoading} />
+
+      <ConfirmDialog
+        open={!!deleteId}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        title="Delete Maintenance Request"
+        description="Are you sure you want to delete this maintenance request? Click Yes to confirm or No to cancel."
+        confirmText="Yes, Delete"
+        cancelText="No, Cancel"
+        variant="destructive"
+        loading={deleteMutation.isPending}
+        onConfirm={() => deleteId && deleteMutation.mutate(deleteId)}
+      />
     </div>
   );
 };

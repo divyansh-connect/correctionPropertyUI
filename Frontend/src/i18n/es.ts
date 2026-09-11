@@ -42,6 +42,7 @@ export const es = {
     aiAssistant: "Asistente IA",
     companySettings: "Configuración de la Empresa",
     companyProfile: "Perfil de la Empresa",
+    unitDeletionSettings: "Eliminación de Unidades",
     usersAndRoles: "Usuarios y Roles",
     rolesAndPermissions: "Roles y Permisos",
     paymentSettings: "Configuración de Pagos",

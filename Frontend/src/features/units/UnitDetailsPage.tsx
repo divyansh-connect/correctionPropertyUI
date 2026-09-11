@@ -14,7 +14,7 @@ import { FormDialog } from '../../components/FormDialog';
 import { 
   Building2, Home, User, CreditCard, Wrench, FileText, ArrowLeft, 
   Plus, Upload, Loader2, Sparkles, Bed, Bath, DollarSign, Calendar,
-  RefreshCw
+  RefreshCw, Edit
 } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
 
@@ -152,6 +152,10 @@ export const UnitDetailsPage: React.FC = () => {
         </div>
 
         <div className="flex items-center space-x-2">
+          <Button variant="outline" size="sm" onClick={() => navigate({ to: `/properties/units/${id}/edit` })} className="flex items-center gap-1">
+            <Edit className="w-4 h-4" />
+            Edit Unit
+          </Button>
           {unit.status !== 'Occupied' && (
             <Button size="sm" onClick={() => setIsAssignOpen(true)} className="flex items-center gap-1">
               <User className="w-4 h-4" />

@@ -198,7 +198,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
           onClick={onReset}
           className="w-full h-10 px-4 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 font-semibold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
         >
-          Reset Filters
+          Unfilter
         </button>
       </div>
     </div>

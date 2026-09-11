@@ -148,6 +148,14 @@ export const UnitsPage: React.FC = () => {
           >
             <Eye className="w-4 h-4" />
           </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate({ to: `/properties/units/${row.original.id}/edit` })}
+            title="Edit Unit"
+          >
+            <Edit className="w-4 h-4" />
+          </Button>
           {row.original.status !== 'Occupied' && (
             <Button
               variant="ghost"
@@ -168,16 +176,6 @@ export const UnitsPage: React.FC = () => {
             title="Change Status"
           >
             <RefreshCw className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => deleteMutation.mutate(row.original.id)}
-            disabled={deleteMutation.isPending}
-            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-            title="Delete"
-          >
-            <Trash2 className="w-4 h-4" />
           </Button>
         </div>
       ),

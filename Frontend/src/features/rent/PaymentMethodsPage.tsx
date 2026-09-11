@@ -3,6 +3,7 @@ import { PageHeader } from '../../components/PageHeader';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { FormDialog } from '../../components/FormDialog';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { CreditCard, Landmark, Plus, Trash2, ShieldCheck, Heart } from 'lucide-react';
@@ -25,6 +26,7 @@ export const PaymentMethodsPage: React.FC = () => {
   const [methodType, setMethodType] = useState<'ACH' | 'Credit Card'>('ACH');
   const [name, setName] = useState('');
   const [detailStr, setDetailStr] = useState('');
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,22 +56,25 @@ export const PaymentMethodsPage: React.FC = () => {
     );
   };
 
-  const handleRemove = (id: string) => {
-    setMethods((prev) => prev.filter((m) => m.id !== id));
+  const confirmRemove = () => {
+    if (deleteId) {
+      setMethods((prev) => prev.filter((m) => m.id !== deleteId));
+      setDeleteId(null);
+    }
   };
 
   return (
-    <div className="space-y-6 text-foreground">
+    <div className="space-y-6">
       <PageHeader
-        title="Stored Payment Methods"
-        description="Verify property business payout bank accounts or tenant autopay profiles."
+        title="Stored Payment Profiles"
+        description="Verify saved ACH bank routing accounts and commercial cards for automated rent auto-pay."
         breadcrumbs={[
           { label: 'Home', href: '/' },
           { label: 'Rent Collection', href: '/rent' },
           { label: 'Payment Methods' },
         ]}
         action={{
-          label: 'Add Stored Method',
+          label: 'Add Payment Account',
           onClick: () => setIsOpen(true),
           icon: <Plus className="w-4.5 h-4.5" />,
         }}
@@ -99,7 +104,7 @@ export const PaymentMethodsPage: React.FC = () => {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => handleRemove(m.id)}
+                onClick={() => setDeleteId(m.id)}
                 className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0"
               >
                 <Trash2 className="w-4.5 h-4.5" />
@@ -118,29 +123,40 @@ export const PaymentMethodsPage: React.FC = () => {
       <FormDialog open={isOpen} onOpenChange={setIsOpen} title="Register Stored Account">
         <form onSubmit={handleAdd} className="space-y-4">
           <div className="space-y-1">
-            <label className="text-xs font-bold text-muted-foreground uppercase">Account Type</label>
+            <label className="text-xs font-bold text-muted-foreground uppercase">Account Category</label>
             <Select value={methodType} onChange={(e) => setMethodType(e.target.value as any)}>
-              <option value="ACH">ACH Direct Bank Transfer</option>
-              <option value="Credit Card">Credit Card</option>
+              <option value="ACH">ACH Bank Direct Debit</option>
+              <option value="Credit Card">Debit or Corporate Credit Card</option>
             </Select>
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-bold text-muted-foreground uppercase">Card / Institution Name</label>
-            <Input placeholder="Chase Checking / Visa Card" value={name} onChange={(e) => setName(e.target.value)} />
+            <label className="text-xs font-bold text-muted-foreground uppercase">Account Title / Label</label>
+            <Input placeholder="E.g. Primary Checking or Company Visa" value={name} onChange={(e) => setName(e.target.value)} required />
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-bold text-muted-foreground uppercase">Details</label>
-            <Input placeholder="Routing: ****0120 Account: ******6543" value={detailStr} onChange={(e) => setDetailStr(e.target.value)} />
+            <label className="text-xs font-bold text-muted-foreground uppercase">Routing / Account Details</label>
+            <Input placeholder="E.g. Routing: 122000496 Account: ****8877" value={detailStr} onChange={(e) => setDetailStr(e.target.value)} />
           </div>
 
-          <div className="flex justify-end space-x-2 pt-4">
-            <Button variant="outline" type="button" onClick={() => setIsOpen(false)}>Cancel</Button>
-            <Button type="submit" disabled={!name.trim()}>Save Account</Button>
+          <div className="flex justify-end space-x-2 pt-2">
+            <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancel</Button>
+            <Button type="submit">Save Stored Method</Button>
           </div>
         </form>
       </FormDialog>
+
+      <ConfirmDialog
+        open={!!deleteId}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+        title="Remove Payment Method"
+        description="Are you sure you want to remove this payment method? Click Yes to confirm or No to cancel."
+        confirmText="Yes, Remove"
+        cancelText="No, Cancel"
+        variant="destructive"
+        onConfirm={confirmRemove}
+      />
     </div>
   );
 };

@@ -47,6 +47,7 @@ import { DraftPropertiesPage } from '../features/properties/DraftPropertiesPage'
 import { BuildingsPage } from '../features/properties/BuildingsPage';
 import { UnitsPage } from '../features/units/UnitsPage';
 import { NewUnitPage } from '../features/units/NewUnitPage';
+import { EditUnitPage } from '../features/units/EditUnitPage';
 import { UnitDetailsPage } from '../features/units/UnitDetailsPage';
 
 // Tenants Module (Phase 3)
@@ -161,6 +162,7 @@ import { AIAssistantPage } from '../features/ai/AIAssistantPage';
 import { AISettingsPage } from '../features/ai/AISettingsPage';
 import { AdminDashboard } from '../features/admin/pages/AdminDashboard';
 import { CompanySettingsPage } from '../features/admin/pages/CompanySettingsPage';
+import { UnitDeletionPage } from '../features/admin/pages/UnitDeletionPage';
 import { UsersPage } from '../features/admin/pages/UsersPage';
 import { TeamsPage } from '../features/admin/pages/TeamsPage';
 import { RolesPage } from '../features/admin/pages/RolesPage';
@@ -575,6 +577,26 @@ const unitDetailsRoute = createRoute({
   component: () => (
     <ProtectedWrapper>
       <UnitDetailsPage />
+    </ProtectedWrapper>
+  ),
+});
+
+const editUnitRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/properties/units/$id/edit',
+  component: () => (
+    <ProtectedWrapper>
+      <EditUnitPage />
+    </ProtectedWrapper>
+  ),
+});
+
+const editUnitAltRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/units/$id/edit',
+  component: () => (
+    <ProtectedWrapper>
+      <EditUnitPage />
     </ProtectedWrapper>
   ),
 });
@@ -1849,6 +1871,11 @@ const adminCompanySettingsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/admin/company-settings',
   component: () => (<ProtectedWrapper><CompanySettingsPage /></ProtectedWrapper>),
+});
+const adminUnitDeletionRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/admin/unit-deletion',
+  component: () => (<ProtectedWrapper><UnitDeletionPage /></ProtectedWrapper>),
 });
 const adminUsersRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -5741,6 +5768,8 @@ const routeTree = rootRoute.addChildren([
   unitsRoute,
   newUnitRoute,
   unitDetailsRoute,
+  editUnitRoute,
+  editUnitAltRoute,
 
   // Tenants
   tenantsRoute,
@@ -5897,6 +5926,7 @@ const routeTree = rootRoute.addChildren([
   aiSettingsRoute,
   adminDashboardRoute,
   adminCompanySettingsRoute,
+  adminUnitDeletionRoute,
   adminUsersRoute,
   adminTeamsRoute,
   adminRolesRoute,

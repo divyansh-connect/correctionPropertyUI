@@ -42,6 +42,7 @@ export const en = {
     aiAssistant: "AI Assistant",
     companySettings: "Company Settings",
     companyProfile: "Company Profile",
+    unitDeletionSettings: "Asset & Portfolio Deletion",
     usersAndRoles: "Users & Roles",
     rolesAndPermissions: "Roles & Permissions",
     paymentSettings: "Payment Settings",

@@ -5,10 +5,11 @@ import { Property } from '../../types';
 import { PageHeader } from '../../components/PageHeader';
 import { DataTable } from '../../components/DataTable';
 import { FilterBar } from '../../components/FilterBar';
-import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { FormDialog } from '../../components/FormDialog';
 import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
 import { StatusBadge } from '../../components/StatusBadge';
-import { Plus, Trash2, Edit, Copy, Eye, Download } from 'lucide-react';
+import { Plus, Trash2, Edit, Copy, Eye, Download, Lock, Loader2 } from 'lucide-react';
 import { ColumnDef } from '@tanstack/react-table';
 import { useNavigate } from '@tanstack/react-router';
 import { useTranslation } from 'react-i18next';
@@ -22,7 +23,6 @@ export const PropertiesPage: React.FC = () => {
   const [typeFilter, setTypeFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [ownerFilter, setOwnerFilter] = useState('');
-  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   // Query Properties
   const { data: properties = [], isLoading, error } = useQuery({
@@ -36,14 +36,7 @@ export const PropertiesPage: React.FC = () => {
     queryFn: () => api.owner.getAll(),
   });
 
-  // Actions Mutations
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => api.property.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['properties'] });
-      setDeleteId(null);
-    },
-  });
+
 
   const duplicateMutation = useMutation({
     mutationFn: async (prop: Property) => {
@@ -208,15 +201,6 @@ export const PropertiesPage: React.FC = () => {
           >
             <Edit className="w-4 h-4" />
           </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setDeleteId(row.original.id)}
-            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-            title={t('properties.actions.delete')}
-          >
-            <Trash2 className="w-4 h-4" />
-          </Button>
         </div>
       ),
     },
@@ -305,17 +289,6 @@ export const PropertiesPage: React.FC = () => {
         data={filteredProperties}
         loading={isLoading}
         error={error ? error.message : null}
-      />
-
-      <ConfirmDialog
-        open={!!deleteId}
-        onOpenChange={(open) => !open && setDeleteId(null)}
-        title={t('properties.deleteDialog.title')}
-        description={t('properties.deleteDialog.desc')}
-        confirmText={t('properties.deleteDialog.confirm')}
-        variant="destructive"
-        loading={deleteMutation.isPending}
-        onConfirm={() => deleteId && deleteMutation.mutate(deleteId)}
       />
     </div>
   );

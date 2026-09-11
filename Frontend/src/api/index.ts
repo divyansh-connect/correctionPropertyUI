@@ -285,19 +285,38 @@ export const api = {
         if (!t) return undefined;
         return {
           id: t.id,
-          firstName: t.firstName,
-          lastName: t.lastName,
-          email: t.email,
-          phone: t.phone,
-          unitId: t.unitId,
+          firstName: t.firstName || '',
+          lastName: t.lastName || '',
+          email: t.email || '',
+          phone: t.phone || '',
+          unitId: t.unitId || '',
           unitNumber: t.unit?.unitNumber || 'Unassigned',
           unitName: t.unit?.unitNumber || 'Unassigned',
-          propertyId: t.unit?.propertyId,
+          propertyId: t.unit?.propertyId || '',
           propertyName: t.unit?.property?.name || 'Unassigned',
-          status: t.status,
+          status: t.status || 'Active',
           createdAt: t.createdAt,
           screeningReports: t.screeningReports || [],
           invoices: t.invoices || [],
+          dob: t.dob ? (t.dob.includes('T') ? t.dob.split('T')[0] : t.dob) : '',
+          nationality: t.nationality || '',
+          idType: t.idType || 'Driver License',
+          idNumber: t.idNumber || '',
+          emergencyName: t.emergencyName || '',
+          emergencyRelationship: t.emergencyRelationship || '',
+          emergencyPhone: t.emergencyPhone || '',
+          employer: t.employer || '',
+          position: t.position || '',
+          monthlyIncome: t.monthlyIncome || 0,
+          employmentStatus: t.employmentStatus || 'Full-Time',
+          currentAddress: t.currentAddress || '',
+          previousAddress: t.previousAddress || '',
+          preferredName: t.preferredName || '',
+          altPhone: t.altPhone || '',
+          gender: t.gender || 'Male',
+          imageUrl: t.imageUrl || '',
+          pets: t.pets || [],
+          vehicles: t.vehicles || [],
         };
       } catch (e) {
         console.error(`Tenant fetch by id failed for ${id}:`, e);
@@ -1315,11 +1334,6 @@ export const api = {
         if (res?.data && Array.isArray(res.data)) {
           return res.data.map((v: any) => {
             let rawPropName = v.unit?.property?.name || v.propertyName || 'NYC Building Asset';
-            if (rawPropName.includes('4115368')) {
-              rawPropName = '13324 Sanford Ave, Flushing, NY 11355';
-            } else if (rawPropName.includes('1000000')) {
-              rawPropName = '3858 Broadway, New York, NY';
-            }
             let unitStr = v.unit?.unitNumber || 'Building Wide';
             if (v.deviceNumber) {
               unitStr = `Device #${v.deviceNumber}`;
@@ -1862,6 +1876,12 @@ export const api = {
       return res.data;
     },
     archive: async (id: string) => {
+      return true;
+    },
+    delete: async (id: string) => {
+      try {
+        await apiClient.delete(`/documents/${id}`);
+      } catch (e) {}
       return true;
     },
     getOwnerDocs: async () => {

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../../api';
 import { PageHeader } from '../../../components/PageHeader';
+import { ConfirmDialog } from '../../../components/ConfirmDialog';
 import { DashboardGrid } from '../components/DashboardGrid';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
@@ -13,6 +14,7 @@ export const DashboardBuilder: React.FC = () => {
   const [selectedDashId, setSelectedDashId] = useState<string>('');
   const [isEditing, setIsEditing] = useState(false);
   const [showAddWidget, setShowAddWidget] = useState(false);
+  const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
 
   // Widget settings form state
   const [wTitle, setWTitle] = useState('');
@@ -60,6 +62,7 @@ export const DashboardBuilder: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dashboards-list'] });
       setSelectedDashId('');
+      setIsConfirmDeleteOpen(false);
     },
   });
 
@@ -143,7 +146,7 @@ export const DashboardBuilder: React.FC = () => {
             >
               <Share2 className="w-4 h-4" /> {activeDashboard.isShared ? 'Shared' : 'Share'}
             </Button>
-            <Button variant="outline" size="sm" onClick={() => deleteDashMutation.mutate()} className="font-semibold text-rose-500 hover:text-rose-600 flex items-center gap-1">
+            <Button variant="outline" size="sm" onClick={() => setIsConfirmDeleteOpen(true)} className="font-semibold text-rose-500 hover:text-rose-600 flex items-center gap-1">
               <Trash2 className="w-4 h-4" /> Delete
             </Button>
           </div>
@@ -231,6 +234,18 @@ export const DashboardBuilder: React.FC = () => {
           </Button>
         </div>
       )}
+
+      <ConfirmDialog
+        open={isConfirmDeleteOpen}
+        onOpenChange={setIsConfirmDeleteOpen}
+        title="Delete Dashboard"
+        description="Are you sure you want to delete this custom dashboard? Click Yes to confirm or No to cancel."
+        confirmText="Yes, Delete"
+        cancelText="No, Cancel"
+        variant="destructive"
+        loading={deleteDashMutation.isPending}
+        onConfirm={() => deleteDashMutation.mutate()}
+      />
     </div>
   );
 };

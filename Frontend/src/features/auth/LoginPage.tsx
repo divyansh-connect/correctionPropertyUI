@@ -97,8 +97,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ navigate }) => {
   } = useForm<LoginFormInputs>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: 'manager@apexpm.com',
-      password: 'password123',
+      email: '',
+      password: '',
     },
   });
 
@@ -250,7 +250,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ navigate }) => {
               <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
               <Input
                 type="email"
-                placeholder="manager@apexpm.com"
+                placeholder="name@example.com"
                 {...registerLogin('email')}
                 className="pl-10 bg-white dark:bg-slate-950/40 border-slate-300 dark:border-slate-700/80 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus-visible:ring-primary"
               />
