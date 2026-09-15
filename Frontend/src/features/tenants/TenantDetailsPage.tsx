@@ -131,9 +131,16 @@ export const TenantDetailsPage: React.FC = () => {
   const hasBalance = balanceDue > 0;
   const monthlyRent = lease ? lease.rentAmount : 1400;
 
+  const { data: profile } = useQuery({ queryKey: ['user-profile'], queryFn: () => api.userProfile.get() });
+
   const property = allProperties.find((p) => p.id === tenant?.propertyId);
   const propertyAddress = property ? property.address : (tenant?.propertyName ? `${tenant.propertyName}, Austin, TX` : 'N/A');
-  const managementCompany = property?.managementCompany || 'Apex Property Management';
+  const managementCompany = 
+    (property?.managementCompany && !property.managementCompany.includes('Apex'))
+      ? property.managementCompany
+      : (profile?.company && !profile.company.includes('Apex'))
+        ? profile.company
+        : (profile?.company || (tenant as any)?.companyName || property?.managementCompany || 'Property Management');
 
   // Timeline events mock
   const timelineEvents: TimelineEvent[] = [

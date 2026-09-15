@@ -99,8 +99,7 @@ export const NewPaymentPage: React.FC = () => {
         paidDate: data.paidDate,
         paymentMethod: data.paymentMethod,
       });
-
-      // If Cash, Zelle, or other manual method is selected, wait for manager interactions. Otherwise do regular redirect.
+  // If Cash, Zelle, or other manual method is selected, wait for manager interactions. Otherwise do regular redirect.
       const isManualMethod = ['Cash', 'Zelle', 'WireTransfer', 'Check', 'MoneyOrder', 'BankTransfer'].includes(data.paymentMethod);
       if (isManualMethod) {
         setShowReceiptModal(true);

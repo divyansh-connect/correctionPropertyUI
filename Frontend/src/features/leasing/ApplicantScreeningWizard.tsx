@@ -31,6 +31,18 @@ export const ApplicantScreeningWizard: React.FC = () => {
     queryFn: () => api.screening.getById(screeningId),
   });
 
+  const { data: profile } = useQuery({
+    queryKey: ['user-profile'],
+    queryFn: () => api.userProfile.get(),
+  });
+
+  const companyName = 
+    (screening?.companyName && !screening.companyName.includes('Apex'))
+      ? screening.companyName
+      : (profile?.company && !profile.company.includes('Apex'))
+        ? profile.company
+        : (profile?.company || screening?.companyName || 'Property Management');
+
   React.useEffect(() => {
     if (screening) {
       if (screening.status === 'Pending Approval' || screening.status === 'Approved' || screening.status === 'Declined') {
@@ -138,7 +150,7 @@ export const ApplicantScreeningWizard: React.FC = () => {
               <Sparkles className="w-4.5 h-4.5 text-primary animate-pulse" /> Screening Check Invitation
             </h3>
             <p className="text-muted-foreground text-xs leading-relaxed font-medium">
-              You have been invited by Apex Property Management to complete a rental application screening check. This request will be processed securely.
+              You have been invited by {companyName} to complete a rental application screening check. This request will be processed securely.
             </p>
             <div className="grid grid-cols-2 gap-3">
               <div className="p-4 bg-secondary/10 rounded-xl border border-border/40">
@@ -206,7 +218,7 @@ export const ApplicantScreeningWizard: React.FC = () => {
                 className="w-4.5 h-4.5 rounded text-primary focus:ring-primary border-border bg-background mt-0.5 shrink-0"
               />
               <p className="text-xs leading-relaxed font-semibold text-foreground">
-                I authorize Apex Property Management and the screening provider (TransUnion) to obtain my consumer report, criminal background report, and eviction history for rental screening purposes.
+                I authorize {companyName} and the screening provider (TransUnion) to obtain my consumer report, criminal background report, and eviction history for rental screening purposes.
               </p>
             </label>
           </div>
