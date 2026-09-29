@@ -126,9 +126,10 @@ export const AcceptHostedModal: React.FC<AcceptHostedModalProps> = ({
             </div>
           </div>
           <button
+            type="button"
             onClick={() => {
-              onCancel();
-              onClose();
+              try { if (onCancel) onCancel(); } catch (e) {}
+              try { if (onClose) onClose(); } catch (e) {}
             }}
             className="text-slate-400 hover:text-white transition p-1 rounded-lg hover:bg-slate-800"
           >
@@ -265,8 +266,8 @@ export const AcceptHostedModal: React.FC<AcceptHostedModalProps> = ({
                       type="button"
                       variant="outline"
                       onClick={() => {
-                        onCancel();
-                        onClose();
+                        try { if (onCancel) onCancel(); } catch (e) {}
+                        try { if (onClose) onClose(); } catch (e) {}
                       }}
                       className="text-xs h-10 px-4 font-bold rounded-xl"
                     >

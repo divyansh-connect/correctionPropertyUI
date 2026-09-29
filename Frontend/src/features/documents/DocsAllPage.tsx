@@ -208,17 +208,6 @@ export const DocsAllPage: React.FC = () => {
       {/* Premium Header Layout */}
       <div className="flex flex-col space-y-2 md:flex-row md:items-center md:justify-between md:space-y-0 pb-6 border-b border-border/60 mb-6">
         <div className="space-y-1.5">
-          <nav className="flex items-center space-x-1.5 text-xs font-semibold text-muted-foreground mb-1">
-            <span className="hover:text-primary transition-colors cursor-pointer" onClick={() => navigate({ to: '/' })}>
-              {t('header.home')}
-            </span>
-            <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/50" />
-            <span className="hover:text-primary transition-colors cursor-pointer" onClick={() => navigate({ to: '/documents' })}>
-              {t('nav.documents')}
-            </span>
-            <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/50" />
-            <span className="text-foreground/80 font-bold">{t('pmDocuments.allTitle')}</span>
-          </nav>
           <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">
             {t('pmDocuments.allTitle')}
           </h1>

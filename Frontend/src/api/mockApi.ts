@@ -2144,10 +2144,11 @@ export const mockApi = {
     getGeneral: async () => {
       await delay(100);
       return {
-        companyName: 'Apex Properties Inc.',
+        companyName: localStorage.getItem('company_name') || 'Divine Properties',
+        address: localStorage.getItem('company_address') || '100 Pine Street, San Francisco, CA',
         logo: '/logo.png',
-        timezone: 'UTC-5 (EST)',
-        currency: 'USD ($)',
+        timezone: localStorage.getItem('company_timezone') || 'EST',
+        currency: localStorage.getItem('company_currency') || 'USD',
         dateFormat: 'MM/DD/YYYY',
         language: 'English',
         primaryColor: '#6366f1',
@@ -2822,14 +2823,14 @@ export const mockApi = {
         const firstName = names[0];
         const lastName = names.slice(1).join(' ') || 'Applicant';
         tenants.unshift({
-          id: check.applicantId,
+          id: check.applicantId || `tenant-${Date.now()}`,
           firstName,
           lastName,
           email: check.applicantEmail,
           phone: check.applicantPhone,
-          propertyId: check.propertyId,
+          propertyId: check.propertyId || '',
           propertyName: check.propertyName,
-          unitId: check.unitId,
+          unitId: check.unitId || '',
           unitNumber: check.unitNumber,
           status: 'Active',
         });
@@ -3177,7 +3178,7 @@ export const mockApi = {
         vehicles: 'Toyota Camry (Silver, 2021) - LIC# TX-77B12',
         pets: 'Golden Retriever (Rex)',
         preferredLanguage: 'English',
-        companyName: 'Apex Living Property Management',
+        companyName: 'Property Management',
         companyAddress: '100 Congress Ave, Austin, TX 78701',
         tenantAddress: '304 Skyline Luxury Lofts, Austin, TX 78702',
         unitDetails: 'Apt 304 (3rd Floor - Corner Unit)',

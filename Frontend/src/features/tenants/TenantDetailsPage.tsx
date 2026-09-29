@@ -34,6 +34,7 @@ export const TenantDetailsPage: React.FC = () => {
   const { data: allMaint = [] } = useQuery({ queryKey: ['maintenance-tickets'], queryFn: () => api.maintenance.getAll() });
   const { data: allDocs = [], refetch: refetchDocs } = useQuery({ queryKey: ['documents'], queryFn: () => api.document.getAll() });
   const { data: allProperties = [] } = useQuery({ queryKey: ['properties'], queryFn: () => api.property.getAll() });
+  const { data: profile } = useQuery({ queryKey: ['user-profile'], queryFn: () => api.userProfile.get() });
 
   // Filtered/Associated items
   const lease = allLeases.find((l) => l.tenantId === id);
@@ -130,8 +131,6 @@ export const TenantDetailsPage: React.FC = () => {
   const balanceDue = (tenant.invoices || []).reduce((sum, inv) => sum + (inv.balance || 0), 0);
   const hasBalance = balanceDue > 0;
   const monthlyRent = lease ? lease.rentAmount : 1400;
-
-  const { data: profile } = useQuery({ queryKey: ['user-profile'], queryFn: () => api.userProfile.get() });
 
   const property = allProperties.find((p) => p.id === tenant?.propertyId);
   const propertyAddress = property ? property.address : (tenant?.propertyName ? `${tenant.propertyName}, Austin, TX` : 'N/A');

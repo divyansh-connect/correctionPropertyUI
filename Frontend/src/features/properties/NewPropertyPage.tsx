@@ -5,7 +5,9 @@ import * as zod from 'zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import api from '../../api';
+import { useCompanyStore } from '../../store/useStore';
 import { PageHeader } from '../../components/PageHeader';
+import { PlanLimitReachedModal } from '../../components/PlanLimitReachedModal';
 import { AddressForm } from '../../components/AddressForm';
 import { FileUploader } from '../../components/FileUploader';
 import { Input } from '../../components/ui/Input';
@@ -45,6 +47,9 @@ type PropertyFormInputs = zod.infer<typeof propertyFormSchema>;
 export const NewPropertyPage: React.FC = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const { companyName } = useCompanyStore();
+  const activeCompany = companyName || 'Divine Properties';
+
   const [photos, setPhotos] = useState<string[]>([]);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [success, setSuccess] = useState(false);
@@ -54,6 +59,9 @@ export const NewPropertyPage: React.FC = () => {
     queryKey: ['owners'],
     queryFn: () => api.owner.getAll(),
   });
+
+  const [showLimitModal, setShowLimitModal] = useState(false);
+  const [limitMessage, setLimitMessage] = useState('');
 
   const createMutation = useMutation({
     mutationFn: (values: any) => {
@@ -65,7 +73,13 @@ export const NewPropertyPage: React.FC = () => {
       setTimeout(() => navigate({ to: '/properties' }), 2000);
     },
     onError: (err: any) => {
-      mapBackendErrors(err, setError);
+      const errMsg = err?.message || err?.response?.data?.error?.message || '';
+      if (errMsg.toLowerCase().includes('limit reached') || err?.code === 'PLAN_LIMIT_EXCEEDED' || err?.response?.data?.error?.code === 'PLAN_LIMIT_EXCEEDED') {
+        setLimitMessage(errMsg || 'Property creation limit reached for your active subscription plan.');
+        setShowLimitModal(true);
+      } else {
+        mapBackendErrors(err, setError);
+      }
     }
   });
 
@@ -80,7 +94,7 @@ export const NewPropertyPage: React.FC = () => {
       type: 'Apartment',
       status: 'Active',
       ownershipPercentage: 100,
-      managementCompany: 'Apex Property Management',
+      managementCompany: activeCompany,
       yearBuilt: 2010,
       totalBuildings: 1,
       totalUnits: 10,
@@ -139,7 +153,7 @@ export const NewPropertyPage: React.FC = () => {
         status: 'Draft',
         ownerId,
         ownershipPercentage: formValues.ownershipPercentage || 100,
-        managementCompany: formValues.managementCompany || 'Apex Property Management',
+        managementCompany: formValues.managementCompany || activeCompany,
         address: `${formValues.streetAddress || ''}, ${formValues.city || ''}, ${formValues.state || ''}, ${formValues.country || 'USA'}, ${formValues.zip || ''}`,
         streetAddress: formValues.streetAddress || '',
         city: formValues.city || '',
@@ -244,7 +258,7 @@ export const NewPropertyPage: React.FC = () => {
 
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Management Company</label>
-              <Input {...register('managementCompany')} />
+              <Input {...register('managementCompany')} disabled className="bg-muted/50 text-muted-foreground cursor-not-allowed font-semibold" />
               {errors.managementCompany && <p className="text-rose-500 text-xs font-semibold">{errors.managementCompany.message}</p>}
             </div>
           </div>
@@ -340,6 +354,14 @@ export const NewPropertyPage: React.FC = () => {
         </div>
 
       </form>
+
+      <PlanLimitReachedModal
+        isOpen={showLimitModal}
+        onClose={() => setShowLimitModal(false)}
+        onUpgrade={() => navigate({ to: '/subscriptions/plans' })}
+        message={limitMessage}
+        limitType="properties"
+      />
     </div>
   );
 };

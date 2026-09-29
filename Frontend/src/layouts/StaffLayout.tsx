@@ -46,9 +46,12 @@ export const StaffLayout: React.FC<StaffLayoutProps> = ({
     refetchInterval: 15000,
   });
 
-  const roleNotifications = realStaffNotifications.length > 0
-    ? realStaffNotifications
-    : notifications.filter((n) => n.role === 'Maintenance Staff');
+  const localNotifications = notifications.filter((n) => !n.role || n.role === 'Maintenance Staff');
+  const roleNotifications = Array.from(
+    new Map(
+      [...(realStaffNotifications || []), ...localNotifications].map((n) => [n.id, n])
+    ).values()
+  );
 
   const unreadCount = roleNotifications.filter((n) => !n.read).length;
 
@@ -97,7 +100,10 @@ export const StaffLayout: React.FC<StaffLayoutProps> = ({
         {/* Desktop Logout Button */}
         <div className="p-4 border-t border-border/40">
           <button
-            onClick={logout}
+            onClick={() => {
+              logout();
+              navigate('/login');
+            }}
             className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-xs font-bold transition-all uppercase tracking-wider text-rose-500 hover:bg-rose-500/10 transition-colors"
           >
             <LogOut className="w-5 h-5" />
@@ -141,7 +147,10 @@ export const StaffLayout: React.FC<StaffLayoutProps> = ({
             {/* Mobile Logout Button */}
             <div className="pt-4 border-t border-border/40 mt-5">
               <button
-                onClick={logout}
+                onClick={() => {
+                  logout();
+                  navigate('/login');
+                }}
                 className="w-full flex items-center space-x-3 px-3 py-3 rounded-lg text-xs font-bold transition-all uppercase tracking-wider text-rose-500 hover:bg-rose-500/10 transition-colors"
               >
                 <LogOut className="w-5 h-5" />
@@ -269,7 +278,11 @@ export const StaffLayout: React.FC<StaffLayoutProps> = ({
                       </span>
                     </div>
                     <button
-                      onClick={logout}
+                      onClick={() => {
+                        setShowProfileMenu(false);
+                        logout();
+                        navigate('/login');
+                      }}
                       className="w-full flex items-center space-x-2 px-3 py-2 text-xs font-bold text-rose-500 hover:bg-rose-500/10 rounded-lg mt-1 transition text-left"
                     >
                       <LogOut className="w-4 h-4" />

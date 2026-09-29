@@ -239,10 +239,13 @@ export const UsersPage: React.FC = () => {
 
   // Filters
   const filtered = users.filter((u: any) => {
+    if (u.role === 'Property Manager') {
+      return false;
+    }
     const matchesRole = roleFilter === 'All' || u.role === roleFilter;
     const matchesSearch =
-      u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchQuery.toLowerCase());
+      (u.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (u.email || '').toLowerCase().includes(searchQuery.toLowerCase());
     return matchesRole && matchesSearch;
   });
 
@@ -276,9 +279,12 @@ export const UsersPage: React.FC = () => {
           />
           <Select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)} className="w-full sm:w-48 text-xs font-semibold">
             <option value="All">All Roles</option>
-            {roles.map((r: any) => (
-              <option key={r.id} value={r.name}>{r.name}</option>
-            ))}
+            {roles
+              .filter((r: any) => r.name !== 'Property Manager')
+              .map((r: any) => (
+                <option key={r.id} value={r.name}>{r.name}</option>
+              ))
+            }
           </Select>
         </div>
         <Button onClick={() => { resetForm(); setIsModalOpen(true); }} className="bg-primary text-primary-foreground font-semibold flex items-center gap-1.5 w-full sm:w-auto">

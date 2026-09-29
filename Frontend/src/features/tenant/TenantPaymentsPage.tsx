@@ -13,10 +13,12 @@ import { ColumnDef } from '@tanstack/react-table';
 import { clsx } from 'clsx';
 import { useTranslation } from 'react-i18next';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/Tabs';
+import { useCompanyStore } from '../../store/useStore';
 
 export const TenantPaymentsPage: React.FC = () => {
   const queryClient = useQueryClient();
   const { t } = useTranslation();
+  const { companyName: globalCompanyName, companyAddress: globalCompanyAddress } = useCompanyStore();
   const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState<'details' | 'processing' | 'receipt'>('details');
   const [processingMsg, setProcessingMsg] = useState('Initializing SSL handshaking...');
@@ -171,6 +173,10 @@ export const TenantPaymentsPage: React.FC = () => {
     document.body.removeChild(link);
   };
 
+  const handleDownloadPDF = () => {
+    window.print();
+  };
+
   // Form states
   const [paymentOption, setPaymentOption] = useState<'full' | 'partial'>('full');
   const [amount, setAmount] = useState('1850');
@@ -206,8 +212,73 @@ export const TenantPaymentsPage: React.FC = () => {
       : 4.99;
   const total = amountNum + fee;
 
+  // Active Gateway query for company-isolated payments
+  const { data: activeGateway } = useQuery({
+    queryKey: ['active-tenant-gateway'],
+    queryFn: () => api.tenantPayments.getActiveGateway(),
+  });
+
+  // Inject Razorpay JS SDK dynamically if Manager configured Razorpay
+  React.useEffect(() => {
+    if (activeGateway?.provider === 'RAZORPAY') {
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.async = true;
+      document.body.appendChild(script);
+      return () => {
+        if (document.body.contains(script)) {
+          document.body.removeChild(script);
+        }
+      };
+    }
+  }, [activeGateway]);
+
   const payMutation = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
+      if (activeGateway?.provider === 'RAZORPAY' && (window as any).Razorpay) {
+        setStep('processing');
+        setProcessingMsg('Creating Razorpay secure order...');
+        const orderData = await api.tenantPayments.createRazorpayOrder({ amount: total, currency: 'USD' });
+        
+        return new Promise((resolve, reject) => {
+          const options = {
+            key: orderData.keyId,
+            amount: orderData.amount,
+            currency: orderData.currency || 'USD',
+            name: profile?.companyName || 'Rental Payment',
+            description: 'Rent Payment Transaction',
+            order_id: orderData.orderId,
+            handler: async (response: any) => {
+              try {
+                setProcessingMsg('Verifying payment signature with gateway...');
+                const verifyRes = await api.tenantPayments.verifyRazorpayPayment({
+                  razorpayOrderId: response.razorpay_order_id,
+                  razorpayPaymentId: response.razorpay_payment_id,
+                  razorpaySignature: response.razorpay_signature,
+                  amount: total,
+                });
+                resolve(verifyRes);
+              } catch (err) {
+                reject(err);
+              }
+            },
+            prefill: {
+              name: tenantName,
+              email: profile?.email || '',
+              contact: profile?.phone || '',
+            },
+            theme: {
+              color: '#2563eb',
+            },
+          };
+          const rzp = new (window as any).Razorpay(options);
+          rzp.on('payment.failed', function (res: any) {
+            reject(new Error(res.error?.description || 'Razorpay payment cancelled'));
+          });
+          rzp.open();
+        });
+      }
+
       return api.tenantPayments.payRent({
         amount: total,
         baseAmount: amountNum,
@@ -221,9 +292,9 @@ export const TenantPaymentsPage: React.FC = () => {
       setReceiptNumber(`RCP-${Math.floor(100000 + Math.random() * 900000)}-ZTR`);
       setStep('receipt');
     },
-    onError: () => {
+    onError: (err: any) => {
       setStep('details');
-      alert('Transaction authorization failed. Please try again.');
+      alert(err?.message || 'Transaction authorization failed. Please try again.');
     }
   });
 
@@ -329,7 +400,7 @@ export const TenantPaymentsPage: React.FC = () => {
         <body>
           <div class="receipt-card">
             <div class="header">
-              <h3 class="logo">Apex<span>Living</span></h3>
+              <h3 class="logo">${profile?.companyName || 'Property Management'}</h3>
               <h1>Payment Receipt</h1>
               <p>Reference ID: ${receiptNumber}</p>
               <span class="success-stamp">Paid & Cleared</span>
@@ -357,7 +428,7 @@ export const TenantPaymentsPage: React.FC = () => {
               </tr>
             </table>
             <div class="footer">
-              Thank you for your rent payment!<br>Apex Property Management System
+              Thank you for your rent payment!<br>${profile?.companyName || 'Property Management System'}
             </div>
           </div>
           <div style="text-align:center; margin-top:20px;" class="no-print">
@@ -577,7 +648,7 @@ export const TenantPaymentsPage: React.FC = () => {
                 <Button variant="outline" size="sm" onClick={() => window.print()} className="text-[10px] font-bold flex items-center gap-1.5 h-8">
                   <Printer className="w-3.5 h-3.5" /> {t('tenantPayments.printStatement')}
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => alert('Statement PDF generated successfully! Starting download...')} className="text-[10px] font-bold flex items-center gap-1.5 h-8">
+                <Button variant="outline" size="sm" onClick={handleDownloadPDF} className="text-[10px] font-bold flex items-center gap-1.5 h-8">
                   <span className="text-rose-500 font-extrabold">PDF</span> {t('tenantPayments.btnDownloadPDF')}
                 </Button>
                 <Button variant="outline" size="sm" onClick={handleExportCSV} className="text-[10px] font-bold flex items-center gap-1.5 h-8">
@@ -591,9 +662,9 @@ export const TenantPaymentsPage: React.FC = () => {
               {/* Company Info */}
               <div className="space-y-2">
                 <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block">{t('tenantPayments.companyName')}</span>
-                <p className="font-black text-sm text-primary">{profile?.companyName || 'Apex Living Property Management'}</p>
+                <p className="font-black text-sm text-primary">{profile?.companyName || globalCompanyName || 'Divine Properties'}</p>
                 <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block mt-4">{t('tenantPayments.companyAddress')}</span>
-                <p className="font-bold text-muted-foreground leading-relaxed whitespace-pre-line">{profile?.companyAddress || '100 Congress Ave,\nAustin, TX 78701'}</p>
+                <p className="font-bold text-muted-foreground leading-relaxed whitespace-pre-line">{profile?.companyAddress || globalCompanyAddress || '100 Congress Ave,\nAustin, TX 78701'}</p>
               </div>
 
               {/* Tenant & Unit Info */}

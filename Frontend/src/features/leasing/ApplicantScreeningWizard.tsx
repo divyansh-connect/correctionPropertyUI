@@ -90,7 +90,7 @@ export const ApplicantScreeningWizard: React.FC = () => {
     if (step === 1) {
       setStep(2);
     } else if (step === 2) {
-      if (dob && ssn) {
+      if (dob) {
         setStep(3);
       } else {
         alert('Please complete all identification fields.');
@@ -183,17 +183,6 @@ export const ApplicantScreeningWizard: React.FC = () => {
                   type="date"
                   value={dob}
                   onChange={e => setDob(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-[10px] uppercase text-muted-foreground font-black">Social Security Number (SSN) *</label>
-                <Input
-                  type="password"
-                  placeholder="XXX-XX-XXXX"
-                  value={ssn}
-                  onChange={e => setSsn(e.target.value)}
-                  maxLength={11}
                   required
                 />
               </div>
@@ -301,7 +290,7 @@ export const ApplicantScreeningWizard: React.FC = () => {
               onClick={handleNextStep}
               className="bg-primary hover:bg-primary/95 text-white font-bold flex items-center gap-1"
               disabled={
-                (step === 2 && (!dob || !ssn)) ||
+                (step === 2 && !dob) ||
                 (step === 3 && !authorized) ||
                 (step === 4 && !selectedFile) ||
                 consentMutation.isPending ||

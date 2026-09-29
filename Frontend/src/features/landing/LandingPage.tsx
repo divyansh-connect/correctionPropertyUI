@@ -2,9 +2,8 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '../../components/ui/Button';
 import { 
-  Sparkles, Building2, ShieldAlert, Cpu, Check, Users, ArrowRight, 
-  MessageSquare, DollarSign, Database, Zap, ArrowUpRight, BarChart3, Shield,
-  Sun, Moon, Loader2
+  Sparkles, Building2, Check, ArrowRight, Shield, Zap, 
+  Sun, Moon, Loader2, CreditCard, Lock, CheckCircle2
 } from 'lucide-react';
 import { useThemeStore } from '../../store/useStore';
 import api from '../../api';
@@ -15,8 +14,6 @@ interface LandingPageProps {
 }
 
 export const LandingPage: React.FC<LandingPageProps> = ({ navigate }) => {
-  const [rentVolume, setRentVolume] = useState(15000);
-  const [activeTab, setActiveTab] = useState<'portals' | 'ai' | 'developers'>('portals');
   const { theme, toggleTheme } = useThemeStore();
 
   const { data: dbPlans = [] } = useQuery({
@@ -24,38 +21,63 @@ export const LandingPage: React.FC<LandingPageProps> = ({ navigate }) => {
     queryFn: () => api.plans.getPublic(),
   });
 
+  const standardCardFeatures = [
+    'PROPERTY MANAGEMENT',
+    'TENANT MANAGEMENT',
+    'RENT & PAYMENTS',
+    'MAINTENANCE MANAGEMENT',
+    'VENDOR MANAGEMENT',
+    'COMMUNICATION',
+    'PAYMENTS MADE EASY',
+  ];
+
   const defaultPlans = [
     { 
-      name: 'Starter', 
-      price: 99, 
-      desc: 'Ideal for independent landlords scaling their initial residential units.',
-      features: ['Up to 50 properties', 'Basic screening logs', 'Standard ledger billing'] 
+      name: '14-Day Free Trial', 
+      price: 0, 
+      billingCycle: '14 Days Free',
+      badge: 'Free Trial',
+      popular: false,
+      desc: 'Full 14-day access for property managers to evaluate platform capabilities.',
+      features: standardCardFeatures
     },
     { 
-      name: 'Professional', 
-      price: 199, 
-      desc: 'For growing property agencies needing advanced rules automation.',
-      features: ['Up to 200 properties', 'Late Fee rules builder', 'AI tenant conversation logs'] 
+      name: 'Monthly Plan', 
+      price: 15, 
+      billingCycle: 'Monthly',
+      badge: 'Most Popular',
+      popular: true,
+      desc: 'Complete property management solution billed flexibly month-to-month.',
+      features: standardCardFeatures
     },
     { 
-      name: 'Enterprise', 
-      price: 499, 
-      desc: 'Designed for enterprise corporations requiring robust security controls.',
-      features: ['Unlimited properties', 'Developer webhook callbacks', 'API keys rotation', 'Dedicated vector library'] 
+      name: 'Yearly Plan', 
+      price: 120, 
+      billingCycle: 'Annual ($10/mo)',
+      badge: 'Best Value',
+      popular: false,
+      desc: 'Save 33% with annual billing ($10/month billed annually at $120).',
+      features: standardCardFeatures
     },
   ];
 
   const displayPlans = dbPlans.length > 0
-    ? dbPlans.map((p: any) => ({
-        name: p.name,
-        price: p.price,
-        desc: p.description || `${p.maxProperties || '50+'} properties, ${p.billingCycle || 'Monthly'} billing`,
-        features: typeof p.features === 'string' 
-          ? p.features.split(',').map((f: string) => f.trim()) 
-          : (Array.isArray(p.features) ? p.features : ['Full Access', 'Unlimited Portals'])
-      }))
+    ? dbPlans.map((p: any) => {
+        const isMonthly = p.name.toLowerCase().includes('monthly');
+        const isYearly = p.name.toLowerCase().includes('yearly') || p.name.toLowerCase().includes('annual');
+        return {
+          name: p.name,
+          price: p.price,
+          billingCycle: p.billingCycle || (isYearly ? 'Annual ($10/mo)' : isMonthly ? 'Monthly' : '14 Days Free'),
+          badge: isMonthly ? 'Most Popular' : (isYearly ? 'Best Value' : 'Free Trial'),
+          popular: isMonthly,
+          desc: p.features || 'Unlimited Properties & Units with full platform access.',
+          features: standardCardFeatures
+        };
+      })
     : defaultPlans;
 
+  const [activeCardIndex, setActiveCardIndex] = useState<number>(1);
   const [selectedCheckoutPlan, setSelectedCheckoutPlan] = useState<{name: string, price: number} | null>(null);
 
   const [checkoutStep, setCheckoutStep] = useState<'form' | 'loading' | 'success'>('form');
@@ -65,6 +87,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({ navigate }) => {
   const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
   const [formError, setFormError] = useState('');
+
+  const handleCloseModal = () => {
+    setSelectedCheckoutPlan(null);
+    setCompanyName('');
+    setFullName('');
+    setEmail('');
+    setPassword('');
+    setPhone('');
+    setFormError('');
+    setCheckoutStep('form');
+  };
 
   // Authorize.Net Accept Hosted Modal States
   const [isHostedModalOpen, setIsHostedModalOpen] = useState(false);
@@ -76,11 +109,37 @@ export const LandingPage: React.FC<LandingPageProps> = ({ navigate }) => {
     setFormError('');
     setCheckoutStep('loading');
     try {
-      // 1. Request Hosted Token from Backend
+      if (selectedCheckoutPlan?.price === 0 || selectedCheckoutPlan?.name?.toLowerCase().includes('trial') || selectedCheckoutPlan?.name?.toLowerCase().includes('free')) {
+        // Direct registration for Free Trial ($0)
+        await api.auth.register({
+          name: companyName,
+          contactName: fullName,
+          email,
+          phone,
+          password,
+          planName: selectedCheckoutPlan?.name || '14-Day Free Trial',
+          price: 0,
+        });
+        setCheckoutStep('success');
+        setTimeout(() => {
+          setSelectedCheckoutPlan(null);
+          setCheckoutStep('form');
+          setFullName('');
+          setCompanyName('');
+          setEmail('');
+          setPassword('');
+          setPhone('');
+          navigate('/login');
+        }, 1500);
+        return;
+      }
+
+      // 1. Request Hosted Token from Backend for Paid Plans
       const hostedData = await api.auth.createHostedPayment({
-        amount: selectedCheckoutPlan?.price || 99,
+        amount: selectedCheckoutPlan?.price || 15,
         planName: `${selectedCheckoutPlan?.name} Plan`,
         description: `SaaS Plan Subscription (${selectedCheckoutPlan?.name}) for ${companyName}`,
+        email: email.trim(),
       });
 
       if (hostedData && hostedData.token) {
@@ -109,7 +168,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ navigate }) => {
         phone,
         password,
         planName: `${selectedCheckoutPlan?.name} Plan`,
-        price: selectedCheckoutPlan?.price || 99,
+        price: selectedCheckoutPlan?.price || 15,
         transactionId: txData.transactionId,
       });
       setCheckoutStep('success');
@@ -122,551 +181,329 @@ export const LandingPage: React.FC<LandingPageProps> = ({ navigate }) => {
         setPassword('');
         setPhone('');
         navigate('/login');
-      }, 2000);
+      }, 1500);
     } catch (err: any) {
       setCheckoutStep('form');
-      setFormError(err.message || 'Registration completion failed.');
+      setFormError('Account registration failed post-payment. Please contact support.');
     }
   };
 
-
-
-  // Estimate SaaS savings
-  const estimatedSavings = Math.round(rentVolume * 0.045);
-
   return (
-    <div className="relative w-full min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white font-sans overflow-x-hidden selection:bg-primary selection:text-white transition-colors duration-300">
-      {/* Custom Keyframes for Animations */}
-      <style>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0px) rotate(0deg); }
-          50% { transform: translateY(-10px) rotate(1deg); }
-        }
-        @keyframes float-delayed {
-          0%, 100% { transform: translateY(0px) rotate(0deg); }
-          50% { transform: translateY(12px) rotate(-1.5deg); }
-        }
-        @keyframes pulse-slow {
-          0%, 100% { opacity: 0.15; transform: scale(1); }
-          50% { opacity: 0.25; transform: scale(1.05); }
-        }
-        .animate-float-card {
-          animation: float 6s ease-in-out infinite;
-        }
-        .animate-float-card-delayed {
-          animation: float-delayed 8s ease-in-out infinite;
-        }
-        .animate-pulse-slow {
-          animation: pulse-slow 10s ease-in-out infinite;
-        }
-        .glass-panel {
-          background: rgba(255, 255, 255, 0.7);
-          backdrop-filter: blur(16px);
-          border: 1px solid rgba(0, 0, 0, 0.08);
-        }
-        .dark .glass-panel {
-          background: rgba(15, 23, 42, 0.45);
-          border: 1px solid rgba(255, 255, 255, 0.06);
-        }
-      `}</style>
+    <div className="min-h-screen bg-gradient-to-b from-[#eef7ff] via-[#e5f2fe] to-[#dcf0ff] text-[#0f172a] flex flex-col justify-between font-sans selection:bg-[#0066ff]/20 selection:text-[#0066ff]">
+      
+      {/* --- HEADER NAVBAR WITH DARK FOOTER COLOR & EXACT LOGO --- */}
+      <header className="sticky top-0 z-40 bg-[#090814] border-b border-white/10 transition-colors shadow-xl">
+        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+          
+          {/* WhatsLandlord Logo from Screenshot */}
+          <div className="flex items-center space-x-3 cursor-pointer" onClick={() => navigate('/')}>
+            <svg viewBox="0 0 540 180" className="h-10 md:h-12 w-auto fill-white">
+              {/* Left emblem: House roof + buildings + W base */}
+              <path d="M 60 90 L 100 55 L 140 90 L 140 108 L 100 73 L 60 108 Z" />
+              <rect x="75" y="36" width="22" height="38" rx="1" />
+              <rect x="80" y="43" width="4" height="4" fill="#090814" />
+              <rect x="88" y="43" width="4" height="4" fill="#090814" />
+              <rect x="80" y="51" width="4" height="4" fill="#090814" />
+              <rect x="88" y="51" width="4" height="4" fill="#090814" />
+              <rect x="92" y="85" width="6" height="6" fill="#090814" />
+              <rect x="102" y="85" width="6" height="6" fill="#090814" />
+              <rect x="92" y="95" width="6" height="6" fill="#090814" />
+              <rect x="102" y="95" width="6" height="6" fill="#090814" />
+              <rect x="110" y="46" width="16" height="35" rx="1" />
+              <rect x="130" y="68" width="14" height="40" rx="1" />
+              <path d="M 45 56 L 58 56 L 58 100 L 80 135 L 100 115 L 120 135 L 142 100 L 142 70 L 155 70 L 155 105 L 120 158 L 100 138 L 80 158 L 45 105 Z" />
+              {/* Text "WhatsLandlord" */}
+              <text x="175" y="110" fontFamily="sans-serif" fontWeight="900" fontSize="56" fill="#ffffff" letterSpacing="-1">
+                Whats<tspan fontWeight="900" fill="#ffffff">Landlord</tspan>
+              </text>
+              {/* Subtext underline line & PROPERTY MANAGEMENT PLATFORM */}
+              <line x1="175" y1="135" x2="215" y2="135" stroke="#ffffff" strokeWidth="2.5" />
+              <text x="225" y="139" fontFamily="sans-serif" fontWeight="700" fontSize="15" fill="#ffffff" letterSpacing="3.5">
+                PROPERTY MANAGEMENT PLATFORM
+              </text>
+              <line x1="480" y1="135" x2="520" y2="135" stroke="#ffffff" strokeWidth="2.5" />
+            </svg>
+          </div>
 
-      {/* Decorative Orbs */}
-      <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[130px] pointer-events-none animate-pulse-slow" />
-      <div className="absolute top-[400px] right-1/4 w-[500px] h-[500px] bg-indigo-500/10 rounded-full blur-[160px] pointer-events-none animate-pulse-slow" />
-      <div className="absolute top-[1200px] left-1/3 w-[450px] h-[450px] bg-sky-500/5 rounded-full blur-[140px] pointer-events-none" />
-
-      {/* Navigation Header */}
-      <header className="sticky top-0 z-50 backdrop-blur-md border-b border-slate-200/80 dark:border-white/5 bg-white/70 dark:bg-slate-950/70 h-16 flex items-center justify-between px-6 lg:px-12 transition-colors duration-300">
-        <div className="flex items-center space-x-3">
-          <span className="font-extrabold text-lg tracking-tight text-slate-900 dark:text-white">
-            WhatsLandlord
-          </span>
-        </div>
-        <nav className="hidden md:flex space-x-8 text-xs font-extrabold text-slate-505 dark:text-slate-400">
-          <a href="#features" className="hover:text-slate-900 dark:hover:text-white transition">Features</a>
-          <a href="#calculator" className="hover:text-slate-900 dark:hover:text-white transition">ROI Calculator</a>
-          <a href="#pricing" className="hover:text-slate-900 dark:hover:text-white transition">Pricing Matrix</a>
-        </nav>
-        <div className="flex items-center space-x-4">
-          {/* Theme Toggle Button */}
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={toggleTheme} 
-            className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-            title="Toggle Theme"
-          >
-            {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5 text-amber-500" />}
-          </Button>
-
-          <button onClick={() => navigate('/login')} className="text-xs font-extrabold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition">
-            Sign In
-          </button>
-          <Button onClick={() => navigate('/login')} size="sm" className="bg-primary hover:bg-primary/90 text-white font-extrabold text-xs h-8 px-4 rounded-lg shadow-lg shadow-primary/20">
-            Access Portals
-          </Button>
+          {/* Right Side Action (Theme Toggle Removed) */}
+          <div className="flex items-center space-x-4">
+            <Button 
+              onClick={() => navigate('/login')}
+              className="font-extrabold text-xs px-6 py-2.5 rounded-xl bg-[#0066ff] hover:bg-[#0052cc] text-white shadow-lg shadow-[#0066ff]/25 border-none uppercase tracking-wider"
+            >
+              Sign In
+            </Button>
+          </div>
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="relative pt-24 pb-20 px-6 max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-        {/* Left Hero Details */}
-        <div className="lg:col-span-7 space-y-6 text-left">
-          <div className="inline-flex items-center space-x-2 bg-primary/10 border border-primary/20 px-3 py-1 rounded-full text-[10px] font-extrabold tracking-wider uppercase text-primary">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Multi-Tenant PropTech Engine</span>
+      {/* --- MAIN HERO & PRICING CARDS SECTION --- */}
+      <main className="flex-1 max-w-7xl mx-auto px-6 py-16 space-y-12 w-full flex flex-col justify-center items-center">
+        
+        {/* Header Text */}
+        <div className="text-center max-w-3xl space-y-4">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#0066ff]/10 border border-[#0066ff]/20 text-[#0066ff] text-xs font-bold tracking-wide uppercase">
+            <Sparkles className="w-3.5 h-3.5" /> Simple Transparent Pricing
           </div>
-
-          <h1 className="text-5xl sm:text-7xl font-black tracking-tight leading-none text-slate-900 dark:text-white">
-            Unified Cloud for{' '}
-            <span className="bg-gradient-to-r from-primary via-indigo-400 to-sky-400 bg-clip-text text-transparent">
-              Property Portals
-            </span>
+          <h1 className="text-4xl md:text-5xl font-black tracking-tight text-[#0f172a]">
+            Subscription Pricing Plans
           </h1>
-
-          <p className="text-slate-600 dark:text-slate-300 text-sm sm:text-base leading-relaxed font-semibold max-w-xl">
-            Scale rent reconciliations, deploy live developer webhook dispatches, trigger AI-driven work orders, and provision tenant portals from a single corporate console.
-          </p>
-
-          <div className="flex gap-4 pt-2">
-            <Button onClick={() => navigate('/login')} className="bg-primary hover:bg-primary/95 text-white font-bold h-12 px-6 rounded-xl flex items-center justify-center gap-2 group shadow-xl shadow-primary/15">
-              Launch Sandbox Portals
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition duration-200" />
-            </Button>
-            <Button onClick={() => navigate('/login')} variant="outline" className="border-slate-300 dark:border-white/10 hover:bg-slate-200/50 dark:hover:bg-white/5 text-slate-700 dark:text-white font-bold h-12 px-6 rounded-xl bg-transparent">
-              Developer Docs
-            </Button>
-          </div>
-        </div>
-
-        {/* Right Hero Interactive Cards Layout */}
-        <div className="lg:col-span-5 relative w-full max-w-full h-[380px] flex justify-center items-center scale-90 sm:scale-100 transition-transform origin-center overflow-hidden">
-          {/* Floating Card 1: AI Ticket */}
-          <div className="absolute top-4 left-4 sm:left-6 w-[240px] sm:w-64 glass-panel p-4 rounded-2xl shadow-2xl animate-float-card text-xs font-semibold">
-            <div className="flex justify-between items-center mb-3">
-              <span className="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded text-[9px] font-bold">AI Workflow</span>
-              <span className="text-[10px] text-slate-500 dark:text-slate-400">Just Now</span>
-            </div>
-            <p className="text-slate-900 dark:text-white font-bold mb-2">"AC Not Cooling in Unit 301"</p>
-            <div className="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-              <span>Auto-dispatched Vendor: AC Solutions Ltd</span>
-            </div>
-          </div>
-
-          {/* Floating Card 2: Financial Stats */}
-          <div className="absolute bottom-6 right-4 sm:right-6 w-[230px] sm:w-60 glass-panel p-5 rounded-2xl shadow-2xl animate-float-card-delayed text-xs font-semibold">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="p-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-lg"><DollarSign className="w-4 h-4" /></span>
-              <div>
-                <p className="text-slate-500 dark:text-slate-400 text-[10px]">Rent Collected</p>
-                <p className="text-slate-900 dark:text-white text-lg font-black">$48,250</p>
-              </div>
-            </div>
-            <div className="h-1 bg-slate-200 dark:bg-slate-800 rounded overflow-hidden">
-              <div className="w-3/4 h-full bg-primary" />
-            </div>
-            <p className="text-[9px] text-slate-500 dark:text-slate-400 mt-2">75% of target met</p>
-          </div>
-        </div>
-      </section>
-
-      {/* Interactive Tabs Features Section */}
-      <section id="features" className="max-w-6xl mx-auto px-6 py-20 border-t border-slate-200/80 dark:border-white/5 space-y-12">
-        <div className="text-center space-y-4 max-w-2xl mx-auto">
-          <h2 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white">All-in-One PropTech Feature Matrix</h2>
-          <p className="text-slate-500 dark:text-slate-400 text-sm font-semibold">
-            Everything you need to manage, scale, and automate your entire real estate portfolio.
+          <p className="text-sm md:text-base text-slate-600 font-medium leading-relaxed">
+            Configure subscription plans, manage pricing structures, and create new offers for subscriber companies. Unlimited properties & units across all plans.
           </p>
         </div>
 
-        {/* Tab Selection */}
-        <div className="flex justify-start md:justify-center space-x-2 border-b border-slate-200/80 dark:border-white/5 pb-2 overflow-x-auto scrollbar-none whitespace-nowrap md:mx-0 md:px-0">
-          {[
-            { key: 'portals', label: 'Multi-Tenant Portals', icon: <Users className="w-4 h-4" /> },
-            { key: 'ai', label: 'AI Dispatches', icon: <Sparkles className="w-4 h-4" /> },
-            { key: 'developers', label: 'Developers & RBAC', icon: <Database className="w-4 h-4" /> },
-          ].map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key as any)}
-              className={`flex items-center gap-2 px-4 py-2 text-xs font-bold transition border-b-2 -mb-2 shrink-0 ${
-                activeTab === tab.key 
-                  ? 'border-primary text-primary dark:text-white bg-primary/5' 
-                  : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
-              }`}
-            >
-              {tab.icon}
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Tab Detail panel */}
-        <div className="glass-panel p-8 rounded-3xl grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-          {activeTab === 'portals' && (
-            <>
-              <div className="space-y-4 text-left">
-                <h3 className="text-2xl font-black text-slate-900 dark:text-white">Segmented User Environments</h3>
-                <p className="text-slate-600 dark:text-slate-400 text-xs font-semibold leading-relaxed">
-                  Provision fully brand-customized portals for property managers, tenants, and owners. Each user logs into an isolated portal mapped to their specific workflow needs.
-                </p>
-                <ul className="text-xs text-slate-700 dark:text-slate-300 space-y-2 font-bold list-none">
-                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500" /> Manager Dashboards & CRM</li>
-                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500" /> Owner Statements & Cash Distributions</li>
-                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500" /> Tenant rent payments & lease updates</li>
-                </ul>
-              </div>
-              <div className="p-6 bg-slate-100/50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-white/5 rounded-2xl space-y-3">
-                <p className="text-xs font-extrabold uppercase text-primary tracking-wider">Interface Mapping</p>
-                <div className="p-3 bg-white dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/5 rounded-xl flex justify-between items-center text-xs">
-                  <span>Manager Portal</span>
-                  <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded uppercase font-bold">Default</span>
+        {/* 3 Pricing Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-6xl pt-4">
+          {displayPlans.map((plan, idx) => {
+            const isSelected = activeCardIndex === idx;
+            return (
+              <div 
+                key={idx}
+                onClick={() => setActiveCardIndex(idx)}
+                className={`relative rounded-3xl p-8 border flex flex-col justify-between transition-all duration-300 cursor-pointer ${
+                  isSelected 
+                    ? 'bg-white border-[#0066ff] ring-4 ring-[#0066ff]/20 shadow-2xl shadow-[#0066ff]/15 scale-105 z-10' 
+                    : 'bg-white/90 border-[#d2e4f7] hover:border-[#0066ff]/40 hover:shadow-xl hover:scale-[1.02] shadow-md'
+                }`}
+              >
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 transition-all">
+                  <span className={`text-[11px] font-black uppercase tracking-wider px-4 py-1.5 rounded-full shadow-md transition-colors ${
+                    isSelected
+                      ? 'bg-[#0066ff] text-white shadow-[#0066ff]/30'
+                      : 'bg-slate-100 text-slate-600 border border-slate-200'
+                  }`}>
+                    {plan.badge}
+                  </span>
                 </div>
-                <div className="p-3 bg-white dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/5 rounded-xl flex justify-between items-center text-xs">
-                  <span>Owner Dashboard</span>
-                  <span className="text-[10px] bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded uppercase font-bold">/owner</span>
-                </div>
-                <div className="p-3 bg-white dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/5 rounded-xl flex justify-between items-center text-xs">
-                  <span>Tenant portal</span>
-                  <span className="text-[10px] bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 rounded uppercase font-bold">/tenant</span>
-                </div>
-              </div>
-            </>
-          )}
 
-          {activeTab === 'ai' && (
-            <>
-              <div className="space-y-4 text-left">
-                <h3 className="text-2xl font-black text-slate-900 dark:text-white">AI Automation Dispatcher</h3>
-                <p className="text-slate-600 dark:text-slate-400 text-xs font-semibold leading-relaxed">
-                  Leverage natural language AI agents to parse leases, automate dispatcher requests, draft responses, and explain complex accounting tables.
-                </p>
-                <ul className="text-xs text-slate-700 dark:text-slate-300 space-y-2 font-bold list-none">
-                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500" /> Vector Knowledge Base Libraries</li>
-                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500" /> Dynamic automation recipes builder</li>
-                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500" /> Accounting AI explanation engines</li>
-                </ul>
-              </div>
-              <div className="p-6 bg-slate-100/50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-white/5 rounded-2xl text-xs space-y-2 font-semibold">
-                <p className="text-[10px] uppercase text-indigo-600 dark:text-indigo-400 font-extrabold">Trigger simulation</p>
-                <p className="text-slate-900 dark:text-white font-bold">"Read tenant ledger and explain late fee exception."</p>
-                <div className="p-3 bg-primary/10 text-primary border border-primary/20 rounded-xl leading-relaxed text-[11px]">
-                  "Exception found: Rent was paid on the 6th, which is outside the 5-day grace period ending on the 5th."
-                </div>
-              </div>
-            </>
-          )}
-
-          {activeTab === 'developers' && (
-            <>
-              <div className="space-y-4 text-left">
-                <h3 className="text-2xl font-black text-slate-900 dark:text-white">Enterprise Settings & API Management</h3>
-                <p className="text-slate-600 dark:text-slate-400 text-xs font-semibold leading-relaxed">
-                  Provide developers with robust API keys management, customized webhook notification triggers, security whitelists, and live system audits.
-                </p>
-                <ul className="text-xs text-slate-700 dark:text-slate-300 space-y-2 font-bold list-none">
-                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500" /> Outbound Webhook Subscriptions</li>
-                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500" /> Key Rotation & developer tokens</li>
-                  <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500" /> IP restrictions & MFA Whitelisting</li>
-                </ul>
-              </div>
-              <div className="p-6 bg-slate-100/50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-white/5 rounded-2xl text-left space-y-3">
-                <p className="text-[10px] font-extrabold uppercase text-sky-600 dark:text-sky-400 tracking-wider">Outbound Webhook Callback</p>
-                <div className="bg-slate-50 dark:bg-slate-950 p-3 rounded-lg font-mono text-[10px] text-slate-800 dark:text-slate-300 border border-slate-200/80 dark:border-white/5">
-                  POST https://api.client.com/webhook<br/>
-                  Body: {"{ event: 'payment.received' }"}
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* 18 Features Grid */}
-        <div className="pt-12 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 text-left">
-          {[
-            { title: "1. Executive Dashboard", desc: "Detailed portfolio performance charts, vacancy rates, and real-time financial tracking metrics." },
-            { title: "2. Property Profiles", desc: "Support for apartments, commercial units, HOA, single & multi-family properties." },
-            { title: "3. Unit Inventory", desc: "Detailed bed/bath square footage logs, availability status trackers, and rental settings." },
-            { title: "4. Tenant Profiles", desc: "Centralized lease history, payment ledgers, messaging logs, and compliance records." },
-            { title: "5. Online Applications", desc: "Track leads, collect dynamic applications, and handle background check integrations." },
-            { title: "6. Rent Collection", desc: "Automate payments, ACH/Credit Card processing, late fee rules, and receipt generation." },
-            { title: "7. Accounting Suite", desc: "Profit & Loss sheets, trust accounting rules, chart of accounts, and bank reconciliation." },
-            { title: "8. Maintenance Flow", desc: "From tenant submission to manager approval, vendor dispatching, and payments." },
-            { title: "9. Vendor Directory", desc: "Database of certified contractors, service agreements, billing history, and dispatch records." },
-            { title: "10. Owner Portal", desc: "Self-service dashboard for performance logs, automated reports, and direct payouts." },
-            { title: "11. Lead CRM Pipeline", desc: "Nurture leasing prospects from showing appointments up to lease signatures." },
-            { title: "12. Communications Hub", desc: "Unified inbox for SMS alerts, recurring email notifications, and system announcements." },
-            { title: "13. Document Hub", desc: "Securely store templates, lease agreements, check-out forms, and e-signatures." },
-            { title: "14. Inspection Manager", desc: "Checklists, condition photo attachments, and move-in/move-out reports." },
-            { title: "15. Custom Reports", desc: "Pre-built financial templates, delinquency reports, and scheduled exports." },
-            { title: "16. Mobile Portals", desc: "Fully responsive layouts for property managers, tenants, and owners on the go." },
-            { title: "17. AI Assistant Suite", desc: "AI-driven maintenance agent, accounting interpreter, and ROI analyst." },
-            { title: "18. System Settings", desc: "Flexible user roles, RBAC configurations, API endpoints, webhooks, and audit logs." }
-          ].map((f, i) => (
-            <div key={i} className="p-5 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl space-y-2 hover:border-primary/30 transition duration-300">
-              <h4 className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                {f.title}
-              </h4>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed font-medium">{f.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ROI Savings Calculator */}
-      <section id="calculator" className="max-w-4xl mx-auto px-6 py-16 border-t border-slate-200/80 dark:border-white/5 text-center space-y-8">
-        <div className="space-y-2">
-          <h2 className="text-3xl font-black text-slate-900 dark:text-white">Estimate Your SaaS ROI</h2>
-          <p className="text-xs text-slate-505 dark:text-slate-400 font-bold">Calculate potential savings by automating lease reconciliations</p>
-        </div>
-
-        <div className="glass-panel p-8 rounded-3xl max-w-2xl mx-auto space-y-6">
-          <div className="space-y-3">
-            <div className="flex justify-between text-xs font-extrabold text-slate-700 dark:text-slate-300">
-              <span>Monthly Rent Collections Volume</span>
-              <span className="text-primary">${rentVolume.toLocaleString()}</span>
-            </div>
-            <input 
-              type="range" 
-              min="5000" 
-              max="200000" 
-              step="5000"
-              value={rentVolume} 
-              onChange={(e) => setRentVolume(Number(e.target.value))}
-              className="w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-primary"
-            />
-          </div>
-
-          <div className="pt-6 border-t border-slate-200/80 dark:border-white/5 grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-[10px] text-slate-505 dark:text-slate-400 font-bold uppercase tracking-wider">Estimated Savings / year</p>
-              <p className="text-3xl font-black text-emerald-600 dark:text-emerald-400">${(estimatedSavings * 12).toLocaleString()}</p>
-            </div>
-            <div>
-              <p className="text-[10px] text-slate-505 dark:text-slate-400 font-bold uppercase tracking-wider">Efficiency Gained</p>
-              <p className="text-3xl font-black text-indigo-600 dark:text-indigo-400">45%</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing Matrix */}
-      <section id="pricing" className="max-w-5xl mx-auto px-6 py-20 border-t border-slate-200/80 dark:border-white/5 space-y-12 text-center">
-        <div className="space-y-2">
-          <h2 className="text-3xl font-black text-slate-900 dark:text-white">Harmonious Enterprise Pricing</h2>
-          <p className="text-xs text-slate-505 dark:text-slate-400 font-bold">Choose a package metered to your portfolio volume</p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
-          {displayPlans.map((tier: any, idx: number) => (
-
-            <div key={idx} className="bg-white dark:bg-white/[0.01] border border-slate-200 dark:border-white/5 p-6 rounded-2xl flex flex-col justify-between hover:border-primary/40 hover:bg-slate-100 dark:hover:bg-white/[0.03] transition-all duration-300 shadow-sm">
-              <div className="space-y-4">
-                <span className="text-xs uppercase tracking-wider font-extrabold text-primary">{tier.name}</span>
-                <p className="text-3xl font-black text-slate-900 dark:text-white">${tier.price}<span className="text-xs text-slate-505 dark:text-slate-400 font-medium">/mo</span></p>
-                <p className="text-[11px] text-slate-650 dark:text-slate-400 leading-relaxed font-semibold">{tier.desc}</p>
-                <ul className="text-xs text-slate-700 dark:text-slate-300 space-y-2 font-bold pt-4 border-t border-slate-200 dark:border-white/5 list-none">
-                  {tier.features.map((f, i) => (
-                    <li key={i} className="flex items-center gap-1.5">
-                      <Check className="w-3.5 h-3.5 text-emerald-500" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <Button onClick={() => setSelectedCheckoutPlan({ name: tier.name, price: tier.price })} className="w-full mt-8 bg-slate-200 dark:bg-white/5 hover:bg-slate-300 dark:hover:bg-white/10 text-slate-800 dark:text-white font-bold h-10 text-xs rounded-xl transition">
-                Buy Now
-              </Button>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Live Client Testimonials */}
-      <section className="max-w-4xl mx-auto px-6 py-16 border-t border-slate-200/80 dark:border-white/5 space-y-8 text-center">
-        <h2 className="text-3xl font-black text-slate-900 dark:text-white">Trusted by Leading Teams</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
-          <div className="glass-panel p-6 rounded-2xl space-y-3">
-            <p className="text-xs text-slate-700 dark:text-slate-300 italic font-medium leading-relaxed">
-              "Transitioning our 1,500 units to WhatsLandlord solved our communication latency. The Tenant portal interface has made rent collection completely friction-free."
-            </p>
-            <div className="text-xs font-bold">
-              <p className="text-slate-900 dark:text-white">Marcus Vance</p>
-              <p className="text-slate-505 dark:text-slate-400 text-[10px]">Operations VP, Vance Realty</p>
-            </div>
-          </div>
-          <div className="glass-panel p-6 rounded-2xl space-y-3">
-            <p className="text-xs text-slate-700 dark:text-slate-300 italic font-medium leading-relaxed">
-              "We love the AI Workflows. Late fee exception handling that used to take our accounting team hours is now audited automatically in minutes."
-            </p>
-            <div className="text-xs font-bold">
-              <p className="text-slate-900 dark:text-white">Sophia Reynolds</p>
-              <p className="text-slate-505 dark:text-slate-400 text-[10px]">CTO, Premier Housing</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer Section */}
-      <footer className="border-t border-slate-200 dark:border-white/5 bg-slate-100 dark:bg-slate-950 py-16 px-6 lg:px-12 text-slate-505 dark:text-slate-400 text-xs font-semibold transition-colors duration-300">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-8 border-b border-slate-200 dark:border-white/5 pb-12">
-          {/* Logo and Tagline */}
-          <div className="sm:col-span-2 space-y-4">
-            <div className="flex items-center space-x-3">
-              <span className="font-extrabold text-lg text-slate-900 dark:text-white">WhatsLandlord</span>
-            </div>
-            <p className="text-slate-505 dark:text-slate-400 leading-relaxed font-semibold max-w-sm text-[11px]">
-              WhatsLandlord simplifies multi-tenant real estate management, providing high-fidelity portal UI modules and enterprise developer integration matrices.
-            </p>
-          </div>
-
-          {/* Links 1 */}
-          <div className="space-y-3">
-            <p className="text-slate-900 dark:text-white font-bold text-[11px] uppercase tracking-wider">Product</p>
-            <ul className="space-y-2 text-slate-505 dark:text-slate-400 font-semibold list-none">
-              <li><button onClick={() => navigate('/login')} className="hover:text-slate-900 dark:hover:text-white transition">Manager Console</button></li>
-              <li><button onClick={() => navigate('/login')} className="hover:text-slate-900 dark:hover:text-white transition">Owner Portal</button></li>
-              <li><button onClick={() => navigate('/login')} className="hover:text-slate-900 dark:hover:text-white transition">Tenant Portal</button></li>
-            </ul>
-          </div>
-
-          {/* Links 2 */}
-          <div className="space-y-3">
-            <p className="text-slate-900 dark:text-white font-bold text-[11px] uppercase tracking-wider">Developers</p>
-            <ul className="space-y-2 text-slate-505 dark:text-slate-400 font-semibold list-none">
-              <li><button onClick={() => navigate('/login')} className="hover:text-slate-900 dark:hover:text-white transition">API Reference</button></li>
-              <li><button onClick={() => navigate('/login')} className="hover:text-slate-900 dark:hover:text-white transition">Webhook Events</button></li>
-              <li><button onClick={() => navigate('/login')} className="hover:text-slate-900 dark:hover:text-white transition">Security Console</button></li>
-            </ul>
-          </div>
-
-          {/* Links 3 */}
-          <div className="space-y-3">
-            <p className="text-slate-900 dark:text-white font-bold text-[11px] uppercase tracking-wider">Enterprise</p>
-            <ul className="space-y-2 text-slate-505 dark:text-slate-400 font-semibold list-none">
-              <li><button onClick={() => navigate('/login')} className="hover:text-slate-900 dark:hover:text-white transition">Multi-Company</button></li>
-              <li><button onClick={() => navigate('/login')} className="hover:text-slate-900 dark:hover:text-white transition">Pricing Plans</button></li>
-              <li><button onClick={() => navigate('/login')} className="hover:text-slate-900 dark:hover:text-white transition">Help Desk</button></li>
-            </ul>
-          </div>
-        </div>
-
-        <div className="max-w-6xl mx-auto pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-slate-505 text-[10px]">
-          <span>© {new Date().getFullYear()} WhatsLandlord SaaS Systems. All rights reserved.</span>
-          <div className="flex space-x-6">
-            <button className="hover:text-slate-400 dark:hover:text-slate-300">Privacy Policy</button>
-            <button className="hover:text-slate-400 dark:hover:text-slate-300">Terms of Service</button>
-          </div>
-        </div>
-      </footer>      {selectedCheckoutPlan && (
-        <div className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-3xl p-6 w-full max-w-xl shadow-2xl space-y-4 text-left text-xs font-semibold text-slate-800 dark:text-slate-200">
-            {checkoutStep === 'form' && (
-              <form onSubmit={handleCheckoutSubmit} className="space-y-4">
-                <div className="flex justify-between items-center border-b pb-3">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-extrabold text-sm uppercase text-slate-900 dark:text-white">Secure Checkout & Register</h3>
-                      <span className="px-2 py-0.5 bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-[9px] font-black uppercase rounded-full">
-                        Authorize.Net Test Mode
+                <div className="space-y-6 pt-2">
+                  <div className="space-y-2 border-b border-[#e2e8f0] pb-6">
+                    <h3 className="text-xl font-black text-[#0f172a] pt-1">{plan.name}</h3>
+                    <div className="flex items-baseline gap-1 text-[#0f172a] pt-2">
+                      <span className="text-4xl font-black tracking-tight">
+                        ${plan.price === 120 ? '10' : plan.price}
+                      </span>
+                      <span className="text-xs text-slate-500 font-bold">
+                        {plan.price === 0 ? '/ 14 days free' : (plan.price === 120 ? '/ month ($120/yr)' : '/ month')}
                       </span>
                     </div>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">Authorize.Net Sandbox Payment Gateway Integration</p>
                   </div>
-                  <button type="button" onClick={() => setSelectedCheckoutPlan(null)} className="text-slate-400 hover:text-slate-650 text-xl font-bold">&times;</button>
-                </div>
 
-
-                {formError && (
-                  <div className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-500 rounded-xl text-center">
-                    {formError}
-                  </div>
-                )}
-
-                <div className="p-3.5 bg-primary/10 border border-primary/20 text-primary rounded-2xl flex justify-between items-center">
-                  <div>
-                    <p className="font-black text-sm uppercase">{selectedCheckoutPlan.name} Plan</p>
-                    <p className="text-[10px] text-slate-500">Auto-recurring billing</p>
-                  </div>
-                  <p className="font-black text-lg">${selectedCheckoutPlan.price}/mo</p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-[10px] uppercase font-bold text-slate-500">Full Name</label>
-                    <input required placeholder="Raj Kumar" value={fullName} onChange={e => setFullName(e.target.value)} className="w-full text-xs font-semibold p-2.5 rounded-lg border bg-slate-50 dark:bg-slate-950 focus:ring-1 focus:ring-primary focus:outline-none text-slate-900 dark:text-white" />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] uppercase font-bold text-slate-500">Company Name</label>
-                    <input required placeholder="Raj Properties" value={companyName} onChange={e => setCompanyName(e.target.value)} className="w-full text-xs font-semibold p-2.5 rounded-lg border bg-slate-50 dark:bg-slate-950 focus:ring-1 focus:ring-primary focus:outline-none text-slate-900 dark:text-white" />
+                  <div className="space-y-3">
+                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                      INCLUDED FEATURES:
+                    </span>
+                    <ul className="space-y-3 text-xs font-semibold text-slate-700">
+                      {plan.features.map((feat, fIdx) => (
+                        <li key={fIdx} className="flex items-start gap-2.5">
+                          <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 transition-colors ${isSelected ? 'text-[#0066ff]' : 'text-slate-400'}`} />
+                          <span className="leading-snug">{feat}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-[10px] uppercase font-bold text-slate-500">Email Address</label>
-                    <input required type="email" placeholder="raj@whatslandlord.com" value={email} onChange={e => setEmail(e.target.value)} className="w-full text-xs font-semibold p-2.5 rounded-lg border bg-slate-50 dark:bg-slate-950 focus:ring-1 focus:ring-primary focus:outline-none text-slate-900 dark:text-white" />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] uppercase font-bold text-slate-500">Password</label>
-                    <input required type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} className="w-full text-xs font-semibold p-2.5 rounded-lg border bg-slate-50 dark:bg-slate-950 focus:ring-1 focus:ring-primary focus:outline-none text-slate-900 dark:text-white" />
-                  </div>
+                <div className="pt-8">
+                  <Button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveCardIndex(idx);
+                      setSelectedCheckoutPlan({ name: plan.name, price: plan.price });
+                    }}
+                    className={`w-full py-3.5 rounded-xl font-extrabold text-xs uppercase tracking-wider transition border-none ${
+                      isSelected 
+                        ? 'bg-[#0066ff] text-white hover:bg-[#0052cc] shadow-lg shadow-[#0066ff]/25' 
+                        : 'bg-slate-900 text-white hover:bg-[#0066ff]'
+                    }`}
+                  >
+                    {plan.price === 0 ? 'Start Free Trial' : `Select ${plan.name}`}
+                  </Button>
                 </div>
-                       <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-bold text-slate-500">Phone Number</label>
-                  <input required placeholder="9876543210" value={phone} onChange={e => setPhone(e.target.value)} className="w-full text-xs font-semibold p-2.5 rounded-lg border bg-slate-50 dark:bg-slate-950 focus:ring-1 focus:ring-primary focus:outline-none text-slate-900 dark:text-white" />
+              </div>
+            );
+          })}
+        </div>
+
+      </main>
+
+      {/* --- CHECKOUT / REGISTRATION MODAL --- */}
+      {selectedCheckoutPlan && (
+        <div 
+          onClick={handleCloseModal}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white border border-[#d2e4f7] rounded-3xl p-8 max-w-md w-full space-y-6 shadow-2xl relative text-[#0f172a]"
+          >
+            <button 
+              onClick={handleCloseModal}
+              className="absolute top-6 right-6 text-slate-400 hover:text-slate-700 text-sm font-bold w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center transition hover:bg-slate-200"
+            >
+              ✕
+            </button>
+
+            <div className="space-y-1">
+              <span className="text-[10px] font-black uppercase tracking-wider text-[#0066ff] bg-[#0066ff]/10 px-2.5 py-1 rounded border border-[#0066ff]/20">
+                Selected: {selectedCheckoutPlan.name} (${selectedCheckoutPlan.price})
+              </span>
+              <h3 className="text-xl font-extrabold text-[#0f172a] pt-2">Create Your Account</h3>
+              <p className="text-xs text-slate-500 font-medium">Register your property management company to get started.</p>
+            </div>
+
+            {formError && (
+              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 text-xs font-semibold">
+                {formError}
+              </div>
+            )}
+
+            {checkoutStep === 'success' ? (
+              <div className="py-8 text-center space-y-3">
+                <div className="w-12 h-12 bg-emerald-500/10 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
+                  <Check className="w-6 h-6 stroke-[3]" />
+                </div>
+                <h4 className="font-extrabold text-lg text-[#0f172a]">Registration Successful!</h4>
+                <p className="text-xs text-slate-500 font-medium">Redirecting to login portal...</p>
+              </div>
+            ) : checkoutStep === 'loading' ? (
+              <div className="py-12 text-center space-y-3">
+                <Loader2 className="w-8 h-8 animate-spin text-[#0066ff] mx-auto" />
+                <p className="text-xs font-bold text-slate-500">Processing registration & payment token...</p>
+              </div>
+            ) : (
+              <form onSubmit={handleCheckoutSubmit} className="space-y-4 text-xs font-semibold">
+                <div>
+                  <label className="block text-slate-600 mb-1 font-bold">Company Name</label>
+                  <input 
+                    type="text" 
+                    required 
+                    placeholder="E.g. Apex Property Management" 
+                    value={companyName} 
+                    onChange={e => setCompanyName(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#d2e4f7] bg-[#f8fafc] text-[#0f172a] focus:outline-none focus:border-[#0066ff]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-600 mb-1 font-bold">Full Contact Name</label>
+                  <input 
+                    type="text" 
+                    required 
+                    placeholder="E.g. Divine User" 
+                    value={fullName} 
+                    onChange={e => setFullName(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#d2e4f7] bg-[#f8fafc] text-[#0f172a] focus:outline-none focus:border-[#0066ff]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-600 mb-1 font-bold">Email Address</label>
+                  <input 
+                    type="email" 
+                    required 
+                    placeholder="manager@company.com" 
+                    value={email} 
+                    onChange={e => setEmail(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#d2e4f7] bg-[#f8fafc] text-[#0f172a] focus:outline-none focus:border-[#0066ff]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-600 mb-1 font-bold">Password</label>
+                  <input 
+                    type="password" 
+                    required 
+                    placeholder="••••••••" 
+                    value={password} 
+                    onChange={e => setPassword(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#d2e4f7] bg-[#f8fafc] text-[#0f172a] focus:outline-none focus:border-[#0066ff]"
+                  />
                 </div>
 
-                <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl text-blue-600 dark:text-blue-400 text-[11px] font-semibold flex items-center gap-2">
-                  <span>🔒 Payment details will be collected securely on official Authorize.Net Accept Hosted interface.</span>
-                </div>
-
-                <div className="pt-2 border-t flex justify-end space-x-2">
-                  <Button type="button" variant="outline" onClick={() => setSelectedCheckoutPlan(null)}>Cancel</Button>
-                  <Button type="submit" className="bg-primary hover:bg-primary/95 text-white font-bold h-10 px-6 rounded-xl">Pay & Subscribe</Button>
+                <div className="pt-2">
+                  <Button type="submit" className="w-full py-3 rounded-xl font-bold text-xs uppercase tracking-wider bg-[#0066ff] hover:bg-[#0052cc] text-white border-none shadow-md shadow-[#0066ff]/20">
+                    {selectedCheckoutPlan.price === 0 ? 'Complete Registration' : `Proceed to Pay $${selectedCheckoutPlan.price}`}
+                  </Button>
                 </div>
               </form>
             )}
-
-            {checkoutStep === 'loading' && (
-              <div className="py-12 flex flex-col items-center justify-center space-y-4 text-center">
-                <Loader2 className="w-10 h-10 animate-spin text-primary" />
-                <p className="font-bold text-sm text-slate-900 dark:text-white">Creating Property Management Account...</p>
-                <p className="text-[10px] text-muted-foreground">Setting up your secure workspace database</p>
-              </div>
-            )}
-
-            {checkoutStep === 'success' && (
-              <div className="py-12 flex flex-col items-center justify-center space-y-4 text-center">
-                <div className="w-12 h-12 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center">
-                  <Check className="w-6 h-6" />
-                </div>
-                <p className="font-bold text-sm text-slate-900 dark:text-white">Subscription Active!</p>
-                <p className="text-[10px] text-muted-foreground">Redirecting to Login Console...</p>
-              </div>
-            )}
           </div>
         </div>
       )}
 
-      {isHostedModalOpen && selectedCheckoutPlan && (
-        <AcceptHostedModal
-          isOpen={isHostedModalOpen}
-          onClose={() => setIsHostedModalOpen(false)}
-          token={hostedToken}
-          hostedUrl={hostedUrl}
-          planName={`${selectedCheckoutPlan.name} Plan`}
-          amount={selectedCheckoutPlan.price}
-          onSuccess={handleHostedSuccess}
-          onCancel={() => setIsHostedModalOpen(false)}
-          onFailure={(err) => setFormError(err)}
-        />
-      )}
+      {/* Authorize.Net Accept Hosted Iframe Modal */}
+      <AcceptHostedModal
+        isOpen={isHostedModalOpen}
+        onClose={() => setIsHostedModalOpen(false)}
+        token={hostedToken}
+        hostedUrl={hostedUrl}
+        planName={selectedCheckoutPlan?.name || 'SaaS Subscription'}
+        amount={selectedCheckoutPlan?.price || 15}
+        onSuccess={handleHostedSuccess}
+        onCancel={() => setIsHostedModalOpen(false)}
+        onFailure={(err) => setFormError(err)}
+      />
+
+      {/* --- EXACT MATCH FOOTER FROM USER SCREENSHOT (ZERO CLICKABLE LINKS) --- */}
+      <footer className="bg-[#090814] text-slate-300 pt-16 pb-12 border-t border-white/5 font-sans">
+        <div className="max-w-7xl mx-auto px-8 space-y-12">
+          
+          {/* Top 4-Column Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-10 text-sm">
+            
+            {/* Column 1: Platform Description */}
+            <div className="space-y-4 md:pr-4">
+              <p className="text-slate-400 text-xs leading-relaxed font-normal">
+                A smarter property management platform that helps owners, property managers, tenants, and property teams manage operations from one centralized system.
+              </p>
+            </div>
+
+            {/* Column 2: Our Company */}
+            <div className="space-y-4">
+              <h4 className="font-extrabold text-white text-base tracking-tight">Our Company</h4>
+              <ul className="space-y-2.5 text-xs text-slate-400 font-medium">
+                <li><span className="cursor-default">About Us</span></li>
+                <li><span className="cursor-default">Features</span></li>
+                <li><span className="cursor-default">Testimonials</span></li>
+                <li><span className="cursor-default">Contact</span></li>
+              </ul>
+            </div>
+
+            {/* Column 3: Get In Touch */}
+            <div className="space-y-4">
+              <h4 className="font-extrabold text-white text-base tracking-tight">Get In Touch</h4>
+              <ul className="space-y-2.5 text-xs text-slate-400 font-medium">
+                <li><span className="cursor-default">Linkedin</span></li>
+                <li><span className="cursor-default">Facebook</span></li>
+                <li><span className="cursor-default">Yelp</span></li>
+                <li><span className="cursor-default">Houzz</span></li>
+              </ul>
+            </div>
+
+            {/* Column 4: Contact Info */}
+            <div className="space-y-4">
+              <h4 className="font-extrabold text-white text-base tracking-tight">Contact Info</h4>
+              <div className="space-y-2.5 text-xs text-slate-400 font-medium leading-relaxed">
+                <p>123 Fifth Avenue, Lane no 17, New York NY 688101.</p>
+                <p>123-456-7890/91</p>
+                <p><span className="cursor-default">contact@example.com</span></p>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Bottom Divider Bar & Copyright */}
+          <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between text-xs text-slate-400 font-normal gap-4">
+            <div>
+              Copyright © 2026 whatslandlord
+            </div>
+            <div>
+              Powered by whatslandlord
+            </div>
+          </div>
+
+        </div>
+      </footer>
+
     </div>
   );
 };
-
-export default LandingPage;
-

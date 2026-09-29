@@ -48,9 +48,18 @@ export const TenantLayout: React.FC<TenantLayoutProps> = ({
     refetchInterval: 15000,
   });
 
-  const roleNotifications = realTenantNotifications.length > 0
-    ? realTenantNotifications
-    : notifications.filter((n) => n.role === 'Tenant');
+  const { data: platformSettings } = useQuery({
+    queryKey: ['platform-settings-general'],
+    queryFn: () => api.platformSettings.getGeneral(),
+    refetchInterval: 15000,
+  });
+
+  const localNotifications = notifications.filter((n) => !n.role || n.role === 'Tenant');
+  const roleNotifications = Array.from(
+    new Map(
+      [...(realTenantNotifications || []), ...localNotifications].map((n) => [n.id, n])
+    ).values()
+  );
 
   const unreadCount = roleNotifications.filter((n) => !n.read).length;
 
@@ -105,7 +114,10 @@ export const TenantLayout: React.FC<TenantLayoutProps> = ({
         {/* Desktop Logout Button */}
         <div className="p-4 border-t border-border/40">
           <button
-            onClick={logout}
+            onClick={() => {
+              logout();
+              navigate('/login');
+            }}
             className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-xs font-bold transition-all uppercase tracking-wider text-rose-500 hover:bg-rose-500/10 transition-colors"
           >
             <LogOut className="w-5 h-5" />
@@ -263,6 +275,17 @@ export const TenantLayout: React.FC<TenantLayoutProps> = ({
 
           </div>
         </header>
+
+        {/* SYSTEM MAINTENANCE BANNER */}
+        {platformSettings?.maintenanceMode === 'true' && (
+          <div className="bg-rose-600 text-white px-6 py-3 shadow-lg flex items-center justify-between text-xs font-extrabold shrink-0 z-20 animate-in slide-in-from-top duration-300">
+            <div className="flex items-center space-x-2.5">
+              <ShieldAlert className="w-5 h-5 text-white animate-bounce shrink-0" />
+              <span>⚠️ SYSTEM MAINTENANCE MODE ACTIVE — Tenant portal is currently under scheduled system maintenance. Access to financial transactions & portal features is restricted.</span>
+            </div>
+            <span className="bg-white/20 px-3 py-1 rounded-full text-[10px] uppercase font-black tracking-widest shrink-0 ml-4 border border-white/20">Portal Restricted</span>
+          </div>
+        )}
 
         {/* OUTLET PAGE BODY */}
         <main className="flex-1 overflow-y-auto p-6 bg-secondary/5 relative">

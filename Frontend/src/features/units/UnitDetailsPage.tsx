@@ -198,7 +198,7 @@ export const UnitDetailsPage: React.FC = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground flex items-center gap-1"><Calendar className="w-4 h-4" /> Availability Date</span>
-                <span>{unit.availabilityDate}</span>
+                <span>{unit.availabilityDate ? String(unit.availabilityDate).split('T')[0] : ''}</span>
               </div>
             </div>
           </Card>

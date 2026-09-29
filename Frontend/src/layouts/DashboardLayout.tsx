@@ -13,6 +13,7 @@ import { Button } from '../components/ui/Button';
 import { StatusBadge } from '../components/StatusBadge';
 import { clsx } from 'clsx';
 import { LanguageSelector } from '../components/LanguageSelector';
+import { SubscriptionGuardModal } from '../components/SubscriptionGuardModal';
 import { useTranslation } from 'react-i18next';
 
 interface MenuItem {
@@ -61,11 +62,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         { title: t('nav.invoices'), path: '/subscriptions/invoices' },
       ],
     },
-    {
-      title: t('nav.platformUsers'),
-      icon: <Users className="w-5 h-5" />,
-      path: '/platform-users',
-    },
+    // {
+    //   title: t('nav.platformUsers'),
+    //   icon: <Users className="w-5 h-5" />,
+    //   path: '/platform-users',
+    // },
     {
       title: t('nav.platformSettings'),
       icon: <Settings className="w-5 h-5" />,
@@ -124,10 +125,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       title: t('nav.documents'),
       icon: <FileText className="w-5 h-5" />,
       path: '/documents/all',
-      submenu: [
-        { title: t('nav.allDocuments'), path: '/documents/all' },
-        { title: t('nav.eSignatures'), path: '/documents/signatures' },
-      ],
     },
     {
       title: t('nav.owners'),
@@ -194,6 +191,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         { title: t('nav.usersAndRoles'), path: '/admin/users' },
         { title: t('nav.rolesAndPermissions'), path: '/admin/roles' },
         { title: t('nav.paymentSettings'), path: '/admin/payment-settings' },
+        { title: 'Subscription & Billing', path: '/admin/billing' },
         { title: t('nav.integrationsMarketplace'), path: '/admin/integrations' },
         { title: t('nav.connectedApps'), path: '/platform-integrations/connected' },
       ],
@@ -295,9 +293,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     refetchInterval: 15000,
   });
 
-  const roleNotifications = realNotifications.length > 0 
-    ? realNotifications 
-    : notifications.filter((n) => n.role === displayRole);
+  const localNotifications = notifications.filter((n) => !n.role || n.role === displayRole);
+  const roleNotifications = Array.from(
+    new Map(
+      [...(realNotifications || []), ...localNotifications].map((n) => [n.id, n])
+    ).values()
+  );
 
   const unreadCount = roleNotifications.filter((n) => !n.read).length;
 
@@ -458,7 +459,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         {/* Desktop Sidebar Footer - Logout */}
         <div className="p-4 border-t border-border/60">
           <button
-            onClick={logout}
+            onClick={() => {
+              logout();
+              navigate('/login');
+            }}
             className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-rose-500 hover:bg-rose-500/10 transition-all uppercase tracking-wider"
           >
             <LogOut className="w-5 h-5" />
@@ -533,7 +537,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             {/* Mobile Logout Button */}
             <div className="pt-4 border-t border-border mt-4">
               <button
-                onClick={logout}
+                onClick={() => {
+                  logout();
+                  navigate('/login');
+                }}
                 className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-rose-500 hover:bg-rose-500/10 transition-colors uppercase tracking-wider"
               >
                 <LogOut className="w-5 h-5" />
@@ -558,23 +565,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               <Menu className="w-5 h-5" />
             </Button>
 
-            {/* Breadcrumb renderer */}
-            <div className="hidden sm:flex items-center space-x-1.5 text-xs text-muted-foreground font-semibold">
-              {getBreadcrumbs().map((crumb, idx) => (
-                <React.Fragment key={idx}>
-                  {idx > 0 && <ChevronRight className="w-3.5 h-3.5 opacity-55" />}
-                  <span
-                    onClick={() => navigate(crumb.href || '/')}
-                    className={clsx(
-                      'hover:text-primary cursor-pointer transition-colors',
-                      idx === getBreadcrumbs().length - 1 && 'text-foreground font-bold pointer-events-none'
-                    )}
-                  >
-                    {crumb.label}
-                  </span>
-                </React.Fragment>
-              ))}
-            </div>
+            {/* Breadcrumb renderer removed per user request */}
           </div>
 
           <div className="flex items-center space-x-3">
@@ -714,6 +705,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           {children}
         </main>
       </div>
+
+      <SubscriptionGuardModal />
     </div>
   );
 };

@@ -22,7 +22,7 @@ const buildingSchema = zod.object({
   propertyId: zod.string().min(1, 'Property is required'),
   name: zod.string().min(1, 'Building Name is required'),
   floors: zod.number().min(1, 'Must have at least 1 floor'),
-  unitsCount: zod.number().min(0, 'Units Count cannot be negative'),
+  unitsCount: zod.number().min(0),
   address: zod.string().optional(),
   status: zod.enum(['Active', 'Inactive']),
 });
@@ -52,11 +52,24 @@ export const BuildingsPage: React.FC = () => {
     register,
     handleSubmit,
     reset,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<BuildingFormValues>({
     resolver: zodResolver(buildingSchema),
-    defaultValues: { floors: 3, unitsCount: 12, status: 'Active' },
+    defaultValues: { floors: 3, unitsCount: 0, status: 'Active' },
   });
+
+  const selectedPropertyId = watch('propertyId');
+
+  React.useEffect(() => {
+    if (selectedPropertyId && properties.length > 0) {
+      const prop = properties.find((p) => p.id === selectedPropertyId);
+      if (prop) {
+        setValue('address', prop.address || prop.streetAddress || '');
+      }
+    }
+  }, [selectedPropertyId, properties, setValue]);
 
   // Mutations
   const createMutation = useMutation({
@@ -91,16 +104,16 @@ export const BuildingsPage: React.FC = () => {
     },
   });
 
-
-
   const handleOpenAddModal = () => {
     setEditingBuilding(null);
+    const firstProp = properties[0];
+    const defaultAddr = firstProp ? (firstProp.address || firstProp.streetAddress || '') : '';
     reset({
-      propertyId: properties[0]?.id || '',
+      propertyId: firstProp?.id || '',
       name: '',
       floors: 3,
-      unitsCount: 12,
-      address: '',
+      unitsCount: 0,
+      address: defaultAddr,
       status: 'Active',
     });
     setIsFormOpen(true);
@@ -108,12 +121,14 @@ export const BuildingsPage: React.FC = () => {
 
   const handleOpenEditModal = (building: Building) => {
     setEditingBuilding(building);
+    const prop = properties.find((p) => p.id === building.propertyId);
+    const buildingAddr = prop ? (prop.address || prop.streetAddress || '') : (building.address || '');
     reset({
       propertyId: building.propertyId || '',
       name: building.name || '',
       floors: building.floors || 1,
       unitsCount: building.unitsCount || 0,
-      address: building.address || '',
+      address: buildingAddr,
       status: (building.status === 'Inactive' ? 'Inactive' : 'Active') as 'Active' | 'Inactive',
     });
     setIsFormOpen(true);
@@ -208,7 +223,15 @@ export const BuildingsPage: React.FC = () => {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-1">
             <label className="text-xs font-bold text-muted-foreground uppercase">Associated Property</label>
-            <Select {...register('propertyId')}>
+            <Select 
+              {...register('propertyId', {
+                onChange: (e) => {
+                  const selectedId = e.target.value;
+                  const prop = properties.find((p) => p.id === selectedId);
+                  setValue('address', prop ? (prop.address || prop.streetAddress || '') : '');
+                },
+              })}
+            >
               <option value="">Select Property...</option>
               {properties.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -225,20 +248,20 @@ export const BuildingsPage: React.FC = () => {
             {errors.name && <p className="text-rose-500 text-xs">{errors.name.message}</p>}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-muted-foreground uppercase">Number of Floors</label>
-              <Input type="number" {...register('floors', { valueAsNumber: true })} />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-muted-foreground uppercase">Total Units</label>
-              <Input type="number" {...register('unitsCount', { valueAsNumber: true })} />
-            </div>
+          <div className="space-y-1">
+            <label className="text-xs font-bold text-muted-foreground uppercase">Number of Floors</label>
+            <Input type="number" {...register('floors', { valueAsNumber: true })} />
           </div>
 
           <div className="space-y-1">
             <label className="text-xs font-bold text-muted-foreground uppercase">Street Address</label>
-            <Input placeholder="Leave blank to use property address" {...register('address')} />
+            <Input 
+              placeholder="Select property to view address" 
+              disabled 
+              readOnly 
+              className="bg-slate-100 dark:bg-slate-800 text-muted-foreground opacity-75 cursor-not-allowed"
+              {...register('address')} 
+            />
           </div>
 
           <div className="space-y-1">

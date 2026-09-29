@@ -3,8 +3,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as zod from 'zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from '@tanstack/react-router';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import api from '../../api';
+import { useCompanyStore } from '../../store/useStore';
 import { PageHeader } from '../../components/PageHeader';
 import { AddressForm } from '../../components/AddressForm';
 import { FileUploader } from '../../components/FileUploader';
@@ -41,15 +42,19 @@ const propertyFormSchema = zod.object({
 
 type PropertyFormInputs = zod.infer<typeof propertyFormSchema>;
 
-export const EditPropertyPage: React.FC = () => {
+export const EditPropertyPage: React.FC<{ propertyId?: string }> = ({ propertyId: propPropertyId }) => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const searchParams = useSearch({ strict: false }) as any;
+  const propertyId = propPropertyId || searchParams?.id || new URLSearchParams(window.location.search).get('id') || '';
+
+  const { companyName } = useCompanyStore();
+  const activeCompany = companyName || 'Divine Properties';
+
+  const [photos, setPhotos] = useState<string[]>([]);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [success, setSuccess] = useState(false);
   const [loadingProperty, setLoadingProperty] = useState(true);
-
-  const searchParams = new URLSearchParams(window.location.search);
-  const propertyId = searchParams.get('id') || '';
 
   // Query owners to select one
   const { data: owners = [] } = useQuery({
@@ -61,6 +66,7 @@ export const EditPropertyPage: React.FC = () => {
     register,
     handleSubmit,
     reset,
+    setError,
     formState: { errors },
   } = useForm<PropertyFormInputs>({
     resolver: zodResolver(propertyFormSchema),
@@ -70,13 +76,13 @@ export const EditPropertyPage: React.FC = () => {
     if (propertyId) {
       setLoadingProperty(true);
       api.property.getById(propertyId)
-        .then((data) => {
+        .then((data: any) => {
           if (data) {
-            const ownerName = data.owner
-              ? typeof data.owner === 'object'
-                ? data.owner.name || `${data.owner.firstName || ''} ${data.owner.lastName || ''}`.trim()
-                : data.owner
-              : '';
+            const ownerObj = owners.find((o) => o.id === data.ownerId);
+            const ownerName = ownerObj 
+              ? (ownerObj.name || `${ownerObj.firstName || ''} ${ownerObj.lastName || ''}`.trim()) 
+              : data.ownerId || '';
+
             reset({
               name: data.name || '',
               type: data.type === 'SingleFamily' ? 'Single Family' : data.type === 'MultiFamily' ? 'Multi Family' : data.type || 'Apartment',
@@ -89,7 +95,7 @@ export const EditPropertyPage: React.FC = () => {
               nycBin: data.nycBin || (data as any).bin || '',
               owner: ownerName,
               ownershipPercentage: data.ownershipPercentage || 100,
-              managementCompany: data.managementCompany || 'Apex Property Management',
+              managementCompany: data.managementCompany || activeCompany,
               yearBuilt: data.yearBuilt || 2020,
               totalBuildings: data.totalBuildings || 1,
               totalUnits: data.units?.length || 0,
@@ -100,10 +106,14 @@ export const EditPropertyPage: React.FC = () => {
             });
           }
         })
-        .catch(console.error)
+        .catch((err) => {
+          console.error('Failed to fetch property details:', err);
+        })
         .finally(() => setLoadingProperty(false));
+    } else {
+      setLoadingProperty(false);
     }
-  }, [propertyId, reset]);
+  }, [propertyId, reset, owners, activeCompany]);
 
   const updateMutation = useMutation({
     mutationFn: (values: any) => {
@@ -236,7 +246,7 @@ export const EditPropertyPage: React.FC = () => {
 
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Management Company</label>
-              <Input {...register('managementCompany')} />
+              <Input {...register('managementCompany')} disabled className="bg-muted/50 text-muted-foreground cursor-not-allowed font-semibold" />
               {errors.managementCompany && <p className="text-rose-500 text-xs">{errors.managementCompany.message}</p>}
             </div>
           </div>

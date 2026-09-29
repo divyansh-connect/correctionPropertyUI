@@ -19,7 +19,7 @@ export const ExportCenter: React.FC = () => {
   const handleDownload = (fileUrl: string | null) => {
     if (!fileUrl) return;
     // Resolve absolute path from backend base URL
-    const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
+    const baseURL = import.meta.env.VITE_API_URL || 'https://doorloop-backend-production-5d5d.up.railway.app/api/v1';
     const serverHost = baseURL.replace('/api/v1', '');
     const downloadUrl = `${serverHost}${fileUrl}`;
     window.open(downloadUrl, '_blank');

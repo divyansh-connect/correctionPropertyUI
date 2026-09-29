@@ -1,12 +1,7 @@
 import { useAuthStore } from '../store/useStore';
 
 const getBaseUrl = () => {
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL;
-  }
-  // Dynamically resolve local host name to support other devices on the same Wi-Fi
-  const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
-  return `http://${host}:5000/api/v1`;
+  return import.meta.env.VITE_API_URL || 'https://doorloop-backend-production-5d5d.up.railway.app/api/v1';
 };
 
 const BASE_URL = getBaseUrl();

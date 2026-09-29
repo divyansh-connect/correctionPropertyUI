@@ -290,7 +290,7 @@ const ProtectedWrapper: React.FC<{ children: React.ReactNode }> = ({ children })
 
   React.useEffect(() => {
     if (!isAuthenticated) {
-      navigate({ to: '/landing' });
+      navigate({ to: '/login' });
       return;
     }
     // Redirect Owner/Tenant/Staff from Root to their dashboards
@@ -2257,7 +2257,7 @@ const NewCompanyPage: React.FC = () => {
           </div>
           <div className="space-y-1">
             <label className="text-[10px] font-extrabold uppercase text-muted-foreground">Password</label>
-            <input name="password" required type="password" placeholder="••••••••" className="w-full text-xs font-semibold p-2.5 rounded-lg border bg-secondary focus:ring-1 focus:ring-primary focus:outline-none" />
+            <Input name="password" required type="password" placeholder="••••••••" className="w-full text-xs font-semibold h-9" />
           </div>
           <div className="space-y-1">
             <label className="text-[10px] font-extrabold uppercase text-muted-foreground">{t('newCompanyPage.phoneNumber')}</label>
@@ -2755,7 +2755,7 @@ const CompanyUsagePage: React.FC = () => {
   );
 };
 
-// 4a. PRICING PLANS MANAGER (CREATE & LIST PLANS)
+// 4a. PRICING PLANS MANAGER (DYNAMIC PLANS FROM BACKEND DB)
 const SubscriptionPlansPage: React.FC = () => {
   const { t } = useTranslation();
   const [plans, setPlans] = React.useState<any[]>([]);
@@ -2765,7 +2765,7 @@ const SubscriptionPlansPage: React.FC = () => {
     try {
       setLoading(true);
       const data = await api.plans.getAll();
-      setPlans(data);
+      setPlans(data || []);
     } catch (e) {
       console.error(e);
     } finally {
@@ -2777,120 +2777,18 @@ const SubscriptionPlansPage: React.FC = () => {
     fetchPlans();
   }, [fetchPlans]);
 
-  const [showCreate, setShowCreate] = React.useState(false);
-  const [newPlan, setNewPlan] = React.useState({ name: '', price: '', cycle: 'Monthly', units: '', storage: '', features: '' });
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newPlan.name || !newPlan.price) return;
-    try {
-      await api.plans.create({
-        name: newPlan.name,
-        price: parseFloat(newPlan.price),
-        billingCycle: newPlan.cycle,
-        maxUnits: parseInt(newPlan.units) || 500,
-        features: newPlan.features || 'Standard Features',
-      });
-      fetchPlans();
-    } catch (err) {
-      console.error(err);
-    }
-    setNewPlan({ name: '', price: '', cycle: 'Monthly', units: '', storage: '', features: '' });
-    setShowCreate(false);
-  };
-
-  const handleCancel = () => {
-    setShowCreate(false);
-    setNewPlan({ name: '', price: '', cycle: 'Monthly', units: '', storage: '', features: '' });
-  };
-
   return (
     <div className="space-y-6">
       <PageHeader
         title={t('subscriptionsPage.plansTitle')}
         description={t('subscriptionsPage.plansDesc')}
         breadcrumbs={[{ label: t('nav.home'), href: '/' }, { label: t('nav.subscriptions') }, { label: t('subscriptionsPage.plansBreadcrumb') }]}
-        action={{
-          label: t('subscriptionsPage.createPlanBtn'),
-          onClick: () => {
-            handleCancel();
-            setShowCreate(true);
-          },
-          icon: <Plus className="w-4 h-4" />
-        }}
       />
 
-      {showCreate && (
-        <form onSubmit={handleSubmit} className="bg-card border rounded-xl p-6 shadow-sm space-y-4 max-w-2xl">
-          <h2 className="text-sm font-extrabold uppercase tracking-wide border-b pb-2">
-            {t('subscriptionsPage.newPlanTitle')}
-          </h2>
-          <div className="grid grid-cols-2 gap-4 text-xs">
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-muted-foreground uppercase">{t('subscriptionsPage.planName')}</label>
-              <input
-                required
-                value={newPlan.name}
-                onChange={e => setNewPlan(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="e.g. Pro Plus Plan"
-                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-muted-foreground uppercase">{t('subscriptionsPage.monthlyPrice')}</label>
-              <input
-                required
-                type="number"
-                value={newPlan.price}
-                onChange={e => setNewPlan(prev => ({ ...prev, price: e.target.value }))}
-                placeholder="e.g. 199"
-                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-muted-foreground uppercase">{t('subscriptionsPage.billingCycle')}</label>
-              <select
-                value={newPlan.cycle}
-                onChange={e => setNewPlan(prev => ({ ...prev, cycle: e.target.value }))}
-                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold focus:outline-none"
-              >
-                <option value="Monthly">{t('status.Monthly')}</option>
-                <option value="Annual">{t('status.Annual')}</option>
-              </select>
-            </div>
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-muted-foreground uppercase">{t('subscriptionsPage.maxUnits')}</label>
-              <input
-                value={newPlan.units}
-                onChange={e => setNewPlan(prev => ({ ...prev, units: e.target.value }))}
-                placeholder="e.g. 500"
-                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold"
-              />
-            </div>
-            <div className="space-y-1 text-xs col-span-2">
-              <label className="text-[10px] font-bold text-muted-foreground uppercase">{t('subscriptionsPage.includedFeatures')}</label>
-              <textarea
-                value={newPlan.features}
-                onChange={e => setNewPlan(prev => ({ ...prev, features: e.target.value }))}
-                placeholder="List features separated by commas..."
-                rows={2}
-                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold"
-              />
-            </div>
-          </div>
-          <div className="border-t pt-4 flex justify-end space-x-2">
-            <Button type="button" variant="outline" onClick={handleCancel}>{t('subscriptionsPage.cancel')}</Button>
-            <Button type="submit">
-              {t('subscriptionsPage.publishPlanBtn')}
-            </Button>
-          </div>
-        </form>
-      )}
-
       {loading ? (
-        <div className="p-6 text-xs text-muted-foreground">Loading subscription plans from database...</div>
+        <div className="p-6 text-xs text-muted-foreground">Loading subscription plans...</div>
       ) : plans.length === 0 ? (
-        <div className="p-6 text-xs text-muted-foreground bg-card border rounded-xl">No active subscription plans found in database.</div>
+        <div className="p-6 text-xs text-muted-foreground bg-card border rounded-xl">No active subscription plans found.</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {plans.map(p => (
@@ -2899,26 +2797,30 @@ const SubscriptionPlansPage: React.FC = () => {
                 <div className="flex justify-between items-start">
                   <div>
                     <h3 className="font-extrabold text-lg text-foreground">{p.name}</h3>
-                    <p className="text-[10px] text-muted-foreground font-semibold uppercase mt-0.5">{p.billingCycle || 'Monthly'}</p>
+                    <p className="text-[10px] text-muted-foreground font-semibold uppercase mt-0.5">{p.billingCycle}</p>
                   </div>
-                  <StatusBadge status="Active" />
+                  <div className="flex items-center space-x-2">
+                    <StatusBadge status="Active" />
+                  </div>
                 </div>
                 <div className="flex items-baseline text-foreground">
                   <span className="text-3xl font-extrabold tracking-tight">${p.price}</span>
-                  <span className="ml-1 text-xs text-muted-foreground font-semibold">{t('subscriptionsPage.perMonth')}</span>
+                  <span className="ml-1 text-xs text-muted-foreground font-semibold">
+                    {p.price === 0 ? '/ 14 days free' : (p.price === 120 ? '/ year ($10/mo)' : '/ month')}
+                  </span>
                 </div>
                 <div className="space-y-2 text-xs font-medium border-t pt-4">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">{t('subscriptionsPage.propertiesLimit')}</span>
-                    <span className="font-bold">{p.maxUnits ? `Up to ${p.maxUnits} Units` : 'Unlimited'}</span>
+                    <span className="text-muted-foreground">Properties Limit</span>
+                    <span className="font-bold text-primary">Unlimited</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">{t('subscriptionsPage.diskStorage')}</span>
-                    <span className="font-bold">{p.maxProperties ? `${p.maxProperties} Properties` : 'Standard Storage'}</span>
+                    <span className="text-muted-foreground">Units Limit</span>
+                    <span className="font-bold text-primary">Unlimited</span>
                   </div>
                   <div className="pt-2">
                     <span className="text-muted-foreground text-[10px] uppercase font-bold tracking-wide">{t('subscriptionsPage.featuresIncluded')}</span>
-                    <p className="font-bold text-primary mt-1 text-[11px] leading-relaxed">{p.features}</p>
+                    <p className="font-bold text-foreground mt-1 text-[11px] leading-relaxed">{p.features}</p>
                   </div>
                 </div>
               </div>
@@ -3002,6 +2904,13 @@ const ActiveSubscriptionsPage: React.FC = () => {
 const SubscriptionInvoicesPage: React.FC = () => {
   const { t } = useTranslation();
   const [invoices, setInvoices] = React.useState<any[]>([]);
+  const [metrics, setMetrics] = React.useState<any>({
+    freeTrialCount: 0,
+    monthlyPlanCount: 0,
+    yearlyPlanCount: 0,
+    totalRevenue: 0,
+    totalInvoices: 0,
+  });
   const [companies, setCompanies] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState<boolean>(true);
   const [showCreate, setShowCreate] = React.useState<boolean>(false);
@@ -3010,11 +2919,20 @@ const SubscriptionInvoicesPage: React.FC = () => {
   const fetchInvoices = React.useCallback(async () => {
     try {
       setLoading(true);
-      const [invData, compData] = await Promise.all([
+      const [invRes, compData] = await Promise.all([
         api.saasInvoices.getAll(),
         api.companies.getAll(),
       ]);
-      setInvoices(invData);
+
+      if (invRes && invRes.invoices) {
+        setInvoices(invRes.invoices);
+        if (invRes.metrics) {
+          setMetrics(invRes.metrics);
+        }
+      } else {
+        setInvoices(Array.isArray(invRes) ? invRes : []);
+      }
+
       setCompanies(compData);
       if (compData.length > 0) {
         setNewInvoice(prev => ({ ...prev, companyId: compData[0].id, companyName: compData[0].name, transactionId: '' }));
@@ -3072,6 +2990,69 @@ const SubscriptionInvoicesPage: React.FC = () => {
           icon: <Plus className="w-4 h-4" />
         }}
       />
+
+      {/* Summary Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Stat Card 1: Free Trial */}
+        <div className="bg-card border rounded-xl p-5 shadow-sm space-y-2 hover:border-primary/40 transition">
+          <div className="flex justify-between items-center text-muted-foreground">
+            <span className="text-[11px] font-bold uppercase tracking-wider">Free Trial Users</span>
+            <div className="p-2 bg-blue-500/10 text-blue-600 rounded-lg">
+              <Users className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="flex items-baseline justify-between">
+            <span className="text-2xl font-extrabold text-foreground">{metrics.freeTrialCount || 0}</span>
+            <span className="text-[10px] font-bold text-blue-600 bg-blue-500/10 px-2 py-0.5 rounded-full">14 Days Free</span>
+          </div>
+          <p className="text-[11px] text-muted-foreground">Active free trial companies</p>
+        </div>
+
+        {/* Stat Card 2: Monthly Plan ($15/mo) */}
+        <div className="bg-card border rounded-xl p-5 shadow-sm space-y-2 hover:border-primary/40 transition">
+          <div className="flex justify-between items-center text-muted-foreground">
+            <span className="text-[11px] font-bold uppercase tracking-wider">Monthly Plan Users</span>
+            <div className="p-2 bg-emerald-500/10 text-emerald-600 rounded-lg">
+              <CreditCard className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="flex items-baseline justify-between">
+            <span className="text-2xl font-extrabold text-foreground">{metrics.monthlyPlanCount || 0}</span>
+            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full">$15 / month</span>
+          </div>
+          <p className="text-[11px] text-muted-foreground">Subscribed monthly billing</p>
+        </div>
+
+        {/* Stat Card 3: Yearly Plan ($10/mo = $120/yr) */}
+        <div className="bg-card border rounded-xl p-5 shadow-sm space-y-2 hover:border-primary/40 transition">
+          <div className="flex justify-between items-center text-muted-foreground">
+            <span className="text-[11px] font-bold uppercase tracking-wider">Yearly Plan Users</span>
+            <div className="p-2 bg-purple-500/10 text-purple-600 rounded-lg">
+              <Sparkles className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="flex items-baseline justify-between">
+            <span className="text-2xl font-extrabold text-foreground">{metrics.yearlyPlanCount || 0}</span>
+            <span className="text-[10px] font-bold text-purple-600 bg-purple-500/10 px-2 py-0.5 rounded-full">$10/mo ($120/yr)</span>
+          </div>
+          <p className="text-[11px] text-muted-foreground">Subscribed annual billing</p>
+        </div>
+
+        {/* Stat Card 4: Total Invoiced Revenue */}
+        <div className="bg-card border rounded-xl p-5 shadow-sm space-y-2 hover:border-primary/40 transition">
+          <div className="flex justify-between items-center text-muted-foreground">
+            <span className="text-[11px] font-bold uppercase tracking-wider">Total Invoiced Revenue</span>
+            <div className="p-2 bg-amber-500/10 text-amber-600 rounded-lg">
+              <BarChart3 className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="flex items-baseline justify-between">
+            <span className="text-2xl font-extrabold text-foreground">${(metrics.totalRevenue || 0).toLocaleString()}</span>
+            <span className="text-[10px] font-bold text-amber-600 bg-amber-500/10 px-2 py-0.5 rounded-full">{metrics.totalInvoices || invoices.length} Invoices</span>
+          </div>
+          <p className="text-[11px] text-muted-foreground">Total paid SaaS revenue</p>
+        </div>
+      </div>
 
       {showCreate && (
         <form onSubmit={handleSubmit} className="bg-card border rounded-xl p-6 shadow-sm space-y-4 max-w-xl">
@@ -3730,6 +3711,8 @@ const PlatformSettingsGeneralView: React.FC = () => {
   const [loading, setLoading] = React.useState<boolean>(true);
   const [saving, setSaving] = React.useState<boolean>(false);
   const [savedSuccess, setSavedSuccess] = React.useState<boolean>(false);
+  const [isEditing, setIsEditing] = React.useState<boolean>(false);
+
   const [form, setForm] = React.useState({
     systemName: 'Apex SaaS Platform',
     supportEmail: 'support@apexpm.com',
@@ -3737,6 +3720,7 @@ const PlatformSettingsGeneralView: React.FC = () => {
     appTimezone: 'UTC (Coordinated Universal Time)',
     maintenanceMode: 'false',
   });
+  const [initialForm, setInitialForm] = React.useState({ ...form });
 
   React.useEffect(() => {
     const fetchSettings = async () => {
@@ -3744,7 +3728,9 @@ const PlatformSettingsGeneralView: React.FC = () => {
         setLoading(true);
         const data = await api.platformSettings.getGeneral();
         if (data && Object.keys(data).length > 0) {
-          setForm(prev => ({ ...prev, ...data }));
+          const merged = { ...form, ...data };
+          setForm(merged);
+          setInitialForm(merged);
         }
       } catch (e) {
         console.error(e);
@@ -3760,6 +3746,8 @@ const PlatformSettingsGeneralView: React.FC = () => {
     try {
       setSaving(true);
       await api.platformSettings.saveGeneral(form);
+      setInitialForm({ ...form });
+      setIsEditing(false);
       setSavedSuccess(true);
       setTimeout(() => setSavedSuccess(false), 3000);
     } catch (e) {
@@ -3769,12 +3757,16 @@ const PlatformSettingsGeneralView: React.FC = () => {
     }
   };
 
+  const handleCancel = () => {
+    setForm({ ...initialForm });
+    setIsEditing(false);
+  };
+
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <PageHeader
         title={t('platformSettingsPage.title')}
         description={t('platformSettingsPage.desc')}
-        breadcrumbs={[{ label: t('platformSettingsPage.home'), href: '/' }, { label: t('platformSettingsPage.platformSettings') }, { label: t('platformSettingsPage.general') }]}
       />
 
       {savedSuccess && (
@@ -3784,7 +3776,19 @@ const PlatformSettingsGeneralView: React.FC = () => {
       )}
 
       <form onSubmit={handleSave} className="bg-card border rounded-xl p-6 shadow-sm space-y-6">
-        <h2 className="text-sm font-extrabold uppercase tracking-wide border-b pb-2">{t('platformSettingsPage.globalProperties')}</h2>
+        <div className="flex items-center justify-between border-b pb-3">
+          <h2 className="text-sm font-extrabold uppercase tracking-wide">{t('platformSettingsPage.globalProperties')}</h2>
+          {!isEditing && (
+            <Button 
+              type="button" 
+              onClick={() => setIsEditing(true)}
+              className="font-bold text-xs bg-primary text-white hover:bg-primary/90 px-4 py-1.5 h-auto rounded-lg shadow-sm"
+            >
+              Edit Settings
+            </Button>
+          )}
+        </div>
+
         {loading ? (
           <div className="text-xs text-muted-foreground py-4">Loading settings from database...</div>
         ) : (
@@ -3792,25 +3796,40 @@ const PlatformSettingsGeneralView: React.FC = () => {
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-muted-foreground uppercase">{t('platformSettingsPage.systemName')}</label>
               <input
+                disabled={!isEditing}
                 value={form.systemName}
                 onChange={e => setForm(prev => ({ ...prev, systemName: e.target.value }))}
-                className="w-full p-2 rounded border bg-secondary text-xs font-semibold"
+                className={`w-full p-2.5 rounded-lg border text-xs font-semibold transition ${
+                  !isEditing 
+                    ? 'bg-slate-100 dark:bg-slate-900/60 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-800 cursor-not-allowed opacity-80' 
+                    : 'bg-background text-foreground border-primary focus:outline-none focus:ring-2 focus:ring-primary/20'
+                }`}
               />
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-muted-foreground uppercase">{t('platformSettingsPage.supportEmail')}</label>
               <input
+                disabled={!isEditing}
                 value={form.supportEmail}
                 onChange={e => setForm(prev => ({ ...prev, supportEmail: e.target.value }))}
-                className="w-full p-2 rounded border bg-secondary text-xs font-semibold"
+                className={`w-full p-2.5 rounded-lg border text-xs font-semibold transition ${
+                  !isEditing 
+                    ? 'bg-slate-100 dark:bg-slate-900/60 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-800 cursor-not-allowed opacity-80' 
+                    : 'bg-background text-foreground border-primary focus:outline-none focus:ring-2 focus:ring-primary/20'
+                }`}
               />
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-muted-foreground uppercase">{t('platformSettingsPage.defaultCurrency')}</label>
               <select
+                disabled={!isEditing}
                 value={form.defaultCurrency}
                 onChange={e => setForm(prev => ({ ...prev, defaultCurrency: e.target.value }))}
-                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold focus:outline-none"
+                className={`w-full p-2.5 rounded-lg border text-xs font-semibold transition ${
+                  !isEditing 
+                    ? 'bg-slate-100 dark:bg-slate-900/60 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-800 cursor-not-allowed opacity-80' 
+                    : 'bg-background text-foreground border-primary focus:outline-none focus:ring-2 focus:ring-primary/20'
+                }`}
               >
                 <option value="USD ($)">USD ($)</option>
                 <option value="EUR (€)">EUR (€)</option>
@@ -3821,9 +3840,14 @@ const PlatformSettingsGeneralView: React.FC = () => {
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-muted-foreground uppercase">{t('platformSettingsPage.appTimezone')}</label>
               <select
+                disabled={!isEditing}
                 value={form.appTimezone}
                 onChange={e => setForm(prev => ({ ...prev, appTimezone: e.target.value }))}
-                className="w-full p-2.5 rounded border bg-secondary text-xs font-semibold focus:outline-none"
+                className={`w-full p-2.5 rounded-lg border text-xs font-semibold transition ${
+                  !isEditing 
+                    ? 'bg-slate-100 dark:bg-slate-900/60 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-800 cursor-not-allowed opacity-80' 
+                    : 'bg-background text-foreground border-primary focus:outline-none focus:ring-2 focus:ring-primary/20'
+                }`}
               >
                 <option value="UTC (Coordinated Universal Time)">UTC (Coordinated Universal Time)</option>
                 <option value="EST (Eastern Standard Time)">EST (Eastern Standard Time)</option>
@@ -3838,15 +3862,26 @@ const PlatformSettingsGeneralView: React.FC = () => {
             <input
               type="checkbox"
               id="maintMode"
+              disabled={!isEditing}
               checked={form.maintenanceMode === 'true'}
               onChange={e => setForm(prev => ({ ...prev, maintenanceMode: e.target.checked ? 'true' : 'false' }))}
-              className="rounded border-border text-primary focus:ring-primary"
+              className="rounded border-border text-primary focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
             />
-            <label htmlFor="maintMode" className="font-bold text-rose-500 cursor-pointer">{t('platformSettingsPage.maintenanceMode')}</label>
+            <label htmlFor="maintMode" className={`font-bold text-rose-500 ${!isEditing ? 'cursor-not-allowed opacity-75' : 'cursor-pointer'}`}>
+              {t('platformSettingsPage.maintenanceMode')}
+            </label>
           </div>
-          <Button type="submit" disabled={saving} className="font-bold bg-primary text-white hover:bg-primary/95">
-            {saving ? 'Saving...' : t('platformSettingsPage.saveSettings')}
-          </Button>
+
+          {isEditing && (
+            <div className="flex items-center space-x-2">
+              <Button type="button" variant="outline" onClick={handleCancel} className="font-bold text-xs">
+                Cancel
+              </Button>
+              <Button type="submit" disabled={saving} className="font-bold text-xs bg-primary text-white hover:bg-primary/95">
+                {saving ? 'Saving...' : t('platformSettingsPage.saveSettings')}
+              </Button>
+            </div>
+          )}
         </div>
       </form>
     </div>
@@ -3884,7 +3919,7 @@ const PlatformSettingsEmailView: React.FC = () => {
           </div>
           <div className="space-y-1">
             <label className="text-[10px] font-bold text-muted-foreground uppercase">{t('platformSettings.email.password')}</label>
-            <input type="password" placeholder="••••••••••••••••" className="w-full p-2 rounded border bg-secondary text-xs font-semibold" />
+            <Input type="password" placeholder="••••••••••••••••" className="w-full text-xs font-semibold h-9" />
           </div>
         </div>
         <div className="border-t pt-4 flex justify-end">

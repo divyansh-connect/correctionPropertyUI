@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import api from '../../api';
 import { PageHeader } from '../../components/PageHeader';
+import { PlanLimitReachedModal } from '../../components/PlanLimitReachedModal';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { Button } from '../../components/ui/Button';
@@ -60,6 +61,9 @@ export const NewUnitPage: React.FC = () => {
   const selectedPropertyId = watch('propertyId');
   const filteredBuildings = buildings.filter((b) => b.propertyId === selectedPropertyId);
 
+  const [showLimitModal, setShowLimitModal] = useState(false);
+  const [limitMessage, setLimitMessage] = useState('');
+
   const createMutation = useMutation({
     mutationFn: (values: UnitFormInputs) => {
       const propObj = properties.find((p) => p.id === values.propertyId);
@@ -76,6 +80,13 @@ export const NewUnitPage: React.FC = () => {
       setSuccess(true);
       setTimeout(() => navigate({ to: '/units' }), 2000);
     },
+    onError: (err: any) => {
+      const errMsg = err?.message || err?.response?.data?.error?.message || '';
+      if (errMsg.toLowerCase().includes('limit reached') || err?.code === 'PLAN_LIMIT_EXCEEDED' || err?.response?.data?.error?.code === 'PLAN_LIMIT_EXCEEDED') {
+        setLimitMessage(errMsg || 'Unit creation limit reached for your active subscription plan.');
+        setShowLimitModal(true);
+      }
+    }
   });
 
   const onSubmit = (values: UnitFormInputs) => {
@@ -208,6 +219,14 @@ export const NewUnitPage: React.FC = () => {
         </div>
 
       </form>
+
+      <PlanLimitReachedModal
+        isOpen={showLimitModal}
+        onClose={() => setShowLimitModal(false)}
+        onUpgrade={() => navigate({ to: '/subscriptions/plans' })}
+        message={limitMessage}
+        limitType="units"
+      />
     </div>
   );
 };

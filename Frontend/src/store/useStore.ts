@@ -57,6 +57,15 @@ interface User {
   name: string;
   email: string;
   role: string;
+  companyId?: string;
+  companyName?: string;
+  planName?: string;
+  planType?: string;
+  isTrialExpired?: boolean;
+  isInGracePeriod?: boolean;
+  isAccessBlocked?: boolean;
+  graceEndsAt?: string;
+  planEndsAt?: string;
   avatarUrl?: string;
   token?: string;
   refreshToken?: string;
@@ -66,6 +75,7 @@ interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   login: (email: string, password?: string) => Promise<boolean>;
+  updateUser: (updatedData: Partial<User>) => void;
   logout: () => void;
   refreshAccessToken: () => Promise<boolean>;
 }
@@ -76,7 +86,6 @@ export const useAuthStore = create<AuthState>((set) => ({
   login: async (email: string, password?: string) => {
     const resData = await apiClient.post<any>('/auth/login', { email, password: password || 'admin123' });
 
-
     const apiUser = resData.data.user;
     const token = resData.data.accessToken;
     const refreshToken = resData.data.refreshToken;
@@ -86,6 +95,15 @@ export const useAuthStore = create<AuthState>((set) => ({
       name: `${apiUser.firstName} ${apiUser.lastName}`,
       email: apiUser.email,
       role: apiUser.roleName,
+      companyId: apiUser.companyId,
+      companyName: apiUser.companyName,
+      planName: apiUser.planName,
+      planType: apiUser.planType,
+      isTrialExpired: apiUser.isTrialExpired,
+      isInGracePeriod: apiUser.isInGracePeriod,
+      isAccessBlocked: apiUser.isAccessBlocked,
+      graceEndsAt: apiUser.graceEndsAt,
+      planEndsAt: apiUser.planEndsAt,
       token: token,
       refreshToken: refreshToken,
     };
@@ -94,6 +112,12 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ user: loggedInUser, isAuthenticated: true });
     return true;
   },
+  updateUser: (updatedData: Partial<User>) => set((state) => {
+    if (!state.user) return state;
+    const newUser = { ...state.user, ...updatedData };
+    sessionStorage.setItem('user', JSON.stringify(newUser));
+    return { user: newUser };
+  }),
   logout: () => {
     sessionStorage.removeItem('user');
     set({ user: null, isAuthenticated: false });
@@ -208,4 +232,27 @@ export const useErrorStore = create<ErrorState>((set) => ({
   message: '',
   showError: (title, message) => set({ isOpen: true, title, message }),
   closeError: () => set({ isOpen: false, title: '', message: '' }),
+}));
+
+// --- Company Profile Store ---
+interface CompanyState {
+  companyName: string;
+  companyAddress: string;
+  timezone: string;
+  currency: string;
+  setCompanyProfile: (profile: Partial<{ companyName: string; companyAddress: string; timezone: string; currency: string }>) => void;
+}
+
+export const useCompanyStore = create<CompanyState>((set) => ({
+  companyName: localStorage.getItem('company_name') || 'Divine Properties',
+  companyAddress: localStorage.getItem('company_address') || '100 Pine Street, San Francisco, CA',
+  timezone: localStorage.getItem('company_timezone') || 'EST',
+  currency: localStorage.getItem('company_currency') || 'USD',
+  setCompanyProfile: (profile) => set((state) => {
+    if (profile.companyName !== undefined) localStorage.setItem('company_name', profile.companyName);
+    if (profile.companyAddress !== undefined) localStorage.setItem('company_address', profile.companyAddress);
+    if (profile.timezone !== undefined) localStorage.setItem('company_timezone', profile.timezone);
+    if (profile.currency !== undefined) localStorage.setItem('company_currency', profile.currency);
+    return { ...state, ...profile };
+  }),
 }));

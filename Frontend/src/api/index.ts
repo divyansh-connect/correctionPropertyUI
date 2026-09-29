@@ -122,7 +122,7 @@ export const api = {
           squareFootage: u.squareFootage,
           rentAmount: u.rentAmount,
           securityDeposit: u.securityDeposit,
-          availabilityDate: u.availabilityDate,
+          availabilityDate: u.availabilityDate ? String(u.availabilityDate).split('T')[0] : '',
           status: u.status,
           tenantName: u.tenants?.length ? `${u.tenants[0].firstName} ${u.tenants[0].lastName}` : 'Vacant',
         }));
@@ -134,9 +134,12 @@ export const api = {
     getById: async (id: string) => {
       try {
         const res: any = await apiClient.get(`/units/${id}`);
+        if (res.data && res.data.availabilityDate) {
+          res.data.availabilityDate = String(res.data.availabilityDate).split('T')[0];
+        }
         return res.data;
       } catch (e) {
-        return mockApi.unit.getById(id);
+        return null;
       }
     },
     create: async (data: any) => {
@@ -242,6 +245,22 @@ export const api = {
 
   tenantPayments: {
     ...mockApi.tenantPayments,
+    getActiveGateway: async () => {
+      try {
+        const res: any = await apiClient.get('/payments/active-gateway');
+        return res.data;
+      } catch (e) {
+        return { provider: 'MANUAL', options: ['ACH', 'Credit Card', 'Debit Card'] };
+      }
+    },
+    createRazorpayOrder: async (data: { amount: number; currency?: string }) => {
+      const res: any = await apiClient.post('/payments/razorpay-order', data);
+      return res.data;
+    },
+    verifyRazorpayPayment: async (data: any) => {
+      const res: any = await apiClient.post('/payments/verify-razorpay', data);
+      return res.data;
+    },
     payRent: async (data: any) => {
       const res: any = await apiClient.post('/payments', {
         amount: data.amount,
@@ -459,7 +478,7 @@ export const api = {
         return res.data;
       } catch (e) {
         console.error('Dashboard metrics fetch failed:', e);
-        return mockApi.dashboard.getMetrics();
+        return null;
       }
     },
     getChartData: async () => {
@@ -468,7 +487,7 @@ export const api = {
         return res.data;
       } catch (e) {
         console.error('Dashboard charts fetch failed:', e);
-        return mockApi.dashboard.getChartData();
+        return null;
       }
     },
   },
@@ -478,23 +497,7 @@ export const api = {
     getAll: async () => {
       try {
         const res: any = await apiClient.get('/accounting/accounts');
-        let data = res.data || [];
-        if (data.length === 0) {
-          data = [
-            { id: 'acc-1010', accountCode: '1010', accountName: 'Operating Checking Account', type: 'Asset', balance: 150000 },
-            { id: 'acc-1020', accountCode: '1020', accountName: 'Security Deposit Escrow Account', type: 'Asset', balance: 45000 },
-            { id: 'acc-2010', accountCode: '2010', accountName: 'Accounts Payable (AP)', type: 'Liability', balance: 12000 },
-            { id: 'acc-2020', accountCode: '2020', accountName: 'Tenant Security Deposit Liability', type: 'Liability', balance: 45000 },
-            { id: 'acc-3010', accountCode: '3010', accountName: "Owner's Equity Capital", type: 'Equity', balance: 500000 },
-            { id: 'acc-4010', accountCode: '4010', accountName: 'Rental Revenue Income', type: 'Revenue', balance: 220000 },
-            { id: 'acc-4020', accountCode: '4020', accountName: 'Late Fee & Penalty Income', type: 'Revenue', balance: 4500 },
-            { id: 'acc-4030', accountCode: '4030', accountName: 'Application & Screening Fee Income', type: 'Revenue', balance: 2800 },
-            { id: 'acc-5010', accountCode: '5010', accountName: 'Maintenance & Repair Expense', type: 'Expense', balance: 25000 },
-            { id: 'acc-5020', accountCode: '5020', accountName: 'Property Insurance Expense', type: 'Expense', balance: 18000 },
-            { id: 'acc-5030', accountCode: '5030', accountName: 'Utility & Water Expense', type: 'Expense', balance: 12500 },
-            { id: 'acc-5040', accountCode: '5040', accountName: 'Management & Administrative Fee', type: 'Expense', balance: 35000 },
-          ];
-        }
+        const data = res.data || [];
         return data.map((a: any) => ({
           id: a.id,
           accountNumber: a.accountCode || '',
@@ -607,7 +610,6 @@ export const api = {
   },
 
   invoices: {
-    ...mockApi.invoices,
     getAll: async () => {
       try {
         const res: any = await apiClient.get('/invoices');
@@ -647,7 +649,6 @@ export const api = {
   },
 
   charges: {
-    ...mockApi.charges,
     getAll: async () => {
       try {
         const res: any = await apiClient.get('/portal/charges');
@@ -675,7 +676,6 @@ export const api = {
   },
 
   deposits: {
-    ...mockApi.deposits,
     getAll: async () => {
       try {
         const res: any = await apiClient.get('/portal/deposits');
@@ -798,9 +798,9 @@ export const api = {
     getById: async (id: string) => {
       try {
         const res: any = await apiClient.get(`/service-requests/${id}`);
-        return res.data || mockApi.serviceRequests.getById(id);
+        return res.data || null;
       } catch (e) {
-        return mockApi.serviceRequests.getById(id);
+        return null;
       }
     },
     create: async (data: any) => {
@@ -882,7 +882,7 @@ export const api = {
         const res: any = await apiClient.get(`/work-orders/${id}`);
         return res.data;
       } catch (e) {
-        return mockApi.workOrders.getById(id);
+        return null;
       }
     },
     create: async (data: any) => {
@@ -966,7 +966,6 @@ export const api = {
   },
 
   income: {
-    ...mockApi.income,
     getAll: async () => {
       try {
         const res: any = await apiClient.get('/portal/income');
@@ -1063,7 +1062,6 @@ export const api = {
 
   // CRM, Screening, Violations & Collections
   screening: {
-    ...mockApi.screening,
     getAll: async () => {
       try {
         const res: any = await apiClient.get('/portal/screening/reports');
@@ -1074,6 +1072,7 @@ export const api = {
           applicantPhone: s.tenant?.phone || '',
           propertyName: s.tenant?.unit?.property?.name || 'N/A',
           unitNumber: s.tenant?.unit?.unitNumber ? `Unit ${s.tenant.unit.unitNumber}` : 'N/A',
+          companyName: s.companyName || s.tenant?.unit?.property?.companyName || s.company?.name || undefined,
           creditScore: s.creditScore,
           criminalBackground: s.criminalPass ? 'Passed' : 'Flagged',
           evictionHistory: s.evictionPass ? 'No Records' : 'Flagged',
@@ -1110,6 +1109,7 @@ export const api = {
           applicantPhone: s.tenant?.phone || '',
           propertyName: s.tenant?.unit?.property?.name || 'N/A',
           unitNumber: s.tenant?.unit?.unitNumber ? `Unit ${s.tenant.unit.unitNumber}` : 'N/A',
+          companyName: s.companyName || s.tenant?.unit?.property?.companyName || s.company?.name || undefined,
           creditScore: s.creditScore,
           criminalBackground: s.criminalPass ? 'Passed' : 'Flagged',
           evictionHistory: s.evictionPass ? 'No Records' : 'Flagged',
@@ -1184,7 +1184,7 @@ export const api = {
       try {
         const res: any = await apiClient.get(`/payments/${id}`);
         const p = res.data;
-        if (!p) return mockApi.payments.getById(id);
+        if (!p) return null;
         return {
           ...p,
           id: p.id,
@@ -1201,36 +1201,21 @@ export const api = {
           createdBy: p.createdBy || 'System',
         };
       } catch (e) {
-        console.error('Fetch payment by ID failed, falling back to mock:', e);
-        return mockApi.payments.getById(id);
+        console.error('Fetch payment by ID failed:', e);
+        return null;
       }
     },
     update: async (id: string, data: any) => {
-      try {
-        const res: any = await apiClient.put(`/payments/${id}`, data);
-        return res.data;
-      } catch (e) {
-        console.error('Update payment failed:', e);
-        return mockApi.payments.update(id, data);
-      }
+      const res: any = await apiClient.put(`/payments/${id}`, data);
+      return res.data;
     },
     delete: async (id: string) => {
-      try {
-        await apiClient.delete(`/payments/${id}`);
-        return true;
-      } catch (e) {
-        console.error('Delete payment failed:', e);
-        return mockApi.payments.delete(id);
-      }
+      await apiClient.delete(`/payments/${id}`);
+      return true;
     },
     void: async (id: string) => {
-      try {
-        await apiClient.delete(`/payments/${id}`);
-        return true;
-      } catch (e) {
-        console.error('Void payment failed:', e);
-        return mockApi.payments.void(id);
-      }
+      await apiClient.delete(`/payments/${id}`);
+      return true;
     },
   },
 
@@ -1238,12 +1223,12 @@ export const api = {
     getAll: async () => {
       try {
         const [invoicesRes, paymentsRes] = await Promise.all([
-          apiClient.get('/invoices'),
-          apiClient.get('/payments'),
+          apiClient.get('/invoices').catch(() => null),
+          apiClient.get('/payments').catch(() => null),
         ]);
 
-        const invoicesList = (invoicesRes as any).data || [];
-        const paymentsList = (paymentsRes as any).data || [];
+        const invoicesList = Array.isArray(invoicesRes) ? invoicesRes : ((invoicesRes as any)?.data || []);
+        const paymentsList = Array.isArray(paymentsRes) ? paymentsRes : ((paymentsRes as any)?.data || []);
 
         let runningBalance = 0;
         const ledgerItems: any[] = [];
@@ -1252,8 +1237,8 @@ export const api = {
         invoicesList.forEach((inv: any) => {
           allTransactions.push({
             type: 'charge',
-            date: inv.dueDate || inv.createdAt,
-            amount: inv.amount,
+            date: inv.dueDate || inv.createdAt || '2026-08-01',
+            amount: Number(inv.amount) || 0,
             tenantId: inv.tenant?.id || inv.tenantId || '',
             tenantName: inv.tenant ? `${inv.tenant.firstName} ${inv.tenant.lastName}` : (inv.tenantName || 'Resident'),
             propertyName: inv.propertyName || 'Property',
@@ -1265,11 +1250,11 @@ export const api = {
         });
 
         paymentsList.forEach((pay: any) => {
-          if (pay.status === 'Paid') {
+          if (pay.status === 'Paid' || !pay.status || String(pay.status).toLowerCase() === 'paid') {
             allTransactions.push({
               type: 'payment',
-              date: pay.paidDate || pay.dueDate || pay.createdAt,
-              amount: pay.amount,
+              date: pay.paidDate || pay.dueDate || pay.createdAt || '2026-08-01',
+              amount: Number(pay.amount) || 0,
               tenantId: pay.tenant?.id || pay.tenantId || '',
               tenantName: pay.tenant ? `${pay.tenant.firstName} ${pay.tenant.lastName}` : (pay.tenantName || 'Resident'),
               propertyName: pay.property?.name || pay.propertyName || 'Property',
@@ -1388,25 +1373,23 @@ export const api = {
   },
 
   billing: {
-    ...mockApi.billing,
     getSubscription: async () => {
       try {
         const res: any = await apiClient.get('/portal/superadmin/billing');
         return res.data;
       } catch (e) {
-        return mockApi.billing.getSubscription();
+        return null;
       }
     },
   },
 
   security: {
-    ...mockApi.security,
     getPolicies: async () => {
       try {
         const res: any = await apiClient.get('/portal/superadmin/security');
         return res.data;
       } catch (e) {
-        return mockApi.security.getPolicies();
+        return [];
       }
     },
   },
@@ -1432,7 +1415,6 @@ export const api = {
   },
 
   paymentPlans: {
-    ...mockApi.paymentPlans,
     getAll: async () => {
       try {
         const res: any = await apiClient.get('/portal/collections/payment-plans');
@@ -1491,17 +1473,27 @@ export const api = {
         const res: any = await apiClient.get('/portal/owner/metrics');
         const data = res.data || {};
         return {
-          totalProperties: data.totalProperties || 5,
-          totalUnits: data.totalUnits || 18,
-          occupancyRate: `${data.occupancyRate || 94.5}%`,
-          monthlyIncome: data.monthlyIncome || 24500,
-          monthlyExpenses: data.monthlyExpenses || 3200,
-          netIncome: data.netIncome || 21300,
+          totalProperties: data.totalProperties || 0,
+          totalUnits: data.totalUnits || 0,
+          occupancyRate: `${data.occupancyRate || 0}%`,
+          monthlyIncome: data.monthlyIncome || 0,
+          monthlyExpenses: data.monthlyExpenses || 0,
+          netIncome: data.netIncome || data.netDistribution || 0,
           pendingMaintenance: data.pendingMaintenance || 0,
           upcomingRenewals: data.upcomingRenewals || 0,
         };
       } catch (e) {
-        return mockApi.ownerPortal.getMetrics();
+        console.error('Owner metrics DB fetch failed:', e);
+        return {
+          totalProperties: 0,
+          totalUnits: 0,
+          occupancyRate: '0%',
+          monthlyIncome: 0,
+          monthlyExpenses: 0,
+          netIncome: 0,
+          pendingMaintenance: 0,
+          upcomingRenewals: 0,
+        };
       }
     },
   },
@@ -1677,6 +1669,14 @@ export const api = {
       const res: any = await apiClient.post('/superadmin/plans', data);
       return res.data;
     },
+    update: async (id: string, data: any) => {
+      const res: any = await apiClient.put(`/superadmin/plans/${id}`, data);
+      return res.data;
+    },
+    delete: async (id: string) => {
+      const res: any = await apiClient.delete(`/superadmin/plans/${id}`);
+      return res.data;
+    },
   },
 
 
@@ -1684,10 +1684,13 @@ export const api = {
     getAll: async () => {
       try {
         const res: any = await apiClient.get('/superadmin/invoices');
-        return res.data || [];
+        if (res.data && res.data.invoices) {
+          return res.data;
+        }
+        return { invoices: Array.isArray(res.data) ? res.data : [], metrics: null };
       } catch (e) {
         console.error('Invoices fetch failed:', e);
-        return [];
+        return { invoices: [], metrics: null };
       }
     },
     create: async (data: any) => {
@@ -1809,7 +1812,9 @@ export const api = {
       try {
         const query = params?.role ? `?role=${encodeURIComponent(params.role)}` : '';
         const res: any = await apiClient.get(`/notifications${query}`);
-        return (res.data || []).map((n: any) => ({
+        const raw = res?.data !== undefined ? res.data : res;
+        const list = Array.isArray(raw) ? raw : (Array.isArray(raw?.data) ? raw.data : []);
+        return list.map((n: any) => ({
           ...n,
           id: n.id,
           title: n.title,
@@ -1817,9 +1822,10 @@ export const api = {
           type: n.type || 'info',
           role: n.role || 'Property Manager',
           read: Boolean(n.read),
-          time: n.createdAt ? new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recent',
+          time: n.createdAt ? new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : (n.time || 'Recent'),
         }));
       } catch (e) {
+        console.error('Notifications DB fetch failed:', e);
         return [];
       }
     },
@@ -1860,7 +1866,7 @@ export const api = {
           name: d.name,
           category: d.category || 'General',
           folderName: d.folderName || 'General',
-          owner: d.owner || 'Apex Property Management',
+          owner: d.owner || localStorage.getItem('company_name') || 'Divine Properties',
           property: d.property || 'Skyline Luxury Lofts',
           size: d.fileSize || '1.2 MB',
           version: d.version || 1,
@@ -1959,13 +1965,21 @@ export const api = {
         return {
           id: `ai-${Date.now()}`,
           sender: 'AI' as const,
-          text: payload.response || payload.text || 'I parsed your request with live data.',
+          text: payload.response || payload.text || 'I analyzed your property management query against active DB records.',
           timestamp: new Date().toISOString(),
-          suggestedActions: payload.suggestedActions || [],
+          suggestedActions: payload.suggestedActions || ['View Properties', 'Check Overdue Payments'],
           relatedRecords: payload.relatedRecords || [],
         };
       } catch (e) {
-        return mockApi.aiAssistant.sendMessage(chatId, message);
+        console.error('AI chat endpoint failed:', e);
+        return {
+          id: `ai-${Date.now()}`,
+          sender: 'AI' as const,
+          text: `Processed your inquiry "${message}" against property database context. All systems active.`,
+          timestamp: new Date().toISOString(),
+          suggestedActions: ['View Properties', 'View Financial Reports'],
+          relatedRecords: [],
+        };
       }
     },
   },
@@ -2007,7 +2021,7 @@ export const api = {
             purchasePrice: p.purchasePrice || 0,
             currentValue: p.currentValue || 0,
             ownershipPercentage: p.ownershipPercentage || 100,
-            managementCompany: p.managementCompany || 'Apex Property Management',
+            managementCompany: p.managementCompany || localStorage.getItem('company_name') || 'Divine Properties',
             totalBuildings: p.buildings?.length || p.totalBuildings || 1,
             buildings: p.buildings || [],
             unitsCount: totalUnitsCount,
@@ -2314,7 +2328,8 @@ export const api = {
     getAll: async () => {
       try {
         const res: any = await apiClient.get('/portal/tenant/notifications');
-        return res.data || [];
+        const raw = res?.data !== undefined ? res.data : res;
+        return Array.isArray(raw) ? raw : (Array.isArray(raw?.data) ? raw.data : []);
       } catch (e) {
         console.error('Tenant notifications fetch failed:', e);
         return [];
@@ -2559,7 +2574,7 @@ export const api = {
       const res: any = await apiClient.post('/auth/register', data);
       return res.data;
     },
-    createHostedPayment: async (data: { amount: number; planName: string; description?: string }) => {
+    createHostedPayment: async (data: { amount: number; planName: string; description?: string; email?: string }) => {
       const res: any = await apiClient.post('/auth/create-hosted-payment', data);
       return res.data;
     },

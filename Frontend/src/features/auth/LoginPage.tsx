@@ -150,13 +150,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({ navigate }) => {
     setApiError(null);
     try {
       await login(data.email, data.password);
-      const emailLower = data.email.toLowerCase();
-      if (emailLower.includes('owner')) {
+      const user = useAuthStore.getState().user;
+      const roleName = user?.role;
+
+      if (roleName === 'Owner') {
         navigate('/owner');
-      } else if (emailLower.includes('tenant')) {
+      } else if (roleName === 'Tenant') {
         navigate('/tenant');
-      } else if (emailLower.includes('staff') || emailLower.includes('tech')) {
-        navigate('/staff/maintenance');
+      } else if (roleName === 'Maintenance Staff' || roleName === 'Staff') {
+        navigate('/staff/dashboard');
       } else {
         navigate('/');
       }
@@ -220,13 +222,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ navigate }) => {
     return (
       <div className="space-y-6 text-slate-900 dark:text-white">
         <div className="flex justify-start">
-          <button
-            type="button"
-            onClick={() => navigate('/landing')}
+          <a
+            href="https://whatslandlord.com/"
             className="text-xs font-bold text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-white transition-colors duration-200 flex items-center gap-1"
           >
             ← Back
-          </button>
+          </a>
         </div>
 
         <div className="text-center">
@@ -274,7 +275,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ navigate }) => {
               </button>
             </div>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+              <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500 z-10 pointer-events-none" />
               <Input
                 type="password"
                 placeholder="••••••••"
@@ -378,7 +379,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ navigate }) => {
           <div className="space-y-1">
             <label className="text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">Choose Password</label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+              <Lock className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 dark:text-slate-500 z-10 pointer-events-none" />
               <Input placeholder="••••••••" type="password" {...registerStep1('password')} className="pl-10 h-9 text-xs" />
             </div>
             {step1Errors.password && <p className="text-rose-500 text-[10px]">{step1Errors.password.message}</p>}

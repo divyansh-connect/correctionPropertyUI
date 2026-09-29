@@ -48,6 +48,17 @@ export const ScreeningReportDrawer: React.FC<ScreeningReportDrawerProps> = ({ sc
 
   if (!screening) return null;
 
+  const isTenantSubmitted = Boolean(
+    screening.authorized ||
+    screening.dob ||
+    screening.screeningStatus === 'Processing' ||
+    screening.screeningStatus === 'Completed' ||
+    screening.screeningStatus === 'Approved' ||
+    screening.screeningStatus === 'Declined' ||
+    (screening as any).status === 'Processing' ||
+    (screening as any).status === 'Completed'
+  );
+
   const getVerificationStatusColor = (status: string) => {
     if (status === 'Verified') return 'text-emerald-500 bg-emerald-500/10 border-emerald-500/25';
     if (status === 'Failed') return 'text-rose-500 bg-rose-500/10 border-rose-500/25';
@@ -107,22 +118,18 @@ export const ScreeningReportDrawer: React.FC<ScreeningReportDrawerProps> = ({ sc
                 <User className="w-5 h-5 text-primary" />
                 <div>
                   <p className="font-extrabold">Identity Check</p>
-                  <p className="text-[10px] text-muted-foreground font-medium">Verify SSN matches applicant profile records.</p>
+                  <p className="text-[10px] text-muted-foreground font-medium">Verify Date of Birth matches applicant profile records.</p>
                 </div>
               </div>
               <span className={`px-2.5 py-1 rounded-full text-[10px] border font-black ${getVerificationStatusColor(screening.identityVerificationStatus || (screening.authorized ? 'Verified' : 'Pending'))}`}>
                 {screening.identityVerificationStatus || (screening.authorized ? 'Verified' : 'Pending')}
               </span>
             </div>
-            {(screening.dob || screening.ssn) && (
-              <div className="grid grid-cols-2 gap-2 border-t border-border/40 pt-2 text-[10px] font-bold">
+            {screening.dob && (
+              <div className="border-t border-border/40 pt-2 text-[10px] font-bold">
                 <div>
                   <span className="text-[8px] uppercase text-muted-foreground">Date of Birth</span>
                   <p className="text-foreground">{screening.dob || '—'}</p>
-                </div>
-                <div>
-                  <span className="text-[8px] uppercase text-muted-foreground">Social Security Number</span>
-                  <p className="text-foreground">{screening.ssn ? `***-**-${screening.ssn.slice(-4)}` : '—'}</p>
                 </div>
               </div>
             )}
@@ -296,47 +303,61 @@ export const ScreeningReportDrawer: React.FC<ScreeningReportDrawerProps> = ({ sc
       </div>
 
       {/* DRAWER FOOTER ACTIONS */}
-      <div className="p-4 border-t bg-secondary/15 flex justify-end gap-2 shrink-0">
-        <Button variant="outline" onClick={onClose} disabled={approveMutation.isPending || declineMutation.isPending || generateReportMutation.isPending}>Close</Button>
-        {(screening.screeningStatus === 'Processing' || screening.screeningStatus === 'Pending Approval' || (screening as any).status === 'Processing' || (screening as any).status === 'Pending Approval') && (
-          <Button
-            onClick={() => generateReportMutation.mutate()}
-            className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold flex items-center gap-1"
-            disabled={generateReportMutation.isPending}
-          >
-            {generateReportMutation.isPending ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            ) : (
-              <Play className="w-3.5 h-3.5" />
-            )}
-            Run Check & Generate Report
-          </Button>
-        )}
-        {(screening.screeningStatus === 'Completed' || (screening as any).status === 'Completed') && (
-          <>
+      <div className="p-4 border-t bg-secondary/15 flex items-center justify-between gap-2 shrink-0">
+        <div>
+          {!isTenantSubmitted && (
+            <span className="text-[10px] font-bold text-amber-600 flex items-center gap-1">
+              <AlertTriangle className="w-3.5 h-3.5 shrink-0" /> Waiting for tenant submission
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={onClose} disabled={approveMutation.isPending || declineMutation.isPending || generateReportMutation.isPending}>Close</Button>
+          
+          {/* RUN CHECK BUTTON - DISABLED UNTIL TENANT SUBMITS */}
+          {(screening.screeningStatus === 'Pending' || screening.screeningStatus === 'Pending Documents' || screening.screeningStatus === 'Processing' || screening.screeningStatus === 'Pending Approval' || (screening as any).status === 'Pending' || (screening as any).status === 'Pending Documents' || (screening as any).status === 'Processing' || (screening as any).status === 'Pending Approval') && (
             <Button
-              onClick={() => declineMutation.mutate()}
-              className="text-rose-500 hover:bg-rose-500/10 border-rose-500/30 font-bold"
-              variant="outline"
-              disabled={approveMutation.isPending || declineMutation.isPending}
+              onClick={() => generateReportMutation.mutate()}
+              className="bg-[#0066ff] hover:bg-[#0052cc] text-white font-bold flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={!isTenantSubmitted || generateReportMutation.isPending}
+              title={!isTenantSubmitted ? "Tenant has not submitted screening details & consent yet" : "Run Check & Generate Report"}
             >
-              {declineMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" />}
-              Decline Application
-            </Button>
-            <Button
-              onClick={() => approveMutation.mutate()}
-              className="bg-primary hover:bg-primary/95 text-white font-bold flex items-center gap-1"
-              disabled={approveMutation.isPending || declineMutation.isPending}
-            >
-              {approveMutation.isPending ? (
+              {generateReportMutation.isPending ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
               ) : (
-                <ArrowRight className="w-3.5 h-3.5" />
+                <Play className="w-3.5 h-3.5" />
               )}
-              Approve Applicant
+              {!isTenantSubmitted ? 'Waiting for Tenant Submission' : 'Run Check & Generate Report'}
             </Button>
-          </>
-        )}
+          )}
+
+          {/* APPROVE / DECLINE BUTTONS - ONLY WHEN REPORT IS COMPLETED */}
+          {(screening.screeningStatus === 'Completed' || (screening as any).status === 'Completed') && (
+            <>
+              <Button
+                onClick={() => declineMutation.mutate()}
+                className="text-rose-500 hover:bg-rose-500/10 border-rose-500/30 font-bold"
+                variant="outline"
+                disabled={approveMutation.isPending || declineMutation.isPending}
+              >
+                {declineMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" />}
+                Decline Application
+              </Button>
+              <Button
+                onClick={() => approveMutation.mutate()}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center gap-1"
+                disabled={approveMutation.isPending || declineMutation.isPending}
+              >
+                {approveMutation.isPending ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <ArrowRight className="w-3.5 h-3.5" />
+                )}
+                Approve Applicant
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
     </div>

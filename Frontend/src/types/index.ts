@@ -1016,15 +1016,16 @@ export interface Violation {
 
 export interface ScreeningCheck {
   id: string;
-  applicantId: string;
-  applicationId: string;
+  applicantId?: string;
+  applicationId?: string;
   applicantName: string;
   applicantEmail: string;
   applicantPhone: string;
-  propertyId: string;
+  propertyId?: string;
   propertyName: string;
-  unitId: string;
+  unitId?: string;
   unitNumber: string;
+  companyName?: string;
   screeningPackage: 'Basic' | 'Comprehensive';
   paymentResponsibility: 'Applicant' | 'Manager';
   paymentStatus?: 'Pending' | 'Paid' | 'Waived';

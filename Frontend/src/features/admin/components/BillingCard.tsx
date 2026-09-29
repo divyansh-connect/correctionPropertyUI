@@ -50,15 +50,6 @@ export const BillingCard: React.FC<BillingCardProps> = ({ subscription }) => {
           <p className="text-foreground font-bold">{subscription.paymentMethod}</p>
         </div>
       </div>
-
-      <div className="flex justify-end space-x-2 pt-4 border-t border-border">
-        <Button variant="outline" size="sm" onClick={() => alert('Editing card Details')} className="font-semibold text-xs h-8">
-          Update Card
-        </Button>
-        <Button size="sm" onClick={() => alert('Tier changes open')} className="bg-primary text-primary-foreground font-semibold text-xs h-8">
-          Upgrade Tier
-        </Button>
-      </div>
     </Card>
   );
 };
