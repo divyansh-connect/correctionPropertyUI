@@ -147,17 +147,6 @@ export const UnitDeletionPage: React.FC = () => {
         </button>
 
         <button
-          onClick={() => setActiveTab('building')}
-          className={`flex items-center gap-2 px-4 py-2 text-xs font-extrabold rounded-xl transition ${
-            activeTab === 'building'
-              ? 'bg-rose-500/10 text-rose-500 border border-rose-500/30'
-              : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
-          }`}
-        >
-          <Home className="w-4 h-4" /> Buildings Deletion
-        </button>
-
-        <button
           onClick={() => setActiveTab('unit')}
           className={`flex items-center gap-2 px-4 py-2 text-xs font-extrabold rounded-xl transition ${
             activeTab === 'unit'
@@ -203,46 +192,6 @@ export const UnitDeletionPage: React.FC = () => {
                 className="flex items-center gap-2 font-bold"
               >
                 <Trash2 className="w-4 h-4" /> Authorize & Delete Property
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* TAB 2: BUILDINGS DELETION */}
-      {activeTab === 'building' && (
-        <div className="bg-card border border-rose-500/30 p-6 rounded-2xl max-w-3xl space-y-4 shadow-sm animate-fade-in">
-          <div className="border-b border-rose-500/20 pb-3">
-            <h3 className="font-bold text-sm text-rose-500 flex items-center gap-1.5">
-              <ShieldAlert className="w-4.5 h-4.5" /> Building Removal (Master Authorization Required)
-            </h3>
-            <p className="text-xs text-muted-foreground mt-1">
-              Deleting a building structure removes complex floor layout references. Master password authentication is mandatory.
-            </p>
-          </div>
-
-          <div className="space-y-3 pt-1">
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-muted-foreground uppercase">Select Building to Delete</label>
-              <Select value={selectedBuildingId} onChange={(e) => setSelectedBuildingId(e.target.value)}>
-                <option value="">Select a Building...</option>
-                {buildings.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.name} - {b.propertyName} ({b.unitsCount || 0} Units)
-                  </option>
-                ))}
-              </Select>
-            </div>
-
-            <div className="pt-2 flex justify-end">
-              <Button
-                type="button"
-                variant="destructive"
-                disabled={!selectedBuildingId}
-                onClick={() => handleOpenDeleteModal('building')}
-                className="flex items-center gap-2 font-bold"
-              >
-                <Trash2 className="w-4 h-4" /> Authorize & Delete Building
               </Button>
             </div>
           </div>
