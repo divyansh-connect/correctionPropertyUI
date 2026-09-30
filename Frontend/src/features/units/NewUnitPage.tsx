@@ -67,11 +67,14 @@ export const NewUnitPage: React.FC = () => {
   const createMutation = useMutation({
     mutationFn: (values: UnitFormInputs) => {
       const propObj = properties.find((p) => p.id === values.propertyId);
-      const bldObj = buildings.find((b) => b.id === values.buildingId);
+      const autoBuilding = buildings.find((b) => b.propertyId === values.propertyId);
+      const targetBuildingId = values.buildingId || autoBuilding?.id;
+      const bldObj = buildings.find((b) => b.id === targetBuildingId);
       return api.unit.create({
         ...values,
+        buildingId: targetBuildingId,
         propertyName: propObj ? propObj.name : 'Unknown Property',
-        buildingName: bldObj ? bldObj.name : undefined,
+        buildingName: bldObj ? bldObj.name : (propObj ? propObj.name : undefined),
       });
     },
     onSuccess: () => {
@@ -97,7 +100,7 @@ export const NewUnitPage: React.FC = () => {
     <div className="max-w-2xl space-y-6">
       <PageHeader
         title="Add Unit"
-        description="Register a new rentable unit layout to a property building."
+        description="Register a new rentable unit layout to a property."
         breadcrumbs={[
           { label: 'Home', href: '/' },
           { label: 'Properties', href: '/properties' },
@@ -114,7 +117,7 @@ export const NewUnitPage: React.FC = () => {
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 bg-card border border-border p-6 rounded-2xl shadow-sm text-foreground">
         
-        <div className="grid grid-cols-2 gap-4">
+        <div>
           <div className="space-y-1">
             <label className="text-xs font-bold text-muted-foreground uppercase">Property</label>
             <Select {...register('propertyId')}>
@@ -126,18 +129,6 @@ export const NewUnitPage: React.FC = () => {
               ))}
             </Select>
             {errors.propertyId && <p className="text-rose-500 text-xs">{errors.propertyId.message}</p>}
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-xs font-bold text-muted-foreground uppercase">Building (Optional)</label>
-            <Select {...register('buildingId')} disabled={!selectedPropertyId}>
-              <option value="">Select Building...</option>
-              {filteredBuildings.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.name}
-                </option>
-              ))}
-            </Select>
           </div>
         </div>
 

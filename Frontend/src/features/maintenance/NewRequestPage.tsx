@@ -56,24 +56,14 @@ export const NewRequestPage: React.FC = () => {
 
   // Reset fields on change
   React.useEffect(() => {
-    setValue('buildingId', '');
+    const matchingBuilding = buildings.find((b) => b.propertyId === selectedPropertyId);
+    setValue('buildingId', matchingBuilding ? matchingBuilding.id : '');
     setValue('unitId', '');
-  }, [selectedPropertyId, setValue]);
+  }, [selectedPropertyId, buildings, setValue]);
 
-  React.useEffect(() => {
-    setValue('unitId', '');
-  }, [selectedBuildingId, setValue]);
-
-  // Filter lists flow-wise
-  const filteredBuildings = selectedPropertyId
-    ? buildings.filter((b) => b.propertyId === selectedPropertyId)
+  const filteredUnits = selectedPropertyId
+    ? units.filter((u) => u.propertyId === selectedPropertyId || (selectedBuildingId && u.buildingId === selectedBuildingId))
     : [];
-
-  const filteredUnits = selectedBuildingId
-    ? units.filter((u) => u.buildingId === selectedBuildingId)
-    : selectedPropertyId
-      ? units.filter((u) => u.propertyId === selectedPropertyId)
-      : [];
 
   // AI DIY Troubleshooting State
   const [aiTips, setAiTips] = React.useState<{ tips: string[]; category: string; emergencyAlert: boolean; suggestionTitle: string } | null>(null);
@@ -138,7 +128,7 @@ export const NewRequestPage: React.FC = () => {
       <Card className="p-6 border bg-card mt-4">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 text-xs font-semibold">
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Property Portfolio</label>
               <Select {...register('propertyId')}>
@@ -151,19 +141,8 @@ export const NewRequestPage: React.FC = () => {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-bold text-muted-foreground uppercase">Building</label>
-              <Select {...register('buildingId')} disabled={!selectedPropertyId}>
-                <option value="">Select Building...</option>
-                {filteredBuildings.map((b) => (
-                  <option key={b.id} value={b.id}>{b.name}</option>
-                ))}
-              </Select>
-              {errors.buildingId && <p className="text-rose-500 text-[10px]">{errors.buildingId.message}</p>}
-            </div>
-
-            <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Unit</label>
-              <Select {...register('unitId')} disabled={!selectedBuildingId && filteredBuildings.length > 0}>
+              <Select {...register('unitId')} disabled={!selectedPropertyId}>
                 <option value="">Select Unit...</option>
                 {filteredUnits.map((u) => (
                   <option key={u.id} value={u.id}>Unit {u.unitNumber}</option>

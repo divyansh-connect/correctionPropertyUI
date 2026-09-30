@@ -317,8 +317,10 @@ export const ExpensesPage: React.FC = () => {
               <div className="space-y-1">
                 <label className="text-xs font-bold text-muted-foreground uppercase">Property Portfolio</label>
                 <Select value={propertyId} onChange={(e) => {
-                  setPropertyId(e.target.value);
-                  setBuildingId('');
+                  const pId = e.target.value;
+                  setPropertyId(pId);
+                  const matchingBld = buildings.find((b) => b.propertyId === pId);
+                  setBuildingId(matchingBld ? matchingBld.id : '');
                   setUnitId('');
                 }}>
                   <option value="">Select Property...</option>
@@ -329,23 +331,10 @@ export const ExpensesPage: React.FC = () => {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-bold text-muted-foreground uppercase">Building Portfolio</label>
-                <Select value={buildingId} onChange={(e) => {
-                  setBuildingId(e.target.value);
-                  setUnitId('');
-                }} disabled={!propertyId}>
-                  <option value="">Select Building...</option>
-                  {buildings.filter((b) => b.propertyId === propertyId).map((b) => (
-                    <option key={b.id} value={b.id}>{b.name}</option>
-                  ))}
-                </Select>
-              </div>
-
-              <div className="space-y-1">
                 <label className="text-xs font-bold text-muted-foreground uppercase">Rentable Unit</label>
-                <Select value={unitId} onChange={(e) => setUnitId(e.target.value)} disabled={!buildingId}>
+                <Select value={unitId} onChange={(e) => setUnitId(e.target.value)} disabled={!propertyId}>
                   <option value="">Select Unit...</option>
-                  {units.filter((u) => u.buildingId === buildingId).map((u) => (
+                  {units.filter((u) => u.propertyId === propertyId || (buildingId && u.buildingId === buildingId)).map((u) => (
                     <option key={u.id} value={u.id}>Unit {u.unitNumber} - {u.status}</option>
                   ))}
                 </Select>

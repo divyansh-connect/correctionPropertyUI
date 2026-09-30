@@ -273,8 +273,8 @@ export const EditPropertyPage: React.FC<{ propertyId?: string }> = ({ propertyId
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-bold text-muted-foreground uppercase">Total Buildings</label>
-              <Input type="number" placeholder="e.g. 1" {...register('totalBuildings', optionalNumberRegister)} />
+              <label className="text-xs font-bold text-muted-foreground uppercase">Total Floors</label>
+              <Input type="number" placeholder="e.g. 3" {...register('totalBuildings', optionalNumberRegister)} />
               {errors.totalBuildings && <p className="text-rose-500 text-xs font-semibold">{errors.totalBuildings.message}</p>}
             </div>
 

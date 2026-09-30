@@ -54,9 +54,12 @@ export const EditUnitPage: React.FC = () => {
   const updateMutation = useMutation({
     mutationFn: (values: UnitFormInputs) => {
       const propObj = properties.find((p) => p.id === values.propertyId);
-      const bldObj = buildings.find((b) => b.id === values.buildingId);
+      const autoBuilding = buildings.find((b) => b.propertyId === values.propertyId);
+      const targetBuildingId = values.buildingId || autoBuilding?.id;
+      const bldObj = buildings.find((b) => b.id === targetBuildingId);
       return api.unit.update(id, {
         ...values,
+        buildingId: targetBuildingId,
         propertyName: propObj ? propObj.name : undefined,
         buildingName: bldObj ? bldObj.name : undefined,
       });
@@ -126,7 +129,7 @@ export const EditUnitPage: React.FC = () => {
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 bg-card border border-border p-6 rounded-2xl shadow-sm text-foreground">
         
-        <div className="grid grid-cols-2 gap-4">
+        <div>
           <div className="space-y-1">
             <label className="text-xs font-bold text-muted-foreground uppercase">Property</label>
             <Select {...register('propertyId')}>
@@ -138,18 +141,6 @@ export const EditUnitPage: React.FC = () => {
               ))}
             </Select>
             {errors.propertyId && <p className="text-rose-500 text-xs">{errors.propertyId.message}</p>}
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-xs font-bold text-muted-foreground uppercase">Building (Optional)</label>
-            <Select {...register('buildingId')} disabled={!selectedPropertyId}>
-              <option value="">Select Building...</option>
-              {filteredBuildings.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.name}
-                </option>
-              ))}
-            </Select>
           </div>
         </div>
 

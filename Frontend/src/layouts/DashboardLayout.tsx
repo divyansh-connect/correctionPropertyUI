@@ -92,7 +92,6 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       path: '/properties',
       submenu: [
         { title: t('nav.properties'), path: '/properties' },
-        { title: t('nav.buildings'), path: '/buildings' },
         { title: t('nav.units'), path: '/units' },
         { title: 'Drafts', path: '/properties/drafts' },
       ],
