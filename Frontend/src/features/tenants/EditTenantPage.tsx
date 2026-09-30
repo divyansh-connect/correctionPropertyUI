@@ -13,6 +13,10 @@ import { FileUploader } from '../../components/FileUploader';
 import { Loader2, ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import { mapBackendErrors } from '../../utils/errorMapping';
 
+const optionalNumberRegister = {
+  setValueAs: (v: any) => (v === '' || v === null || v === undefined || isNaN(Number(v)) ? undefined : Number(v)),
+};
+
 const tenantFormSchema = zod.object({
   firstName: zod.string().min(1, 'First Name is required'),
   lastName: zod.string().min(1, 'Last Name is required'),
@@ -304,7 +308,7 @@ export const EditTenantPage: React.FC = () => {
             </div>
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Monthly Income ($)</label>
-              <Input type="number" {...register('monthlyIncome', { valueAsNumber: true })} />
+              <Input type="number" placeholder="e.g. 3500" {...register('monthlyIncome', optionalNumberRegister)} />
               {errors.monthlyIncome && <p className="text-rose-500 text-xs">{errors.monthlyIncome.message}</p>}
             </div>
             <div className="space-y-1">
