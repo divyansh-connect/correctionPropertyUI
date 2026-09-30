@@ -98,7 +98,7 @@ export const StatementsScreen = () => {
         const mapped = rawList.map((item) => ({
           id: item.id || `stmt-${Math.random()}`,
           period: item.period || 'Current Period',
-          propertyName: item.propertyName || 'property 1',
+          propertyName: item.propertyName || 'Property',
           totalIncome: Number(item.totalIncome || item.income) || 0,
           totalExpenses: Number(item.totalExpenses || item.expenses) || 0,
           netDistribution: Number(item.netDistribution) || 0,
@@ -107,18 +107,11 @@ export const StatementsScreen = () => {
         }));
         setStatements(mapped);
       } else {
-        // Fallback snapshot matching Web screenshot 1-to-1
-        setStatements([
-          { id: 'stmt-1', period: 'Current Period', propertyName: 'Sky house', totalIncome: 0, totalExpenses: 0, netDistribution: 0, status: 'Published', generatedDate: '2026-08-04' },
-          { id: 'stmt-2', period: 'Current Period', propertyName: 'property 1', totalIncome: 2200, totalExpenses: 220, netDistribution: 1980, status: 'Published', generatedDate: '2026-08-04' },
-        ]);
+        setStatements([]);
       }
     } catch (e) {
       console.log('Error fetching GET /portal/owner/statements:', e.message);
-      setStatements([
-        { id: 'stmt-1', period: 'Current Period', propertyName: 'Sky house', totalIncome: 0, totalExpenses: 0, netDistribution: 0, status: 'Published', generatedDate: '2026-08-04' },
-        { id: 'stmt-2', period: 'Current Period', propertyName: 'property 1', totalIncome: 2200, totalExpenses: 220, netDistribution: 1980, status: 'Published', generatedDate: '2026-08-04' },
-      ]);
+      setStatements([]);
     } finally {
       setLoading(false);
       setRefreshing(false);

@@ -100,6 +100,27 @@ export const TenantDocumentsScreen = () => {
   const [showOOwnerDropdown, setShowOOwnerDropdown] = useState(false);
   const [showOCatDropdown, setShowOCatDropdown] = useState(false);
 
+  // Auto-set owner info when property is selected in Upload Owner Document modal
+  useEffect(() => {
+    if (oPropId) {
+      const selectedProp = properties.find((p) => p.id === oPropId);
+      if (selectedProp) {
+        const foundOwner = ownersList.find(
+          (o) => o.id === selectedProp.ownerId || o.id === selectedProp.owner?.id
+        );
+        if (foundOwner) {
+          setOOwnerId(foundOwner.id);
+        } else if (selectedProp.ownerId) {
+          setOOwnerId(selectedProp.ownerId);
+        } else {
+          setOOwnerId('');
+        }
+      }
+    } else {
+      setOOwnerId('');
+    }
+  }, [oPropId, properties, ownersList]);
+
   // --- Upload Tenant Document Form States ---
   const [tDocName, setTDocName] = useState('');
   const [tCategory, setTCategory] = useState('Lease');
@@ -108,6 +129,18 @@ export const TenantDocumentsScreen = () => {
   const [showTPropDropdown, setShowTPropDropdown] = useState(false);
   const [showTTenantDropdown, setShowTTenantDropdown] = useState(false);
   const [showTCatDropdown, setShowTCatDropdown] = useState(false);
+
+  // Auto-set property info when tenant is selected in Upload Tenant Document modal
+  useEffect(() => {
+    if (tTenantId) {
+      const selectedTenant = tenantsList.find((t) => t.id === tTenantId);
+      if (selectedTenant) {
+        setTPropId(selectedTenant.propertyId || selectedTenant.unit?.propertyId || '');
+      }
+    } else {
+      setTPropId('');
+    }
+  }, [tTenantId, tenantsList]);
 
   // Animations
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -502,7 +535,12 @@ export const TenantDocumentsScreen = () => {
                   {showOPropDropdown && (
                     <View style={styles.dropdownContainer}>
                       {properties.map((opt) => (
-                        <TouchableOpacity key={opt.id} style={styles.dropdownItem} onPress={() => { setOPropId(opt.id); setShowOPropDropdown(false); }}>
+                        <TouchableOpacity key={opt.id} style={styles.dropdownItem} onPress={() => { 
+                          setOPropId(opt.id); 
+                          const foundOwner = ownersList.find((o) => o.id === opt.ownerId || o.id === opt.owner?.id);
+                          setOOwnerId(foundOwner ? foundOwner.id : (opt.ownerId || ''));
+                          setShowOPropDropdown(false); 
+                        }}>
                           <Text style={styles.dropdownItemText} allowFontScaling={false}>{opt.name}</Text>
                           {oPropId === opt.id && <Ionicons name="checkmark" size={16} color="#38bdf8" />}
                         </TouchableOpacity>
@@ -511,25 +549,33 @@ export const TenantDocumentsScreen = () => {
                   )}
                 </View>
 
-                {/* Owner Selector */}
-                <View style={[styles.formGroup, showOOwnerDropdown && { zIndex: 9998, position: 'relative' }]}>
-                  <Text style={styles.formLabel} allowFontScaling={false}>OWNER</Text>
-                  <TouchableOpacity style={styles.dropdownTrigger} onPress={() => setShowOOwnerDropdown(!showOOwnerDropdown)} activeOpacity={0.7}>
-                    <Text style={styles.dropdownTriggerText} allowFontScaling={false}>
-                      {ownersList.find(o => o.id === oOwnerId)?.name || 'Select Owner...'}
-                    </Text>
-                    <Ionicons name={showOOwnerDropdown ? "chevron-up" : "chevron-down"} size={16} color="#cbd5e1" />
-                  </TouchableOpacity>
-                  {showOOwnerDropdown && (
-                    <View style={styles.dropdownContainer}>
-                      {ownersList.map((opt) => (
-                        <TouchableOpacity key={opt.id} style={styles.dropdownItem} onPress={() => { setOOwnerId(opt.id); setShowOOwnerDropdown(false); }}>
-                          <Text style={styles.dropdownItemText} allowFontScaling={false}>{opt.name}</Text>
-                          {oOwnerId === opt.id && <Ionicons name="checkmark" size={16} color="#38bdf8" />}
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  )}
+                {/* Associated Owner (Auto-filled & disabled read-only) */}
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>ASSOCIATED OWNER</Text>
+                  <TextInput
+                    style={[
+                      styles.formInput,
+                      {
+                        backgroundColor: isDarkMode ? '#1e293b' : '#e2e8f0',
+                        color: isDarkMode ? '#94a3b8' : '#64748b',
+                        opacity: 0.75,
+                      }
+                    ]}
+                    placeholder={oPropId ? 'No owner assigned to this property' : 'Select a property first'}
+                    placeholderTextColor="#64748b"
+                    value={(() => {
+                      if (!oPropId) return 'Select a property first';
+                      const selectedProp = properties.find((p) => p.id === oPropId);
+                      if (!selectedProp) return 'Select a property first';
+                      const ownerObj = ownersList.find((o) => o.id === oOwnerId || o.id === selectedProp.ownerId || o.id === selectedProp.owner?.id) || selectedProp.owner;
+                      if (ownerObj) {
+                        const fullName = ownerObj.name || `${ownerObj.firstName || ''} ${ownerObj.lastName || ''}`.trim() || 'Unknown Owner';
+                        return `${fullName} (${ownerObj.companyName || 'Individual'})`;
+                      }
+                      return 'No owner assigned to this property';
+                    })()}
+                    editable={false}
+                  />
                 </View>
 
                 {/* Category Selector */}
@@ -592,29 +638,8 @@ export const TenantDocumentsScreen = () => {
               <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
                 <Text style={styles.modalSubHeader} allowFontScaling={false}>Upload lease, receipt, or notice documents associated with tenant accounts.</Text>
 
-                {/* Property Selector */}
-                <View style={[styles.formGroup, showTPropDropdown && { zIndex: 9999, position: 'relative' }]}>
-                  <Text style={styles.formLabel} allowFontScaling={false}>PROPERTY</Text>
-                  <TouchableOpacity style={styles.dropdownTrigger} onPress={() => setShowTPropDropdown(!showTPropDropdown)} activeOpacity={0.7}>
-                    <Text style={styles.dropdownTriggerText} allowFontScaling={false}>
-                      {properties.find(p => p.id === tPropId)?.name || 'Select Property...'}
-                    </Text>
-                    <Ionicons name={showTPropDropdown ? "chevron-up" : "chevron-down"} size={16} color="#cbd5e1" />
-                  </TouchableOpacity>
-                  {showTPropDropdown && (
-                    <View style={styles.dropdownContainer}>
-                      {properties.map((opt) => (
-                        <TouchableOpacity key={opt.id} style={styles.dropdownItem} onPress={() => { setTPropId(opt.id); setShowTPropDropdown(false); }}>
-                          <Text style={styles.dropdownItemText} allowFontScaling={false}>{opt.name}</Text>
-                          {tPropId === opt.id && <Ionicons name="checkmark" size={16} color="#38bdf8" />}
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  )}
-                </View>
-
-                {/* Tenant Selector */}
-                <View style={[styles.formGroup, showTTenantDropdown && { zIndex: 9998, position: 'relative' }]}>
+                {/* Tenant Selector (First, matching Web UI) */}
+                <View style={[styles.formGroup, showTTenantDropdown && { zIndex: 9999, position: 'relative' }]}>
                   <Text style={styles.formLabel} allowFontScaling={false}>TENANT</Text>
                   <TouchableOpacity style={styles.dropdownTrigger} onPress={() => setShowTTenantDropdown(!showTTenantDropdown)} activeOpacity={0.7}>
                     <Text style={styles.dropdownTriggerText} allowFontScaling={false}>
@@ -625,8 +650,14 @@ export const TenantDocumentsScreen = () => {
                   {showTTenantDropdown && (
                     <View style={styles.dropdownContainer}>
                       {tenantsList.map((opt) => (
-                        <TouchableOpacity key={opt.id} style={styles.dropdownItem} onPress={() => { setTTenantId(opt.id); setShowTTenantDropdown(false); }}>
-                          <Text style={styles.dropdownItemText} allowFontScaling={false}>{opt.firstName} {opt.lastName}</Text>
+                        <TouchableOpacity key={opt.id} style={styles.dropdownItem} onPress={() => { 
+                          setTTenantId(opt.id); 
+                          setTPropId(opt.propertyId || opt.unit?.propertyId || '');
+                          setShowTTenantDropdown(false); 
+                        }}>
+                          <Text style={styles.dropdownItemText} allowFontScaling={false}>
+                            {opt.firstName} {opt.lastName} {opt.unit?.unitNumber ? `(Unit ${opt.unit.unitNumber})` : ''}
+                          </Text>
                           {tTenantId === opt.id && <Ionicons name="checkmark" size={16} color="#38bdf8" />}
                         </TouchableOpacity>
                       ))}

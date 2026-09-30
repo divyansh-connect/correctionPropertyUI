@@ -12,6 +12,7 @@ import {
   RefreshControl,
   Animated,
   Easing,
+  Linking,
 } from 'react-native';
 import apiClient from '../api/client';
 import { useAuthStore } from '../store/useStore';
@@ -532,6 +533,19 @@ export const InvoicesScreen = () => {
                 ))}
               </View>
             )}
+
+            <TouchableOpacity
+              style={[styles.closeModalBtn, { backgroundColor: '#10b981', marginBottom: 8 }]}
+              onPress={() => {
+                const phone = (selectedInvoice?.tenantPhone || selectedInvoice?.phone || '15550199').replace(/\D/g, '');
+                const msg = `Hi ${selectedInvoice?.tenantName || 'Resident'}, your outstanding invoice balance for ${selectedInvoice?.propertyName || 'Property'} is $${selectedInvoice?.balance || selectedInvoice?.amount}. Please process payment here: https://doorloop-backend-production-5d5d.up.railway.app/payments`;
+                Linking.openURL(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`).catch(() => {
+                  Alert.alert('Notice', 'Unable to open WhatsApp.');
+                });
+              }}
+            >
+              <Text style={styles.closeModalBtnText} allowFontScaling={false}>💬 Send WhatsApp Payment Link</Text>
+            </TouchableOpacity>
 
             <TouchableOpacity style={styles.closeModalBtn} onPress={() => setSelectedInvoice(null)}>
               <Text style={styles.closeModalBtnText} allowFontScaling={false}>Close Invoice</Text>

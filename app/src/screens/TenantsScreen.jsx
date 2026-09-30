@@ -77,31 +77,43 @@ export const TenantsScreen = () => {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // --- Add Tenant Form States ---
+  // --- Add Tenant Form States (Matching Web Frontend NewTenantPage 1-to-1) ---
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [preferredName, setPreferredName] = useState('');
   const [dob, setDob] = useState('');
   const [gender, setGender] = useState('Male');
   const [nationality, setNationality] = useState('American');
+
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [altPhone, setAltPhone] = useState('');
   const [password, setPassword] = useState('');
-  const [unitId, setUnitId] = useState('');
+
   const [idType, setIdType] = useState('Driver License');
   const [idNumber, setIdNumber] = useState('');
+
+  const [emergencyName, setEmergencyName] = useState('');
+  const [emergencyRelationship, setEmergencyRelationship] = useState('');
+  const [emergencyPhone, setEmergencyPhone] = useState('');
+
   const [empName, setEmpName] = useState('');
   const [empPosition, setEmpPosition] = useState('');
   const [empIncome, setEmpIncome] = useState('');
   const [empStatus, setEmpStatus] = useState('Full-Time');
-  const [tStatus, setTStatus] = useState('Active');
 
+  const [currentAddress, setCurrentAddress] = useState('');
+  const [previousAddress, setPreviousAddress] = useState('');
+
+  const [petsList, setPetsList] = useState([]);
+  const [vehiclesList, setVehiclesList] = useState([]);
+
+  const [tStatus, setTStatus] = useState('Active');
   const [tenantErrors, setTenantErrors] = useState({});
   const [showDobPicker, setShowDobPicker] = useState(false);
 
   // Dropdowns active states
   const [showGenderDropdown, setShowGenderDropdown] = useState(false);
-  const [showUnitDropdown, setShowUnitDropdown] = useState(false);
   const [showIdDropdown, setShowIdDropdown] = useState(false);
   const [showEmpDropdown, setShowEmpDropdown] = useState(false);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
@@ -129,7 +141,7 @@ export const TenantsScreen = () => {
     ]).start();
   };
 
-  // Fetch live tenants & units
+  // Fetch live tenants
   const fetchLiveTenantsData = async () => {
     try {
       setLoading(true);
@@ -192,22 +204,34 @@ export const TenantsScreen = () => {
     const payload = {
       firstName: firstName.trim(),
       lastName: lastName.trim(),
-      email: email.trim(),
-      phone: phone.trim(),
-      password: password.trim() || undefined,
-      unitId: unitId || undefined,
-      status: tStatus,
-      // Web fields mapped:
       preferredName: preferredName.trim() || undefined,
       dob: dob.trim() || undefined,
       gender,
       nationality: nationality.trim() || undefined,
+
+      email: email.trim(),
+      phone: phone.trim(),
+      altPhone: altPhone.trim() || undefined,
+      password: password.trim() || undefined,
+
       idType,
       idNumber: idNumber.trim() || undefined,
-      employerName: empName.trim() || undefined,
+
+      emergencyName: emergencyName.trim() || undefined,
+      emergencyRelationship: emergencyRelationship.trim() || undefined,
+      emergencyPhone: emergencyPhone.trim() || undefined,
+
+      employer: empName.trim() || undefined,
       position: empPosition.trim() || undefined,
       monthlyIncome: empIncome ? Number(empIncome) : undefined,
       employmentStatus: empStatus,
+
+      currentAddress: currentAddress.trim() || undefined,
+      previousAddress: previousAddress.trim() || undefined,
+
+      pets: petsList.length > 0 ? petsList : undefined,
+      vehicles: vehiclesList.length > 0 ? vehiclesList : undefined,
+      role: 'Tenant',
     };
 
     const valRes = tenantSchema.safeParse(payload);
@@ -231,18 +255,120 @@ export const TenantsScreen = () => {
       setLastName('');
       setPreferredName('');
       setDob('');
+      setGender('Male');
+      setNationality('American');
       setEmail('');
       setPhone('');
+      setAltPhone('');
       setPassword('');
-      setUnitId('');
+      setIdType('Driver License');
       setIdNumber('');
+      setEmergencyName('');
+      setEmergencyRelationship('');
+      setEmergencyPhone('');
       setEmpName('');
       setEmpPosition('');
       setEmpIncome('');
-      
+      setEmpStatus('Full-Time');
+      setCurrentAddress('');
+      setPreviousAddress('');
+      setPetsList([]);
+      setVehiclesList([]);
+
       fetchLiveTenantsData();
     } catch (err) {
       Alert.alert('Error', err.message || 'Failed to register tenant');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // --- Edit Tenant Handlers ---
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editingTenantId, setEditingTenantId] = useState(null);
+
+  const handleOpenEditTenant = (item) => {
+    setEditingTenantId(item.id);
+    setFirstName(item.firstName || (item.name ? item.name.split(' ')[0] : ''));
+    setLastName(item.lastName || (item.name ? item.name.split(' ').slice(1).join(' ') : ''));
+    setPreferredName(item.preferredName || '');
+    setDob(item.dob ? String(item.dob).split('T')[0] : '');
+    setGender(item.gender || 'Male');
+    setNationality(item.nationality || 'American');
+
+    setEmail(item.email || '');
+    setPhone(item.phone || '');
+    setAltPhone(item.altPhone || '');
+    setPassword(''); // blank means keep unchanged
+
+    setIdType(item.idType || 'Driver License');
+    setIdNumber(item.idNumber || '');
+
+    setEmergencyName(item.emergencyName || '');
+    setEmergencyRelationship(item.emergencyRelationship || '');
+    setEmergencyPhone(item.emergencyPhone || '');
+
+    setEmpName(item.employer || item.employerName || '');
+    setEmpPosition(item.position || '');
+    setEmpIncome(item.monthlyIncome ? String(item.monthlyIncome) : '');
+    setEmpStatus(item.employmentStatus || 'Full-Time');
+
+    setCurrentAddress(item.currentAddress || '');
+    setPreviousAddress(item.previousAddress || '');
+
+    setPetsList(Array.isArray(item.pets) ? item.pets : []);
+    setVehiclesList(Array.isArray(item.vehicles) ? item.vehicles : []);
+
+    setTStatus(item.status || 'Active');
+    setTenantErrors({});
+    setIsEditOpen(true);
+  };
+
+  const handleUpdateTenant = async () => {
+    setTenantErrors({});
+
+    const payload = {
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      preferredName: preferredName.trim() || undefined,
+      dob: dob ? String(dob).split('T')[0] : undefined,
+      gender,
+      nationality: nationality.trim() || undefined,
+
+      email: email.trim(),
+      phone: phone.trim(),
+      altPhone: altPhone.trim() || undefined,
+      password: password.trim() ? password.trim() : undefined,
+
+      idType,
+      idNumber: idNumber.trim() || undefined,
+
+      emergencyName: emergencyName.trim() || undefined,
+      emergencyRelationship: emergencyRelationship.trim() || undefined,
+      emergencyPhone: emergencyPhone.trim() || undefined,
+
+      employer: empName.trim() || undefined,
+      position: empPosition.trim() || undefined,
+      monthlyIncome: empIncome ? Number(empIncome) : undefined,
+      employmentStatus: empStatus,
+
+      currentAddress: currentAddress.trim() || undefined,
+      previousAddress: previousAddress.trim() || undefined,
+
+      pets: petsList.length > 0 ? petsList : undefined,
+      vehicles: vehiclesList.length > 0 ? vehiclesList : undefined,
+      status: tStatus,
+    };
+
+    try {
+      setSubmitting(true);
+      await apiClient.put(`/tenants/${editingTenantId}`, payload, logout, refreshAccessToken);
+      Alert.alert('Success', 'Tenant profile updated successfully.');
+      setIsEditOpen(false);
+
+      fetchLiveTenantsData();
+    } catch (err) {
+      Alert.alert('Error', err.message || 'Failed to update tenant');
     } finally {
       setSubmitting(false);
     }
@@ -337,10 +463,13 @@ export const TenantsScreen = () => {
             filteredTenants.map((item, idx) => {
               const name = item.name || `${item.firstName || ''} ${item.lastName || ''}`.trim() || 'Tenant';
               const initial = name.charAt(0).toUpperCase();
-              const propName = item.unit?.property?.name || item.propertyName || 'Property';
-              const unitNum = item.unit?.unitNumber || item.unitNumber || 'room 1b';
-              const rent = Number(item.unit?.rentAmount || item.rentAmount || 1000);
-              
+              const propName = item.unit?.property?.name || item.propertyName || '';
+              const unitNum = item.unit?.unitNumber || item.unitNumber || '';
+              const unitSubtext = (propName || unitNum)
+                ? `${propName || 'Unassigned'}${unitNum ? ` · Unit ${unitNum}` : ''}`
+                : 'Unassigned';
+              const rent = Number(item.unit?.rentAmount || item.rentAmount || item.monthlyRent || 0);
+
               const statusColor = String(item.status).toLowerCase() === 'active' ? '#10b981' : '#f59e0b';
               const statusBg = String(item.status).toLowerCase() === 'active' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.12)';
 
@@ -353,7 +482,7 @@ export const TenantsScreen = () => {
                     <View style={styles.tenantInfo}>
                       <Text style={styles.tenantName} allowFontScaling={false}>{name}</Text>
                       <Text style={styles.tenantSubText} allowFontScaling={false}>
-                        {propName} · Unit {unitNum}
+                        {unitSubtext}
                       </Text>
                     </View>
                     <View style={styles.badgesRow}>
@@ -363,6 +492,13 @@ export const TenantsScreen = () => {
                         activeOpacity={0.7}
                       >
                         <Ionicons name="eye-outline" size={16} color="#38bdf8" />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.editBtn}
+                        onPress={() => handleOpenEditTenant(item)}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name="create-outline" size={16} color="#f59e0b" />
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={styles.deleteBtn}
@@ -387,7 +523,7 @@ export const TenantsScreen = () => {
                     <View style={styles.metaCol}>
                       <Ionicons name="call-outline" size={13} color="#94a3b8" style={{ marginRight: 6 }} />
                       <Text style={styles.metaText} allowFontScaling={false} numberOfLines={1}>
-                        {item.phone || '(512) 555-0199'}
+                        {item.phone || 'N/A'}
                       </Text>
                     </View>
                   </View>
@@ -396,7 +532,7 @@ export const TenantsScreen = () => {
                     <View style={styles.metaCol}>
                       <Ionicons name="card-outline" size={13} color="#10b981" style={{ marginRight: 6 }} />
                       <Text style={[styles.metaText, { color: '#10b981', fontWeight: '800' }]} allowFontScaling={false}>
-                        ${rent.toLocaleString()}/mo Rent
+                        ${rent ? rent.toLocaleString() : '0'}/mo Rent
                       </Text>
                     </View>
                     <View style={[styles.activeBadge, { backgroundColor: statusBg, borderColor: statusColor, paddingVertical: 2 }]}>
@@ -487,42 +623,26 @@ export const TenantsScreen = () => {
                 <Text style={styles.modalSubHeader} allowFontScaling={false}>CONTACT DETAILS</Text>
                 <View style={styles.formGroup}>
                   <Text style={styles.formLabel} allowFontScaling={false}>EMAIL ADDRESS *</Text>
-                  <TextInput style={styles.formInput} placeholder="staff@gmail.com" placeholderTextColor="#64748b" keyboardType="email-address" autoCapitalize="none" value={email} onChangeText={setEmail} />
+                  <TextInput style={styles.formInput} placeholder="john.doe@gmail.com" placeholderTextColor="#64748b" keyboardType="email-address" autoCapitalize="none" value={email} onChangeText={setEmail} />
                   {tenantErrors.email && <Text style={styles.errorLabel} allowFontScaling={false}>{tenantErrors.email}</Text>}
                 </View>
 
-                <View style={styles.formGroup}>
-                  <Text style={styles.formLabel} allowFontScaling={false}>MOBILE PHONE</Text>
-                  <TextInput style={styles.formInput} placeholder="(512) 555-0199" placeholderTextColor="#64748b" keyboardType="phone-pad" value={phone} onChangeText={setPhone} />
-                  {tenantErrors.phone && <Text style={styles.errorLabel} allowFontScaling={false}>{tenantErrors.phone}</Text>}
+                <View style={styles.formRow}>
+                  <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>MOBILE PHONE *</Text>
+                    <TextInput style={styles.formInput} placeholder="(512) 555-0199" placeholderTextColor="#64748b" keyboardType="phone-pad" value={phone} onChangeText={setPhone} />
+                    {tenantErrors.phone && <Text style={styles.errorLabel} allowFontScaling={false}>{tenantErrors.phone}</Text>}
+                  </View>
+                  <View style={[styles.formGroup, { flex: 1 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>ALTERNATE PHONE</Text>
+                    <TextInput style={styles.formInput} placeholder="(512) 555-4321" placeholderTextColor="#64748b" keyboardType="phone-pad" value={altPhone} onChangeText={setAltPhone} />
+                  </View>
                 </View>
 
                 <View style={styles.formGroup}>
-                  <Text style={styles.formLabel} allowFontScaling={false}>PASSWORD</Text>
+                  <Text style={styles.formLabel} allowFontScaling={false}>PASSWORD *</Text>
                   <TextInput style={styles.formInput} placeholder="••••••••" placeholderTextColor="#64748b" secureTextEntry autoCapitalize="none" value={password} onChangeText={setPassword} />
                   {tenantErrors.password && <Text style={styles.errorLabel} allowFontScaling={false}>{tenantErrors.password}</Text>}
-                </View>
-
-                <Text style={styles.modalSubHeader} allowFontScaling={false}>UNIT ASSIGNMENT</Text>
-                {/* Unit ID Dropdown */}
-                <View style={[styles.formGroup, showUnitDropdown && { zIndex: 9998, position: 'relative' }]}>
-                  <Text style={styles.formLabel} allowFontScaling={false}>ASSIGNED UNIT</Text>
-                  <TouchableOpacity style={styles.dropdownTrigger} onPress={() => setShowUnitDropdown(!showUnitDropdown)} activeOpacity={0.7}>
-                    <Text style={styles.dropdownTriggerText} allowFontScaling={false}>
-                      {units.find(u => u.id === unitId) ? `Unit ${units.find(u => u.id === unitId).unitNumber} (${units.find(u => u.id === unitId).property?.name || 'Property'})` : 'Select Unit...'}
-                    </Text>
-                    <Ionicons name={showUnitDropdown ? "chevron-up" : "chevron-down"} size={16} color="#cbd5e1" />
-                  </TouchableOpacity>
-                  {showUnitDropdown && (
-                    <View style={styles.dropdownContainer}>
-                      {units.map((opt) => (
-                        <TouchableOpacity key={opt.id} style={styles.dropdownItem} onPress={() => { setUnitId(opt.id); setShowUnitDropdown(false); }}>
-                          <Text style={styles.dropdownItemText} allowFontScaling={false}>Unit {opt.unitNumber} - {opt.property?.name}</Text>
-                          {unitId === opt.id && <Ionicons name="checkmark" size={16} color="#38bdf8" />}
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  )}
                 </View>
 
                 <Text style={styles.modalSubHeader} allowFontScaling={false}>GOVERNMENT IDS</Text>
@@ -549,6 +669,22 @@ export const TenantsScreen = () => {
                   <TextInput style={styles.formInput} placeholder="A1234567" placeholderTextColor="#64748b" value={idNumber} onChangeText={setIdNumber} />
                 </View>
 
+                <Text style={styles.modalSubHeader} allowFontScaling={false}>EMERGENCY CONTACT</Text>
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>CONTACT NAME</Text>
+                  <TextInput style={styles.formInput} placeholder="Mary Doe" placeholderTextColor="#64748b" value={emergencyName} onChangeText={setEmergencyName} />
+                </View>
+                <View style={styles.formRow}>
+                  <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>RELATIONSHIP</Text>
+                    <TextInput style={styles.formInput} placeholder="Spouse / Parent" placeholderTextColor="#64748b" value={emergencyRelationship} onChangeText={setEmergencyRelationship} />
+                  </View>
+                  <View style={[styles.formGroup, { flex: 1 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>EMERGENCY PHONE</Text>
+                    <TextInput style={styles.formInput} placeholder="(512) 555-9876" placeholderTextColor="#64748b" keyboardType="phone-pad" value={emergencyPhone} onChangeText={setEmergencyPhone} />
+                  </View>
+                </View>
+
                 <Text style={styles.modalSubHeader} allowFontScaling={false}>EMPLOYMENT PARAMETERS</Text>
                 <View style={styles.formGroup}>
                   <Text style={styles.formLabel} allowFontScaling={false}>EMPLOYER NAME</Text>
@@ -563,6 +699,320 @@ export const TenantsScreen = () => {
                     <Text style={styles.formLabel} allowFontScaling={false}>MONTHLY INCOME ($)</Text>
                     <TextInput style={styles.formInput} placeholder="3500" keyboardType="decimal-pad" placeholderTextColor="#64748b" value={empIncome} onChangeText={setEmpIncome} />
                     {tenantErrors.monthlyIncome && <Text style={styles.errorLabel} allowFontScaling={false}>{tenantErrors.monthlyIncome}</Text>}
+                  </View>
+                </View>
+
+                {/* Employment Status dropdown */}
+                <View style={[styles.formGroup, showEmpDropdown && { zIndex: 9996, position: 'relative' }]}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>STATUS</Text>
+                  <TouchableOpacity style={styles.dropdownTrigger} onPress={() => setShowEmpDropdown(!showEmpDropdown)} activeOpacity={0.7}>
+                    <Text style={styles.dropdownTriggerText} allowFontScaling={false}>{empStatus}</Text>
+                    <Ionicons name={showEmpDropdown ? "chevron-up" : "chevron-down"} size={14} color="#cbd5e1" />
+                  </TouchableOpacity>
+                  {showEmpDropdown && (
+                    <View style={styles.dropdownContainer}>
+                      {empStatuses.map((opt) => (
+                        <TouchableOpacity key={opt} style={styles.dropdownItem} onPress={() => { setEmpStatus(opt); setShowEmpDropdown(false); }}>
+                          <Text style={styles.dropdownItemText} allowFontScaling={false}>{opt}</Text>
+                          {empStatus === opt && <Ionicons name="checkmark" size={16} color="#38bdf8" />}
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </View>
+
+                <Text style={styles.modalSubHeader} allowFontScaling={false}>ADDRESS HISTORY</Text>
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>CURRENT ADDRESS</Text>
+                  <TextInput style={styles.formInput} placeholder="789 Pine Rd, Austin, TX" placeholderTextColor="#64748b" value={currentAddress} onChangeText={setCurrentAddress} />
+                </View>
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>PREVIOUS ADDRESS (OPTIONAL)</Text>
+                  <TextInput style={styles.formInput} placeholder="456 Elm St, Dallas, TX" placeholderTextColor="#64748b" value={previousAddress} onChangeText={setPreviousAddress} />
+                </View>
+
+                {/* PETS REGISTRY */}
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 14, marginBottom: 8 }}>
+                  <Text style={[styles.modalSubHeader, { marginTop: 0, marginBottom: 0 }]} allowFontScaling={false}>PETS REGISTRY</Text>
+                  <TouchableOpacity
+                    style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#38bdf820', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 6 }}
+                    onPress={() => setPetsList([...petsList, { name: '', type: '', breed: '' }])}
+                  >
+                    <Ionicons name="add" size={14} color="#38bdf8" style={{ marginRight: 4 }} />
+                    <Text style={{ fontSize: 11, fontWeight: '800', color: '#38bdf8' }} allowFontScaling={false}>+ Add Pet</Text>
+                  </TouchableOpacity>
+                </View>
+                {petsList.map((pet, idx) => (
+                  <View key={idx} style={{ backgroundColor: '#1e293b', padding: 10, borderRadius: 10, marginBottom: 10, borderWidth: 1, borderColor: '#334155' }}>
+                    <View style={{ flexDirection: 'row', gap: 8, marginBottom: 6 }}>
+                      <TextInput
+                        style={[styles.formInput, { flex: 1, height: 38 }]}
+                        placeholder="Pet Name (e.g. Max)"
+                        placeholderTextColor="#64748b"
+                        value={pet.name}
+                        onChangeText={(t) => {
+                          const updated = [...petsList];
+                          updated[idx].name = t;
+                          setPetsList(updated);
+                        }}
+                      />
+                      <TextInput
+                        style={[styles.formInput, { flex: 1, height: 38 }]}
+                        placeholder="Type (e.g. Dog)"
+                        placeholderTextColor="#64748b"
+                        value={pet.type}
+                        onChangeText={(t) => {
+                          const updated = [...petsList];
+                          updated[idx].type = t;
+                          setPetsList(updated);
+                        }}
+                      />
+                    </View>
+                    <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+                      <TextInput
+                        style={[styles.formInput, { flex: 1, height: 38 }]}
+                        placeholder="Breed (e.g. Golden Retriever)"
+                        placeholderTextColor="#64748b"
+                        value={pet.breed}
+                        onChangeText={(t) => {
+                          const updated = [...petsList];
+                          updated[idx].breed = t;
+                          setPetsList(updated);
+                        }}
+                      />
+                      <TouchableOpacity
+                        onPress={() => setPetsList(petsList.filter((_, i) => i !== idx))}
+                        style={{ padding: 6 }}
+                      >
+                        <Ionicons name="trash-outline" size={18} color="#ef4444" />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ))}
+
+                {/* VEHICLES REGISTRY */}
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 14, marginBottom: 8 }}>
+                  <Text style={[styles.modalSubHeader, { marginTop: 0, marginBottom: 0 }]} allowFontScaling={false}>VEHICLES REGISTRY</Text>
+                  <TouchableOpacity
+                    style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#38bdf820', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 6 }}
+                    onPress={() => setVehiclesList([...vehiclesList, { make: '', model: '', plate: '' }])}
+                  >
+                    <Ionicons name="add" size={14} color="#38bdf8" style={{ marginRight: 4 }} />
+                    <Text style={{ fontSize: 11, fontWeight: '800', color: '#38bdf8' }} allowFontScaling={false}>+ Add Vehicle</Text>
+                  </TouchableOpacity>
+                </View>
+                {vehiclesList.map((veh, idx) => (
+                  <View key={idx} style={{ backgroundColor: '#1e293b', padding: 10, borderRadius: 10, marginBottom: 10, borderWidth: 1, borderColor: '#334155' }}>
+                    <View style={{ flexDirection: 'row', gap: 8, marginBottom: 6 }}>
+                      <TextInput
+                        style={[styles.formInput, { flex: 1, height: 38 }]}
+                        placeholder="Make (e.g. Toyota)"
+                        placeholderTextColor="#64748b"
+                        value={veh.make}
+                        onChangeText={(t) => {
+                          const updated = [...vehiclesList];
+                          updated[idx].make = t;
+                          setVehiclesList(updated);
+                        }}
+                      />
+                      <TextInput
+                        style={[styles.formInput, { flex: 1, height: 38 }]}
+                        placeholder="Model (e.g. RAV4)"
+                        placeholderTextColor="#64748b"
+                        value={veh.model}
+                        onChangeText={(t) => {
+                          const updated = [...vehiclesList];
+                          updated[idx].model = t;
+                          setVehiclesList(updated);
+                        }}
+                      />
+                    </View>
+                    <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+                      <TextInput
+                        style={[styles.formInput, { flex: 1, height: 38 }]}
+                        placeholder="License Plate (e.g. TX-123XYZ)"
+                        placeholderTextColor="#64748b"
+                        value={veh.plate}
+                        onChangeText={(t) => {
+                          const updated = [...vehiclesList];
+                          updated[idx].plate = t;
+                          setVehiclesList(updated);
+                        }}
+                      />
+                      <TouchableOpacity
+                        onPress={() => setVehiclesList(vehiclesList.filter((_, i) => i !== idx))}
+                        style={{ padding: 6 }}
+                      >
+                        <Ionicons name="trash-outline" size={18} color="#ef4444" />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ))}
+
+                {/* Save Buttons inside ScrollView */}
+                <View style={styles.modalActions}>
+                  <TouchableOpacity style={styles.cancelBtn} onPress={() => setIsAddOpen(false)} disabled={submitting}>
+                    <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.submitBtn, submitting && styles.submitBtnDisabled]} onPress={handleCreateTenant} disabled={submitting}>
+                    {submitting ? <ActivityIndicator size="small" color="#0f172a" /> : <Text style={styles.submitBtnText} allowFontScaling={false}>Save Tenant</Text>}
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
+            </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* --- EDIT TENANT MODAL (Keyboard Responsive) --- */}
+      <Modal visible={isEditOpen} animationType="slide" transparent>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalBg}>
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={styles.modalCard}>
+              <View style={styles.modalHeaderRow}>
+                <Text style={styles.modalTitle} allowFontScaling={false}>Edit Tenant</Text>
+                <TouchableOpacity onPress={() => setIsEditOpen(false)}>
+                  <Ionicons name="close" size={24} color="#94a3b8" />
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                <Text style={styles.modalSubHeader} allowFontScaling={false}>PERSONAL INFORMATION</Text>
+                <View style={styles.formRow}>
+                  <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>FIRST NAME *</Text>
+                    <TextInput style={styles.formInput} placeholder="John" placeholderTextColor="#64748b" value={firstName} onChangeText={setFirstName} />
+                    {tenantErrors.firstName && <Text style={styles.errorLabel} allowFontScaling={false}>{tenantErrors.firstName}</Text>}
+                  </View>
+                  <View style={[styles.formGroup, { flex: 1 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>LAST NAME *</Text>
+                    <TextInput style={styles.formInput} placeholder="Doe" placeholderTextColor="#64748b" value={lastName} onChangeText={setLastName} />
+                    {tenantErrors.lastName && <Text style={styles.errorLabel} allowFontScaling={false}>{tenantErrors.lastName}</Text>}
+                  </View>
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>PREFERRED NAME</Text>
+                  <TextInput style={styles.formInput} placeholder="Johnny" placeholderTextColor="#64748b" value={preferredName} onChangeText={setPreferredName} />
+                </View>
+
+                <View style={styles.formRow}>
+                  <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>DATE OF BIRTH</Text>
+                    <TouchableOpacity style={styles.dropdownTrigger} onPress={() => setShowDobPicker(true)}>
+                      <Text style={styles.dropdownTriggerText} allowFontScaling={false}>{dob || 'Select Date...'}</Text>
+                      <Ionicons name="calendar-outline" size={14} color="#cbd5e1" />
+                    </TouchableOpacity>
+                    <CustomDatePicker
+                      visible={showDobPicker}
+                      value={dob}
+                      onSelect={(date) => setDob(date)}
+                      onClose={() => setShowDobPicker(false)}
+                    />
+                  </View>
+
+                  {/* Gender dropdown */}
+                  <View style={[styles.formGroup, { flex: 1 }, showGenderDropdown && { zIndex: 9999, position: 'relative' }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>GENDER</Text>
+                    <TouchableOpacity style={styles.dropdownTrigger} onPress={() => setShowGenderDropdown(!showGenderDropdown)} activeOpacity={0.7}>
+                      <Text style={styles.dropdownTriggerText} allowFontScaling={false}>{gender}</Text>
+                      <Ionicons name={showGenderDropdown ? "chevron-up" : "chevron-down"} size={14} color="#cbd5e1" />
+                    </TouchableOpacity>
+                    {showGenderDropdown && (
+                      <View style={styles.dropdownContainer}>
+                        {genderOptions.map((opt) => (
+                          <TouchableOpacity key={opt} style={styles.dropdownItem} onPress={() => { setGender(opt); setShowGenderDropdown(false); }}>
+                            <Text style={styles.dropdownItemText} allowFontScaling={false}>{opt}</Text>
+                            {gender === opt && <Ionicons name="checkmark" size={16} color="#38bdf8" />}
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    )}
+                  </View>
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>NATIONALITY</Text>
+                  <TextInput style={styles.formInput} placeholder="American" placeholderTextColor="#64748b" value={nationality} onChangeText={setNationality} />
+                </View>
+
+                <Text style={styles.modalSubHeader} allowFontScaling={false}>CONTACT & CREDENTIALS</Text>
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>EMAIL ADDRESS *</Text>
+                  <TextInput style={styles.formInput} placeholder="john.doe@gmail.com" placeholderTextColor="#64748b" keyboardType="email-address" autoCapitalize="none" value={email} onChangeText={setEmail} />
+                  {tenantErrors.email && <Text style={styles.errorLabel} allowFontScaling={false}>{tenantErrors.email}</Text>}
+                </View>
+
+                <View style={styles.formRow}>
+                  <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>MOBILE PHONE *</Text>
+                    <TextInput style={styles.formInput} placeholder="(512) 555-0199" placeholderTextColor="#64748b" keyboardType="phone-pad" value={phone} onChangeText={setPhone} />
+                    {tenantErrors.phone && <Text style={styles.errorLabel} allowFontScaling={false}>{tenantErrors.phone}</Text>}
+                  </View>
+                  <View style={[styles.formGroup, { flex: 1 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>ALTERNATE PHONE</Text>
+                    <TextInput style={styles.formInput} placeholder="(512) 555-4321" placeholderTextColor="#64748b" keyboardType="phone-pad" value={altPhone} onChangeText={setAltPhone} />
+                  </View>
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>NEW PASSWORD (LEAVE BLANK TO KEEP UNCHANGED)</Text>
+                  <TextInput style={styles.formInput} placeholder="••••••••" placeholderTextColor="#64748b" secureTextEntry autoCapitalize="none" value={password} onChangeText={setPassword} />
+                </View>
+
+                <Text style={styles.modalSubHeader} allowFontScaling={false}>GOVERNMENT IDS</Text>
+                {/* ID Type dropdown */}
+                <View style={[styles.formGroup, showIdDropdown && { zIndex: 9997, position: 'relative' }]}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>ID TYPE</Text>
+                  <TouchableOpacity style={styles.dropdownTrigger} onPress={() => setShowIdDropdown(!showIdDropdown)} activeOpacity={0.7}>
+                    <Text style={styles.dropdownTriggerText} allowFontScaling={false}>{idType}</Text>
+                    <Ionicons name={showIdDropdown ? "chevron-up" : "chevron-down"} size={14} color="#cbd5e1" />
+                  </TouchableOpacity>
+                  {showIdDropdown && (
+                    <View style={styles.dropdownContainer}>
+                      {idOptions.map((opt) => (
+                        <TouchableOpacity key={opt} style={styles.dropdownItem} onPress={() => { setIdType(opt); setShowIdDropdown(false); }}>
+                          <Text style={styles.dropdownItemText} allowFontScaling={false}>{opt}</Text>
+                          {idType === opt && <Ionicons name="checkmark" size={16} color="#38bdf8" />}
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </View>
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>ID NUMBER</Text>
+                  <TextInput style={styles.formInput} placeholder="A1234567" placeholderTextColor="#64748b" value={idNumber} onChangeText={setIdNumber} />
+                </View>
+
+                <Text style={styles.modalSubHeader} allowFontScaling={false}>EMERGENCY CONTACT</Text>
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>CONTACT NAME</Text>
+                  <TextInput style={styles.formInput} placeholder="Mary Doe" placeholderTextColor="#64748b" value={emergencyName} onChangeText={setEmergencyName} />
+                </View>
+                <View style={styles.formRow}>
+                  <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>RELATIONSHIP</Text>
+                    <TextInput style={styles.formInput} placeholder="Spouse / Parent" placeholderTextColor="#64748b" value={emergencyRelationship} onChangeText={setEmergencyRelationship} />
+                  </View>
+                  <View style={[styles.formGroup, { flex: 1 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>EMERGENCY PHONE</Text>
+                    <TextInput style={styles.formInput} placeholder="(512) 555-9876" placeholderTextColor="#64748b" keyboardType="phone-pad" value={emergencyPhone} onChangeText={setEmergencyPhone} />
+                  </View>
+                </View>
+
+                <Text style={styles.modalSubHeader} allowFontScaling={false}>EMPLOYMENT PARAMETERS</Text>
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>EMPLOYER NAME</Text>
+                  <TextInput style={styles.formInput} placeholder="Google Inc." placeholderTextColor="#64748b" value={empName} onChangeText={setEmpName} />
+                </View>
+                <View style={styles.formRow}>
+                  <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>POSITION</Text>
+                    <TextInput style={styles.formInput} placeholder="Staff Engineer" placeholderTextColor="#64748b" value={empPosition} onChangeText={setEmpPosition} />
+                  </View>
+                  <View style={[styles.formGroup, { flex: 1 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>MONTHLY INCOME ($)</Text>
+                    <TextInput style={styles.formInput} placeholder="3500" keyboardType="decimal-pad" placeholderTextColor="#64748b" value={empIncome} onChangeText={setEmpIncome} />
                   </View>
                 </View>
 
@@ -585,7 +1035,7 @@ export const TenantsScreen = () => {
                   )}
                 </View>
 
-                {/* Tenant account status dropdown */}
+                {/* Account Status dropdown */}
                 <View style={[styles.formGroup, showStatusDropdown && { zIndex: 9995, position: 'relative' }]}>
                   <Text style={styles.formLabel} allowFontScaling={false}>ACCOUNT STATUS</Text>
                   <TouchableOpacity style={styles.dropdownTrigger} onPress={() => setShowStatusDropdown(!showStatusDropdown)} activeOpacity={0.7}>
@@ -604,13 +1054,23 @@ export const TenantsScreen = () => {
                   )}
                 </View>
 
+                <Text style={styles.modalSubHeader} allowFontScaling={false}>ADDRESS HISTORY</Text>
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>CURRENT ADDRESS</Text>
+                  <TextInput style={styles.formInput} placeholder="789 Pine Rd, Austin, TX" placeholderTextColor="#64748b" value={currentAddress} onChangeText={setCurrentAddress} />
+                </View>
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>PREVIOUS ADDRESS (OPTIONAL)</Text>
+                  <TextInput style={styles.formInput} placeholder="456 Elm St, Dallas, TX" placeholderTextColor="#64748b" value={previousAddress} onChangeText={setPreviousAddress} />
+                </View>
+
                 {/* Save Buttons inside ScrollView */}
                 <View style={styles.modalActions}>
-                  <TouchableOpacity style={styles.cancelBtn} onPress={() => setIsAddOpen(false)} disabled={submitting}>
+                  <TouchableOpacity style={styles.cancelBtn} onPress={() => setIsEditOpen(false)} disabled={submitting}>
                     <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={[styles.submitBtn, submitting && styles.submitBtnDisabled]} onPress={handleCreateTenant} disabled={submitting}>
-                    {submitting ? <ActivityIndicator size="small" color="#0f172a" /> : <Text style={styles.submitBtnText} allowFontScaling={false}>Save Tenant</Text>}
+                  <TouchableOpacity style={[styles.submitBtn, submitting && styles.submitBtnDisabled]} onPress={handleUpdateTenant} disabled={submitting}>
+                    {submitting ? <ActivityIndicator size="small" color="#0f172a" /> : <Text style={styles.submitBtnText} allowFontScaling={false}>Update Tenant</Text>}
                   </TouchableOpacity>
                 </View>
               </ScrollView>
@@ -639,7 +1099,7 @@ export const TenantsScreen = () => {
               <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
                 {/* 1. Personal & Contact */}
                 <View style={styles.detailContainer}>
-                  <Text style={styles.modalSubHeader} allowFontScaling={false} style={{ marginTop: 0, marginBottom: 8, color: '#38bdf8', fontSize: 10, fontWeight: '850' }}>
+                  <Text style={[styles.modalSubHeader, { marginTop: 0, marginBottom: 8, color: '#38bdf8', fontSize: 10, fontWeight: '850' }]} allowFontScaling={false}>
                     PERSONAL & CONTACT SPECIFICATIONS
                   </Text>
                   <View style={styles.detailRow}>
@@ -648,59 +1108,69 @@ export const TenantsScreen = () => {
                   </View>
                   <View style={styles.detailRow}>
                     <Text style={styles.detailLabel} allowFontScaling={false}>Phone Contact</Text>
-                    <Text style={styles.detailVal} allowFontScaling={false}>{selectedTenant.phone || '(512) 555-0199'}</Text>
+                    <Text style={styles.detailVal} allowFontScaling={false}>{selectedTenant.phone || 'N/A'}</Text>
                   </View>
                   <View style={styles.detailRow}>
                     <Text style={styles.detailLabel} allowFontScaling={false}>Preferred Name</Text>
-                    <Text style={styles.detailVal} allowFontScaling={false}>{selectedTenant.preferredName || selectedTenant.firstName || 'Johnny'}</Text>
+                    <Text style={styles.detailVal} allowFontScaling={false}>{selectedTenant.preferredName || selectedTenant.firstName || 'N/A'}</Text>
                   </View>
                   <View style={styles.detailRow}>
                     <Text style={styles.detailLabel} allowFontScaling={false}>Birth Date / Gender</Text>
-                    <Text style={styles.detailVal} allowFontScaling={false}>{selectedTenant.dob || '1995-01-01'} · {selectedTenant.gender || 'Male'}</Text>
+                    <Text style={styles.detailVal} allowFontScaling={false}>
+                      {selectedTenant.dob ? String(selectedTenant.dob).split('T')[0] : 'N/A'} · {selectedTenant.gender || 'N/A'}
+                    </Text>
                   </View>
                   <View style={[styles.detailRow, { borderBottomWidth: 0 }]}>
                     <Text style={styles.detailLabel} allowFontScaling={false}>Nationality</Text>
-                    <Text style={styles.detailVal} allowFontScaling={false}>{selectedTenant.nationality || 'American'}</Text>
+                    <Text style={styles.detailVal} allowFontScaling={false}>{selectedTenant.nationality || 'N/A'}</Text>
                   </View>
                 </View>
 
                 {/* 2. Employment & Income */}
                 <View style={styles.detailContainer}>
-                  <Text style={styles.modalSubHeader} allowFontScaling={false} style={{ marginTop: 0, marginBottom: 8, color: '#38bdf8', fontSize: 10, fontWeight: '850' }}>
+                  <Text style={[styles.modalSubHeader, { marginTop: 0, marginBottom: 8, color: '#38bdf8', fontSize: 10, fontWeight: '850' }]} allowFontScaling={false}>
                     EMPLOYMENT PARAMETERS
                   </Text>
                   <View style={styles.detailRow}>
                     <Text style={styles.detailLabel} allowFontScaling={false}>Employer / Position</Text>
-                    <Text style={styles.detailVal} allowFontScaling={false}>{selectedTenant.employerName || 'Google Inc.'} · {selectedTenant.position || 'Staff Engineer'}</Text>
+                    <Text style={styles.detailVal} allowFontScaling={false}>
+                      {(selectedTenant.employer || selectedTenant.employerName) ? `${selectedTenant.employer || selectedTenant.employerName}${selectedTenant.position ? ` · ${selectedTenant.position}` : ''}` : 'N/A'}
+                    </Text>
                   </View>
                   <View style={styles.detailRow}>
                     <Text style={styles.detailLabel} allowFontScaling={false}>Monthly Income</Text>
                     <Text style={[styles.detailVal, { color: '#10b981' }]} allowFontScaling={false}>
-                      ${(Number(selectedTenant.monthlyIncome) || 3500).toLocaleString()}/mo
+                      ${(Number(selectedTenant.monthlyIncome) || 0).toLocaleString()}/mo
                     </Text>
                   </View>
                   <View style={[styles.detailRow, { borderBottomWidth: 0 }]}>
                     <Text style={styles.detailLabel} allowFontScaling={false}>Employment Status</Text>
-                    <Text style={styles.detailVal} allowFontScaling={false}>{selectedTenant.employmentStatus || 'Full-Time'}</Text>
+                    <Text style={styles.detailVal} allowFontScaling={false}>{selectedTenant.employmentStatus || 'N/A'}</Text>
                   </View>
                 </View>
 
                 {/* 3. Assigned Lease unit */}
                 <View style={styles.detailContainer}>
-                  <Text style={styles.modalSubHeader} allowFontScaling={false} style={{ marginTop: 0, marginBottom: 8, color: '#38bdf8', fontSize: 10, fontWeight: '850' }}>
+                  <Text style={[styles.modalSubHeader, { marginTop: 0, marginBottom: 8, color: '#38bdf8', fontSize: 10, fontWeight: '850' }]} allowFontScaling={false}>
                     LEASE UNIT PATHS
                   </Text>
                   <View style={styles.detailRow}>
                     <Text style={styles.detailLabel} allowFontScaling={false}>Property Name</Text>
-                    <Text style={styles.detailVal} allowFontScaling={false}>{selectedTenant.unit?.property?.name || selectedTenant.propertyName || 'Property'}</Text>
+                    <Text style={styles.detailVal} allowFontScaling={false}>
+                      {selectedTenant.unit?.property?.name || selectedTenant.propertyName || 'Unassigned'}
+                    </Text>
                   </View>
                   <View style={styles.detailRow}>
                     <Text style={styles.detailLabel} allowFontScaling={false}>Unit number</Text>
-                    <Text style={styles.detailVal} allowFontScaling={false}>Unit {selectedTenant.unit?.unitNumber || selectedTenant.unitNumber || '101'}</Text>
+                    <Text style={styles.detailVal} allowFontScaling={false}>
+                      {(selectedTenant.unit?.unitNumber || selectedTenant.unitNumber) ? `Unit ${selectedTenant.unit?.unitNumber || selectedTenant.unitNumber}` : 'Unassigned'}
+                    </Text>
                   </View>
                   <View style={[styles.detailRow, { borderBottomWidth: 0 }]}>
                     <Text style={styles.detailLabel} allowFontScaling={false}>Account Status</Text>
-                    <Text style={[styles.detailVal, { color: '#10b981', fontWeight: '800' }]} allowFontScaling={false}>{selectedTenant.status || 'Active'}</Text>
+                    <Text style={[styles.detailVal, { color: '#10b981', fontWeight: '800' }]} allowFontScaling={false}>
+                      {selectedTenant.status || 'Active'}
+                    </Text>
                   </View>
                 </View>
               </ScrollView>
@@ -776,6 +1246,7 @@ const getStyles = (colors, isDarkMode) => StyleSheet.create({
   tenantSubText: { fontSize: 11.5, color: colors.textSecondary, marginTop: 2 },
   badgesRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   deleteBtn: { width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(239, 68, 68, 0.12)', alignItems: 'center', justifyContent: 'center' },
+  editBtn: { width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(245, 158, 11, 0.12)', alignItems: 'center', justifyContent: 'center' },
   eyeBtn: { width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(56, 189, 248, 0.12)', alignItems: 'center', justifyContent: 'center' },
 
   divider: { height: 1, backgroundColor: colors.divider, marginVertical: 12 },

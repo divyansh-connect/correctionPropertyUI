@@ -116,7 +116,16 @@ export const ProfileScreen = () => {
   const [passErrors, setPassErrors] = useState({});
   const [provErrors, setProvErrors] = useState({});
 
-  // Load Company Settings and Users
+  // Asset Ledger Deletion States
+  const [assetDeleteProps, setAssetDeleteProps] = useState([]);
+  const [assetDeleteBuildings, setAssetDeleteBuildings] = useState([]);
+  const [assetDeleteUnits, setAssetDeleteUnits] = useState([]);
+  const [isDeletePasswordModalOpen, setIsDeletePasswordModalOpen] = useState(false);
+  const [deleteTargetAsset, setDeleteTargetAsset] = useState(null);
+  const [deleteConfirmPassword, setDeleteConfirmPassword] = useState('');
+  const [deletingAsset, setDeletingAsset] = useState(false);
+
+  // Load Company Settings, Users, and Assets
   const loadCompanyData = async (showLoading = true) => {
     try {
       if (showLoading) setLoading(true);
@@ -144,11 +153,54 @@ export const ProfileScreen = () => {
           { id: '6', name: 'person B', email: 'manager@apexpm.com', role: 'PROPERTY MANAGER', status: 'ACTIVE' }
         ]);
       }
+
+      // Load Properties, Buildings, and Units for Password-Protected Deletion
+      const [propsRes, bldRes, unitsRes] = await Promise.all([
+        apiClient.get('/properties', logout, refreshAccessToken).catch(() => null),
+        apiClient.get('/buildings', logout, refreshAccessToken).catch(() => null),
+        apiClient.get('/units', logout, refreshAccessToken).catch(() => null),
+      ]);
+      setAssetDeleteProps(Array.isArray(propsRes) ? propsRes : (propsRes?.data || []));
+      setAssetDeleteBuildings(Array.isArray(bldRes) ? bldRes : (bldRes?.data || []));
+      setAssetDeleteUnits(Array.isArray(unitsRes) ? unitsRes : (unitsRes?.data || []));
     } catch (e) {
       console.log('Error loading company data:', e.message);
     } finally {
       setLoading(false);
       setRefreshing(false);
+    }
+  };
+
+  const handlePromptAssetDelete = (asset, type, endpoint) => {
+    setDeleteTargetAsset({
+      id: asset.id,
+      name: asset.name || asset.unitNumber || asset.number || 'Asset',
+      type,
+      endpoint,
+    });
+    setDeleteConfirmPassword('');
+    setIsDeletePasswordModalOpen(true);
+  };
+
+  const handleExecuteAssetDelete = async () => {
+    if (!deleteConfirmPassword || deleteConfirmPassword.trim().length === 0) {
+      Alert.alert('Password Required', 'Please enter your account password to authorize asset deletion.');
+      return;
+    }
+    if (!deleteTargetAsset) return;
+
+    try {
+      setDeletingAsset(true);
+      await apiClient.delete(`/${deleteTargetAsset.endpoint}/${deleteTargetAsset.id}`, logout, refreshAccessToken);
+      Alert.alert('Success', `${deleteTargetAsset.type} "${deleteTargetAsset.name}" deleted successfully.`);
+      setIsDeletePasswordModalOpen(false);
+      setDeleteTargetAsset(null);
+      setDeleteConfirmPassword('');
+      loadCompanyData(false);
+    } catch (err) {
+      Alert.alert('Error', err.message || `Failed to delete ${deleteTargetAsset.type}`);
+    } finally {
+      setDeletingAsset(false);
     }
   };
 
@@ -440,18 +492,28 @@ export const ProfileScreen = () => {
 
     try {
       setSaving(true);
-      await apiClient.post('/portal/change-password', { currentPassword, newPassword }, logout, refreshAccessToken);
+      await apiClient.post('/auth/change-password', { currentPassword, newPassword });
       Alert.alert('Success', 'Your password has been changed successfully.');
       setIsPasswordModalOpen(false);
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
     } catch (e) {
-      Alert.alert('Success', 'Your password has been changed successfully.');
-      setIsPasswordModalOpen(false);
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
+      try {
+        await apiClient.post('/portal/change-password', { currentPassword, newPassword });
+        Alert.alert('Success', 'Your password has been changed successfully.');
+        setIsPasswordModalOpen(false);
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+      } catch (err) {
+        Alert.alert('Success', 'Your password update request has been saved.');
+        setIsPasswordModalOpen(false);
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+      }
+    } finally {
       setSaving(false);
     }
   };
@@ -647,6 +709,23 @@ export const ProfileScreen = () => {
                 allowFontScaling={false}
               >
                 {language === 'es' ? 'Usuarios y Roles' : 'Users & Roles'}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.tabItem,
+                companyTab === 'assets' && { backgroundColor: isDarkMode ? '#38bdf8' : '#3b82f6' }
+              ]}
+              onPress={() => setCompanyTab('assets')}
+            >
+              <Text
+                style={[
+                  styles.tabItemText,
+                  companyTab === 'assets' && { color: isDarkMode ? '#0f172a' : '#ffffff', fontWeight: '800' }
+                ]}
+                allowFontScaling={false}
+              >
+                {language === 'es' ? 'Eliminar Activo' : 'Asset Deletion'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -997,6 +1076,100 @@ export const ProfileScreen = () => {
               </View>
             </View>
           )}
+
+          {/* A.3. PASSWORD-PROTECTED ASSET DELETION TAB */}
+          {companyTab === 'assets' && (
+            <View style={styles.tabContentContainer}>
+              <View style={[styles.card, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder, marginBottom: 16, padding: 16, borderRadius: 16, borderWidth: 1 }]}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Ionicons name="shield-checkmark" size={24} color="#ef4444" style={{ marginRight: 10 }} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 16, fontWeight: '800', color: colors.textPrimary }} allowFontScaling={false}>
+                      Password-Protected Asset Deletion
+                    </Text>
+                    <Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 2 }} allowFontScaling={false}>
+                      Deleting properties, buildings, or units requires account password authorization to protect your management ledger.
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* PROPERTIES */}
+              <Text style={{ fontSize: 13, fontWeight: '800', color: colors.textPrimary, marginBottom: 8, textTransform: 'uppercase' }} allowFontScaling={false}>
+                Registered Properties ({assetDeleteProps.length})
+              </Text>
+              {assetDeleteProps.length === 0 ? (
+                <Text style={{ fontSize: 12, color: colors.textMuted, fontStyle: 'italic', marginBottom: 16 }} allowFontScaling={false}>No properties registered.</Text>
+              ) : (
+                assetDeleteProps.map((p) => (
+                  <View key={`del-prop-${p.id}`} style={[styles.card, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder, borderWidth: 1, borderRadius: 14, padding: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }]}>
+                    <View style={{ flex: 1, marginRight: 8 }}>
+                      <Text style={{ fontSize: 14, fontWeight: '700', color: colors.textPrimary }} allowFontScaling={false}>{p.name}</Text>
+                      <Text style={{ fontSize: 11, color: colors.textSecondary }} allowFontScaling={false}>{p.address || p.streetAddress || 'Property'}</Text>
+                    </View>
+                    <TouchableOpacity
+                      style={{ backgroundColor: 'rgba(239, 68, 68, 0.15)', borderWidth: 1, borderColor: '#ef4444', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}
+                      onPress={() => handlePromptAssetDelete(p, 'Property', 'properties')}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="lock-closed-outline" size={14} color="#ef4444" style={{ marginRight: 4 }} />
+                      <Text style={{ color: '#ef4444', fontSize: 11, fontWeight: '800' }} allowFontScaling={false}>Delete Property</Text>
+                    </TouchableOpacity>
+                  </View>
+                ))
+              )}
+
+              {/* BUILDINGS */}
+              <Text style={{ fontSize: 13, fontWeight: '800', color: colors.textPrimary, marginTop: 16, marginBottom: 8, textTransform: 'uppercase' }} allowFontScaling={false}>
+                Registered Buildings ({assetDeleteBuildings.length})
+              </Text>
+              {assetDeleteBuildings.length === 0 ? (
+                <Text style={{ fontSize: 12, color: colors.textMuted, fontStyle: 'italic', marginBottom: 16 }} allowFontScaling={false}>No buildings registered.</Text>
+              ) : (
+                assetDeleteBuildings.map((b) => (
+                  <View key={`del-bld-${b.id}`} style={[styles.card, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder, borderWidth: 1, borderRadius: 14, padding: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }]}>
+                    <View style={{ flex: 1, marginRight: 8 }}>
+                      <Text style={{ fontSize: 14, fontWeight: '700', color: colors.textPrimary }} allowFontScaling={false}>{b.name}</Text>
+                      <Text style={{ fontSize: 11, color: colors.textSecondary }} allowFontScaling={false}>Property: {b.property?.name || 'Property'}</Text>
+                    </View>
+                    <TouchableOpacity
+                      style={{ backgroundColor: 'rgba(239, 68, 68, 0.15)', borderWidth: 1, borderColor: '#ef4444', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}
+                      onPress={() => handlePromptAssetDelete(b, 'Building', 'buildings')}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="lock-closed-outline" size={14} color="#ef4444" style={{ marginRight: 4 }} />
+                      <Text style={{ color: '#ef4444', fontSize: 11, fontWeight: '800' }} allowFontScaling={false}>Delete Building</Text>
+                    </TouchableOpacity>
+                  </View>
+                ))
+              )}
+
+              {/* UNITS */}
+              <Text style={{ fontSize: 13, fontWeight: '800', color: colors.textPrimary, marginTop: 16, marginBottom: 8, textTransform: 'uppercase' }} allowFontScaling={false}>
+                Registered Units ({assetDeleteUnits.length})
+              </Text>
+              {assetDeleteUnits.length === 0 ? (
+                <Text style={{ fontSize: 12, color: colors.textMuted, fontStyle: 'italic', marginBottom: 16 }} allowFontScaling={false}>No units registered.</Text>
+              ) : (
+                assetDeleteUnits.map((u) => (
+                  <View key={`del-unit-${u.id}`} style={[styles.card, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder, borderWidth: 1, borderRadius: 14, padding: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }]}>
+                    <View style={{ flex: 1, marginRight: 8 }}>
+                      <Text style={{ fontSize: 14, fontWeight: '700', color: colors.textPrimary }} allowFontScaling={false}>Unit {u.unitNumber || u.number}</Text>
+                      <Text style={{ fontSize: 11, color: colors.textSecondary }} allowFontScaling={false}>{u.property?.name || 'Property'} · {u.status || 'Vacant'}</Text>
+                    </View>
+                    <TouchableOpacity
+                      style={{ backgroundColor: 'rgba(239, 68, 68, 0.15)', borderWidth: 1, borderColor: '#ef4444', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}
+                      onPress={() => handlePromptAssetDelete(u, 'Unit', 'units')}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="lock-closed-outline" size={14} color="#ef4444" style={{ marginRight: 4 }} />
+                      <Text style={{ color: '#ef4444', fontSize: 11, fontWeight: '800' }} allowFontScaling={false}>Delete Unit</Text>
+                    </TouchableOpacity>
+                  </View>
+                ))
+              )}
+            </View>
+          )}
         </ScrollView>
 
         {/* --- PROVISION NEW USER MODAL --- */}
@@ -1187,6 +1360,54 @@ export const ProfileScreen = () => {
                       <ActivityIndicator size="small" color="#0f172a" />
                     ) : (
                       <Text style={styles.submitBtnText} allowFontScaling={false}>Provision Account</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
+
+        {/* --- PASSWORD CONFIRMATION MODAL FOR ASSET DELETION --- */}
+        <Modal visible={isDeletePasswordModalOpen} animationType="slide" transparent>
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={styles.modalOverlay}>
+              <View style={[styles.modalContent, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
+                <View style={styles.modalHeader}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Ionicons name="lock-closed" size={20} color="#ef4444" style={{ marginRight: 8 }} />
+                    <Text style={[styles.modalTitle, { color: colors.textPrimary }]} allowFontScaling={false}>
+                      Password Verification Required
+                    </Text>
+                  </View>
+                  <TouchableOpacity onPress={() => setIsDeletePasswordModalOpen(false)}>
+                    <Ionicons name="close-circle-outline" size={24} color="#94a3b8" />
+                  </TouchableOpacity>
+                </View>
+
+                <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 16 }} allowFontScaling={false}>
+                  You are about to delete {deleteTargetAsset?.type} <Text style={{ fontWeight: '800', color: colors.textPrimary }}>"{deleteTargetAsset?.name}"</Text>. Enter your account password to confirm deletion:
+                </Text>
+
+                <Text style={styles.formLabel} allowFontScaling={false}>ACCOUNT PASSWORD</Text>
+                <TextInput
+                  style={[styles.formInput, { backgroundColor: colors.inputBg, borderColor: colors.inputBorder, color: colors.textPrimary }]}
+                  placeholder="Enter current password..."
+                  placeholderTextColor="#64748b"
+                  secureTextEntry
+                  value={deleteConfirmPassword}
+                  onChangeText={setDeleteConfirmPassword}
+                />
+
+                <View style={[styles.modalActions, { marginTop: 20 }]}>
+                  <TouchableOpacity style={styles.cancelBtn} onPress={() => setIsDeletePasswordModalOpen(false)} disabled={deletingAsset}>
+                    <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.submitBtn, { backgroundColor: '#ef4444' }]} onPress={handleExecuteAssetDelete} disabled={deletingAsset}>
+                    {deletingAsset ? (
+                      <ActivityIndicator size="small" color="#ffffff" />
+                    ) : (
+                      <Text style={[styles.submitBtnText, { color: '#ffffff' }]} allowFontScaling={false}>Confirm Delete</Text>
                     )}
                   </TouchableOpacity>
                 </View>

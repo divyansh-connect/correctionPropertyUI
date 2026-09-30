@@ -20,6 +20,7 @@ import {
 import { useAuthStore, useThemeStore } from '../store/useStore';
 import { useThemeColors } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
+import { apiClient } from '../api/client';
 
 export const ManagerAccountingScreen = () => {
   const { logout, refreshAccessToken } = useAuthStore();
@@ -42,6 +43,7 @@ export const ManagerAccountingScreen = () => {
   const [units, setUnits] = useState([]);
   const [tenants, setTenants] = useState([]);
   const [staff, setStaff] = useState([]);
+  const [owners, setOwners] = useState([]);
 
   // Loading states
   const [loading, setLoading] = useState(false);
@@ -61,27 +63,31 @@ export const ManagerAccountingScreen = () => {
 
   // 2. Income Creator form states (Matching web screenshot fields)
   const [createIncomeOpen, setCreateIncomeOpen] = useState(false);
-  const [incomeSource, setIncomeSource] = useState('Tenant / Resident');
+  const [incomeSourceType, setIncomeSourceType] = useState('Tenant / Resident'); // 'Tenant / Resident' | 'Property Owner (Contribution)' | 'Miscellaneous / Vending / Other'
+  const [incomeTenantId, setIncomeTenantId] = useState('');
+  const [incomeOwnerId, setIncomeOwnerId] = useState('');
+  const [incomeMiscDesc, setIncomeMiscDesc] = useState('');
   const [incomePropertyId, setIncomePropertyId] = useState('');
   const [incomeBuildingId, setIncomeBuildingId] = useState('');
   const [incomeUnitId, setIncomeUnitId] = useState('');
-  const [incomeTenantId, setIncomeTenantId] = useState('');
   const [incomeCategory, setIncomeCategory] = useState('Rent Revenue');
   const [incomeAmount, setIncomeAmount] = useState('');
 
   // 3. Expense Creator form states (Matching web screenshot fields)
   const [createExpenseOpen, setCreateExpenseOpen] = useState(false);
-  const [expensePayeeType, setExpensePayeeType] = useState('Vendor / Service Partner');
+  const [expensePayeeType, setExpensePayeeType] = useState('Vendor / Staff Payee'); // 'Vendor / Staff Payee' | 'Tenant (Refund / Return)' | 'Property Owner (Distribution)'
+  const [expenseVendorId, setExpenseVendorId] = useState('');
+  const [expenseTenantId, setExpenseTenantId] = useState('');
+  const [expenseOwnerId, setExpenseOwnerId] = useState('');
   const [expensePropertyId, setExpensePropertyId] = useState('');
   const [expenseBuildingId, setExpenseBuildingId] = useState('');
   const [expenseUnitId, setExpenseUnitId] = useState('');
-  const [expenseVendorId, setExpenseVendorId] = useState('');
   const [expenseCategory, setExpenseCategory] = useState('General Maintenance');
   const [expenseAmount, setExpenseAmount] = useState('');
 
   // Universal Picker Options Modal state
   const [pickerModalOpen, setPickerModalOpen] = useState(false);
-  const [activePicker, setActivePicker] = useState(null); // 'property' | 'building' | 'unit' | 'tenant' | 'vendor' | 'coaType' | 'incomeCat' | 'expenseCat'
+  const [activePicker, setActivePicker] = useState(null); // 'property' | 'building' | 'unit' | 'tenant' | 'vendor' | 'owner' | 'incomeSourceType' | 'expensePayeeType' | 'coaType' | 'incomeCat' | 'expenseCat'
 
   // Animations
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -128,22 +134,22 @@ export const ManagerAccountingScreen = () => {
     try {
       if (showLoading) setLoading(true);
       const res = await apiClient.get('/portal/income', logout, refreshAccessToken);
-      const rawList = res?.data || res || [];
+      const rawList = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : []);
       
       const parsedList = rawList.map((i) => {
         let parsed = { propertyName: 'Property', tenantName: 'Resident', propertyId: '', buildingId: '', unitId: '', sourceType: 'Tenant', sourceId: '' };
         try {
-          parsed = JSON.parse(i.description);
+          parsed = typeof i.description === 'string' ? JSON.parse(i.description) : (i.description || {});
         } catch {
           parsed.propertyName = i.description || 'Property';
         }
         return {
           id: i.id,
-          category: i.category,
-          amount: i.amount,
+          category: i.category || 'Rent Revenue',
+          amount: i.amount || 0,
           clearingDate: i.date ? i.date.split('T')[0] : 'N/A',
-          residentName: parsed.tenantName || 'Resident',
-          propertyLocation: parsed.propertyName || 'Property',
+          residentName: parsed.tenantName || i.tenantName || 'Resident',
+          propertyLocation: parsed.propertyName || i.propertyName || 'Property',
           status: i.status || 'Cleared'
         };
       });
@@ -163,22 +169,22 @@ export const ManagerAccountingScreen = () => {
     try {
       if (showLoading) setLoading(true);
       const res = await apiClient.get('/portal/expenses', logout, refreshAccessToken);
-      const rawList = res?.data || res || [];
+      const rawList = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : []);
       
       const parsedList = rawList.map((e) => {
         let parsed = { vendorName: 'Vendor', propertyName: 'Property', propertyId: '', buildingId: '', unitId: '', payeeType: 'Vendor', payeeId: '' };
         try {
-          parsed = JSON.parse(e.description);
+          parsed = typeof e.description === 'string' ? JSON.parse(e.description) : (e.description || {});
         } catch {
           parsed.vendorName = e.description || 'Vendor';
         }
         return {
           id: e.id,
-          category: e.category,
-          amountPaid: e.amount,
+          category: e.category || 'General Maintenance',
+          amountPaid: e.amount || 0,
           expenseDate: e.date ? e.date.split('T')[0] : 'N/A',
-          vendorPartner: parsed.vendorName || 'Vendor',
-          propertyLocation: parsed.propertyName || 'Property',
+          vendorPartner: parsed.vendorName || e.vendorName || 'Vendor',
+          propertyLocation: parsed.propertyName || e.propertyName || 'Property',
           status: 'Cleared',
           approvalAction: 'Audited'
         };
@@ -194,24 +200,32 @@ export const ManagerAccountingScreen = () => {
     }
   };
 
-  // 4. Fetch dropdown choices (Cascasding selections)
+  // 4. Fetch dropdown choices (Cascading selections)
   const fetchOptions = async () => {
     try {
-      const [props, bldgs, unts, tnts, staffRes] = await Promise.all([
+      const [props, bldgs, unts, tnts, staffRes, ownersRes, vendorsRes] = await Promise.all([
         apiClient.get('/properties', logout, refreshAccessToken).catch(() => null),
         apiClient.get('/buildings', logout, refreshAccessToken).catch(() => null),
         apiClient.get('/units', logout, refreshAccessToken).catch(() => null),
         apiClient.get('/tenants', logout, refreshAccessToken).catch(() => null),
         apiClient.get('/superadmin/company-users', logout, refreshAccessToken).catch(() => null),
+        apiClient.get('/owners', logout, refreshAccessToken).catch(() => null),
+        apiClient.get('/vendors', logout, refreshAccessToken).catch(() => null),
       ]);
-      if (props?.data || props) setProperties(props?.data || props || []);
-      if (bldgs?.data || bldgs) setBuildings(bldgs?.data || bldgs || []);
-      if (unts?.data || unts) setUnits(unts?.data || unts || []);
-      if (tnts?.data || tnts) setTenants(tnts?.data || tnts || []);
+      if (props?.data || props) setProperties(Array.isArray(props?.data) ? props.data : (Array.isArray(props) ? props : []));
+      if (bldgs?.data || bldgs) setBuildings(Array.isArray(bldgs?.data) ? bldgs.data : (Array.isArray(bldgs) ? bldgs : []));
+      if (unts?.data || unts) setUnits(Array.isArray(unts?.data) ? unts.data : (Array.isArray(unts) ? unts : []));
+      if (tnts?.data || tnts) setTenants(Array.isArray(tnts?.data) ? tnts.data : (Array.isArray(tnts) ? tnts : []));
       
       const staffList = staffRes?.data || staffRes || [];
-      const filteredStaff = staffList.filter(u => u.role === 'Maintenance Staff' || u.role === 'Maintenance');
+      const filteredStaff = Array.isArray(staffList) ? staffList.filter(u => u.role === 'Maintenance Staff' || u.role === 'Maintenance') : [];
       setStaff(filteredStaff);
+
+      const rawOwners = Array.isArray(ownersRes) ? ownersRes : (ownersRes?.data || []);
+      setOwners(rawOwners);
+
+      const rawVendors = Array.isArray(vendorsRes) ? vendorsRes : (vendorsRes?.data || []);
+      setVendors(rawVendors);
     } catch (e) {
       console.log('Failed loading selections:', e.message);
     }
@@ -299,43 +313,79 @@ export const ManagerAccountingScreen = () => {
 
     try {
       setSubmitting(true);
-      const chosenProp = properties.find(p => p.id === incomePropertyId)?.name || 'Property';
-      const chosenTenant = tenants.find(t => t.id === incomeTenantId)?.name || 'Resident';
-      
-      const payload = {
-        category: incomeCategory,
-        amount: parseFloat(incomeAmount),
-        date: new Date().toISOString(),
-        propertyName: chosenProp,
-        tenantName: chosenTenant,
-        propertyId: incomePropertyId,
-        buildingId: incomeBuildingId,
-        unitId: incomeUnitId,
-        sourceType: 'Tenant',
-        sourceId: incomeTenantId,
-      };
+      let resolvedName = '';
+      let sourceId = '';
+      let resolvedPropertyId = '';
+      let resolvedBuildingId = '';
+      let resolvedUnitId = '';
 
-      // Call same API endpoint as web: POST /portal/income
+      if (incomeSourceType === 'Tenant / Resident') {
+        if (!incomeTenantId) {
+          Alert.alert('Validation Error', 'Please select a Resident / Tenant.');
+          setSubmitting(false);
+          return;
+        }
+        const tenant = tenants.find((t) => t.id === incomeTenantId);
+        resolvedName = tenant ? `${tenant.firstName || ''} ${tenant.lastName || ''}`.trim() || tenant.name : 'Tenant';
+        sourceId = incomeTenantId;
+        resolvedPropertyId = tenant ? tenant.propertyId || '' : '';
+        resolvedUnitId = tenant ? tenant.unitId || '' : '';
+        if (tenant && tenant.unitId) {
+          const matchingUnit = units.find((u) => u.id === tenant.unitId);
+          resolvedBuildingId = matchingUnit ? matchingUnit.buildingId || '' : '';
+        }
+      } else if (incomeSourceType === 'Property Owner (Contribution)') {
+        if (!incomeOwnerId) {
+          Alert.alert('Validation Error', 'Please select a Property Owner.');
+          setSubmitting(false);
+          return;
+        }
+        const owner = owners.find((o) => o.id === incomeOwnerId);
+        resolvedName = owner ? `${owner.firstName || ''} ${owner.lastName || ''}`.trim() || owner.name : 'Owner';
+        sourceId = incomeOwnerId;
+        resolvedPropertyId = incomePropertyId;
+        resolvedBuildingId = incomeBuildingId;
+        resolvedUnitId = incomeUnitId;
+      } else {
+        resolvedName = incomeMiscDesc.trim() || 'Miscellaneous Source';
+        resolvedPropertyId = incomePropertyId;
+        resolvedBuildingId = incomeBuildingId;
+        resolvedUnitId = incomeUnitId;
+      }
+
+      const chosenProp = properties.find((p) => p.id === resolvedPropertyId);
+
       const description = JSON.stringify({
-        propertyName: payload.propertyName,
-        tenantName: payload.tenantName,
-        propertyId: payload.propertyId,
-        buildingId: payload.buildingId,
-        unitId: payload.unitId,
-        sourceType: payload.sourceType,
-        sourceId: payload.sourceId,
+        propertyName: chosenProp ? chosenProp.name : 'Property',
+        tenantName: resolvedName,
+        propertyId: resolvedPropertyId,
+        buildingId: resolvedBuildingId,
+        unitId: resolvedUnitId,
+        sourceType: incomeSourceType,
+        sourceId,
       });
 
-      await apiClient.post('/portal/income', {
-        category: payload.category,
-        amount: payload.amount,
-        date: payload.date,
-        description,
-      }, logout, refreshAccessToken);
+      await apiClient.post(
+        '/portal/income',
+        {
+          category: incomeCategory,
+          amount: parseFloat(incomeAmount),
+          date: new Date().toISOString(),
+          description,
+        },
+        logout,
+        refreshAccessToken
+      );
 
       Alert.alert('Success', 'Miscellaneous Income recorded successfully.');
       setCreateIncomeOpen(false);
       setIncomeAmount('');
+      setIncomeMiscDesc('');
+      setIncomeTenantId('');
+      setIncomeOwnerId('');
+      setIncomePropertyId('');
+      setIncomeBuildingId('');
+      setIncomeUnitId('');
       fetchIncomeTransactions(true);
     } catch (e) {
       Alert.alert('Error', e.message || 'Failed to record income.');
@@ -353,44 +403,88 @@ export const ManagerAccountingScreen = () => {
 
     try {
       setSubmitting(true);
-      const chosenProp = properties.find(p => p.id === expensePropertyId)?.name || 'Property';
-      const chosenStaff = staff.find(s => s.id === expenseVendorId);
-      const staffName = chosenStaff ? `${chosenStaff.firstName || ''} ${chosenStaff.lastName || ''}`.trim() : 'Staff';
+      let payeeName = '';
+      let payeeId = '';
+      let resolvedPropertyId = '';
+      let resolvedBuildingId = '';
+      let resolvedUnitId = '';
 
-      const payload = {
-        category: expenseCategory,
-        amount: parseFloat(expenseAmount),
-        date: new Date().toISOString(),
-        vendorName: staffName,
-        propertyName: chosenProp,
-        propertyId: expensePropertyId,
-        buildingId: expenseBuildingId,
-        unitId: expenseUnitId,
-        payeeType: 'Staff',
-        payeeId: expenseVendorId,
-      };
+      if (expensePayeeType === 'Vendor / Staff Payee') {
+        if (!expenseVendorId) {
+          Alert.alert('Validation Error', 'Please select a Payee / Staff member.');
+          setSubmitting(false);
+          return;
+        }
+        const staffMember = staff.find((s) => s.id === expenseVendorId);
+        payeeName = staffMember
+          ? `${staffMember.firstName || ''} ${staffMember.lastName || ''}`.trim() || staffMember.name
+          : 'Staff';
+        payeeId = expenseVendorId;
+        resolvedPropertyId = expensePropertyId;
+        resolvedBuildingId = expenseBuildingId;
+        resolvedUnitId = expenseUnitId;
+      } else if (expensePayeeType === 'Tenant (Refund / Return)') {
+        if (!expenseTenantId) {
+          Alert.alert('Validation Error', 'Please select a Resident / Tenant.');
+          setSubmitting(false);
+          return;
+        }
+        const tenant = tenants.find((t) => t.id === expenseTenantId);
+        payeeName = tenant ? `${tenant.firstName || ''} ${tenant.lastName || ''}`.trim() || tenant.name : 'Tenant';
+        payeeId = expenseTenantId;
+        resolvedPropertyId = tenant ? tenant.propertyId || '' : '';
+        resolvedUnitId = tenant ? tenant.unitId || '' : '';
+        if (tenant && tenant.unitId) {
+          const matchingUnit = units.find((u) => u.id === tenant.unitId);
+          resolvedBuildingId = matchingUnit ? matchingUnit.buildingId || '' : '';
+        }
+      } else if (expensePayeeType === 'Property Owner (Distribution)') {
+        if (!expenseOwnerId) {
+          Alert.alert('Validation Error', 'Please select a Property Owner.');
+          setSubmitting(false);
+          return;
+        }
+        const owner = owners.find((o) => o.id === expenseOwnerId);
+        payeeName = owner ? `${owner.firstName || ''} ${owner.lastName || ''}`.trim() || owner.name : 'Owner';
+        payeeId = expenseOwnerId;
+        resolvedPropertyId = expensePropertyId;
+        resolvedBuildingId = expenseBuildingId;
+        resolvedUnitId = expenseUnitId;
+      }
 
-      // Call same API endpoint as web: POST /portal/expenses
+      const chosenProp = properties.find((p) => p.id === resolvedPropertyId);
+
       const description = JSON.stringify({
-        vendorName: payload.vendorName,
-        propertyName: payload.propertyName,
-        propertyId: payload.propertyId,
-        buildingId: payload.buildingId,
-        unitId: payload.unitId,
-        payeeType: payload.payeeType,
-        payeeId: payload.payeeId,
+        vendorName: payeeName,
+        propertyName: chosenProp ? chosenProp.name : 'Property',
+        propertyId: resolvedPropertyId,
+        buildingId: resolvedBuildingId,
+        unitId: resolvedUnitId,
+        payeeType: expensePayeeType,
+        payeeId,
       });
 
-      await apiClient.post('/portal/expenses', {
-        category: payload.category,
-        amount: payload.amount,
-        date: payload.date,
-        description,
-      }, logout, refreshAccessToken);
+      await apiClient.post(
+        '/portal/expenses',
+        {
+          category: expenseCategory,
+          amount: parseFloat(expenseAmount),
+          date: new Date().toISOString(),
+          description,
+        },
+        logout,
+        refreshAccessToken
+      );
 
       Alert.alert('Success', 'Expense recorded successfully.');
       setCreateExpenseOpen(false);
       setExpenseAmount('');
+      setExpenseVendorId('');
+      setExpenseTenantId('');
+      setExpenseOwnerId('');
+      setExpensePropertyId('');
+      setExpenseBuildingId('');
+      setExpenseUnitId('');
       fetchExpensesList(true);
     } catch (e) {
       Alert.alert('Error', e.message || 'Failed to record expense.');
@@ -399,50 +493,104 @@ export const ManagerAccountingScreen = () => {
     }
   };
 
-  // Dynamic Picker Cascading Options list compiler
+  // Dynamic Picker Options list compiler
   const getPickerOptions = () => {
     switch (activePicker) {
-      case 'property':
+      case 'incomeSourceType':
+        return [
+          { value: 'Tenant / Resident', label: 'Tenant / Resident' },
+          { value: 'Property Owner (Contribution)', label: 'Property Owner (Contribution)' },
+          { value: 'Miscellaneous / Vending / Other', label: 'Miscellaneous / Vending / Other' },
+        ];
+
+      case 'expensePayeeType':
+        return [
+          { value: 'Vendor / Staff Payee', label: 'Vendor / Staff Payee' },
+          { value: 'Tenant (Refund / Return)', label: 'Tenant (Refund / Return)' },
+          { value: 'Property Owner (Distribution)', label: 'Property Owner (Distribution)' },
+        ];
+
+      case 'property': {
+        if (createIncomeOpen && incomeSourceType === 'Property Owner (Contribution)' && incomeOwnerId) {
+          const ownedProps = properties.filter(p => p.ownerId === incomeOwnerId);
+          if (ownedProps.length > 0) return ownedProps.map(p => ({ value: p.id, label: p.name }));
+        }
+        if (createExpenseOpen && expensePayeeType === 'Property Owner (Distribution)' && expenseOwnerId) {
+          const ownedProps = properties.filter(p => p.ownerId === expenseOwnerId);
+          if (ownedProps.length > 0) return ownedProps.map(p => ({ value: p.id, label: p.name }));
+        }
         return properties.map(p => ({ value: p.id, label: p.name }));
-      
-      case 'building':
-        // Filter buildings by chosen property
-        const activePropId = activeTab === 'income' ? incomePropertyId : expensePropertyId;
+      }
+
+      case 'building': {
+        const activePropId = createIncomeOpen ? incomePropertyId : expensePropertyId;
         const filteredBldgs = activePropId ? buildings.filter(b => b.propertyId === activePropId) : buildings;
         return filteredBldgs.map(b => ({ value: b.id, label: b.name || `Building` }));
+      }
 
-      case 'unit':
-        // Filter units by chosen building or property
-        const actPropId = activeTab === 'income' ? incomePropertyId : expensePropertyId;
-        const actBldgId = activeTab === 'income' ? incomeBuildingId : expenseBuildingId;
+      case 'unit': {
+        const actPropId = createIncomeOpen ? incomePropertyId : expensePropertyId;
+        const actBldgId = createIncomeOpen ? incomeBuildingId : expenseBuildingId;
         let filteredUnits = units;
         if (actBldgId) {
           filteredUnits = units.filter(u => u.buildingId === actBldgId);
         } else if (actPropId) {
           filteredUnits = units.filter(u => u.propertyId === actPropId);
         }
-        return filteredUnits.map(u => ({ value: u.id, label: `Unit ${u.unitNumber} (${u.property?.name || 'Property'})` }));
+        return filteredUnits.map(u => ({ value: u.id, label: `Unit ${u.unitNumber}` }));
+      }
 
-      case 'tenant':
-        // Filter tenants by chosen unit and make sure unitId is present
-        const actUnitId = activeTab === 'income' ? incomeUnitId : expenseUnitId;
-        let filteredTenants = tenants.filter(t => !!t.unitId);
-        if (actUnitId) {
-          filteredTenants = filteredTenants.filter(t => t.unitId === actUnitId);
-        }
-        return filteredTenants.map(t => ({ value: t.id, label: t.name || `${t.firstName || ''} ${t.lastName || ''}`.trim() }));
+      case 'tenant': {
+        return tenants.map(t => ({
+          value: t.id,
+          label: `${t.firstName || ''} ${t.lastName || ''}`.trim() || t.name || 'Tenant',
+        }));
+      }
 
-      case 'vendor':
-        return staff.map(s => ({ value: s.id, label: `${s.firstName || ''} ${s.lastName || ''}`.trim() || s.name || 'Staff' }));
+      case 'owner': {
+        return owners.map(o => ({
+          value: o.id,
+          label: `${o.firstName || ''} ${o.lastName || ''}`.trim() || o.name || 'Owner',
+        }));
+      }
+
+      case 'vendor': {
+        const staffOpts = staff.map(s => ({
+          value: `staff-${s.id}`,
+          label: `Staff: ${(`${s.firstName || ''} ${s.lastName || ''}`).trim() || s.name || 'Staff'}`
+        }));
+        const vendorOpts = vendors.map(v => ({
+          value: `vendor-${v.id}`,
+          label: `Vendor: ${v.name || 'Vendor'}`
+        }));
+        const combined = [...staffOpts, ...vendorOpts];
+        return combined.length > 0 ? combined : [{ value: '', label: 'No Payees Found' }];
+      }
 
       case 'coaType':
         return ['Assets', 'Liability', 'Equity', 'Income', 'Expenses'].map(t => ({ value: t, label: t }));
 
       case 'incomeCat':
-        return ['Rent Revenue', 'Late Fees', 'Pet Fees', 'Utilities', 'Storage', 'App Fee'].map(t => ({ value: t, label: t }));
+        return [
+          { value: 'Rent', label: 'Rent Revenue' },
+          { value: 'Utilities', label: 'Utilities Reimbursement' },
+          { value: 'Late Fees', label: 'Late Fees Penalty' },
+          { value: 'Parking', label: 'Parking Space Rent' },
+          { value: 'Storage', label: 'Storage Lockers Rent' },
+          { value: 'Pet Fees', label: 'Pet Rent Fee' },
+        ];
 
       case 'expenseCat':
-        return ['General Maintenance', 'Utilities', 'Landscaping', 'Property Taxes', 'Insurance', 'Management Fees'].map(t => ({ value: t, label: t }));
+        return [
+          { value: 'Maintenance', label: 'General Maintenance' },
+          { value: 'Repairs', label: 'Repairs' },
+          { value: 'Utilities', label: 'Utilities' },
+          { value: 'Insurance', label: 'Insurance' },
+          { value: 'Property Taxes', label: 'Property Taxes' },
+          { value: 'Payroll', label: 'Payroll' },
+          { value: 'Management Fee', label: 'Management Fee' },
+          { value: 'Other Expense', label: 'Other Expense' },
+        ];
 
       default:
         return [];
@@ -450,30 +598,81 @@ export const ManagerAccountingScreen = () => {
   };
 
   const handleSelectPickerOption = (val) => {
-    if (activeTab === 'income') {
+    if (!val) return;
+    if (activePicker === 'incomeSourceType') {
+      setIncomeSourceType(val);
+      setIncomeTenantId('');
+      setIncomeOwnerId('');
+      setIncomeMiscDesc('');
+      setIncomePropertyId('');
+      setIncomeBuildingId('');
+      setIncomeUnitId('');
+    } else if (activePicker === 'expensePayeeType') {
+      setExpensePayeeType(val);
+      setExpenseVendorId('');
+      setExpenseTenantId('');
+      setExpenseOwnerId('');
+      setExpensePropertyId('');
+      setExpenseBuildingId('');
+      setExpenseUnitId('');
+    } else if (createIncomeOpen) {
+      if (activePicker === 'tenant') {
+        setIncomeTenantId(val);
+        const t = tenants.find(item => item.id === val);
+        if (t) {
+          setIncomePropertyId(t.propertyId || '');
+          setIncomeUnitId(t.unitId || '');
+          if (t.unitId) {
+            const u = units.find(unitItem => unitItem.id === t.unitId);
+            setIncomeBuildingId(u ? u.buildingId || '' : '');
+          }
+        }
+      }
+      if (activePicker === 'owner') {
+        setIncomeOwnerId(val);
+        const ownedProps = properties.filter(p => p.ownerId === val);
+        if (ownedProps.length === 1) {
+          setIncomePropertyId(ownedProps[0].id);
+        } else {
+          setIncomePropertyId('');
+        }
+      }
       if (activePicker === 'property') {
         setIncomePropertyId(val);
         setIncomeBuildingId('');
         setIncomeUnitId('');
-        setIncomeTenantId('');
       }
       if (activePicker === 'building') {
         setIncomeBuildingId(val);
         setIncomeUnitId('');
-        setIncomeTenantId('');
       }
       if (activePicker === 'unit') {
         setIncomeUnitId(val);
-        setIncomeTenantId('');
-        // Auto default tenant if single resident in unit
-        const matchingTenants = tenants.filter(t => t.unitId === val);
-        if (matchingTenants.length === 1) {
-          setIncomeTenantId(matchingTenants[0].id);
+      }
+      if (activePicker === 'incomeCat') setIncomeCategory(val);
+    } else if (createExpenseOpen) {
+      if (activePicker === 'vendor') setExpenseVendorId(val);
+      if (activePicker === 'tenant') {
+        setExpenseTenantId(val);
+        const t = tenants.find(item => item.id === val);
+        if (t) {
+          setExpensePropertyId(t.propertyId || '');
+          setExpenseUnitId(t.unitId || '');
+          if (t.unitId) {
+            const u = units.find(unitItem => unitItem.id === t.unitId);
+            setExpenseBuildingId(u ? u.buildingId || '' : '');
+          }
         }
       }
-      if (activePicker === 'tenant') setIncomeTenantId(val);
-      if (activePicker === 'incomeCat') setIncomeCategory(val);
-    } else if (activeTab === 'expenses') {
+      if (activePicker === 'owner') {
+        setExpenseOwnerId(val);
+        const ownedProps = properties.filter(p => p.ownerId === val);
+        if (ownedProps.length === 1) {
+          setExpensePropertyId(ownedProps[0].id);
+        } else {
+          setExpensePropertyId('');
+        }
+      }
       if (activePicker === 'property') {
         setExpensePropertyId(val);
         setExpenseBuildingId('');
@@ -484,7 +683,6 @@ export const ManagerAccountingScreen = () => {
         setExpenseUnitId('');
       }
       if (activePicker === 'unit') setExpenseUnitId(val);
-      if (activePicker === 'vendor') setExpenseVendorId(val);
       if (activePicker === 'expenseCat') setExpenseCategory(val);
     } else {
       if (activePicker === 'coaType') setCoaType(val);
@@ -509,6 +707,61 @@ export const ManagerAccountingScreen = () => {
     const text = `${item.vendorPartner || ''} ${item.propertyLocation || ''} ${item.category || ''}`.toLowerCase();
     return text.includes(searchQuery.toLowerCase());
   });
+
+  // Location card resolver for dynamic display (Tenant Location)
+  const renderLocationCard = (tenantId) => {
+    if (!tenantId) return null;
+    const t = tenants.find(item => item.id === tenantId);
+    if (!t) return null;
+    const prop = properties.find(p => p.id === t.propertyId);
+    const unitObj = units.find(u => u.id === t.unitId);
+    const bldg = buildings.find(b => b.id === unitObj?.buildingId);
+
+    return (
+      <View style={styles.locationCard}>
+        <Text style={styles.locationTitle} allowFontScaling={false}>ASSOCIATED LOCATION DETAILS</Text>
+        <View style={styles.locationRow}>
+          <View style={styles.locationItem}>
+            <Text style={styles.locationItemLabel} allowFontScaling={false}>Property</Text>
+            <Text style={styles.locationItemValue} allowFontScaling={false}>{prop ? prop.name : 'N/A'}</Text>
+          </View>
+          <View style={styles.locationItem}>
+            <Text style={styles.locationItemLabel} allowFontScaling={false}>Building</Text>
+            <Text style={styles.locationItemValue} allowFontScaling={false}>{bldg ? bldg.name : 'N/A'}</Text>
+          </View>
+          <View style={styles.locationItem}>
+            <Text style={styles.locationItemLabel} allowFontScaling={false}>Unit</Text>
+            <Text style={styles.locationItemValue} allowFontScaling={false}>{unitObj ? `Unit ${unitObj.unitNumber}` : 'N/A'}</Text>
+          </View>
+        </View>
+      </View>
+    );
+  };
+
+  // Property card resolver for dynamic display (Owner Property)
+  const renderOwnerPropertyCard = (ownerId, propId) => {
+    if (!ownerId) return null;
+    const ownerObj = owners.find(o => o.id === ownerId);
+    if (!ownerObj) return null;
+    const ownedProps = properties.filter(p => p.ownerId === ownerId);
+    const selectedProp = properties.find(p => p.id === propId) || ownedProps[0];
+
+    return (
+      <View style={styles.locationCard}>
+        <Text style={styles.locationTitle} allowFontScaling={false}>ASSOCIATED PROPERTY DETAILS</Text>
+        <View style={styles.locationRow}>
+          <View style={styles.locationItem}>
+            <Text style={styles.locationItemLabel} allowFontScaling={false}>Property Name</Text>
+            <Text style={styles.locationItemValue} allowFontScaling={false}>{selectedProp ? selectedProp.name : 'N/A'}</Text>
+          </View>
+          <View style={styles.locationItem}>
+            <Text style={styles.locationItemLabel} allowFontScaling={false}>Address</Text>
+            <Text style={styles.locationItemValue} allowFontScaling={false}>{selectedProp ? (selectedProp.address || selectedProp.streetAddress || 'N/A') : 'N/A'}</Text>
+          </View>
+        </View>
+      </View>
+    );
+  };
 
   return (
     <View style={styles.mainWrapper}>
@@ -600,42 +853,44 @@ export const ManagerAccountingScreen = () => {
           </View>
         ) : (
           <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
-            
-            {/* A. RENDERING FOR CHART OF ACCOUNTS (CoA) */}
             {activeTab === 'coa' && (
               <View>
                 {filteredCoA.length === 0 ? (
-                  <View style={styles.emptyView}>
-                    <Text style={styles.emptyText} allowFontScaling={false}>
-                      {language === 'es' ? 'No coinciden registros del Plan de Cuentas' : 'No Chart of Account records match'}
-                    </Text>
+                  <View style={styles.emptyCard}>
+                    <Ionicons name="journal-outline" size={40} color="#64748b" />
+                    <Text style={styles.emptyTitle} allowFontScaling={false}>No Chart of Accounts</Text>
+                    <Text style={styles.emptyDesc} allowFontScaling={false}>No ledger account journals found matching your filter.</Text>
                   </View>
                 ) : (
                   filteredCoA.map((item) => (
-                    <View key={item.id} style={styles.ledgerCard}>
-                      <View style={styles.rowBetween}>
-                        <View>
-                          <Text style={styles.coaNum} allowFontScaling={false}>{item.accountNumber || item.accountCode}</Text>
-                          <Text style={styles.recordLabel} allowFontScaling={false}>{item.accountName}</Text>
+                    <View key={item.id} style={styles.dataCard}>
+                      <View style={styles.cardHeader}>
+                        <View style={styles.accountNumberBadge}>
+                          <Text style={styles.accountNumberText} allowFontScaling={false}>{item.accountNumber || item.accountCode || '----'}</Text>
                         </View>
-                        <TouchableOpacity onPress={() => handleDeleteAccount(item.id, item.accountName)}>
-                          <Ionicons name="trash-outline" size={18} color="#ef4444" />
+                        <Text style={styles.cardTitle} allowFontScaling={false}>{item.accountName || 'Ledger Account'}</Text>
+                        <TouchableOpacity style={{ padding: 4 }} onPress={() => handleDeleteAccount(item.id, item.accountName)}>
+                          <Ionicons name="trash-outline" size={18} color="#f43f5e" />
                         </TouchableOpacity>
                       </View>
-                      <View style={styles.divider} />
-                      <View style={styles.rowBetween}>
-                        <Text style={styles.recordSubText} allowFontScaling={false}>
-                          {language === 'es' ? 'Tipo / Alineación de Clase' : 'Type / Class Alignment'}
-                        </Text>
-                        <Text style={styles.recordSubTextVal} allowFontScaling={false}>{item.type}</Text>
-                      </View>
-                      <View style={styles.rowBetween}>
-                        <Text style={styles.recordSubText} allowFontScaling={false}>
-                          {language === 'es' ? 'Saldo Actual del Libro Mayor' : 'Current Balance Ledger'}
-                        </Text>
-                        <Text style={[styles.recordValue, { color: '#38bdf8' }]} allowFontScaling={false}>
-                          ${Number(item.balance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                        </Text>
+                      <View style={styles.cardDivider} />
+                      <View style={styles.cardDetailRow}>
+                        <View style={styles.detailItem}>
+                          <Text style={styles.detailLabel} allowFontScaling={false}>Type</Text>
+                          <Text style={styles.detailValue} allowFontScaling={false}>{item.type || 'Assets'}</Text>
+                        </View>
+                        <View style={styles.detailItem}>
+                          <Text style={styles.detailLabel} allowFontScaling={false}>Balance</Text>
+                          <Text style={[styles.detailValue, { color: '#38bdf8', fontWeight: '800' }]} allowFontScaling={false}>
+                            ${item.balance ? Number(item.balance).toLocaleString() : '0'}
+                          </Text>
+                        </View>
+                        <View style={styles.detailItem}>
+                          <Text style={styles.detailLabel} allowFontScaling={false}>Status</Text>
+                          <View style={styles.statusBadgeActive}>
+                            <Text style={styles.statusTextActive} allowFontScaling={false}>Active</Text>
+                          </View>
+                        </View>
                       </View>
                     </View>
                   ))
@@ -643,41 +898,45 @@ export const ManagerAccountingScreen = () => {
               </View>
             )}
 
-            {/* B. RENDERING FOR INCOME TRANSACTIONS */}
             {activeTab === 'income' && (
               <View>
                 {filteredIncome.length === 0 ? (
-                  <View style={styles.emptyView}>
-                    <Text style={styles.emptyText} allowFontScaling={false}>
-                      {language === 'es' ? 'No se encontraron entradas de ingresos misceláneos' : 'No miscellaneous income ledger entries found'}
-                    </Text>
+                  <View style={styles.emptyCard}>
+                    <Ionicons name="cash-outline" size={40} color="#64748b" />
+                    <Text style={styles.emptyTitle} allowFontScaling={false}>No Income Transactions</Text>
+                    <Text style={styles.emptyDesc} allowFontScaling={false}>No revenue disbursements or clearing deposits recorded yet.</Text>
                   </View>
                 ) : (
                   filteredIncome.map((item) => (
-                    <View key={item.id} style={styles.ledgerCard}>
-                      <View style={styles.rowBetween}>
-                        <View>
-                          <Text style={styles.recordLabel} allowFontScaling={false}>{item.residentName}</Text>
-                          <Text style={styles.recordSubText} allowFontScaling={false}>{item.propertyLocation}</Text>
+                    <View key={item.id} style={styles.dataCard}>
+                      <View style={styles.cardHeader}>
+                        <View style={styles.incomeIconBadge}>
+                          <Ionicons name="trending-up-outline" size={16} color="#10b981" />
                         </View>
-                        <View style={[styles.badge, { borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.12)' }]}>
-                          <Text style={[styles.badgeText, { color: '#10b981' }]} allowFontScaling={false}>{item.category}</Text>
+                        <View style={{ flex: 1, marginLeft: 10 }}>
+                          <Text style={styles.cardTitle} allowFontScaling={false}>{item.residentName}</Text>
+                          <Text style={styles.cardSubTitle} allowFontScaling={false}>{item.propertyLocation}</Text>
                         </View>
+                        <Text style={styles.incomeAmountText} allowFontScaling={false}>+${Number(item.amount).toLocaleString()}</Text>
                       </View>
-                      <View style={styles.divider} />
-                      <View style={styles.rowBetween}>
-                        <Text style={styles.recordSubText} allowFontScaling={false}>
-                          {language === 'es' ? 'Fecha de Liquidación' : 'Clearing Timestamp'}
-                        </Text>
-                        <Text style={styles.recordSubTextVal} allowFontScaling={false}>{item.clearingDate}</Text>
-                      </View>
-                      <View style={styles.rowBetween}>
-                        <Text style={styles.recordSubText} allowFontScaling={false}>
-                          {language === 'es' ? 'Valor Recibido de Pago' : 'Payment Value Received'}
-                        </Text>
-                        <Text style={[styles.recordValue, { color: '#10b981' }]} allowFontScaling={false}>
-                          +${Number(item.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                        </Text>
+                      <View style={styles.cardDivider} />
+                      <View style={styles.cardDetailRow}>
+                        <View style={styles.detailItem}>
+                          <Text style={styles.detailLabel} allowFontScaling={false}>Clearing Date</Text>
+                          <Text style={styles.detailValue} allowFontScaling={false}>{item.clearingDate}</Text>
+                        </View>
+                        <View style={styles.detailItem}>
+                          <Text style={styles.detailLabel} allowFontScaling={false}>Category</Text>
+                          <View style={styles.categoryChip}>
+                            <Text style={styles.categoryChipText} allowFontScaling={false}>{item.category}</Text>
+                          </View>
+                        </View>
+                        <View style={styles.detailItem}>
+                          <Text style={styles.detailLabel} allowFontScaling={false}>Status</Text>
+                          <View style={styles.statusBadgeActive}>
+                            <Text style={styles.statusTextActive} allowFontScaling={false}>{item.status}</Text>
+                          </View>
+                        </View>
                       </View>
                     </View>
                   ))
@@ -685,60 +944,60 @@ export const ManagerAccountingScreen = () => {
               </View>
             )}
 
-            {/* C. RENDERING FOR EXPENSES TRACKER */}
             {activeTab === 'expenses' && (
               <View>
                 {filteredExpense.length === 0 ? (
-                  <View style={styles.emptyView}>
-                    <Text style={styles.emptyText} allowFontScaling={false}>
-                      {language === 'es' ? 'No hay artículos de gastos auditar' : 'No business expense items audited'}
-                    </Text>
+                  <View style={styles.emptyCard}>
+                    <Ionicons name="receipt-outline" size={40} color="#64748b" />
+                    <Text style={styles.emptyTitle} allowFontScaling={false}>No Expense Records</Text>
+                    <Text style={styles.emptyDesc} allowFontScaling={false}>No vendor maintenance invoices or property bills found.</Text>
                   </View>
                 ) : (
                   filteredExpense.map((item) => (
-                    <View key={item.id} style={styles.ledgerCard}>
-                      <View style={styles.rowBetween}>
-                        <View>
-                          <Text style={styles.recordLabel} allowFontScaling={false}>{item.vendorPartner}</Text>
-                          <Text style={styles.recordSubText} allowFontScaling={false}>{item.propertyLocation}</Text>
+                    <View key={item.id} style={styles.dataCard}>
+                      <View style={styles.cardHeader}>
+                        <View style={styles.expenseIconBadge}>
+                          <Ionicons name="trending-down-outline" size={16} color="#f43f5e" />
                         </View>
-                        <View style={[styles.badge, { borderColor: '#f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.12)' }]}>
-                          <Text style={[styles.badgeText, { color: '#f59e0b' }]} allowFontScaling={false}>{item.category}</Text>
+                        <View style={{ flex: 1, marginLeft: 10 }}>
+                          <Text style={styles.cardTitle} allowFontScaling={false}>{item.vendorPartner}</Text>
+                          <Text style={styles.cardSubTitle} allowFontScaling={false}>{item.propertyLocation}</Text>
                         </View>
+                        <Text style={styles.expenseAmountText} allowFontScaling={false}>-${Number(item.amountPaid).toLocaleString()}</Text>
                       </View>
-                      <View style={styles.divider} />
-                      <View style={styles.rowBetween}>
-                        <Text style={styles.recordSubText} allowFontScaling={false}>
-                          {language === 'es' ? 'Fecha de Gasto' : 'Expense Clearing Date'}
-                        </Text>
-                        <Text style={styles.recordSubTextVal} allowFontScaling={false}>{item.expenseDate}</Text>
-                      </View>
-                      <View style={styles.rowBetween}>
-                        <Text style={styles.recordSubText} allowFontScaling={false}>
-                          {language === 'es' ? 'Pago Despachado' : 'Payment Dispatched'}
-                        </Text>
-                        <Text style={[styles.recordValue, { color: '#ef4444' }]} allowFontScaling={false}>
-                          -${Number(item.amountPaid || item.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                        </Text>
+                      <View style={styles.cardDivider} />
+                      <View style={styles.cardDetailRow}>
+                        <View style={styles.detailItem}>
+                          <Text style={styles.detailLabel} allowFontScaling={false}>Expense Date</Text>
+                          <Text style={styles.detailValue} allowFontScaling={false}>{item.expenseDate}</Text>
+                        </View>
+                        <View style={styles.detailItem}>
+                          <Text style={styles.detailLabel} allowFontScaling={false}>Category</Text>
+                          <View style={styles.categoryChip}>
+                            <Text style={styles.categoryChipText} allowFontScaling={false}>{item.category}</Text>
+                          </View>
+                        </View>
+                        <View style={styles.detailItem}>
+                          <Text style={styles.detailLabel} allowFontScaling={false}>Action</Text>
+                          <Text style={[styles.detailValue, { color: '#94a3b8' }]} allowFontScaling={false}>{item.approvalAction}</Text>
+                        </View>
                       </View>
                     </View>
                   ))
                 )}
               </View>
             )}
-
           </Animated.View>
         )}
-        <View style={{ height: 60 }} />
       </ScrollView>
 
-      {/* --- 1. RECORD ACCOUNT (CoA) MODAL --- */}
+      {/* --- 1. CREATE CHART OF ACCOUNT MODAL --- */}
       <Modal visible={createCoaOpen} animationType="slide" transparent>
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle} allowFontScaling={false}>Create New Chart Account</Text>
+                <Text style={styles.modalTitle} allowFontScaling={false}>New Chart of Account</Text>
                 <TouchableOpacity onPress={() => setCreateCoaOpen(false)}>
                   <Ionicons name="close-circle-outline" size={24} color="#94a3b8" />
                 </TouchableOpacity>
@@ -814,66 +1073,137 @@ export const ManagerAccountingScreen = () => {
 
               <ScrollView style={styles.modalForm} showsVerticalScrollIndicator={false}>
                 <Text style={styles.formLabel} allowFontScaling={false}>SOURCE TYPE</Text>
-                <TouchableOpacity style={styles.formPickerSelector} disabled>
-                  <Text style={styles.formPickerText} allowFontScaling={false}>{incomeSource}</Text>
-                  <Ionicons name="chevron-down" size={16} color="#475569" />
-                </TouchableOpacity>
-
-                <Text style={styles.formLabel} allowFontScaling={false}>PROPERTY PORTFOLIO</Text>
                 <TouchableOpacity
                   style={styles.formPickerSelector}
                   onPress={() => {
-                    setActivePicker('property');
+                    setActivePicker('incomeSourceType');
                     setPickerModalOpen(true);
                   }}
                 >
-                  <Text style={styles.formPickerText} allowFontScaling={false}>
-                    {incomePropertyId ? properties.find(p => p.id === incomePropertyId)?.name : 'Select Property...'}
-                  </Text>
+                  <Text style={styles.formPickerText} allowFontScaling={false}>{incomeSourceType}</Text>
                   <Ionicons name="chevron-down" size={16} color="#cbd5e1" />
                 </TouchableOpacity>
 
-                <Text style={styles.formLabel} allowFontScaling={false}>BUILDING PORTFOLIO</Text>
-                <TouchableOpacity
-                  style={styles.formPickerSelector}
-                  onPress={() => {
-                    setActivePicker('building');
-                    setPickerModalOpen(true);
-                  }}
-                >
-                  <Text style={styles.formPickerText} allowFontScaling={false}>
-                    {incomeBuildingId ? buildings.find(b => b.id === incomeBuildingId)?.name : 'Select Building...'}
-                  </Text>
-                  <Ionicons name="chevron-down" size={16} color="#cbd5e1" />
-                </TouchableOpacity>
+                {/* Conditional Fields based on SOURCE TYPE */}
+                {incomeSourceType === 'Tenant / Resident' && (
+                  <View>
+                    <Text style={styles.formLabel} allowFontScaling={false}>RESIDENT / TENANT PAYEE</Text>
+                    <TouchableOpacity
+                      style={styles.formPickerSelector}
+                      onPress={() => {
+                        setActivePicker('tenant');
+                        setPickerModalOpen(true);
+                      }}
+                    >
+                      <Text style={styles.formPickerText} allowFontScaling={false}>
+                        {incomeTenantId
+                          ? tenants.find(t => t.id === incomeTenantId)
+                            ? `${tenants.find(t => t.id === incomeTenantId).firstName || ''} ${tenants.find(t => t.id === incomeTenantId).lastName || ''}`.trim()
+                            : 'Select Tenant...'
+                          : 'Select Tenant...'}
+                      </Text>
+                      <Ionicons name="chevron-down" size={16} color="#cbd5e1" />
+                    </TouchableOpacity>
 
-                <Text style={styles.formLabel} allowFontScaling={false}>RENTABLE UNIT</Text>
-                <TouchableOpacity
-                  style={styles.formPickerSelector}
-                  onPress={() => {
-                    setActivePicker('unit');
-                    setPickerModalOpen(true);
-                  }}
-                >
-                  <Text style={styles.formPickerText} allowFontScaling={false}>
-                    {incomeUnitId ? `Unit ${units.find(u => u.id === incomeUnitId)?.unitNumber}` : 'Select Unit...'}
-                  </Text>
-                  <Ionicons name="chevron-down" size={16} color="#cbd5e1" />
-                </TouchableOpacity>
+                    {renderLocationCard(incomeTenantId)}
+                  </View>
+                )}
 
-                <Text style={styles.formLabel} allowFontScaling={false}>RESIDENT / TENANT PAYEE</Text>
-                <TouchableOpacity
-                  style={styles.formPickerSelector}
-                  onPress={() => {
-                    setActivePicker('tenant');
-                    setPickerModalOpen(true);
-                  }}
-                >
-                  <Text style={styles.formPickerText} allowFontScaling={false}>
-                    {incomeTenantId ? tenants.find(t => t.id === incomeTenantId)?.name : 'Select Tenant...'}
-                  </Text>
-                  <Ionicons name="chevron-down" size={16} color="#cbd5e1" />
-                </TouchableOpacity>
+                {incomeSourceType === 'Property Owner (Contribution)' && (
+                  <View>
+                    <Text style={styles.formLabel} allowFontScaling={false}>PROPERTY OWNER PAYEE</Text>
+                    <TouchableOpacity
+                      style={styles.formPickerSelector}
+                      onPress={() => {
+                        setActivePicker('owner');
+                        setPickerModalOpen(true);
+                      }}
+                    >
+                      <Text style={styles.formPickerText} allowFontScaling={false}>
+                        {incomeOwnerId
+                          ? owners.find(o => o.id === incomeOwnerId)
+                            ? `${owners.find(o => o.id === incomeOwnerId).firstName || ''} ${owners.find(o => o.id === incomeOwnerId).lastName || ''}`.trim()
+                            : 'Select Owner...'
+                          : 'Select Owner...'}
+                      </Text>
+                      <Ionicons name="chevron-down" size={16} color="#cbd5e1" />
+                    </TouchableOpacity>
+
+                    {incomeOwnerId ? (
+                      <View>
+                        <Text style={styles.formLabel} allowFontScaling={false}>SELECT PROPERTY</Text>
+                        <TouchableOpacity
+                          style={styles.formPickerSelector}
+                          onPress={() => {
+                            setActivePicker('property');
+                            setPickerModalOpen(true);
+                          }}
+                        >
+                          <Text style={styles.formPickerText} allowFontScaling={false}>
+                            {incomePropertyId ? properties.find(p => p.id === incomePropertyId)?.name : 'Choose Property...'}
+                          </Text>
+                          <Ionicons name="chevron-down" size={16} color="#cbd5e1" />
+                        </TouchableOpacity>
+                        {renderOwnerPropertyCard(incomeOwnerId, incomePropertyId)}
+                      </View>
+                    ) : null}
+                  </View>
+                )}
+
+                {incomeSourceType === 'Miscellaneous / Vending / Other' && (
+                  <View>
+                    <Text style={styles.formLabel} allowFontScaling={false}>SOURCE DESCRIPTION</Text>
+                    <TextInput
+                      style={styles.formInput}
+                      placeholder="E.g. Vending Machine Inc., Laundry Fee..."
+                      placeholderTextColor="#64748b"
+                      value={incomeMiscDesc}
+                      onChangeText={setIncomeMiscDesc}
+                    />
+
+                    <Text style={styles.formLabel} allowFontScaling={false}>PROPERTY PORTFOLIO</Text>
+                    <TouchableOpacity
+                      style={styles.formPickerSelector}
+                      onPress={() => {
+                        setActivePicker('property');
+                        setPickerModalOpen(true);
+                      }}
+                    >
+                      <Text style={styles.formPickerText} allowFontScaling={false}>
+                        {incomePropertyId ? properties.find(p => p.id === incomePropertyId)?.name : 'Select Property...'}
+                      </Text>
+                      <Ionicons name="chevron-down" size={16} color="#cbd5e1" />
+                    </TouchableOpacity>
+
+                    <Text style={styles.formLabel} allowFontScaling={false}>BUILDING PORTFOLIO</Text>
+                    <TouchableOpacity
+                      style={styles.formPickerSelector}
+                      onPress={() => {
+                        setActivePicker('building');
+                        setPickerModalOpen(true);
+                      }}
+                    >
+                      <Text style={styles.formPickerText} allowFontScaling={false}>
+                        {incomeBuildingId ? buildings.find(b => b.id === incomeBuildingId)?.name : 'Select Building...'}
+                      </Text>
+                      <Ionicons name="chevron-down" size={16} color="#cbd5e1" />
+                    </TouchableOpacity>
+
+                    <Text style={styles.formLabel} allowFontScaling={false}>RENTABLE UNIT</Text>
+                    <TouchableOpacity
+                      style={styles.formPickerSelector}
+                      onPress={() => {
+                        setActivePicker('unit');
+                        setPickerModalOpen(true);
+                      }}
+                    >
+                      <Text style={styles.formPickerText} allowFontScaling={false}>
+                        {incomeUnitId ? `Unit ${units.find(u => u.id === incomeUnitId)?.unitNumber}` : 'Select Unit...'}
+                      </Text>
+                      <Ionicons name="chevron-down" size={16} color="#cbd5e1" />
+                    </TouchableOpacity>
+                  </View>
+                )}
 
                 <Text style={styles.formLabel} allowFontScaling={false}>INCOME CATEGORY</Text>
                 <TouchableOpacity
@@ -929,66 +1259,150 @@ export const ManagerAccountingScreen = () => {
 
               <ScrollView style={styles.modalForm} showsVerticalScrollIndicator={false}>
                 <Text style={styles.formLabel} allowFontScaling={false}>PAYEE TYPE</Text>
-                <TouchableOpacity style={styles.formPickerSelector} disabled>
+                <TouchableOpacity
+                  style={styles.formPickerSelector}
+                  onPress={() => {
+                    setActivePicker('expensePayeeType');
+                    setPickerModalOpen(true);
+                  }}
+                >
                   <Text style={styles.formPickerText} allowFontScaling={false}>{expensePayeeType}</Text>
-                  <Ionicons name="chevron-down" size={16} color="#475569" />
-                </TouchableOpacity>
-
-                <Text style={styles.formLabel} allowFontScaling={false}>PROPERTY PORTFOLIO</Text>
-                <TouchableOpacity
-                  style={styles.formPickerSelector}
-                  onPress={() => {
-                    setActivePicker('property');
-                    setPickerModalOpen(true);
-                  }}
-                >
-                  <Text style={styles.formPickerText} allowFontScaling={false}>
-                    {expensePropertyId ? properties.find(p => p.id === expensePropertyId)?.name : 'Select Property...'}
-                  </Text>
                   <Ionicons name="chevron-down" size={16} color="#cbd5e1" />
                 </TouchableOpacity>
 
-                <Text style={styles.formLabel} allowFontScaling={false}>BUILDING PORTFOLIO</Text>
-                <TouchableOpacity
-                  style={styles.formPickerSelector}
-                  onPress={() => {
-                    setActivePicker('building');
-                    setPickerModalOpen(true);
-                  }}
-                >
-                  <Text style={styles.formPickerText} allowFontScaling={false}>
-                    {expenseBuildingId ? buildings.find(b => b.id === expenseBuildingId)?.name : 'Select Building...'}
-                  </Text>
-                  <Ionicons name="chevron-down" size={16} color="#cbd5e1" />
-                </TouchableOpacity>
+                {/* Conditional Fields based on PAYEE TYPE */}
+                {expensePayeeType === 'Vendor / Staff Payee' && (
+                  <View>
+                    <Text style={styles.formLabel} allowFontScaling={false}>PAYEE (STAFF / VENDOR)</Text>
+                    <TouchableOpacity
+                      style={styles.formPickerSelector}
+                      onPress={() => {
+                        setActivePicker('vendor');
+                        setPickerModalOpen(true);
+                      }}
+                    >
+                      <Text style={styles.formPickerText} allowFontScaling={false}>
+                        {expenseVendorId
+                          ? (() => {
+                              const s = staff.find(st => `staff-${st.id}` === expenseVendorId || st.id === expenseVendorId);
+                              if (s) return `Staff: ${(`${s.firstName || ''} ${s.lastName || ''}`).trim() || s.name}`;
+                              const v = vendors.find(vd => `vendor-${vd.id}` === expenseVendorId || vd.id === expenseVendorId);
+                              if (v) return `Vendor: ${v.name}`;
+                              return 'Select Payee...';
+                            })()
+                          : 'Select Payee...'}
+                      </Text>
+                      <Ionicons name="chevron-down" size={16} color="#cbd5e1" />
+                    </TouchableOpacity>
 
-                <Text style={styles.formLabel} allowFontScaling={false}>RENTABLE UNIT</Text>
-                <TouchableOpacity
-                  style={styles.formPickerSelector}
-                  onPress={() => {
-                    setActivePicker('unit');
-                    setPickerModalOpen(true);
-                  }}
-                >
-                  <Text style={styles.formPickerText} allowFontScaling={false}>
-                    {expenseUnitId ? `Unit ${units.find(u => u.id === expenseUnitId)?.unitNumber}` : 'Select Unit...'}
-                  </Text>
-                  <Ionicons name="chevron-down" size={16} color="#cbd5e1" />
-                </TouchableOpacity>
+                    <Text style={styles.formLabel} allowFontScaling={false}>PROPERTY PORTFOLIO</Text>
+                    <TouchableOpacity
+                      style={styles.formPickerSelector}
+                      onPress={() => {
+                        setActivePicker('property');
+                        setPickerModalOpen(true);
+                      }}
+                    >
+                      <Text style={styles.formPickerText} allowFontScaling={false}>
+                        {expensePropertyId ? properties.find(p => p.id === expensePropertyId)?.name : 'Select Property...'}
+                      </Text>
+                      <Ionicons name="chevron-down" size={16} color="#cbd5e1" />
+                    </TouchableOpacity>
 
-                <Text style={styles.formLabel} allowFontScaling={false}>MAINTENANCE STAFF</Text>
-                <TouchableOpacity
-                  style={styles.formPickerSelector}
-                  onPress={() => {
-                    setActivePicker('vendor');
-                    setPickerModalOpen(true);
-                  }}
-                >
-                  <Text style={styles.formPickerText} allowFontScaling={false}>
-                    {expenseVendorId ? staff.find(s => s.id === expenseVendorId) ? `${staff.find(s => s.id === expenseVendorId).firstName || ''} ${staff.find(s => s.id === expenseVendorId).lastName || ''}`.trim() : 'Select Maintenance Staff...' : 'Select Maintenance Staff...'}
-                  </Text>
-                  <Ionicons name="chevron-down" size={16} color="#cbd5e1" />
-                </TouchableOpacity>
+                    <Text style={styles.formLabel} allowFontScaling={false}>BUILDING PORTFOLIO</Text>
+                    <TouchableOpacity
+                      style={styles.formPickerSelector}
+                      onPress={() => {
+                        setActivePicker('building');
+                        setPickerModalOpen(true);
+                      }}
+                    >
+                      <Text style={styles.formPickerText} allowFontScaling={false}>
+                        {expenseBuildingId ? buildings.find(b => b.id === expenseBuildingId)?.name : 'Select Building...'}
+                      </Text>
+                      <Ionicons name="chevron-down" size={16} color="#cbd5e1" />
+                    </TouchableOpacity>
+
+                    <Text style={styles.formLabel} allowFontScaling={false}>RENTABLE UNIT</Text>
+                    <TouchableOpacity
+                      style={styles.formPickerSelector}
+                      onPress={() => {
+                        setActivePicker('unit');
+                        setPickerModalOpen(true);
+                      }}
+                    >
+                      <Text style={styles.formPickerText} allowFontScaling={false}>
+                        {expenseUnitId ? `Unit ${units.find(u => u.id === expenseUnitId)?.unitNumber}` : 'Select Unit...'}
+                      </Text>
+                      <Ionicons name="chevron-down" size={16} color="#cbd5e1" />
+                    </TouchableOpacity>
+                  </View>
+                )}
+
+                {expensePayeeType === 'Tenant (Refund / Return)' && (
+                  <View>
+                    <Text style={styles.formLabel} allowFontScaling={false}>RESIDENT / TENANT PAYEE</Text>
+                    <TouchableOpacity
+                      style={styles.formPickerSelector}
+                      onPress={() => {
+                        setActivePicker('tenant');
+                        setPickerModalOpen(true);
+                      }}
+                    >
+                      <Text style={styles.formPickerText} allowFontScaling={false}>
+                        {expenseTenantId
+                          ? tenants.find(t => t.id === expenseTenantId)
+                            ? `${tenants.find(t => t.id === expenseTenantId).firstName || ''} ${tenants.find(t => t.id === expenseTenantId).lastName || ''}`.trim()
+                            : 'Select Tenant...'
+                          : 'Select Tenant...'}
+                      </Text>
+                      <Ionicons name="chevron-down" size={16} color="#cbd5e1" />
+                    </TouchableOpacity>
+
+                    {renderLocationCard(expenseTenantId)}
+                  </View>
+                )}
+
+                {expensePayeeType === 'Property Owner (Distribution)' && (
+                  <View>
+                    <Text style={styles.formLabel} allowFontScaling={false}>PROPERTY OWNER PAYEE</Text>
+                    <TouchableOpacity
+                      style={styles.formPickerSelector}
+                      onPress={() => {
+                        setActivePicker('owner');
+                        setPickerModalOpen(true);
+                      }}
+                    >
+                      <Text style={styles.formPickerText} allowFontScaling={false}>
+                        {expenseOwnerId
+                          ? owners.find(o => o.id === expenseOwnerId)
+                            ? `${owners.find(o => o.id === expenseOwnerId).firstName || ''} ${owners.find(o => o.id === expenseOwnerId).lastName || ''}`.trim()
+                            : 'Select Owner...'
+                          : 'Select Owner...'}
+                      </Text>
+                      <Ionicons name="chevron-down" size={16} color="#cbd5e1" />
+                    </TouchableOpacity>
+
+                    {expenseOwnerId ? (
+                      <View>
+                        <Text style={styles.formLabel} allowFontScaling={false}>SELECT PROPERTY</Text>
+                        <TouchableOpacity
+                          style={styles.formPickerSelector}
+                          onPress={() => {
+                            setActivePicker('property');
+                            setPickerModalOpen(true);
+                          }}
+                        >
+                          <Text style={styles.formPickerText} allowFontScaling={false}>
+                            {expensePropertyId ? properties.find(p => p.id === expensePropertyId)?.name : 'Choose Property...'}
+                          </Text>
+                          <Ionicons name="chevron-down" size={16} color="#cbd5e1" />
+                        </TouchableOpacity>
+                        {renderOwnerPropertyCard(expenseOwnerId, expensePropertyId)}
+                      </View>
+                    ) : null}
+                  </View>
+                )}
 
                 <Text style={styles.formLabel} allowFontScaling={false}>EXPENSE CATEGORY</Text>
                 <TouchableOpacity
@@ -1099,12 +1513,17 @@ const getStyles = (colors, isDarkMode) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#38bdf8',
-    borderRadius: 10,
-    paddingHorizontal: 12,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
     height: 38,
   },
-  addBtnText: { color: '#0f172a', fontSize: 12.5, fontWeight: '800', marginLeft: 2 },
-
+  addBtnText: {
+    color: '#0f172a',
+    fontSize: 12,
+    fontWeight: '800',
+    marginLeft: 4,
+  },
   // Card layouts
   ledgerCard: {
     backgroundColor: colors.surface,

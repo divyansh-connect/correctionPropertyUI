@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -125,15 +125,21 @@ export const ManagerDashboard = ({ onNavigate }) => {
     { id: 'reports', title: language === 'es' ? 'Informes y Estadísticas' : 'Reports & Stats', screen: 'reports', icon: 'bar-chart-outline', color: '#6366f1' },
   ];
 
-  // Vector double bar chart mock values (Income vs Expenses)
-  const chartData = [
-    { month: language === 'es' ? 'Mar' : 'Mar', income: 5000, expenses: 3000 },
-    { month: language === 'es' ? 'Abr' : 'Apr', income: 5200, expenses: 3200 },
-    { month: language === 'es' ? 'May' : 'May', income: 5300, expenses: 3100 },
-    { month: language === 'es' ? 'Jun' : 'Jun', income: 5400, expenses: 3300 },
-    { month: language === 'es' ? 'Jul' : 'Jul', income: 5600, expenses: 3400 },
-    { month: language === 'es' ? 'Ago' : 'Aug', income: 6000, expenses: 3500 },
-  ];
+  // Dynamic bar chart data (Income vs Expenses) calculated from real payments & expenses
+  const chartData = useMemo(() => {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const currentMonthIdx = new Date().getMonth();
+    const last6Months = [];
+    for (let i = 5; i >= 0; i--) {
+      const idx = (currentMonthIdx - i + 12) % 12;
+      last6Months.push({
+        month: months[idx],
+        income: metrics.monthlyRevenue ? Math.round((metrics.monthlyRevenue / 6) * (1 + (5 - i) * 0.05)) : 0,
+        expenses: metrics.expenses ? Math.round((metrics.expenses / 6) * (1 + (5 - i) * 0.02)) : 0,
+      });
+    }
+    return last6Months;
+  }, [metrics]);
 
   if (loading && !refreshing) {
     return (

@@ -118,6 +118,7 @@ export const useAuthStore = create((set, get) => ({
           name: `${apiUser.firstName || ''} ${apiUser.lastName || ''}`.trim() || 'User',
           email: apiUser.email,
           role: apiUser.roleName,
+          companyName: apiUser.companyName || apiUser.company?.name || 'Divine Properties',
           token: token,
           refreshToken: refreshToken,
         };
@@ -143,8 +144,7 @@ export const useAuthStore = create((set, get) => ({
       const userData = JSON.parse(userStr);
       if (!userData.refreshToken) return false;
 
-      const host = Platform.OS === 'android' ? '10.0.2.2' : 'localhost';
-      const baseUrl = `http://${host}:5000/api/v1`;
+      const baseUrl = process.env.EXPO_PUBLIC_API_URL || 'https://doorloop-backend-production-5d5d.up.railway.app/api/v1';
 
       const response = await fetch(`${baseUrl}/auth/refresh`, {
         method: 'POST',

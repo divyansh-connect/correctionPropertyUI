@@ -210,6 +210,65 @@ export const OwnersScreen = () => {
     }
   };
 
+  // --- Edit Owner Handlers ---
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editingOwnerId, setEditingOwnerId] = useState(null);
+
+  const handleOpenEditOwner = (item) => {
+    setEditingOwnerId(item.id);
+    setFullName(item.name || '');
+    setEmail(item.email || '');
+    setPassword(''); // blank keeps current
+    setPhone(item.phone || '');
+    setPayoutMethod(item.payoutMethod || 'ACH/Direct Deposit');
+    const assignedIds = (item.properties || []).map(p => p.id);
+    setSelectedPropertyIds(assignedIds);
+    setIsEditOpen(true);
+  };
+
+  const handleUpdateOwner = async () => {
+    if (!fullName.trim() || !email.trim()) {
+      Alert.alert('Validation Error', 'Full Name and Email are required.');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      const [first = '', ...lastParts] = fullName.trim().split(' ');
+      const last = lastParts.join(' ');
+
+      const payload = {
+        name: fullName.trim(),
+        firstName: first,
+        lastName: last || 'Owner',
+        email: email.trim(),
+        password: password.trim() ? password.trim() : undefined,
+        phone: phone.trim() || undefined,
+        payoutMethod,
+        propertiesOwned: selectedPropertyIds,
+      };
+
+      await apiClient.put(`/owners/${editingOwnerId}`, payload, logout, refreshAccessToken);
+      
+      Alert.alert('Success', 'Property Owner updated successfully.');
+      setIsEditOpen(false);
+      
+      // Reset state
+      setFullName('');
+      setEmail('');
+      setPassword('');
+      setPhone('');
+      setPayoutMethod('ACH/Direct Deposit');
+      setSelectedPropertyIds([]);
+      
+      fetchLiveOwnersData();
+    } catch (err) {
+      Alert.alert('Error', err.message || 'Failed to update property owner');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const filteredOwners = owners.filter((item) => {
     const text = `${item.name || ''} ${item.email || ''} ${item.phone || ''}`.toLowerCase();
     return text.includes(searchQuery.toLowerCase());
@@ -294,13 +353,22 @@ export const OwnersScreen = () => {
                       <Text style={styles.ownerName} allowFontScaling={false}>{item.name}</Text>
                       <Text style={styles.ownerSubText} allowFontScaling={false}>Payout: {item.payoutMethod || 'Direct Deposit'}</Text>
                     </View>
-                    <TouchableOpacity
-                      style={styles.deleteBtn}
-                      onPress={() => handleDeleteOwner(item.id, item.name)}
-                      activeOpacity={0.7}
-                    >
-                      <Ionicons name="trash-outline" size={18} color="#ef4444" />
-                    </TouchableOpacity>
+                    <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
+                      <TouchableOpacity
+                        style={styles.editBtn}
+                        onPress={() => handleOpenEditOwner(item)}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name="create-outline" size={18} color="#f59e0b" />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.deleteBtn}
+                        onPress={() => handleDeleteOwner(item.id, item.name)}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name="trash-outline" size={18} color="#ef4444" />
+                      </TouchableOpacity>
+                    </View>
                   </View>
 
                   <View style={styles.divider} />
@@ -316,7 +384,7 @@ export const OwnersScreen = () => {
                     <View style={styles.metaCol}>
                       <Ionicons name="call-outline" size={13} color="#94a3b8" style={{ marginRight: 6 }} />
                       <Text style={styles.metaText} allowFontScaling={false} numberOfLines={1}>
-                        {item.phone || '(555) 555-0100'}
+                        {item.phone || 'N/A'}
                       </Text>
                     </View>
                   </View>
@@ -494,6 +562,165 @@ export const OwnersScreen = () => {
           </TouchableWithoutFeedback>
         </KeyboardAvoidingView>
       </Modal>
+
+      {/* MODAL: Edit Property Owner */}
+      <Modal visible={isEditOpen} animationType="slide" transparent>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalBg}
+        >
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={styles.modalCard}>
+              <View style={styles.modalHeaderRow}>
+                <Text style={styles.modalTitle} allowFontScaling={false}>Edit Property Owner</Text>
+                <TouchableOpacity onPress={() => setIsEditOpen(false)}>
+                  <Ionicons name="close" size={24} color="#94a3b8" />
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView 
+                style={styles.modalScroll} 
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+              >
+                {/* Form Input fields */}
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>FULL NAME</Text>
+                  <TextInput
+                    style={styles.formInput}
+                    placeholder="e.g. Jane Doe"
+                    placeholderTextColor="#64748b"
+                    value={fullName}
+                    onChangeText={setFullName}
+                  />
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>EMAIL</Text>
+                  <TextInput
+                    style={styles.formInput}
+                    placeholder="staff@gmail.com"
+                    placeholderTextColor="#64748b"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    value={email}
+                    onChangeText={setEmail}
+                  />
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>PASSWORD (leave blank to keep current)</Text>
+                  <TextInput
+                    style={styles.formInput}
+                    placeholder="••••••••"
+                    placeholderTextColor="#64748b"
+                    secureTextEntry
+                    autoCapitalize="none"
+                    value={password}
+                    onChangeText={setPassword}
+                  />
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>PHONE</Text>
+                  <TextInput
+                    style={styles.formInput}
+                    placeholder="(555) 555-0100"
+                    placeholderTextColor="#64748b"
+                    keyboardType="phone-pad"
+                    value={phone}
+                    onChangeText={setPhone}
+                  />
+                </View>
+
+                {/* PAYOUT METHOD Selector */}
+                <View style={[styles.formGroup, showPayoutDropdown && { zIndex: 9999, position: 'relative' }]}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>PAYOUT METHOD</Text>
+                  <TouchableOpacity
+                    style={styles.dropdownTrigger}
+                    onPress={() => setShowPayoutDropdown(!showPayoutDropdown)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.dropdownTriggerText} allowFontScaling={false}>{payoutMethod}</Text>
+                    <Ionicons name={showPayoutDropdown ? "chevron-up" : "chevron-down"} size={16} color="#cbd5e1" />
+                  </TouchableOpacity>
+
+                  {showPayoutDropdown && (
+                    <View style={styles.dropdownContainer}>
+                      {payoutOptions.map((opt) => (
+                        <TouchableOpacity
+                          key={opt}
+                          style={styles.dropdownItem}
+                          onPress={() => {
+                            setPayoutMethod(opt);
+                            setShowPayoutDropdown(false);
+                          }}
+                        >
+                          <Text style={styles.dropdownItemText} allowFontScaling={false}>{opt}</Text>
+                          {payoutMethod === opt && (
+                            <Ionicons name="checkmark" size={16} color="#38bdf8" />
+                          )}
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </View>
+
+                {/* ASSIGN PROPERTIES Checkbox List */}
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>ASSIGN PROPERTIES</Text>
+                  <View style={styles.checkboxContainer}>
+                    {properties.length === 0 ? (
+                      <Text style={styles.noPropertiesText} allowFontScaling={false}>No properties created yet.</Text>
+                    ) : (
+                      properties.map((prop) => {
+                        const isChecked = selectedPropertyIds.includes(prop.id);
+                        return (
+                          <TouchableOpacity
+                            key={prop.id}
+                            style={styles.checkboxRow}
+                            onPress={() => togglePropertySelection(prop.id)}
+                            activeOpacity={0.8}
+                          >
+                            <View style={[styles.checkboxBox, isChecked && styles.checkboxBoxChecked]}>
+                              {isChecked && (
+                                <Ionicons name="checkmark" size={12} color="#0f172a" />
+                              )}
+                            </View>
+                            <Text style={styles.checkboxLabel} allowFontScaling={false}>{prop.name}</Text>
+                          </TouchableOpacity>
+                        );
+                      })
+                    )}
+                  </View>
+                </View>
+
+                {/* Cancel & Update Buttons inside ScrollView */}
+                <View style={styles.modalActions}>
+                  <TouchableOpacity
+                    style={styles.cancelBtn}
+                    onPress={() => setIsEditOpen(false)}
+                    disabled={submitting}
+                  >
+                    <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.submitBtn, submitting && styles.submitBtnDisabled]}
+                    onPress={handleUpdateOwner}
+                    disabled={submitting}
+                  >
+                    {submitting ? (
+                      <ActivityIndicator size="small" color="#0f172a" />
+                    ) : (
+                      <Text style={styles.submitBtnText} allowFontScaling={false}>Update Owner</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
+            </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 };
@@ -569,6 +796,7 @@ const getStyles = (colors, isDarkMode) => StyleSheet.create({
   ownerName: { fontSize: 15, fontWeight: '800', color: colors.textPrimary },
   ownerSubText: { fontSize: 11.5, color: colors.textSecondary, marginTop: 2 },
   deleteBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(239, 68, 68, 0.12)', alignItems: 'center', justifyContent: 'center' },
+  editBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(245, 158, 11, 0.12)', alignItems: 'center', justifyContent: 'center' },
 
   divider: { height: 1, backgroundColor: colors.divider, marginVertical: 12 },
 

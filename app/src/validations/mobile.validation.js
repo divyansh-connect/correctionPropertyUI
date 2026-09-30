@@ -2,6 +2,8 @@ import * as z from 'zod';
 
 export const propertySchema = z.object({
   name: z.string().min(1, 'Property Name is required'),
+  nycBin: z.string().optional(),
+  managementCompany: z.string().optional(),
   ownershipPercentage: z.number({ invalid_type_error: 'Ownership percentage must be a number' })
     .min(0, 'Percentage cannot be negative')
     .max(100, 'Percentage cannot exceed 100'),
@@ -21,7 +23,9 @@ export const buildingSchema = z.object({
   floors: z.number({ invalid_type_error: 'Floors must be a number' })
     .min(1, 'Must have at least 1 floor'),
   unitsCount: z.number({ invalid_type_error: 'Units count must be a number' })
-    .min(0, 'Units count cannot be negative'),
+    .min(0, 'Units count cannot be negative')
+    .optional()
+    .default(0),
 });
 
 export const unitSchema = z.object({
@@ -43,11 +47,25 @@ export const unitSchema = z.object({
 export const tenantSchema = z.object({
   firstName: z.string().min(1, 'First Name is required'),
   lastName: z.string().min(1, 'Last Name is required'),
+  preferredName: z.string().optional(),
+  dob: z.string().optional(),
+  gender: z.string().optional(),
+  nationality: z.string().optional(),
   email: z.string().email('Invalid email address'),
-  phone: z.string().min(1, 'Phone number is required'),
-  monthlyIncome: z.number({ invalid_type_error: 'Monthly income must be a number' })
-    .min(0, 'Income cannot be negative')
-    .optional(),
+  phone: z.string().min(1, 'Mobile Phone is required'),
+  altPhone: z.string().optional(),
+  idType: z.string().optional(),
+  idNumber: z.string().optional(),
+  emergencyName: z.string().optional(),
+  emergencyRelationship: z.string().optional(),
+  emergencyPhone: z.string().optional(),
+  employer: z.string().optional(),
+  position: z.string().optional(),
+  monthlyIncome: z.number({ invalid_type_error: 'Monthly income must be a number' }).min(0, 'Income cannot be negative').optional(),
+  employmentStatus: z.string().optional(),
+  currentAddress: z.string().optional(),
+  previousAddress: z.string().optional(),
+  password: z.string().optional(),
 });
 
 export const leadSchema = z.object({

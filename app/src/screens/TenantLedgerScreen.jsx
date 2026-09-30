@@ -186,13 +186,7 @@ export const TenantLedgerScreen = () => {
       setLedgerEntries(mappedWithBalance);
     } catch (e) {
       console.log('Error fetching all 4 ledger APIs:', e.message);
-      // Fallback matching Web 1-to-1
-      setLedgerEntries([
-        { id: 'l-1', date: '2026-08-01', tenantName: 'person 1', propertyName: 'property 1', unitNumber: 'room 1b', description: 'Rent Charge & Utilities', debit: 1100, credit: 0, balance: 1100, transactionType: 'Rent Charge', status: 'Active' },
-        { id: 'l-2', date: '2026-08-01', tenantName: 'person 1', propertyName: 'property 1', unitNumber: 'room 1b', description: 'Payment via ACH Bank Transfer', debit: 0, credit: 1068.1, balance: 31.9, transactionType: 'Payment', status: 'Paid' },
-        { id: 'l-3', date: '2026-08-01', tenantName: 'person 1', propertyName: 'property 1', unitNumber: 'room 1b', description: 'Payment via ACH Bank Transfer', debit: 0, credit: 1131.9, balance: 0, transactionType: 'Payment', status: 'Paid' },
-        { id: 'l-4', date: '2026-08-01', tenantName: 'person 2', propertyName: 'Property 2', unitNumber: 'Room 2B', description: 'Rent Charge', debit: 5100, credit: 0, balance: 5100, transactionType: 'Rent Charge', status: 'Draft' },
-      ]);
+      setLedgerEntries([]);
     } finally {
       setLoading(false);
       setRefreshing(false);

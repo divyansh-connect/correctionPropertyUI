@@ -17,6 +17,7 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
 } from 'react-native';
+import apiClient from '../api/client';
 import { useAuthStore, useThemeStore } from '../store/useStore';
 import { useThemeColors } from '../theme';
 import { Ionicons } from '@expo/vector-icons';
@@ -75,8 +76,7 @@ export const ManagerRentPaymentsScreen = () => {
   const [invTenantId, setInvTenantId] = useState('');
   const [invDueDate, setInvDueDate] = useState('');
   const [invLineItems, setInvLineItems] = useState([
-    { id: 1, description: 'Rent Charge', amount: '0' },
-    { id: 2, description: 'Utility Reimbursement', amount: '100' }
+    { id: 1, description: 'Rent Charge', amount: '0' }
   ]);
   const [invNotes, setInvNotes] = useState('');
 
@@ -85,6 +85,37 @@ export const ManagerRentPaymentsScreen = () => {
   const [showPayDatePicker, setShowPayDatePicker] = useState(false);
   const [showPayDueDateRefPicker, setShowPayDueDateRefPicker] = useState(false);
   const [showInvDatePicker, setShowInvDatePicker] = useState(false);
+
+  // Auto-populate rent amount when tenant is selected in Invoice Modal
+  useEffect(() => {
+    if (invTenantId) {
+      const selectedTenant = tenants.find(t => t.id === invTenantId);
+      const rentAmount = Number(selectedTenant?.unit?.rentAmount || selectedTenant?.rentAmount || selectedTenant?.unit?.rent || 0);
+      if (rentAmount > 0) {
+        setInvLineItems(prev => {
+          const rentIdx = prev.findIndex(item => item.description.toLowerCase().includes('rent'));
+          if (rentIdx !== -1) {
+            const updated = [...prev];
+            updated[rentIdx] = { ...updated[rentIdx], amount: String(rentAmount) };
+            return updated;
+          }
+          return [{ id: Date.now(), description: 'Rent Charge', amount: String(rentAmount) }, ...prev];
+        });
+      }
+    }
+  }, [invTenantId, tenants]);
+
+  // Auto-populate rent amount when tenant is selected in Record Payment Modal
+  useEffect(() => {
+    if (payTenantId) {
+      const selectedTenant = tenants.find(t => t.id === payTenantId);
+      const rentAmount = Number(selectedTenant?.unit?.rentAmount || selectedTenant?.rentAmount || selectedTenant?.unit?.rent || 0);
+      if (rentAmount > 0) {
+        setPayAmount(String(rentAmount));
+        setAllocRent(String(rentAmount));
+      }
+    }
+  }, [payTenantId, tenants]);
 
   // Eye statement view states
   const [selectedStatementTenant, setSelectedStatementTenant] = useState(null);
@@ -144,7 +175,7 @@ export const ManagerRentPaymentsScreen = () => {
         id: p.id,
         receiptNumber: p.receiptNumber || `#${idx + 1}`,
         tenantName: p.tenant ? `${p.tenant.firstName} ${p.tenant.lastName}` : (p.tenantName || 'Unknown Tenant'),
-        propertyName: p.property?.name || p.propertyName || 'Property',
+        propertyName: p.property?.name || p.propertyName || 'Unassigned',
         unitNumber: p.unit?.unitNumber || p.unitNumber || 'Unassigned',
         amount: p.amount,
         paidDate: p.paidDate ? p.paidDate.split('T')[0] : (p.createdAt ? p.createdAt.split('T')[0] : 'N/A'),
@@ -176,7 +207,7 @@ export const ManagerRentPaymentsScreen = () => {
         id: inv.id,
         invoiceNumber: inv.invoiceNumber || `INV-${String(inv.id).padStart(4, '0')}`,
         tenantName: inv.tenant ? `${inv.tenant.firstName} ${inv.tenant.lastName}` : (inv.tenantName || 'Resident'),
-        propertyName: inv.propertyName || 'Property',
+        propertyName: inv.propertyName || inv.property?.name || 'Unassigned',
         dueDate: inv.dueDate ? inv.dueDate.split('T')[0] : (inv.createdAt ? inv.createdAt.split('T')[0] : 'N/A'),
         amount: inv.amount,
         outstandingBalance: inv.outstandingBalance !== undefined ? inv.outstandingBalance : inv.amount,
@@ -214,11 +245,11 @@ export const ManagerRentPaymentsScreen = () => {
       invoicesList.forEach((inv) => {
         allTransactions.push({
           type: 'charge',
-          date: inv.dueDate || inv.createdAt || '2026-08-01',
+          date: inv.dueDate || inv.createdAt || new Date().toISOString().split('T')[0],
           amount: inv.amount || 0,
           tenantName: inv.tenant ? `${inv.tenant.firstName} ${inv.tenant.lastName}` : (inv.tenantName || 'Resident'),
-          propertyName: inv.propertyName || 'Property',
-          unitNumber: inv.unitNumber || 'Unassigned',
+          propertyName: inv.propertyName || inv.property?.name || 'Unassigned',
+          unitNumber: inv.unitNumber || inv.unit?.unitNumber || 'Unassigned',
           description: 'Rent Assessment Charge',
           transactionType: 'Rent Charge',
           id: `led-chg-${inv.id}`,
@@ -229,11 +260,11 @@ export const ManagerRentPaymentsScreen = () => {
         if (pay.status === 'Paid' || !pay.status) {
           allTransactions.push({
             type: 'payment',
-            date: pay.paidDate || pay.createdAt || '2026-08-01',
+            date: pay.paidDate || pay.createdAt || new Date().toISOString().split('T')[0],
             amount: pay.amount || 0,
             tenantName: pay.tenant ? `${pay.tenant.firstName} ${pay.tenant.lastName}` : (pay.tenantName || 'Resident'),
-            propertyName: pay.property?.name || 'Property',
-            unitNumber: pay.unit?.unitNumber || 'Unassigned',
+            propertyName: pay.property?.name || pay.propertyName || 'Unassigned',
+            unitNumber: pay.unit?.unitNumber || pay.unitNumber || 'Unassigned',
             description: `Payment Received - Ref ${pay.referenceNumber || 'N/A'}`,
             transactionType: 'Payment',
             id: `led-pay-${pay.id}`,
@@ -262,16 +293,7 @@ export const ManagerRentPaymentsScreen = () => {
       setLedgerList(items.reverse()); // Reverse to show latest first
     } catch (e) {
       console.log('Compile ledger failed:', e.message);
-      // Mock ledger data matching Screenshot 5 exactly
-      setLedgerList([
-        { id: '1', date: '2026-08-01', tenantName: 'person 1', propertyName: 'property 1 (Unit room 1b)', description: 'Payment Received - Ref REF-1785579588125', debit: null, credit: 1068.1, balance: -2697.9, transactionType: 'Payment' },
-        { id: '2', date: '2026-08-01', tenantName: 'person 1', propertyName: 'property 1 (Unit room 1b)', description: 'Payment Received - Ref REF-1785579060315', debit: null, credit: 1131.9, balance: -1629.8, transactionType: 'Payment' },
-        { id: '3', date: '2026-08-01', tenantName: 'person 2', propertyName: 'property 2 (Unit Room 2B)', description: 'Payment Received - Ref REF-1785577679097', debit: null, credit: 5247.9, balance: -497.9, transactionType: 'Payment' },
-        { id: '4', date: '2026-08-01', tenantName: 'person 2', propertyName: 'property 2 (Unit Room 2B)', description: 'Payment Received - Ref REF-1785577116075', debit: null, credit: 2550, balance: 4750, transactionType: 'Payment' },
-        { id: '5', date: '2026-08-01', tenantName: 'Resident', propertyName: 'property 2 (Unit Room 2B)', description: 'Rent Assessment Charge', debit: 5100, credit: null, balance: 7300, transactionType: 'Rent Charge' },
-        { id: '6', date: '2026-08-01', tenantName: 'Resident', propertyName: 'property 1 (Unit room 1b)', description: 'Rent Assessment Charge', debit: 1100, credit: null, balance: 2200, transactionType: 'Rent Charge' },
-        { id: '7', date: '2026-08-01', tenantName: 'Resident', propertyName: 'property 1 (Unit room 1b)', description: 'Rent Assessment Charge', debit: 1100, credit: null, balance: 1100, transactionType: 'Rent Charge' },
-      ]);
+      setLedgerList([]);
     } finally {
       if (activeTab === 'ledger') {
         setLoading(false);
@@ -509,9 +531,11 @@ export const ManagerRentPaymentsScreen = () => {
   const getTenantUnitLocationLabel = (tenantId) => {
     const t = tenants.find(item => item.id === tenantId);
     if (!t) return 'Select Resident to update location';
-    const propName = t.unit?.property?.name || 'Property';
-    const unitNo = t.unit?.unitNumber || 'Unassigned';
-    return `${propName} · Unit ${unitNo}`;
+    const propName = t.unit?.property?.name || t.propertyName || 'Unassigned';
+    const unitNo = t.unit?.unitNumber || t.unitNumber || 'Unassigned';
+    return (propName !== 'Unassigned' || unitNo !== 'Unassigned')
+      ? `${propName}${unitNo !== 'Unassigned' ? ` · Unit ${unitNo}` : ''}`
+      : 'Unassigned Location';
   };
 
   const getStatementData = () => {
@@ -1180,17 +1204,17 @@ export const ManagerRentPaymentsScreen = () => {
                     <View style={styles.rowBetween}>
                       <View style={{ flex: 1.2 }}>
                         <Text style={styles.stmtBadgeText} allowFontScaling={false}>OFFICIAL TENANT LEDGER STATEMENT</Text>
-                        <Text style={styles.stmtCompanyName} allowFontScaling={false}>Apex Property Management</Text>
-                        <Text style={styles.stmtCompanyAddress} allowFontScaling={false}>Indore, Indore, Mp, India, 42342</Text>
+                        <Text style={styles.stmtCompanyName} allowFontScaling={false}>Property Management</Text>
+                        <Text style={styles.stmtCompanyAddress} allowFontScaling={false}>Corporate Office</Text>
                       </View>
                       
                       <View style={styles.stmtRecipientBox}>
                         <Text style={styles.stmtRecipientLabel} allowFontScaling={false}>STATEMENT RECIPIENT</Text>
                         <Text style={styles.stmtRecipientName} allowFontScaling={false}>{selectedStatementTenant.tenantName}</Text>
-                        <Text style={styles.stmtRecipientContact} allowFontScaling={false}>Phone: {tenant.phone || '344232'}</Text>
-                        <Text style={styles.stmtRecipientContact} allowFontScaling={false}>Email: {tenant.email || 'tenant@apexpm.com'}</Text>
+                        <Text style={styles.stmtRecipientContact} allowFontScaling={false}>Phone: {tenant.phone || 'N/A'}</Text>
+                        <Text style={styles.stmtRecipientContact} allowFontScaling={false}>Email: {tenant.email || 'N/A'}</Text>
                         <Text style={styles.stmtRecipientLocation} allowFontScaling={false}>
-                          {tenant.unit ? `${tenant.unit.property?.name || 'Property'} - Unit ${tenant.unit.unitNumber}` : selectedStatementTenant.propertyName}
+                          {tenant.unit ? `${tenant.unit.property?.name || 'Unassigned'} - Unit ${tenant.unit.unitNumber || 'Unassigned'}` : selectedStatementTenant.propertyName}
                         </Text>
                       </View>
                     </View>

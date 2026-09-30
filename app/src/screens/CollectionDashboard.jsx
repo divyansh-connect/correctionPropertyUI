@@ -91,34 +91,38 @@ export const CollectionDashboard = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const [metricsRes, chartsRes] = await Promise.all([
+      const [metricsRes, paymentsRes, expensesRes] = await Promise.all([
         apiClient.get('/dashboard/metrics', logout, refreshAccessToken).catch(() => null),
-        apiClient.get('/dashboard/charts', logout, refreshAccessToken).catch(() => null),
+        apiClient.get('/payments', logout, refreshAccessToken).catch(() => null),
+        apiClient.get('/portal/expenses', logout, refreshAccessToken).catch(() => null),
       ]);
 
       const mData = metricsRes?.data || metricsRes || {};
-      const cData = chartsRes?.data || chartsRes || {};
+      const rawPayments = Array.isArray(paymentsRes) ? paymentsRes : (paymentsRes?.data || []);
+      const rawExpenses = Array.isArray(expensesRes) ? expensesRes : (expensesRes?.data || []);
+
+      const collectionsSum = rawPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+      const expensesSum = rawExpenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
 
       setMetrics({
-        collections: mData.collections || mData.tenantCollections || 6000,
-        overdue: mData.overdue || mData.tenantOverdue || 0,
-        payouts: mData.payouts || mData.ownerPayouts || 4320,
-        expenses: mData.expenses || mData.maintenanceExpenses || 3000,
-        grossInflowGrowth: mData.grossInflowGrowth || '+12.4%',
-        overdueChange: mData.overdueChange || '-8.5%',
+        collections: collectionsSum || mData.collections || 0,
+        overdue: mData.overdue || 0,
+        payouts: Math.max(0, collectionsSum - expensesSum),
+        expenses: expensesSum || mData.expenses || 0,
+        grossInflowGrowth: mData.grossInflowGrowth || '0%',
+        overdueChange: mData.overdueChange || '0%',
       });
 
-      setCharts(cData);
+      setCharts(mData.charts || {});
     } catch (e) {
-      console.log('Error fetching GET /dashboard/metrics & /dashboard/charts:', e.message);
-      // Fallback matching Web screenshot 1-to-1
+      console.log('Error fetching GET /dashboard/metrics & /payments:', e.message);
       setMetrics({
-        collections: 6000,
+        collections: 0,
         overdue: 0,
-        payouts: 4320,
-        expenses: 3000,
-        grossInflowGrowth: '+12.4%',
-        overdueChange: '-8.5%',
+        payouts: 0,
+        expenses: 0,
+        grossInflowGrowth: '0%',
+        overdueChange: '0%',
       });
     } finally {
       setLoading(false);

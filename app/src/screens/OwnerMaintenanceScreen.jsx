@@ -101,11 +101,11 @@ export const OwnerMaintenanceScreen = () => {
           return {
             id: item.id || `m-${Math.random()}`,
             ticketNumber: `#${index + 1}`,
-            date: item.date ? item.date.split('T')[0] : (item.createdAt ? item.createdAt.split('T')[0] : '2026-08-04'),
+            date: item.date ? item.date.split('T')[0] : (item.createdAt ? item.createdAt.split('T')[0] : ''),
             title: item.title || 'Maintenance Request',
             description: item.description || 'No detailed diagnostics description provided.',
-            propertyName: item.propertyName || 'property 1',
-            unitNumber: item.unitNumber || 'Unit room 1b',
+            propertyName: item.propertyName || 'Property',
+            unitNumber: item.unitNumber || 'Unit',
             tenantName: item.tenantName || 'Resident',
             estimatedCost: Number(item.estimatedCost) || 0,
             actualCost: actual,
@@ -118,22 +118,11 @@ export const OwnerMaintenanceScreen = () => {
         });
         setTickets(formatted);
       } else {
-        // Fallback default snapshots matching Web 1-to-1
-        setTickets([
-          { id: 't-1', ticketNumber: '#1', date: '2026-08-04', title: 'cscscsa', description: 'Leaking pipe under kitchen sink.', propertyName: 'property 1', unitNumber: 'Unit room 1b', tenantName: 'fcsdfsf', estimatedCost: 150, actualCost: 150, extraExpenses: 0, totalCost: 150, status: 'New', resolutionNotes: null, assignedVendorName: 'Apex Plumbing' },
-          { id: 't-2', ticketNumber: '#2', date: '2026-08-04', title: 'cewcwe', description: 'Wall paint chipping in living room.', propertyName: 'property 1', unitNumber: 'Unit room 1b', tenantName: 'dwee', estimatedCost: 200, actualCost: 200, extraExpenses: 50, totalCost: 250, status: 'In Progress', resolutionNotes: null, assignedVendorName: 'Perfect Paints' },
-          { id: 't-3', ticketNumber: '#3', date: '2026-08-04', title: 'csjcnsd', description: 'AC unit blowing warm air.', propertyName: 'property 1', unitNumber: 'Unit room 1B', tenantName: 'dewn', estimatedCost: 350, actualCost: 350, extraExpenses: 0, totalCost: 350, status: 'Completed', resolutionNotes: 'Replaced condenser filter.', assignedVendorName: 'HVAC Pros' },
-          { id: 't-4', ticketNumber: '#4', date: '2026-08-04', title: 'dfefsef fs efs fs', description: 'Damaged porch lock.', propertyName: 'property 1', unitNumber: 'Unit room 1b', tenantName: 'test', estimatedCost: 100, actualCost: 120, extraExpenses: 20, totalCost: 140, status: 'Completed', resolutionNotes: 'Installed new deadbolt.', assignedVendorName: 'Lock & Key Inc' },
-        ]);
+        setTickets([]);
       }
     } catch (e) {
       console.log('Error fetching owner maintenance tickets:', e.message);
-      setTickets([
-        { id: 't-1', ticketNumber: '#1', date: '2026-08-04', title: 'cscscsa', description: 'Leaking pipe under kitchen sink.', propertyName: 'property 1', unitNumber: 'Unit room 1b', tenantName: 'fcsdfsf', estimatedCost: 150, actualCost: 150, extraExpenses: 0, totalCost: 150, status: 'New', resolutionNotes: null, assignedVendorName: 'Apex Plumbing' },
-        { id: 't-2', ticketNumber: '#2', date: '2026-08-04', title: 'cewcwe', description: 'Wall paint chipping in living room.', propertyName: 'property 1', unitNumber: 'Unit room 1b', tenantName: 'dwee', estimatedCost: 200, actualCost: 200, extraExpenses: 50, totalCost: 250, status: 'In Progress', resolutionNotes: null, assignedVendorName: 'Perfect Paints' },
-        { id: 't-3', ticketNumber: '#3', date: '2026-08-04', title: 'csjcnsd', description: 'AC unit blowing warm air.', propertyName: 'property 1', unitNumber: 'Unit room 1B', tenantName: 'dewn', estimatedCost: 350, actualCost: 350, extraExpenses: 0, totalCost: 350, status: 'Completed', resolutionNotes: 'Replaced condenser filter.', assignedVendorName: 'HVAC Pros' },
-        { id: 't-4', ticketNumber: '#4', date: '2026-08-04', title: 'dfefsef fs efs fs', description: 'Damaged porch lock.', propertyName: 'property 1', unitNumber: 'Unit room 1b', tenantName: 'test', estimatedCost: 100, actualCost: 120, extraExpenses: 20, totalCost: 140, status: 'Completed', resolutionNotes: 'Installed new deadbolt.', assignedVendorName: 'Lock & Key Inc' },
-      ]);
+      setTickets([]);
     } finally {
       setLoading(false);
       setRefreshing(false);

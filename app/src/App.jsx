@@ -46,6 +46,10 @@ import { ManagerCommunicationScreen } from './screens/ManagerCommunicationScreen
 import { ManagerAccountingScreen } from './screens/ManagerAccountingScreen';
 import { ManagerRentPaymentsScreen } from './screens/ManagerRentPaymentsScreen';
 import { OwnersScreen } from './screens/OwnersScreen';
+import { WordPressInquiriesScreen } from './screens/WordPressInquiriesScreen';
+import { PlatformSettingsScreen } from './screens/PlatformSettingsScreen';
+import { InspectionTemplatesScreen } from './screens/InspectionTemplatesScreen';
+import { RolesPermissionsScreen } from './screens/RolesPermissionsScreen';
 
 export default function App() {
   const { user, isAuthenticated, isLoaded, initializeAuth } = useAuthStore();
@@ -118,7 +122,8 @@ export default function App() {
         { id: 'dashboard', label: language === 'es' ? 'Tablero' : 'Dashboard', icon: 'grid-outline', activeIcon: 'grid' },
         { id: 'companies', label: language === 'es' ? 'Empresas' : 'Companies', icon: 'business-outline', activeIcon: 'business' },
         { id: 'subscriptions', label: language === 'es' ? 'Suscripciones' : 'Subscriptions', icon: 'card-outline', activeIcon: 'card' },
-        { id: 'platform-users', label: language === 'es' ? 'Usuarios' : 'Users', icon: 'people-outline', activeIcon: 'people' },
+        { id: 'wordpress-inquiries', label: 'WP Leads', icon: 'chatbox-ellipses-outline', activeIcon: 'chatbox-ellipses' },
+        { id: 'platform-settings', label: language === 'es' ? 'Ajustes' : 'Settings', icon: 'settings-outline', activeIcon: 'settings' },
         { id: 'profile', label: language === 'es' ? 'Perfil' : 'Profile', icon: 'person-outline', activeIcon: 'person' },
       ];
       break;
@@ -127,6 +132,7 @@ export default function App() {
       moduleTabs = [
         { id: 'dashboard', label: language === 'es' ? 'Tablero' : 'Dashboard', icon: 'grid-outline', activeIcon: 'grid' },
         { id: 'rent', label: language === 'es' ? 'Pagos' : 'Payments', icon: 'card-outline', activeIcon: 'card' },
+        { id: 'ledger', label: language === 'es' ? 'Libro' : 'Ledger', icon: 'book-outline', activeIcon: 'book' },
         { id: 'profile', label: language === 'es' ? 'Perfil' : 'Profile', icon: 'person-outline', activeIcon: 'person' },
       ];
       break;
@@ -208,6 +214,14 @@ export default function App() {
         return <SubscriptionsScreen />;
       case 'platform-users':
         return <PlatformUsersScreen />;
+      case 'wordpress-inquiries':
+        return <WordPressInquiriesScreen />;
+      case 'platform-settings':
+        return <PlatformSettingsScreen />;
+      case 'inspection-templates':
+        return <InspectionTemplatesScreen />;
+      case 'roles-permissions':
+        return <RolesPermissionsScreen />;
       case 'integrations':
         return <IntegrationsScreen onNavigate={handleNavigate} />;
       case 'lease':

@@ -110,6 +110,7 @@ export const LeadsScreen = ({ onNavigate }) => {
 
   // 8. Move In / Move Out start inspection states
   const [selectedMoveInOrOut, setSelectedMoveInOrOut] = useState(null);
+  const [startInspectionModalOpen, setStartInspectionModalOpen] = useState(false);
   const [startInspectionTemplateId, setStartInspectionTemplateId] = useState('');
   const [leadErrors, setLeadErrors] = useState({});
   const [appErrors, setAppErrors] = useState({});

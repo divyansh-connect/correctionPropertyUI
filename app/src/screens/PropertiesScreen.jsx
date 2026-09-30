@@ -66,7 +66,7 @@ const AnimatedTouchable = ({ children, onPress, style, disabled }) => {
 };
 
 export const PropertiesScreen = () => {
-  const { logout, refreshAccessToken } = useAuthStore();
+  const { user, logout, refreshAccessToken } = useAuthStore();
   const { language } = useThemeStore();
   const { colors, isDarkMode } = useThemeColors();
   const styles = getStyles(colors, isDarkMode);
@@ -100,6 +100,15 @@ export const PropertiesScreen = () => {
   const [isAddPropOpen, setIsAddPropOpen] = useState(false);
   const [isAddBuildingOpen, setIsAddBuildingOpen] = useState(false);
   const [isAddUnitOpen, setIsAddUnitOpen] = useState(false);
+
+  const [isEditPropOpen, setIsEditPropOpen] = useState(false);
+  const [editingPropId, setEditingPropId] = useState(null);
+
+  const [isEditBuildingOpen, setIsEditBuildingOpen] = useState(false);
+  const [editingBuildingId, setEditingBuildingId] = useState(null);
+
+  const [isEditUnitOpen, setIsEditUnitOpen] = useState(false);
+  const [editingUnitId, setEditingUnitId] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
   const [propErrors, setPropErrors] = useState({});
@@ -116,16 +125,24 @@ export const PropertiesScreen = () => {
   const [pState, setPState] = useState('TX');
   const [pCountry, setPCountry] = useState('USA');
   const [pZip, setPZip] = useState('78701');
+  const [pNycBin, setPNycBin] = useState('');
   const [pOwnerId, setPOwnerId] = useState('');
   const [pShare, setPShare] = useState('100');
-  const [pMgtCo, setPMgtCo] = useState('Apex Property Management');
-  const [pYearBuilt, setPYearBuilt] = useState('2020');
+  const [pMgtCo, setPMgtCo] = useState(user?.companyName || 'Divine Properties');
+  const [pYearBuilt, setPYearBuilt] = useState('2010');
   const [pBuildingsCount, setPBuildingsCount] = useState('1');
-  const [pUnitsCount, setPUnitsCount] = useState('0');
-  const [pSqft, setPSqft] = useState('10000');
-  const [pPurchasePrice, setPPurchasePrice] = useState('1000000');
-  const [pCurrentValue, setPCurrentValue] = useState('1200000');
-  const [pExpenses, setPExpenses] = useState('0');
+  const [pUnitsCount, setPUnitsCount] = useState('10');
+  const [pSqft, setPSqft] = useState('8500');
+  const [pPurchasePrice, setPPurchasePrice] = useState('2000000');
+  const [pCurrentValue, setPCurrentValue] = useState('2200000');
+  const [pExpenses, setPExpenses] = useState('4500');
+
+  useEffect(() => {
+    if (isAddPropOpen) {
+      setPMgtCo(user?.companyName || 'Divine Properties');
+    }
+  }, [isAddPropOpen, user?.companyName]);
+
   // Dropdown states for Add Property
   const [showTypeDropdown, setShowTypeDropdown] = useState(false);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
@@ -135,12 +152,22 @@ export const PropertiesScreen = () => {
   const [bPropId, setBPropId] = useState('');
   const [bName, setBName] = useState('');
   const [bFloors, setBFloors] = useState('3');
-  const [bUnitsCount, setBUnitsCount] = useState('12');
+  const [bUnitsCount, setBUnitsCount] = useState('0');
   const [bStreetAddress, setBStreetAddress] = useState('');
   const [bStatus, setBStatus] = useState('Active');
   // Dropdown states for Add Building
   const [showBPropDropdown, setShowBPropDropdown] = useState(false);
   const [showBStatusDropdown, setShowBStatusDropdown] = useState(false);
+
+  useEffect(() => {
+    if (isAddBuildingOpen || isEditBuildingOpen) {
+      const selectedProp = properties.find(p => p.id === bPropId) || properties[0];
+      if (selectedProp) {
+        if (!bPropId && isAddBuildingOpen) setBPropId(selectedProp.id);
+        setBStreetAddress(selectedProp.address || selectedProp.streetAddress || '');
+      }
+    }
+  }, [isAddBuildingOpen, isEditBuildingOpen, bPropId, properties]);
 
   // --- Add Unit Form State ---
   const [uPropId, setUPropId] = useState('');
@@ -330,26 +357,55 @@ export const PropertiesScreen = () => {
   };
 
   // --- Creation Handlers ---
-  const handleCreateProperty = async () => {
+  const handlePublishDraft = (id, name) => {
+    Alert.alert(
+      'Publish Draft Property',
+      `Are you sure you want to publish "${name}" as an active property?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Publish',
+          onPress: async () => {
+            try {
+              setLoading(true);
+              await apiClient.put(`/properties/${id}`, { status: 'Active' }, logout, refreshAccessToken);
+              Alert.alert('Success', `Draft "${name}" published successfully!`);
+              fetchData();
+            } catch (err) {
+              Alert.alert('Error', err.message || 'Failed to publish draft');
+              setLoading(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleCreateProperty = async (overrideStatus = null) => {
     setPropErrors({});
+    const targetStatus = overrideStatus || pStatus;
 
     const payload = {
       name: pName.trim(),
       type: pType,
-      status: pStatus,
+      status: targetStatus,
       streetAddress: pStreet.trim() || undefined,
       city: pCity.trim() || undefined,
       state: pState.trim() || undefined,
       country: pCountry.trim() || undefined,
       zip: pZip.trim() || undefined,
+      nycBin: pNycBin.trim() || undefined,
       address: pStreet.trim() ? `${pStreet.trim()}, ${pCity.trim()}, ${pState.trim()}` : 'Austin, TX',
       ownerId: pOwnerId || undefined,
-      ownershipPercentage: Number(pShare) || 0,
-      managementCompany: pMgtCo.trim() || 'Apex Property Management',
-      yearBuilt: Number(pYearBuilt) || 0,
-      squareFootage: Number(pSqft) || 0,
-      purchasePrice: Number(pPurchasePrice) || 0,
-      currentValue: Number(pCurrentValue) || 0,
+      ownershipPercentage: Number(pShare) || 100,
+      managementCompany: pMgtCo || user?.companyName || 'Divine Properties',
+      yearBuilt: Number(pYearBuilt) || 2010,
+      totalBuildings: Number(pBuildingsCount) || 1,
+      totalUnits: Number(pUnitsCount) || 10,
+      squareFootage: Number(pSqft) || 8500,
+      purchasePrice: Number(pPurchasePrice) || 2000000,
+      currentValue: Number(pCurrentValue) || 2200000,
+      monthlyExpenses: Number(pExpenses) || 4500,
     };
 
     const valRes = propertySchema.safeParse(payload);
@@ -365,14 +421,14 @@ export const PropertiesScreen = () => {
     try {
       setSubmitting(true);
       await apiClient.post('/properties', valRes.data, logout, refreshAccessToken);
-      Alert.alert('Success', 'Property created successfully.');
+      Alert.alert('Success', targetStatus === 'Draft' ? 'Property saved as draft.' : 'Property created successfully.');
       setIsAddPropOpen(false);
       setPName('');
       setPStreet('');
       setPOwnerId('');
       fetchData();
     } catch (err) {
-      Alert.alert('Error', err.message || 'Failed to create property');
+      Alert.alert('Error', err.message || 'Failed to save property');
     } finally {
       setSubmitting(false);
     }
@@ -436,7 +492,7 @@ export const PropertiesScreen = () => {
       bathrooms: Number(uBaths) || 0,
       rentAmount: Number(uRent) || 0,
       securityDeposit: Number(uDeposit) || 0,
-      availabilityDate: uAvailDate,
+      availabilityDate: uAvailDate ? String(uAvailDate).split('T')[0] : new Date().toISOString().split('T')[0],
       status: uStatus,
     };
 
@@ -461,6 +517,193 @@ export const PropertiesScreen = () => {
       fetchData();
     } catch (err) {
       Alert.alert('Error', err.message || 'Failed to create unit');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // --- Edit Property Handlers ---
+  const handleOpenEditProperty = (item) => {
+    setEditingPropId(item.id);
+    setPName(item.name || '');
+    setPType(item.type || 'Apartment');
+    setPStatus(item.status || 'Active');
+    setPStreet(item.streetAddress || item.address || '');
+    setPCity(item.city || '');
+    setPState(item.state || '');
+    setPCountry(item.country || 'USA');
+    setPZip(item.zip || '');
+    setPNycBin(item.nycBin || item.bin || '');
+    setPOwnerId(item.ownerId || '');
+    setPShare(String(item.ownershipPercentage !== undefined ? item.ownershipPercentage : 100));
+    setPMgtCo(item.managementCompany || user?.companyName || 'Divine Properties');
+    setPYearBuilt(String(item.yearBuilt || 2020));
+    setPBuildingsCount(String(item.totalBuildings || 1));
+    setPUnitsCount(String(item.units?.length || item.totalUnits || 0));
+    setPSqft(String(item.squareFootage || 10000));
+    setPPurchasePrice(String(item.purchasePrice || 1000000));
+    setPCurrentValue(String(item.currentValue || 1200000));
+    setPExpenses(String(item.monthlyExpenses || 0));
+    setPropErrors({});
+    setIsEditPropOpen(true);
+  };
+
+  const handleUpdateProperty = async () => {
+    setPropErrors({});
+    const payload = {
+      name: pName.trim(),
+      type: pType,
+      status: pStatus,
+      streetAddress: pStreet.trim() || undefined,
+      city: pCity.trim() || undefined,
+      state: pState.trim() || undefined,
+      country: pCountry.trim() || undefined,
+      zip: pZip.trim() || undefined,
+      nycBin: pNycBin.trim() || undefined,
+      address: pStreet.trim() ? `${pStreet.trim()}, ${pCity.trim()}, ${pState.trim()}` : pStreet.trim(),
+      ownerId: pOwnerId || undefined,
+      ownershipPercentage: Number(pShare) || 100,
+      managementCompany: pMgtCo || user?.companyName || 'Divine Properties',
+      yearBuilt: Number(pYearBuilt) || 2020,
+      totalBuildings: Number(pBuildingsCount) || 1,
+      squareFootage: Number(pSqft) || 10000,
+      purchasePrice: Number(pPurchasePrice) || 1000000,
+      currentValue: Number(pCurrentValue) || 1200000,
+      monthlyExpenses: Number(pExpenses) || 0,
+    };
+
+    const valRes = propertySchema.safeParse(payload);
+    if (!valRes.success) {
+      const errs = {};
+      valRes.error.issues.forEach(issue => {
+        errs[issue.path[0]] = issue.message;
+      });
+      setPropErrors(errs);
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      await apiClient.put(`/properties/${editingPropId}`, valRes.data, logout, refreshAccessToken);
+      Alert.alert('Success', 'Property updated successfully!');
+      setIsEditPropOpen(false);
+      fetchData();
+    } catch (err) {
+      Alert.alert('Error', err.message || 'Failed to update property');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // --- Edit Building Handlers ---
+  const handleOpenEditBuilding = (item) => {
+    setEditingBuildingId(item.id);
+    setBName(item.name || '');
+    setBPropId(item.propertyId || item.property?.id || '');
+    setBFloors(String(item.floors || 1));
+    setBUnitsCount(String(item.unitsCount || 0));
+    setBStreetAddress(item.streetAddress || '');
+    setBStatus(item.status || 'Active');
+    setBldErrors({});
+    setIsEditBuildingOpen(true);
+  };
+
+  const handleUpdateBuilding = async () => {
+    setBldErrors({});
+    if (!bPropId) {
+      Alert.alert('Validation Error', 'Associated Property is required.');
+      return;
+    }
+
+    const payload = {
+      propertyId: bPropId,
+      name: bName.trim(),
+      floors: Number(bFloors) || 0,
+      unitsCount: Number(bUnitsCount) || 0,
+      streetAddress: bStreetAddress.trim() || undefined,
+      status: bStatus,
+    };
+
+    const valRes = buildingSchema.safeParse(payload);
+    if (!valRes.success) {
+      const errs = {};
+      valRes.error.issues.forEach(issue => {
+        errs[issue.path[0]] = issue.message;
+      });
+      setBldErrors(errs);
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      await apiClient.put(`/buildings/${editingBuildingId}`, valRes.data, logout, refreshAccessToken);
+      Alert.alert('Success', 'Building updated successfully!');
+      setIsEditBuildingOpen(false);
+      fetchData();
+    } catch (err) {
+      Alert.alert('Error', err.message || 'Failed to update building');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // --- Edit Unit Handlers ---
+  const handleOpenEditUnit = (item) => {
+    setEditingUnitId(item.id);
+    setUNumber(item.unitNumber || item.number || '');
+    setUPropId(item.propertyId || item.property?.id || '');
+    setUBuildingId(item.buildingId || item.building?.id || '');
+    setUFloor(String(item.floor || 1));
+    setUSqft(String(item.squareFootage || item.sqft || 850));
+    setUBeds(String(item.bedrooms || 1));
+    setUBaths(String(item.bathrooms || 1));
+    setURent(String(item.rentAmount || item.rent || item.marketRent || 0));
+    setUDeposit(String(item.securityDeposit || 0));
+    setUAvailDate(item.availabilityDate ? String(item.availabilityDate).split('T')[0] : new Date().toISOString().split('T')[0]);
+    setUStatus(item.status || 'Vacant');
+    setUnitErrors({});
+    setIsEditUnitOpen(true);
+  };
+
+  const handleUpdateUnit = async () => {
+    setUnitErrors({});
+    if (!uPropId) {
+      Alert.alert('Validation Error', 'Associated Property is required.');
+      return;
+    }
+
+    const payload = {
+      propertyId: uPropId,
+      buildingId: uBuildingId || undefined,
+      unitNumber: uNumber.trim(),
+      floor: Number(uFloor) || 0,
+      squareFootage: Number(uSqft) || 0,
+      bedrooms: Number(uBeds) || 0,
+      bathrooms: Number(uBaths) || 0,
+      rentAmount: Number(uRent) || 0,
+      securityDeposit: Number(uDeposit) || 0,
+      availabilityDate: uAvailDate ? String(uAvailDate).split('T')[0] : new Date().toISOString().split('T')[0],
+      status: uStatus,
+    };
+
+    const valRes = unitSchema.safeParse(payload);
+    if (!valRes.success) {
+      const errs = {};
+      valRes.error.issues.forEach(issue => {
+        errs[issue.path[0]] = issue.message;
+      });
+      setUnitErrors(errs);
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      await apiClient.put(`/units/${editingUnitId}`, valRes.data, logout, refreshAccessToken);
+      Alert.alert('Success', 'Unit updated successfully!');
+      setIsEditUnitOpen(false);
+      fetchData();
+    } catch (err) {
+      Alert.alert('Error', err.message || 'Failed to update unit');
     } finally {
       setSubmitting(false);
     }
@@ -507,8 +750,15 @@ export const PropertiesScreen = () => {
 
   // Filters
   const filteredProperties = properties.filter(item =>
-    (item.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-    formatAddress(item.address).toLowerCase().includes(searchQuery.toLowerCase())
+    String(item.status).toLowerCase() !== 'draft' &&
+    ((item.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    formatAddress(item.address).toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
+  const filteredDrafts = properties.filter(item =>
+    String(item.status).toLowerCase() === 'draft' &&
+    ((item.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    formatAddress(item.address).toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   const filteredBuildings = buildings.filter(item => {
@@ -544,14 +794,18 @@ export const PropertiesScreen = () => {
             ? (language === 'es' ? 'Propiedades de la Cartera' : 'Portfolio Properties')
             : activeTab === 'buildings'
               ? (language === 'es' ? 'Estructuras de Edificios' : 'Building Structures')
-              : (language === 'es' ? 'Directorio de Unidades' : 'Units Directory')}
+              : activeTab === 'units'
+                ? (language === 'es' ? 'Directorio de Unidades' : 'Units Directory')
+                : (language === 'es' ? 'Borradores de Propiedades' : 'Property Drafts')}
         </Text>
         <Text style={styles.headerSubtitle} allowFontScaling={false}>
           {activeTab === 'properties'
             ? (language === 'es' ? 'Verifique activos inmobiliarios, métricas de ocupación y valoración.' : 'Verify real estate assets, occupancy metrics, and valuation.')
             : activeTab === 'buildings'
               ? (language === 'es' ? 'Verifique estructuras de edificios, complejos y recuentos de pisos.' : 'Verify building structures, complexes, and floor counts.')
-              : (language === 'es' ? 'Verifique inventario de unidades residenciales, habitaciones y renta.' : 'Verify residential unit inventory, bed/bath counts, and rent.')}
+              : activeTab === 'units'
+                ? (language === 'es' ? 'Verifique inventario de unidades residenciales, habitaciones y renta.' : 'Verify residential unit inventory, bed/bath counts, and rent.')
+                : (language === 'es' ? 'Verifique, complete o publique borradores de propiedades.' : 'View, complete, publish or discard your saved property drafts.')}
         </Text>
 
         {/* Search & Action Bar */}
@@ -565,7 +819,9 @@ export const PropertiesScreen = () => {
                   ? (language === 'es' ? 'Buscar propiedades por nombre...' : 'Search properties by name...')
                   : activeTab === 'buildings'
                     ? (language === 'es' ? 'Buscar edificios por nombre...' : 'Search buildings by name...')
-                    : (language === 'es' ? 'Buscar unidades por número...' : 'Search units by number...')
+                    : activeTab === 'units'
+                      ? (language === 'es' ? 'Buscar unidades por número...' : 'Search units by number...')
+                      : (language === 'es' ? 'Buscar borradores por nombre...' : 'Search drafts by name...')
               }
               placeholderTextColor="#64748b"
               value={searchQuery}
@@ -575,7 +831,7 @@ export const PropertiesScreen = () => {
           <TouchableOpacity
             style={styles.addBtn}
             onPress={() => {
-              if (activeTab === 'properties') setIsAddPropOpen(true);
+              if (activeTab === 'properties' || activeTab === 'drafts') setIsAddPropOpen(true);
               else if (activeTab === 'buildings') setIsAddBuildingOpen(true);
               else setIsAddUnitOpen(true);
             }}
@@ -583,7 +839,7 @@ export const PropertiesScreen = () => {
           >
             <Ionicons name="add" size={18} color="#0f172a" />
             <Text style={styles.addBtnText} allowFontScaling={false}>
-              {activeTab === 'properties'
+              {activeTab === 'properties' || activeTab === 'drafts'
                 ? (language === 'es' ? 'Propiedad' : 'Property')
                 : activeTab === 'buildings'
                   ? (language === 'es' ? 'Edificio' : 'Building')
@@ -616,6 +872,14 @@ export const PropertiesScreen = () => {
           >
             <Text style={[styles.tabBtnText, activeTab === 'units' && styles.tabBtnTextActive]} allowFontScaling={false}>
               {language === 'es' ? 'Unidades' : 'Units'}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tabBtn, activeTab === 'drafts' && styles.tabBtnActive]}
+            onPress={() => { setActiveTab('drafts'); setSearchQuery(''); }}
+          >
+            <Text style={[styles.tabBtnText, activeTab === 'drafts' && styles.tabBtnTextActive]} allowFontScaling={false}>
+              {language === 'es' ? 'Borradores' : 'Drafts'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -677,11 +941,11 @@ export const PropertiesScreen = () => {
                             <Text style={styles.activeBadgeText} allowFontScaling={false}>{item.status || 'Active'}</Text>
                           </View>
                           <TouchableOpacity
-                            style={styles.trashBtn}
-                            onPress={() => handleDeleteProperty(item.id, item.name)}
+                            style={styles.editBtn}
+                            onPress={() => handleOpenEditProperty(item)}
                             activeOpacity={0.7}
                           >
-                            <Ionicons name="trash-outline" size={16} color="#ef4444" />
+                            <Ionicons name="create-outline" size={16} color="#3b82f6" />
                           </TouchableOpacity>
                         </View>
                       </View>
@@ -760,11 +1024,11 @@ export const PropertiesScreen = () => {
                           <Text style={styles.activeBadgeText} allowFontScaling={false}>Active</Text>
                         </View>
                         <TouchableOpacity
-                          style={styles.trashBtn}
-                          onPress={() => handleDeleteBuilding(item.id, item.name)}
+                          style={styles.editBtn}
+                          onPress={() => handleOpenEditBuilding(item)}
                           activeOpacity={0.7}
                         >
-                          <Ionicons name="trash-outline" size={16} color="#ef4444" />
+                          <Ionicons name="create-outline" size={16} color="#3b82f6" />
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -838,11 +1102,11 @@ export const PropertiesScreen = () => {
                             <Ionicons name="eye-outline" size={16} color="#38bdf8" />
                           </TouchableOpacity>
                           <TouchableOpacity
-                            style={styles.trashBtn}
-                            onPress={() => handleDeleteUnit(item.id, item.unitNumber)}
+                            style={styles.editBtn}
+                            onPress={() => handleOpenEditUnit(item)}
                             activeOpacity={0.7}
                           >
-                            <Ionicons name="trash-outline" size={16} color="#ef4444" />
+                            <Ionicons name="create-outline" size={16} color="#3b82f6" />
                           </TouchableOpacity>
                         </View>
                       </View>
@@ -889,6 +1153,89 @@ export const PropertiesScreen = () => {
                               : 'Vacant'}
                           </Text>
                         </View>
+                      </View>
+                    </View>
+                  );
+                })
+              )}
+            </>
+          )}
+
+          {/* TAB 4: DRAFTS */}
+          {activeTab === 'drafts' && (
+            <>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle} allowFontScaling={false}>
+                  {language === 'es' ? `BORRADORES DE PROPIEDADES (${filteredDrafts.length})` : `PROPERTY DRAFTS (${filteredDrafts.length})`}
+                </Text>
+              </View>
+
+              {filteredDrafts.length === 0 ? (
+                <View style={styles.emptyCard}>
+                  <Ionicons name="document-text-outline" size={48} color="#f59e0b" style={{ marginBottom: 10 }} />
+                  <Text style={styles.emptyText} allowFontScaling={false}>
+                    {language === 'es' ? 'No se encontraron borradores' : 'No property drafts found'}
+                  </Text>
+                  <Text style={[styles.loadingText, { textAlign: 'center', marginTop: 4 }]} allowFontScaling={false}>
+                    {language === 'es' ? 'Los borradores guardados aparecerán aquí.' : 'Saved drafts will appear here for review and publication.'}
+                  </Text>
+                </View>
+              ) : (
+                filteredDrafts.map((item, idx) => {
+                  return (
+                    <View key={item.id || `draft-${idx}`} style={styles.card}>
+                      <View style={styles.cardHeader}>
+                        <View style={styles.headerTitleContainer}>
+                          <Ionicons name="document-text-outline" size={20} color="#f59e0b" style={{ marginRight: 8 }} />
+                          <Text style={styles.propertyName} allowFontScaling={false} numberOfLines={1}>
+                            {item.name || 'Untitled Draft'}
+                          </Text>
+                        </View>
+                        <View style={styles.badgesRow}>
+                          <View style={[styles.activeBadge, { backgroundColor: 'rgba(245, 158, 11, 0.12)', borderColor: '#f59e0b' }]}>
+                            <Text style={[styles.activeBadgeText, { color: '#f59e0b' }]} allowFontScaling={false}>Draft</Text>
+                          </View>
+                          <TouchableOpacity
+                            style={styles.editBtn}
+                            onPress={() => handleOpenEditProperty(item)}
+                            activeOpacity={0.7}
+                          >
+                            <Ionicons name="create-outline" size={16} color="#3b82f6" />
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+
+                      <View style={styles.locationRow}>
+                        <Ionicons name="location-outline" size={14} color="#94a3b8" style={{ marginRight: 4 }} />
+                        <Text style={styles.address} allowFontScaling={false} numberOfLines={1}>
+                          {formatAddress(item.address)}
+                        </Text>
+                      </View>
+
+                      <View style={styles.specsRow}>
+                        <View style={styles.specChip}>
+                          <Text style={styles.specChipText} allowFontScaling={false}>{item.type || 'Multifamily'}</Text>
+                        </View>
+                        {item.nycBin ? (
+                          <View style={[styles.specChip, { borderColor: '#f59e0b' }]}>
+                            <Text style={[styles.specChipText, { color: '#f59e0b' }]} allowFontScaling={false}>BIN #{item.nycBin}</Text>
+                          </View>
+                        ) : null}
+                      </View>
+
+                      <View style={styles.divider} />
+
+                      <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 4 }}>
+                        <TouchableOpacity
+                          style={styles.publishBtn}
+                          onPress={() => handlePublishDraft(item.id, item.name)}
+                          activeOpacity={0.8}
+                        >
+                          <Ionicons name="checkmark-circle-outline" size={16} color="#0f172a" style={{ marginRight: 4 }} />
+                          <Text style={styles.publishBtnText} allowFontScaling={false}>
+                            {language === 'es' ? 'Publicar Propiedad' : 'Publish Property'}
+                          </Text>
+                        </TouchableOpacity>
                       </View>
                     </View>
                   );
@@ -983,6 +1330,23 @@ export const PropertiesScreen = () => {
                   </View>
                 </View>
 
+                {/* NYC BIN (Building Identification Number) */}
+                <View style={styles.formGroup}>
+                  <Text style={[styles.formLabel, { color: '#f59e0b' }]} allowFontScaling={false}>
+                    NYC BIN (BUILDING IDENTIFICATION NUMBER){' '}
+                    <Text style={{ color: '#94a3b8', fontWeight: 'normal', fontSize: 9 }}>
+                      (OPTIONAL - FOR NYC DOB VIOLATIONS API SYNC)
+                    </Text>
+                  </Text>
+                  <TextInput
+                    style={styles.formInput}
+                    placeholder="e.g. 1000000"
+                    placeholderTextColor="#64748b"
+                    value={pNycBin}
+                    onChangeText={setPNycBin}
+                  />
+                </View>
+
                 <Text style={styles.modalSubHeader} allowFontScaling={false}>OWNERSHIP STRUCTURE</Text>
                 {/* Owners Dropdown */}
                 <View style={[styles.formGroup, showOwnerDropdown && { zIndex: 9997, position: 'relative' }]}>
@@ -1004,22 +1368,40 @@ export const PropertiesScreen = () => {
                     </View>
                   )}
                 </View>
-                 <View style={styles.formGroup}>
-                  <Text style={styles.formLabel} allowFontScaling={false}>OWNERSHIP PERCENTAGE (%)</Text>
-                  <TextInput style={styles.formInput} placeholder="100" keyboardType="decimal-pad" placeholderTextColor="#64748b" value={pShare} onChangeText={setPShare} />
-                  {propErrors.ownershipPercentage && <Text style={styles.errorLabel} allowFontScaling={false}>{propErrors.ownershipPercentage}</Text>}
-                </View>
-                <View style={styles.formGroup}>
-                  <Text style={styles.formLabel} allowFontScaling={false}>MANAGEMENT COMPANY</Text>
-                  <TextInput style={styles.formInput} placeholder="Apex Property Management" placeholderTextColor="#64748b" value={pMgtCo} onChangeText={setPMgtCo} />
+
+                <View style={styles.formRow}>
+                  <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>OWNERSHIP PERCENTAGE (%)</Text>
+                    <TextInput style={styles.formInput} placeholder="100" keyboardType="decimal-pad" placeholderTextColor="#64748b" value={pShare} onChangeText={setPShare} />
+                    {propErrors.ownershipPercentage && <Text style={styles.errorLabel} allowFontScaling={false}>{propErrors.ownershipPercentage}</Text>}
+                  </View>
+                  <View style={[styles.formGroup, { flex: 1 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>MANAGEMENT COMPANY</Text>
+                    <TextInput
+                      style={[styles.formInput, styles.disabledInput]}
+                      value={pMgtCo || user?.companyName || 'Divine Properties'}
+                      editable={false}
+                      placeholderTextColor="#64748b"
+                    />
+                  </View>
                 </View>
 
-                 <Text style={styles.modalSubHeader} allowFontScaling={false}>PROPERTY PARAMETERS</Text>
+                <Text style={styles.modalSubHeader} allowFontScaling={false}>PROPERTY PARAMETERS</Text>
                 <View style={styles.formRow}>
                   <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
                     <Text style={styles.formLabel} allowFontScaling={false}>YEAR BUILT</Text>
                     <TextInput style={styles.formInput} placeholder="2010" keyboardType="numeric" placeholderTextColor="#64748b" value={pYearBuilt} onChangeText={setPYearBuilt} />
                     {propErrors.yearBuilt && <Text style={styles.errorLabel} allowFontScaling={false}>{propErrors.yearBuilt}</Text>}
+                  </View>
+                  <View style={[styles.formGroup, { flex: 1 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>TOTAL BUILDINGS</Text>
+                    <TextInput style={styles.formInput} placeholder="1" keyboardType="numeric" placeholderTextColor="#64748b" value={pBuildingsCount} onChangeText={setPBuildingsCount} />
+                  </View>
+                </View>
+                <View style={styles.formRow}>
+                  <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>TOTAL UNITS</Text>
+                    <TextInput style={styles.formInput} placeholder="10" keyboardType="numeric" placeholderTextColor="#64748b" value={pUnitsCount} onChangeText={setPUnitsCount} />
                   </View>
                   <View style={[styles.formGroup, { flex: 1 }]}>
                     <Text style={styles.formLabel} allowFontScaling={false}>SQUARE FOOTAGE</Text>
@@ -1041,12 +1423,23 @@ export const PropertiesScreen = () => {
                     {propErrors.currentValue && <Text style={styles.errorLabel} allowFontScaling={false}>{propErrors.currentValue}</Text>}
                   </View>
                 </View>
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>MONTHLY EXPENSES ($)</Text>
+                  <TextInput style={styles.formInput} placeholder="4500" keyboardType="decimal-pad" placeholderTextColor="#64748b" value={pExpenses} onChangeText={setPExpenses} />
+                </View>
 
                 <View style={styles.modalActions}>
                   <TouchableOpacity style={styles.cancelBtn} onPress={() => setIsAddPropOpen(false)} disabled={submitting}>
                     <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={[styles.submitBtn, submitting && styles.submitBtnDisabled]} onPress={handleCreateProperty} disabled={submitting}>
+                  <TouchableOpacity 
+                    style={[styles.draftBtn, submitting && styles.submitBtnDisabled]} 
+                    onPress={() => handleCreateProperty('Draft')} 
+                    disabled={submitting}
+                  >
+                    <Text style={styles.draftBtnText} allowFontScaling={false}>Save Draft</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.submitBtn, submitting && styles.submitBtnDisabled]} onPress={() => handleCreateProperty('Active')} disabled={submitting}>
                     {submitting ? <ActivityIndicator size="small" color="#0f172a" /> : <Text style={styles.submitBtnText} allowFontScaling={false}>Create Property</Text>}
                   </TouchableOpacity>
                 </View>
@@ -1081,7 +1474,11 @@ export const PropertiesScreen = () => {
                   {showBPropDropdown && (
                     <View style={styles.dropdownContainer}>
                       {properties.map((opt) => (
-                        <TouchableOpacity key={opt.id} style={styles.dropdownItem} onPress={() => { setBPropId(opt.id); setShowBPropDropdown(false); }}>
+                        <TouchableOpacity key={opt.id} style={styles.dropdownItem} onPress={() => { 
+                          setBPropId(opt.id); 
+                          setBStreetAddress(opt.address || opt.streetAddress || '');
+                          setShowBPropDropdown(false); 
+                        }}>
                           <Text style={styles.dropdownItemText} allowFontScaling={false}>{opt.name}</Text>
                           {bPropId === opt.id && <Ionicons name="checkmark" size={16} color="#38bdf8" />}
                         </TouchableOpacity>
@@ -1096,22 +1493,21 @@ export const PropertiesScreen = () => {
                   {bldErrors.name && <Text style={styles.errorLabel} allowFontScaling={false}>{bldErrors.name}</Text>}
                 </View>
 
-                <View style={styles.formRow}>
-                  <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
-                    <Text style={styles.formLabel} allowFontScaling={false}>NUMBER OF FLOORS</Text>
-                    <TextInput style={styles.formInput} placeholder="3" keyboardType="numeric" placeholderTextColor="#64748b" value={bFloors} onChangeText={setBFloors} />
-                    {bldErrors.floors && <Text style={styles.errorLabel} allowFontScaling={false}>{bldErrors.floors}</Text>}
-                  </View>
-                  <View style={[styles.formGroup, { flex: 1 }]}>
-                    <Text style={styles.formLabel} allowFontScaling={false}>TOTAL UNITS</Text>
-                    <TextInput style={styles.formInput} placeholder="12" keyboardType="numeric" placeholderTextColor="#64748b" value={bUnitsCount} onChangeText={setBUnitsCount} />
-                    {bldErrors.unitsCount && <Text style={styles.errorLabel} allowFontScaling={false}>{bldErrors.unitsCount}</Text>}
-                  </View>
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>NUMBER OF FLOORS</Text>
+                  <TextInput style={styles.formInput} placeholder="3" keyboardType="numeric" placeholderTextColor="#64748b" value={bFloors} onChangeText={setBFloors} />
+                  {bldErrors.floors && <Text style={styles.errorLabel} allowFontScaling={false}>{bldErrors.floors}</Text>}
                 </View>
 
                 <View style={styles.formGroup}>
                   <Text style={styles.formLabel} allowFontScaling={false}>STREET ADDRESS</Text>
-                  <TextInput style={styles.formInput} placeholder="Leave blank to use property address" placeholderTextColor="#64748b" value={bStreetAddress} onChangeText={setBStreetAddress} />
+                  <TextInput 
+                    style={[styles.formInput, { backgroundColor: isDarkMode ? '#1e293b' : '#e2e8f0', color: isDarkMode ? '#94a3b8' : '#64748b', opacity: 0.75 }]} 
+                    placeholder="Property Address" 
+                    placeholderTextColor="#64748b" 
+                    value={bStreetAddress} 
+                    editable={false} 
+                  />
                 </View>
 
                 {/* Building Status Dropdown */}
@@ -1250,7 +1646,7 @@ export const PropertiesScreen = () => {
                  <View style={styles.formGroup}>
                   <Text style={styles.formLabel} allowFontScaling={false}>AVAILABILITY DATE</Text>
                   <TouchableOpacity style={styles.dropdownTrigger} onPress={() => setShowAvailDatePicker(true)}>
-                    <Text style={styles.dropdownTriggerText} allowFontScaling={false}>{uAvailDate || 'Select Date...'}</Text>
+                    <Text style={styles.dropdownTriggerText} allowFontScaling={false}>{uAvailDate ? String(uAvailDate).split('T')[0] : 'Select Date...'}</Text>
                     <Ionicons name="calendar-outline" size={16} color="#cbd5e1" />
                   </TouchableOpacity>
                   {unitErrors.availabilityDate && <Text style={styles.errorLabel} allowFontScaling={false}>{unitErrors.availabilityDate}</Text>}
@@ -1287,6 +1683,397 @@ export const PropertiesScreen = () => {
                   </TouchableOpacity>
                   <TouchableOpacity style={[styles.submitBtn, submitting && styles.submitBtnDisabled]} onPress={handleCreateUnit} disabled={submitting}>
                     {submitting ? <ActivityIndicator size="small" color="#0f172a" /> : <Text style={styles.submitBtnText} allowFontScaling={false}>Save Unit</Text>}
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
+            </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* --- EDIT PROPERTY MODAL --- */}
+      <Modal visible={isEditPropOpen} animationType="slide" transparent>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalBg}>
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={styles.modalCard}>
+              <View style={styles.modalHeaderRow}>
+                <Text style={styles.modalTitle} allowFontScaling={false}>Edit Property</Text>
+                <TouchableOpacity onPress={() => setIsEditPropOpen(false)}>
+                  <Ionicons name="close" size={24} color="#94a3b8" />
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                <Text style={styles.modalSubHeader} allowFontScaling={false}>BASIC INFORMATION</Text>
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>PROPERTY NAME</Text>
+                  <TextInput style={styles.formInput} placeholder="e.g. Oakridge Heights" placeholderTextColor="#64748b" value={pName} onChangeText={setPName} />
+                  {propErrors.name && <Text style={styles.errorLabel} allowFontScaling={false}>{propErrors.name}</Text>}
+                </View>
+
+                {/* Property Type Dropdown */}
+                <View style={[styles.formGroup, showTypeDropdown && { zIndex: 9999, position: 'relative' }]}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>PROPERTY TYPE</Text>
+                  <TouchableOpacity style={styles.dropdownTrigger} onPress={() => setShowTypeDropdown(!showTypeDropdown)} activeOpacity={0.7}>
+                    <Text style={styles.dropdownTriggerText} allowFontScaling={false}>{pType}</Text>
+                    <Ionicons name={showTypeDropdown ? "chevron-up" : "chevron-down"} size={16} color="#cbd5e1" />
+                  </TouchableOpacity>
+                  {showTypeDropdown && (
+                    <View style={styles.dropdownContainer}>
+                      {pTypes.map((opt) => (
+                        <TouchableOpacity key={opt} style={styles.dropdownItem} onPress={() => { setPType(opt); setShowTypeDropdown(false); }}>
+                          <Text style={styles.dropdownItemText} allowFontScaling={false}>{opt}</Text>
+                          {pType === opt && <Ionicons name="checkmark" size={16} color="#38bdf8" />}
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </View>
+
+                {/* Status Dropdown */}
+                <View style={[styles.formGroup, showStatusDropdown && { zIndex: 9998, position: 'relative' }]}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>STATUS</Text>
+                  <TouchableOpacity style={styles.dropdownTrigger} onPress={() => setShowStatusDropdown(!showStatusDropdown)} activeOpacity={0.7}>
+                    <Text style={styles.dropdownTriggerText} allowFontScaling={false}>{pStatus}</Text>
+                    <Ionicons name={showStatusDropdown ? "chevron-up" : "chevron-down"} size={16} color="#cbd5e1" />
+                  </TouchableOpacity>
+                  {showStatusDropdown && (
+                    <View style={styles.dropdownContainer}>
+                      {pStatuses.map((opt) => (
+                        <TouchableOpacity key={opt} style={styles.dropdownItem} onPress={() => { setPStatus(opt); setShowStatusDropdown(false); }}>
+                          <Text style={styles.dropdownItemText} allowFontScaling={false}>{opt}</Text>
+                          {pStatus === opt && <Ionicons name="checkmark" size={16} color="#38bdf8" />}
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </View>
+
+                <Text style={styles.modalSubHeader} allowFontScaling={false}>ADDRESS COORDINATES</Text>
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>STREET ADDRESS</Text>
+                  <TextInput style={styles.formInput} placeholder="124 Oakridge Blvd" placeholderTextColor="#64748b" value={pStreet} onChangeText={setPStreet} />
+                </View>
+                <View style={styles.formRow}>
+                  <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>CITY</Text>
+                    <TextInput style={styles.formInput} placeholder="Austin" placeholderTextColor="#64748b" value={pCity} onChangeText={setPCity} />
+                  </View>
+                  <View style={[styles.formGroup, { flex: 1 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>STATE</Text>
+                    <TextInput style={styles.formInput} placeholder="TX" placeholderTextColor="#64748b" value={pState} onChangeText={setPState} />
+                  </View>
+                </View>
+                <View style={styles.formRow}>
+                  <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>COUNTRY</Text>
+                    <TextInput style={styles.formInput} placeholder="USA" placeholderTextColor="#64748b" value={pCountry} onChangeText={setPCountry} />
+                  </View>
+                  <View style={[styles.formGroup, { flex: 1 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>ZIP CODE</Text>
+                    <TextInput style={styles.formInput} placeholder="78701" placeholderTextColor="#64748b" value={pZip} onChangeText={setPZip} />
+                  </View>
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={[styles.formLabel, { color: '#f59e0b' }]} allowFontScaling={false}>NYC BIN</Text>
+                  <TextInput style={styles.formInput} placeholder="e.g. 1000000" placeholderTextColor="#64748b" value={pNycBin} onChangeText={setPNycBin} />
+                </View>
+
+                <Text style={styles.modalSubHeader} allowFontScaling={false}>OWNERSHIP STRUCTURE</Text>
+                <View style={[styles.formGroup, showOwnerDropdown && { zIndex: 9997, position: 'relative' }]}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>OWNER</Text>
+                  <TouchableOpacity style={styles.dropdownTrigger} onPress={() => setShowOwnerDropdown(!showOwnerDropdown)} activeOpacity={0.7}>
+                    <Text style={styles.dropdownTriggerText} allowFontScaling={false}>
+                      {owners.find(o => o.id === pOwnerId)?.name || 'Select Owner...'}
+                    </Text>
+                    <Ionicons name={showOwnerDropdown ? "chevron-up" : "chevron-down"} size={16} color="#cbd5e1" />
+                  </TouchableOpacity>
+                  {showOwnerDropdown && (
+                    <View style={styles.dropdownContainer}>
+                      {owners.map((opt) => (
+                        <TouchableOpacity key={opt.id} style={styles.dropdownItem} onPress={() => { setPOwnerId(opt.id); setShowOwnerDropdown(false); }}>
+                          <Text style={styles.dropdownItemText} allowFontScaling={false}>{opt.name}</Text>
+                          {pOwnerId === opt.id && <Ionicons name="checkmark" size={16} color="#38bdf8" />}
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </View>
+
+                <View style={styles.formRow}>
+                  <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>OWNERSHIP (%)</Text>
+                    <TextInput style={styles.formInput} placeholder="100" keyboardType="decimal-pad" placeholderTextColor="#64748b" value={pShare} onChangeText={setPShare} />
+                  </View>
+                  <View style={[styles.formGroup, { flex: 1 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>MANAGEMENT COMPANY</Text>
+                    <TextInput style={[styles.formInput, styles.disabledInput]} value={pMgtCo || user?.companyName || 'Divine Properties'} editable={false} />
+                  </View>
+                </View>
+
+                <Text style={styles.modalSubHeader} allowFontScaling={false}>FINANCIAL & PARAMETERS</Text>
+                <View style={styles.formRow}>
+                  <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>YEAR BUILT</Text>
+                    <TextInput style={styles.formInput} placeholder="2010" keyboardType="numeric" placeholderTextColor="#64748b" value={pYearBuilt} onChangeText={setPYearBuilt} />
+                  </View>
+                  <View style={[styles.formGroup, { flex: 1 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>SQUARE FOOTAGE</Text>
+                    <TextInput style={styles.formInput} placeholder="8500" keyboardType="numeric" placeholderTextColor="#64748b" value={pSqft} onChangeText={setPSqft} />
+                  </View>
+                </View>
+                <View style={styles.formRow}>
+                  <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>PURCHASE PRICE ($)</Text>
+                    <TextInput style={styles.formInput} placeholder="2000000" keyboardType="numeric" placeholderTextColor="#64748b" value={pPurchasePrice} onChangeText={setPPurchasePrice} />
+                  </View>
+                  <View style={[styles.formGroup, { flex: 1 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>CURRENT VALUE ($)</Text>
+                    <TextInput style={styles.formInput} placeholder="2200000" keyboardType="numeric" placeholderTextColor="#64748b" value={pCurrentValue} onChangeText={setPCurrentValue} />
+                  </View>
+                </View>
+
+                <View style={styles.modalActions}>
+                  <TouchableOpacity style={styles.cancelBtn} onPress={() => setIsEditPropOpen(false)} disabled={submitting}>
+                    <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.submitBtn, submitting && styles.submitBtnDisabled]} onPress={handleUpdateProperty} disabled={submitting}>
+                    {submitting ? <ActivityIndicator size="small" color="#0f172a" /> : <Text style={styles.submitBtnText} allowFontScaling={false}>Update Property</Text>}
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
+            </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* --- EDIT BUILDING MODAL --- */}
+      <Modal visible={isEditBuildingOpen} animationType="slide" transparent>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalBg}>
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={styles.modalCard}>
+              <View style={styles.modalHeaderRow}>
+                <Text style={styles.modalTitle} allowFontScaling={false}>Edit Building</Text>
+                <TouchableOpacity onPress={() => setIsEditBuildingOpen(false)}>
+                  <Ionicons name="close" size={24} color="#94a3b8" />
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                <View style={[styles.formGroup, showBPropDropdown && { zIndex: 9999, position: 'relative' }]}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>ASSOCIATED PROPERTY</Text>
+                  <TouchableOpacity style={styles.dropdownTrigger} onPress={() => setShowBPropDropdown(!showBPropDropdown)} activeOpacity={0.7}>
+                    <Text style={styles.dropdownTriggerText} allowFontScaling={false}>
+                      {properties.find(p => p.id === bPropId)?.name || 'Select Property...'}
+                    </Text>
+                    <Ionicons name={showBPropDropdown ? "chevron-up" : "chevron-down"} size={16} color="#cbd5e1" />
+                  </TouchableOpacity>
+                  {showBPropDropdown && (
+                    <View style={styles.dropdownContainer}>
+                      {properties.map((opt) => (
+                        <TouchableOpacity key={opt.id} style={styles.dropdownItem} onPress={() => { setBPropId(opt.id); setShowBPropDropdown(false); }}>
+                          <Text style={styles.dropdownItemText} allowFontScaling={false}>{opt.name}</Text>
+                          {bPropId === opt.id && <Ionicons name="checkmark" size={16} color="#38bdf8" />}
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>BUILDING NAME</Text>
+                  <TextInput style={styles.formInput} placeholder="Building B / Block C" placeholderTextColor="#64748b" value={bName} onChangeText={setBName} />
+                  {bldErrors.name && <Text style={styles.errorLabel} allowFontScaling={false}>{bldErrors.name}</Text>}
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>NUMBER OF FLOORS</Text>
+                  <TextInput style={styles.formInput} placeholder="3" keyboardType="numeric" placeholderTextColor="#64748b" value={bFloors} onChangeText={setBFloors} />
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>STREET ADDRESS</Text>
+                  <TextInput
+                    style={[styles.formInput, styles.disabledInput]}
+                    placeholder="100000 Sanford Ave, Flushing, NY 11355"
+                    placeholderTextColor="#64748b"
+                    value={bStreetAddress}
+                    editable={false}
+                  />
+                </View>
+
+                <View style={[styles.formGroup, showBStatusDropdown && { zIndex: 9998, position: 'relative' }]}>
+                  <Text style={styles.formLabel} allowFontScaling={false}>STATUS</Text>
+                  <TouchableOpacity style={styles.dropdownTrigger} onPress={() => setShowBStatusDropdown(!showBStatusDropdown)} activeOpacity={0.7}>
+                    <Text style={styles.dropdownTriggerText} allowFontScaling={false}>{bStatus}</Text>
+                    <Ionicons name={showBStatusDropdown ? "chevron-up" : "chevron-down"} size={16} color="#cbd5e1" />
+                  </TouchableOpacity>
+                  {showBStatusDropdown && (
+                    <View style={styles.dropdownContainer}>
+                      {['Active', 'Inactive', 'Under Review', 'Archived'].map((opt) => (
+                        <TouchableOpacity key={opt} style={styles.dropdownItem} onPress={() => { setBStatus(opt); setShowBStatusDropdown(false); }}>
+                          <Text style={styles.dropdownItemText} allowFontScaling={false}>{opt}</Text>
+                          {bStatus === opt && <Ionicons name="checkmark" size={16} color="#38bdf8" />}
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </View>
+
+                <View style={styles.modalActions}>
+                  <TouchableOpacity style={styles.cancelBtn} onPress={() => setIsEditBuildingOpen(false)} disabled={submitting}>
+                    <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.submitBtn, submitting && styles.submitBtnDisabled]} onPress={handleUpdateBuilding} disabled={submitting}>
+                    {submitting ? <ActivityIndicator size="small" color="#0f172a" /> : <Text style={styles.submitBtnText} allowFontScaling={false}>Update Building</Text>}
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
+            </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* --- EDIT UNIT MODAL --- */}
+      <Modal visible={isEditUnitOpen} animationType="slide" transparent>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalBg}>
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={styles.modalCard}>
+              <View style={styles.modalHeaderRow}>
+                <Text style={styles.modalTitle} allowFontScaling={false}>Edit Unit</Text>
+                <TouchableOpacity onPress={() => setIsEditUnitOpen(false)}>
+                  <Ionicons name="close" size={24} color="#94a3b8" />
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                {/* PROPERTY & BUILDING (OPTIONAL) ROW */}
+                <View style={styles.formRow}>
+                  <View style={[styles.formGroup, { flex: 1, marginRight: 8 }, showUPropDropdown && { zIndex: 9999, position: 'relative' }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>PROPERTY</Text>
+                    <TouchableOpacity style={styles.dropdownTrigger} onPress={() => setShowUPropDropdown(!showUPropDropdown)} activeOpacity={0.7}>
+                      <Text style={styles.dropdownTriggerText} allowFontScaling={false} numberOfLines={1}>
+                        {properties.find(p => p.id === uPropId)?.name || 'Select Property...'}
+                      </Text>
+                      <Ionicons name={showUPropDropdown ? "chevron-up" : "chevron-down"} size={16} color="#cbd5e1" />
+                    </TouchableOpacity>
+                    {showUPropDropdown && (
+                      <View style={styles.dropdownContainer}>
+                        {properties.map((opt) => (
+                          <TouchableOpacity key={opt.id} style={styles.dropdownItem} onPress={() => { setUPropId(opt.id); setUBuildingId(''); setShowUPropDropdown(false); }}>
+                            <Text style={styles.dropdownItemText} allowFontScaling={false}>{opt.name}</Text>
+                            {uPropId === opt.id && <Ionicons name="checkmark" size={16} color="#38bdf8" />}
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    )}
+                  </View>
+
+                  <View style={[styles.formGroup, { flex: 1 }, showUBuildDropdown && { zIndex: 9999, position: 'relative' }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>BUILDING (OPTIONAL)</Text>
+                    <TouchableOpacity style={styles.dropdownTrigger} onPress={() => setShowUBuildDropdown(!showUBuildDropdown)} activeOpacity={0.7}>
+                      <Text style={styles.dropdownTriggerText} allowFontScaling={false} numberOfLines={1}>
+                        {buildings.find(b => b.id === uBuildingId)?.name || 'Select Building...'}
+                      </Text>
+                      <Ionicons name={showUBuildDropdown ? "chevron-up" : "chevron-down"} size={16} color="#cbd5e1" />
+                    </TouchableOpacity>
+                    {showUBuildDropdown && (
+                      <View style={styles.dropdownContainer}>
+                        {buildings.filter(b => !uPropId || b.propertyId === uPropId).map((opt) => (
+                          <TouchableOpacity key={opt.id} style={styles.dropdownItem} onPress={() => { setUBuildingId(opt.id); setShowUBuildDropdown(false); }}>
+                            <Text style={styles.dropdownItemText} allowFontScaling={false}>{opt.name}</Text>
+                            {uBuildingId === opt.id && <Ionicons name="checkmark" size={16} color="#38bdf8" />}
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    )}
+                  </View>
+                </View>
+
+                {/* UNIT NUMBER, FLOOR, SQUARE FOOTAGE ROW */}
+                <View style={styles.formRow}>
+                  <View style={[styles.formGroup, { flex: 1, marginRight: 6 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>UNIT NUMBER</Text>
+                    <TextInput style={styles.formInput} placeholder="101" placeholderTextColor="#64748b" value={uNumber} onChangeText={setUNumber} />
+                  </View>
+
+                  <View style={[styles.formGroup, { flex: 1, marginRight: 6 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>FLOOR</Text>
+                    <TextInput style={styles.formInput} placeholder="1" keyboardType="numeric" placeholderTextColor="#64748b" value={uFloor} onChangeText={setUFloor} />
+                  </View>
+
+                  <View style={[styles.formGroup, { flex: 1 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>SQUARE FOOTAGE</Text>
+                    <TextInput style={styles.formInput} placeholder="850" keyboardType="numeric" placeholderTextColor="#64748b" value={uSqft} onChangeText={setUSqft} />
+                  </View>
+                </View>
+
+                {/* BEDROOMS & BATHROOMS ROW */}
+                <View style={styles.formRow}>
+                  <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>BEDROOMS</Text>
+                    <TextInput style={styles.formInput} placeholder="2" keyboardType="numeric" placeholderTextColor="#64748b" value={uBeds} onChangeText={setUBeds} />
+                  </View>
+                  <View style={[styles.formGroup, { flex: 1 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>BATHROOMS</Text>
+                    <TextInput style={styles.formInput} placeholder="1" keyboardType="numeric" placeholderTextColor="#64748b" value={uBaths} onChangeText={setUBaths} />
+                  </View>
+                </View>
+
+                {/* MONTHLY RENT & SECURITY DEPOSIT ROW */}
+                <View style={styles.formRow}>
+                  <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>MONTHLY RENT ($)</Text>
+                    <TextInput style={styles.formInput} placeholder="1500" keyboardType="numeric" placeholderTextColor="#64748b" value={uRent} onChangeText={setURent} />
+                  </View>
+                  <View style={[styles.formGroup, { flex: 1 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>SECURITY DEPOSIT ($)</Text>
+                    <TextInput style={styles.formInput} placeholder="1500" keyboardType="numeric" placeholderTextColor="#64748b" value={uDeposit} onChangeText={setUDeposit} />
+                  </View>
+                </View>
+
+                {/* AVAILABILITY DATE & STATUS ROW */}
+                <View style={styles.formRow}>
+                  <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>AVAILABILITY DATE</Text>
+                    <TouchableOpacity style={styles.dropdownTrigger} onPress={() => setShowAvailDatePicker(true)}>
+                      <Text style={styles.dropdownTriggerText} allowFontScaling={false}>{uAvailDate ? String(uAvailDate).split('T')[0] : 'Select Date...'}</Text>
+                      <Ionicons name="calendar-outline" size={16} color="#cbd5e1" />
+                    </TouchableOpacity>
+                    <CustomDatePicker
+                      visible={showAvailDatePicker}
+                      value={uAvailDate}
+                      onSelect={(date) => setUAvailDate(date)}
+                      onClose={() => setShowAvailDatePicker(false)}
+                    />
+                  </View>
+
+                  <View style={[styles.formGroup, { flex: 1 }, showUStatusDropdown && { zIndex: 9997, position: 'relative' }]}>
+                    <Text style={styles.formLabel} allowFontScaling={false}>STATUS</Text>
+                    <TouchableOpacity style={styles.dropdownTrigger} onPress={() => setShowUStatusDropdown(!showUStatusDropdown)} activeOpacity={0.7}>
+                      <Text style={styles.dropdownTriggerText} allowFontScaling={false}>{uStatus}</Text>
+                      <Ionicons name={showUStatusDropdown ? "chevron-up" : "chevron-down"} size={16} color="#cbd5e1" />
+                    </TouchableOpacity>
+                    {showUStatusDropdown && (
+                      <View style={styles.dropdownContainer}>
+                        {['Occupied', 'Vacant', 'Under Maintenance'].map((opt) => (
+                          <TouchableOpacity key={opt} style={styles.dropdownItem} onPress={() => { setUStatus(opt); setShowUStatusDropdown(false); }}>
+                            <Text style={styles.dropdownItemText} allowFontScaling={false}>{opt}</Text>
+                            {uStatus === opt && <Ionicons name="checkmark" size={16} color="#38bdf8" />}
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    )}
+                  </View>
+                </View>
+
+                <View style={styles.modalActions}>
+                  <TouchableOpacity style={styles.cancelBtn} onPress={() => setIsEditUnitOpen(false)} disabled={submitting}>
+                    <Text style={styles.cancelBtnText} allowFontScaling={false}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.submitBtn, submitting && styles.submitBtnDisabled]} onPress={handleUpdateUnit} disabled={submitting}>
+                    {submitting ? <ActivityIndicator size="small" color="#0f172a" /> : <Text style={styles.submitBtnText} allowFontScaling={false}>Save Changes</Text>}
                   </TouchableOpacity>
                 </View>
               </ScrollView>
@@ -1592,6 +2379,23 @@ const getStyles = (colors, isDarkMode) => StyleSheet.create({
   center: { flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' },
   loadingText: { color: colors.textSecondary, marginTop: 8 },
 
+  fixedHeader: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    backgroundColor: colors.background,
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: colors.textPrimary,
+  },
+  headerSubtitle: {
+    fontSize: 12.5,
+    color: colors.textSecondary,
+    marginTop: 4,
+    marginBottom: 4,
+  },
+
   // Tabs bar
   tabContainer: {
     flexDirection: 'row',
@@ -1649,6 +2453,7 @@ const getStyles = (colors, isDarkMode) => StyleSheet.create({
   activeBadge: { backgroundColor: 'rgba(16, 185, 129, 0.12)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, borderWidth: 1, borderColor: '#10b981' },
   activeBadgeText: { color: '#10b981', fontSize: 10, fontWeight: '800' },
   trashBtn: { width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(239, 68, 68, 0.12)', alignItems: 'center', justifyContent: 'center' },
+  editBtn: { width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(59, 130, 246, 0.12)', alignItems: 'center', justifyContent: 'center' },
   eyeBtn: { width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(56, 189, 248, 0.12)', alignItems: 'center', justifyContent: 'center' },
 
   locationRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
@@ -1688,6 +2493,10 @@ const getStyles = (colors, isDarkMode) => StyleSheet.create({
     height: 44,
     color: colors.textPrimary,
     fontSize: 13,
+  },
+  disabledInput: {
+    opacity: 0.6,
+    backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : '#f1f5f9',
   },
 
   dropdownTrigger: {
@@ -1732,6 +2541,34 @@ const getStyles = (colors, isDarkMode) => StyleSheet.create({
   submitBtn: { backgroundColor: '#38bdf8', paddingVertical: 10, paddingHorizontal: 16, borderRadius: 10, minWidth: 110, alignItems: 'center', justifyContent: 'center' },
   submitBtnDisabled: { opacity: 0.5 },
   submitBtnText: { color: '#0f172a', fontSize: 12.5, fontWeight: '800' },
+  draftBtn: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#38bdf8',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  draftBtnText: {
+    color: '#38bdf8',
+    fontSize: 12.5,
+    fontWeight: '700',
+  },
+  publishBtn: {
+    backgroundColor: '#10b981',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  publishBtnText: {
+    color: '#0f172a',
+    fontSize: 12,
+    fontWeight: '800',
+  },
 
   // Detail Modal styling
   modalTitleRow: { flexDirection: 'row', alignItems: 'center' },
@@ -1770,3 +2607,5 @@ const getStyles = (colors, isDarkMode) => StyleSheet.create({
   docText: { color: colors.textSecondary, fontSize: 12, marginLeft: 8, flex: 1 },
   docSize: { color: colors.textMuted, fontSize: 11 },
 });
+
+export default PropertiesScreen;

@@ -100,24 +100,17 @@ export const DistributionsScreen = () => {
           distributionNo: item.distributionNo || (item.id ? `DIST-${item.id.substring(0, 4).toUpperCase()}` : 'DIST-1000'),
           propertyManaged: item.propertyManaged || 'Property 2 Distribution',
           paymentDate: item.paymentDate || item.date || '2026-08-04',
-          amountPaid: Number(item.amountPaid || item.amount) || 250,
+          amountPaid: Number(item.amountPaid || item.amount) || 0,
           payoutMethod: item.payoutMethod || 'Direct Deposit',
           status: item.status || 'Completed',
         }));
         setDistributions(mapped);
       } else {
-        // Fallback snapshot matching Web screenshot 1-to-1
-        setDistributions([
-          { id: 'd-1', distributionNo: 'DIST-1000', propertyManaged: 'Property 2 Distribution', paymentDate: '2026-08-04', amountPaid: 250, payoutMethod: 'Direct Deposit', status: 'Completed' },
-          { id: 'd-2', distributionNo: 'DIST-1001', propertyManaged: 'Property 2 Distribution', paymentDate: '2026-08-04', amountPaid: 250, payoutMethod: 'Direct Deposit', status: 'Completed' },
-        ]);
+        setDistributions([]);
       }
     } catch (e) {
       console.log('Error fetching GET /portal/owner/distributions:', e.message);
-      setDistributions([
-        { id: 'd-1', distributionNo: 'DIST-1000', propertyManaged: 'Property 2 Distribution', paymentDate: '2026-08-04', amountPaid: 250, payoutMethod: 'Direct Deposit', status: 'Completed' },
-        { id: 'd-2', distributionNo: 'DIST-1001', propertyManaged: 'Property 2 Distribution', paymentDate: '2026-08-04', amountPaid: 250, payoutMethod: 'Direct Deposit', status: 'Completed' },
-      ]);
+      setDistributions([]);
     } finally {
       setLoading(false);
       setRefreshing(false);
