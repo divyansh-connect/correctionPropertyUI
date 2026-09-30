@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as zod from 'zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from '@tanstack/react-router';
+import { useNavigate, Link } from '@tanstack/react-router';
 import api from '../../api';
 import { useCompanyStore } from '../../store/useStore';
 import { PageHeader } from '../../components/PageHeader';
@@ -15,6 +15,10 @@ import { Select } from '../../components/ui/Select';
 import { Button } from '../../components/ui/Button';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import { mapBackendErrors } from '../../utils/errorMapping';
+
+const optionalNumberRegister = {
+  setValueAs: (v: any) => (v === '' || v === null || v === undefined || isNaN(Number(v)) ? undefined : Number(v)),
+};
 
 const propertyFormSchema = zod.object({
   name: zod.string().min(1, 'Property Name is required'),
@@ -32,14 +36,14 @@ const propertyFormSchema = zod.object({
   ownershipPercentage: zod.number().min(1).max(100),
   managementCompany: zod.string().min(1, 'Management Company is required'),
   
-  yearBuilt: zod.number().min(1700).max(new Date().getFullYear()),
-  totalBuildings: zod.number().min(1),
-  totalUnits: zod.number().min(0),
-  squareFootage: zod.number().min(1),
+  yearBuilt: zod.number().min(1700, 'Year built must be at least 1700').max(new Date().getFullYear() + 5, 'Year built is invalid').optional(),
+  totalBuildings: zod.number().min(1, 'Must be at least 1 building').optional(),
+  totalUnits: zod.number().min(0, 'Units cannot be negative').optional(),
+  squareFootage: zod.number().min(0, 'Square footage cannot be negative').optional(),
   
-  purchasePrice: zod.number().min(0),
-  currentValue: zod.number().min(0),
-  monthlyExpenses: zod.number().min(0),
+  purchasePrice: zod.number().min(0, 'Purchase price cannot be negative').optional(),
+  currentValue: zod.number().min(0, 'Current value cannot be negative').optional(),
+  monthlyExpenses: zod.number().min(0, 'Monthly expenses cannot be negative').optional(),
 });
 
 type PropertyFormInputs = zod.infer<typeof propertyFormSchema>;
@@ -95,13 +99,13 @@ export const NewPropertyPage: React.FC = () => {
       status: 'Active',
       ownershipPercentage: 100,
       managementCompany: activeCompany,
-      yearBuilt: 2010,
-      totalBuildings: 1,
-      totalUnits: 10,
-      squareFootage: 8500,
-      purchasePrice: 2000000,
-      currentValue: 2200000,
-      monthlyExpenses: 4500,
+      yearBuilt: undefined,
+      totalBuildings: undefined,
+      totalUnits: undefined,
+      squareFootage: undefined,
+      purchasePrice: undefined,
+      currentValue: undefined,
+      monthlyExpenses: undefined,
     },
   });
 
@@ -259,6 +263,12 @@ export const NewPropertyPage: React.FC = () => {
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Management Company</label>
               <Input {...register('managementCompany')} disabled className="bg-muted/50 text-muted-foreground cursor-not-allowed font-semibold" />
+              <p className="text-[11px] text-muted-foreground">
+                To change this, please go to{' '}
+                <Link to="/admin/company-settings" className="text-primary font-medium hover:underline">
+                  Company Settings
+                </Link>.
+              </p>
               {errors.managementCompany && <p className="text-rose-500 text-xs font-semibold">{errors.managementCompany.message}</p>}
             </div>
           </div>
@@ -266,57 +276,64 @@ export const NewPropertyPage: React.FC = () => {
 
         {/* --- SECTION 4: PROPERTY DETAILS --- */}
         <div className="space-y-4">
-          <h3 className="font-bold text-sm text-foreground uppercase border-b pb-2">Property Parameters</h3>
+          <h3 className="font-bold text-sm text-foreground uppercase border-b pb-2">Property Parameters (Optional)</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Year Built</label>
-              <Input type="number" {...register('yearBuilt', { valueAsNumber: true })} />
+              <Input type="number" placeholder="e.g. 2020" {...register('yearBuilt', optionalNumberRegister)} />
+              {errors.yearBuilt && <p className="text-rose-500 text-xs font-semibold">{errors.yearBuilt.message}</p>}
             </div>
 
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Total Buildings</label>
-              <Input type="number" {...register('totalBuildings', { valueAsNumber: true })} />
+              <Input type="number" placeholder="e.g. 1" {...register('totalBuildings', optionalNumberRegister)} />
+              {errors.totalBuildings && <p className="text-rose-500 text-xs font-semibold">{errors.totalBuildings.message}</p>}
             </div>
 
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Total Units</label>
-              <Input type="number" {...register('totalUnits', { valueAsNumber: true })} />
+              <Input type="number" placeholder="e.g. 10" {...register('totalUnits', optionalNumberRegister)} />
+              {errors.totalUnits && <p className="text-rose-500 text-xs font-semibold">{errors.totalUnits.message}</p>}
             </div>
 
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Square Footage</label>
-              <Input type="number" {...register('squareFootage', { valueAsNumber: true })} />
+              <Input type="number" placeholder="e.g. 8500" {...register('squareFootage', optionalNumberRegister)} />
+              {errors.squareFootage && <p className="text-rose-500 text-xs font-semibold">{errors.squareFootage.message}</p>}
             </div>
           </div>
         </div>
 
         {/* --- SECTION 5: FINANCIAL DATA --- */}
         <div className="space-y-4">
-          <h3 className="font-bold text-sm text-foreground uppercase border-b pb-2">Financial Valuation</h3>
+          <h3 className="font-bold text-sm text-foreground uppercase border-b pb-2">Financial Valuation (Optional)</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Purchase Price ($)</label>
-              <Input type="number" {...register('purchasePrice', { valueAsNumber: true })} />
+              <Input type="number" placeholder="e.g. 2000000" {...register('purchasePrice', optionalNumberRegister)} />
+              {errors.purchasePrice && <p className="text-rose-500 text-xs font-semibold">{errors.purchasePrice.message}</p>}
             </div>
 
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Current Value ($)</label>
-              <Input type="number" {...register('currentValue', { valueAsNumber: true })} />
+              <Input type="number" placeholder="e.g. 2200000" {...register('currentValue', optionalNumberRegister)} />
+              {errors.currentValue && <p className="text-rose-500 text-xs font-semibold">{errors.currentValue.message}</p>}
             </div>
 
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Monthly Expenses ($)</label>
-              <Input type="number" {...register('monthlyExpenses', { valueAsNumber: true })} />
+              <Input type="number" placeholder="e.g. 4500" {...register('monthlyExpenses', optionalNumberRegister)} />
+              {errors.monthlyExpenses && <p className="text-rose-500 text-xs font-semibold">{errors.monthlyExpenses.message}</p>}
             </div>
           </div>
         </div>
 
         {/* --- SECTION 6: MEDIA --- */}
         <div className="space-y-4">
-          <h3 className="font-bold text-sm text-foreground uppercase border-b pb-2">Media & Attachments</h3>
+          <h3 className="font-bold text-sm text-foreground uppercase border-b pb-2">Property Photo & Document (Optional)</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-xs font-bold text-muted-foreground uppercase">Property Photo <span className="text-muted-foreground font-normal">(Optional - Max 1MB)</span></label>
+              <label className="text-xs font-bold text-muted-foreground uppercase">Property Photo <span className="text-muted-foreground font-normal">(Max 1MB)</span></label>
               <FileUploader
                 accept="image/*"
                 maxSizeMB={1}

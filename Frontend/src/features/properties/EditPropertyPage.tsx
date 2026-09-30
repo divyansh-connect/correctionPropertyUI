@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as zod from 'zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { useNavigate, useSearch, Link } from '@tanstack/react-router';
 import api from '../../api';
 import { useCompanyStore } from '../../store/useStore';
 import { PageHeader } from '../../components/PageHeader';
@@ -14,30 +14,34 @@ import { Select } from '../../components/ui/Select';
 import { Button } from '../../components/ui/Button';
 import { Loader2, ArrowLeft } from 'lucide-react';
 
+const optionalNumberRegister = {
+  setValueAs: (v: any) => (v === '' || v === null || v === undefined || isNaN(Number(v)) ? undefined : Number(v)),
+};
+
 const propertyFormSchema = zod.object({
   name: zod.string().min(1, 'Property Name is required'),
   type: zod.enum(['Apartment', 'Commercial', 'Single Family', 'Multi Family', 'HOA']),
   status: zod.enum(['Active', 'Inactive', 'Under Review', 'Archived']),
-  
+
   streetAddress: zod.string().min(1, 'Street Address is required'),
   city: zod.string().min(1, 'City is required'),
   state: zod.string().min(2, 'State is required'),
   country: zod.string().min(1, 'Country is required'),
   zip: zod.string().min(5, 'ZIP Code is required'),
   nycBin: zod.string().optional(),
-  
+
   owner: zod.string().min(1, 'Owner is required'),
   ownershipPercentage: zod.number().min(1).max(100),
   managementCompany: zod.string().min(1, 'Management Company is required'),
-  
-  yearBuilt: zod.number().min(1700).max(new Date().getFullYear()),
-  totalBuildings: zod.number().min(1),
-  totalUnits: zod.number().min(0),
-  squareFootage: zod.number().min(1),
-  
-  purchasePrice: zod.number().min(0),
-  currentValue: zod.number().min(0),
-  monthlyExpenses: zod.number().min(0),
+
+  yearBuilt: zod.number().min(1700, 'Year built must be at least 1700').max(new Date().getFullYear() + 5, 'Year built is invalid').optional(),
+  totalBuildings: zod.number().min(1, 'Must be at least 1 building').optional(),
+  totalUnits: zod.number().min(0, 'Units cannot be negative').optional(),
+  squareFootage: zod.number().min(0, 'Square footage cannot be negative').optional(),
+
+  purchasePrice: zod.number().min(0, 'Purchase price cannot be negative').optional(),
+  currentValue: zod.number().min(0, 'Current value cannot be negative').optional(),
+  monthlyExpenses: zod.number().min(0, 'Monthly expenses cannot be negative').optional(),
 });
 
 type PropertyFormInputs = zod.infer<typeof propertyFormSchema>;
@@ -79,8 +83,8 @@ export const EditPropertyPage: React.FC<{ propertyId?: string }> = ({ propertyId
         .then((data: any) => {
           if (data) {
             const ownerObj = owners.find((o) => o.id === data.ownerId);
-            const ownerName = ownerObj 
-              ? (ownerObj.name || `${ownerObj.firstName || ''} ${ownerObj.lastName || ''}`.trim()) 
+            const ownerName = ownerObj
+              ? (ownerObj.name || `${ownerObj.firstName || ''} ${ownerObj.lastName || ''}`.trim())
               : data.ownerId || '';
 
             reset({
@@ -127,8 +131,8 @@ export const EditPropertyPage: React.FC<{ propertyId?: string }> = ({ propertyId
   });
 
   const onSubmit = (values: PropertyFormInputs) => {
-    const selectedOwner = owners.find((o) => 
-      o.name === values.owner || 
+    const selectedOwner = owners.find((o) =>
+      o.name === values.owner ||
       `${o.firstName} ${o.lastName}`.trim() === values.owner ||
       o.id === values.owner
     );
@@ -181,7 +185,7 @@ export const EditPropertyPage: React.FC<{ propertyId?: string }> = ({ propertyId
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 bg-card border border-border p-6 rounded-2xl shadow-sm text-foreground">
-        
+
         {/* --- SECTION 1: BASIC INFORMATION --- */}
         <div className="space-y-4">
           <h3 className="font-bold text-sm text-foreground uppercase border-b pb-2">Basic Information</h3>
@@ -247,6 +251,12 @@ export const EditPropertyPage: React.FC<{ propertyId?: string }> = ({ propertyId
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Management Company</label>
               <Input {...register('managementCompany')} disabled className="bg-muted/50 text-muted-foreground cursor-not-allowed font-semibold" />
+              <p className="text-[11px] text-muted-foreground">
+                To change this, please go to{' '}
+                <Link to="/admin/company-settings" className="text-primary font-medium hover:underline">
+                  Company Settings
+                </Link>.
+              </p>
               {errors.managementCompany && <p className="text-rose-500 text-xs">{errors.managementCompany.message}</p>}
             </div>
           </div>
@@ -254,57 +264,64 @@ export const EditPropertyPage: React.FC<{ propertyId?: string }> = ({ propertyId
 
         {/* --- SECTION 4: PROPERTY DETAILS --- */}
         <div className="space-y-4">
-          <h3 className="font-bold text-sm text-foreground uppercase border-b pb-2">Property Parameters</h3>
+          <h3 className="font-bold text-sm text-foreground uppercase border-b pb-2">Property Parameters (Optional)</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Year Built</label>
-              <Input type="number" {...register('yearBuilt', { valueAsNumber: true })} />
+              <Input type="number" placeholder="e.g. 2020" {...register('yearBuilt', optionalNumberRegister)} />
+              {errors.yearBuilt && <p className="text-rose-500 text-xs font-semibold">{errors.yearBuilt.message}</p>}
             </div>
 
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Total Buildings</label>
-              <Input type="number" {...register('totalBuildings', { valueAsNumber: true })} />
+              <Input type="number" placeholder="e.g. 1" {...register('totalBuildings', optionalNumberRegister)} />
+              {errors.totalBuildings && <p className="text-rose-500 text-xs font-semibold">{errors.totalBuildings.message}</p>}
             </div>
 
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Total Units</label>
-              <Input type="number" disabled {...register('totalUnits', { valueAsNumber: true })} />
+              <Input type="number" disabled {...register('totalUnits', optionalNumberRegister)} />
+              {errors.totalUnits && <p className="text-rose-500 text-xs font-semibold">{errors.totalUnits.message}</p>}
             </div>
 
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Square Footage</label>
-              <Input type="number" {...register('squareFootage', { valueAsNumber: true })} />
+              <Input type="number" placeholder="e.g. 8500" {...register('squareFootage', optionalNumberRegister)} />
+              {errors.squareFootage && <p className="text-rose-500 text-xs font-semibold">{errors.squareFootage.message}</p>}
             </div>
           </div>
         </div>
 
         {/* --- SECTION 5: FINANCIAL INFORMATION --- */}
         <div className="space-y-4">
-          <h3 className="font-bold text-sm text-foreground uppercase border-b pb-2">Financial Valuation</h3>
+          <h3 className="font-bold text-sm text-foreground uppercase border-b pb-2">Financial Valuation (Optional)</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Purchase Price ($)</label>
-              <Input type="number" {...register('purchasePrice', { valueAsNumber: true })} />
+              <Input type="number" placeholder="e.g. 2000000" {...register('purchasePrice', optionalNumberRegister)} />
+              {errors.purchasePrice && <p className="text-rose-500 text-xs font-semibold">{errors.purchasePrice.message}</p>}
             </div>
 
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Current Value ($)</label>
-              <Input type="number" {...register('currentValue', { valueAsNumber: true })} />
+              <Input type="number" placeholder="e.g. 2200000" {...register('currentValue', optionalNumberRegister)} />
+              {errors.currentValue && <p className="text-rose-500 text-xs font-semibold">{errors.currentValue.message}</p>}
             </div>
 
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Monthly Expenses ($)</label>
-              <Input type="number" {...register('monthlyExpenses', { valueAsNumber: true })} />
+              <Input type="number" placeholder="e.g. 4500" {...register('monthlyExpenses', optionalNumberRegister)} />
+              {errors.monthlyExpenses && <p className="text-rose-500 text-xs font-semibold">{errors.monthlyExpenses.message}</p>}
             </div>
           </div>
         </div>
 
         {/* --- SECTION 6: MEDIA --- */}
         <div className="space-y-4">
-          <h3 className="font-bold text-sm text-foreground uppercase border-b pb-2">Media & Attachments</h3>
+          <h3 className="font-bold text-sm text-foreground uppercase border-b pb-2">Property Photo & Document (Optional)</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-xs font-bold text-muted-foreground uppercase">Property Photo <span className="text-muted-foreground font-normal">(Optional - Max 1MB)</span></label>
+              <label className="text-xs font-bold text-muted-foreground uppercase">Property Photo <span className="text-muted-foreground font-normal">(Max 1MB)</span></label>
               <FileUploader
                 accept="image/*"
                 maxSizeMB={1}
