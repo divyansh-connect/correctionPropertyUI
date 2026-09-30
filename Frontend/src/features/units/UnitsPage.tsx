@@ -112,7 +112,6 @@ export const UnitsPage: React.FC = () => {
       ),
     },
     { accessorKey: 'propertyName', header: t('pmLeasing.property'), id: 'property' },
-    { accessorKey: 'buildingName', header: t('pmProperties.building'), id: 'building', cell: ({ row }) => row.original.buildingName || 'N/A' },
     { accessorKey: 'floor', header: t('pmProperties.floor'), id: 'floor' },
     { accessorKey: 'bedrooms', header: t('pmProperties.beds'), id: 'bedrooms' },
     { accessorKey: 'bathrooms', header: t('pmProperties.baths'), id: 'bathrooms' },

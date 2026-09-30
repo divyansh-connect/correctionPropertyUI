@@ -13,7 +13,7 @@ import { FileUploader } from '../../components/FileUploader';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { Button } from '../../components/ui/Button';
-import { Loader2, ArrowLeft } from 'lucide-react';
+import { Loader2, ArrowLeft, ChevronDown } from 'lucide-react';
 import { mapBackendErrors } from '../../utils/errorMapping';
 
 const optionalNumberRegister = {
@@ -57,6 +57,7 @@ export const NewPropertyPage: React.FC = () => {
   const [photos, setPhotos] = useState<string[]>([]);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [success, setSuccess] = useState(false);
+  const [showAdditionalDetails, setShowAdditionalDetails] = useState(false);
 
   // Query owners to select one
   const { data: owners = [] } = useQuery({
@@ -274,78 +275,94 @@ export const NewPropertyPage: React.FC = () => {
           </div>
         </div>
 
-        {/* --- SECTION 4: PROPERTY DETAILS --- */}
-        <div className="space-y-4">
-          <h3 className="font-bold text-sm text-foreground uppercase border-b pb-2">Property Parameters (Optional)</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-muted-foreground uppercase">Year Built</label>
-              <Input type="number" placeholder="e.g. 2020" {...register('yearBuilt', optionalNumberRegister)} />
-              {errors.yearBuilt && <p className="text-rose-500 text-xs font-semibold">{errors.yearBuilt.message}</p>}
+        {/* ADDITIONAL DETAILS DROPDOWN TOGGLE */}
+        <div className="pt-2 border-t">
+          <button
+            type="button"
+            onClick={() => setShowAdditionalDetails(!showAdditionalDetails)}
+            className="w-full flex items-center justify-between p-4 bg-muted/30 hover:bg-muted/60 border border-border rounded-xl transition-all text-left cursor-pointer"
+          >
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-sm text-foreground uppercase tracking-wide">
+                  Additional Details (Optional)
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Property Parameters, Financial Valuation, Property Photo & Documents
+              </p>
             </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-muted-foreground uppercase">Total Floors</label>
-              <Input type="number" placeholder="e.g. 3" {...register('totalBuildings', optionalNumberRegister)} />
-              {errors.totalBuildings && <p className="text-rose-500 text-xs font-semibold">{errors.totalBuildings.message}</p>}
+            <div className="flex items-center gap-2 text-xs font-semibold text-primary">
+              <span>{showAdditionalDetails ? 'Hide Details' : 'Show Details'}</span>
+              <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showAdditionalDetails ? 'rotate-180' : ''}`} />
             </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-muted-foreground uppercase">Total Units</label>
-              <Input type="number" placeholder="e.g. 10" {...register('totalUnits', optionalNumberRegister)} />
-              {errors.totalUnits && <p className="text-rose-500 text-xs font-semibold">{errors.totalUnits.message}</p>}
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-muted-foreground uppercase">Square Footage</label>
-              <Input type="number" placeholder="e.g. 8500" {...register('squareFootage', optionalNumberRegister)} />
-              {errors.squareFootage && <p className="text-rose-500 text-xs font-semibold">{errors.squareFootage.message}</p>}
-            </div>
-          </div>
+          </button>
         </div>
 
-        {/* --- SECTION 5: FINANCIAL DATA --- */}
-        <div className="space-y-4">
-          <h3 className="font-bold text-sm text-foreground uppercase border-b pb-2">Financial Valuation (Optional)</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-muted-foreground uppercase">Purchase Price ($)</label>
-              <Input type="number" placeholder="e.g. 2000000" {...register('purchasePrice', optionalNumberRegister)} />
-              {errors.purchasePrice && <p className="text-rose-500 text-xs font-semibold">{errors.purchasePrice.message}</p>}
+        {showAdditionalDetails && (
+          <div className="space-y-8 animate-fade-in pt-2">
+            {/* --- SECTION 4: PROPERTY DETAILS --- */}
+            <div className="space-y-4">
+              <h3 className="font-bold text-sm text-foreground uppercase border-b pb-2">Property Parameters (Optional)</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-muted-foreground uppercase">Total Floors</label>
+                  <Input type="number" placeholder="e.g. 3" {...register('totalBuildings', optionalNumberRegister)} />
+                  {errors.totalBuildings && <p className="text-rose-500 text-xs font-semibold">{errors.totalBuildings.message}</p>}
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-muted-foreground uppercase">Total Units</label>
+                  <Input type="number" placeholder="e.g. 10" {...register('totalUnits', optionalNumberRegister)} />
+                  {errors.totalUnits && <p className="text-rose-500 text-xs font-semibold">{errors.totalUnits.message}</p>}
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-muted-foreground uppercase">Current Value ($)</label>
-              <Input type="number" placeholder="e.g. 2200000" {...register('currentValue', optionalNumberRegister)} />
-              {errors.currentValue && <p className="text-rose-500 text-xs font-semibold">{errors.currentValue.message}</p>}
+            {/* --- SECTION 5: FINANCIAL DATA --- */}
+            <div className="space-y-4">
+              <h3 className="font-bold text-sm text-foreground uppercase border-b pb-2">Financial Valuation (Optional)</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-muted-foreground uppercase">Purchase Price ($)</label>
+                  <Input type="number" placeholder="e.g. 2000000" {...register('purchasePrice', optionalNumberRegister)} />
+                  {errors.purchasePrice && <p className="text-rose-500 text-xs font-semibold">{errors.purchasePrice.message}</p>}
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-muted-foreground uppercase">Current Value ($)</label>
+                  <Input type="number" placeholder="e.g. 2200000" {...register('currentValue', optionalNumberRegister)} />
+                  {errors.currentValue && <p className="text-rose-500 text-xs font-semibold">{errors.currentValue.message}</p>}
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-muted-foreground uppercase">Monthly Expenses ($)</label>
+                  <Input type="number" placeholder="e.g. 4500" {...register('monthlyExpenses', optionalNumberRegister)} />
+                  {errors.monthlyExpenses && <p className="text-rose-500 text-xs font-semibold">{errors.monthlyExpenses.message}</p>}
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-muted-foreground uppercase">Monthly Expenses ($)</label>
-              <Input type="number" placeholder="e.g. 4500" {...register('monthlyExpenses', optionalNumberRegister)} />
-              {errors.monthlyExpenses && <p className="text-rose-500 text-xs font-semibold">{errors.monthlyExpenses.message}</p>}
+            {/* --- SECTION 6: MEDIA --- */}
+            <div className="space-y-4">
+              <h3 className="font-bold text-sm text-foreground uppercase border-b pb-2">Property Photo & Document (Optional)</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-muted-foreground uppercase">Property Photo <span className="text-muted-foreground font-normal">(Max 1MB)</span></label>
+                  <FileUploader
+                    accept="image/*"
+                    maxSizeMB={1}
+                    onFileSelect={(file) => setImageFile(file)}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-muted-foreground uppercase">Property Documents</label>
+                  <FileUploader />
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-
-        {/* --- SECTION 6: MEDIA --- */}
-        <div className="space-y-4">
-          <h3 className="font-bold text-sm text-foreground uppercase border-b pb-2">Property Photo & Document (Optional)</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-muted-foreground uppercase">Property Photo <span className="text-muted-foreground font-normal">(Max 1MB)</span></label>
-              <FileUploader
-                accept="image/*"
-                maxSizeMB={1}
-                onFileSelect={(file) => setImageFile(file)}
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-muted-foreground uppercase">Property Documents</label>
-              <FileUploader />
-            </div>
-          </div>
-        </div>
+        )}
 
         {/* --- FOOTER BUTTONS --- */}
         <div className="flex justify-between items-center pt-6 border-t">
