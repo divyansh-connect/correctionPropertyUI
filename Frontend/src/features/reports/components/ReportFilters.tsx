@@ -2,6 +2,7 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../../api';
 import { ReportFiltersState } from '../types/report.types';
+import { FilterX } from 'lucide-react';
 
 interface ReportFiltersProps {
   filters: ReportFiltersState;
@@ -27,26 +28,29 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
   paymentMethodOptions = [],
 }) => {
   // Query properties
-  const { data: properties = [] } = useQuery({
+  const { data: propertiesData = [] } = useQuery({
     queryKey: ['properties'],
     queryFn: () => api.property.getAll(),
   });
+  const properties = Array.isArray(propertiesData) ? propertiesData : [];
 
   // Query units (optionally filtered by selected property)
-  const { data: units = [] } = useQuery({
+  const { data: unitsData = [] } = useQuery({
     queryKey: ['units'],
     queryFn: () => api.unit.getAll(),
   });
+  const units = Array.isArray(unitsData) ? unitsData : [];
 
   const filteredUnits = filters.propertyId
     ? units.filter((u: any) => u.propertyId === filters.propertyId)
     : units;
 
   // Query tenants
-  const { data: tenants = [] } = useQuery({
+  const { data: tenantsData = [] } = useQuery({
     queryKey: ['tenants'],
     queryFn: () => api.tenant.getAll(),
   });
+  const tenants = Array.isArray(tenantsData) ? tenantsData : [];
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
@@ -54,7 +58,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
       <div>
         <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Property</label>
         <select
-          value={filters.propertyId}
+          value={filters.propertyId || ''}
           onChange={(e) => onChange('propertyId', e.target.value)}
           className="w-full h-10 px-3 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
         >
@@ -71,14 +75,14 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
       <div>
         <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Unit</label>
         <select
-          value={filters.unitId}
+          value={filters.unitId || ''}
           onChange={(e) => onChange('unitId', e.target.value)}
           className="w-full h-10 px-3 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
         >
           <option value="">All Units</option>
           {filteredUnits.map((u: any) => (
             <option key={u.id} value={u.id}>
-              Unit {u.unitNumber} ({u.propertyName})
+              Unit {u.unitNumber} {u.propertyName ? `(${u.propertyName})` : ''}
             </option>
           ))}
         </select>
@@ -88,14 +92,14 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
       <div>
         <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Tenant</label>
         <select
-          value={filters.tenantId}
+          value={filters.tenantId || ''}
           onChange={(e) => onChange('tenantId', e.target.value)}
           className="w-full h-10 px-3 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
         >
           <option value="">All Tenants</option>
           {tenants.map((t: any) => (
             <option key={t.id} value={t.id}>
-              {t.firstName} {t.lastName}
+              {t.firstName || ''} {t.lastName || ''}
             </option>
           ))}
         </select>
@@ -106,7 +110,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
         <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Start Date</label>
         <input
           type="date"
-          value={filters.startDate}
+          value={filters.startDate || ''}
           onChange={(e) => onChange('startDate', e.target.value)}
           className="w-full h-10 px-3 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
         />
@@ -117,7 +121,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
         <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">End Date</label>
         <input
           type="date"
-          value={filters.endDate}
+          value={filters.endDate || ''}
           onChange={(e) => onChange('endDate', e.target.value)}
           className="w-full h-10 px-3 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
         />
@@ -128,7 +132,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
         <div>
           <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Status</label>
           <select
-            value={filters.status}
+            value={filters.status || ''}
             onChange={(e) => onChange('status', e.target.value)}
             className="w-full h-10 px-3 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
@@ -147,7 +151,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
         <div>
           <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Priority</label>
           <select
-            value={filters.priority}
+            value={filters.priority || ''}
             onChange={(e) => onChange('priority', e.target.value)}
             className="w-full h-10 px-3 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
@@ -166,7 +170,7 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
         <div>
           <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Payment Method</label>
           <select
-            value={filters.paymentMethod}
+            value={filters.paymentMethod || ''}
             onChange={(e) => onChange('paymentMethod', e.target.value)}
             className="w-full h-10 px-3 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
@@ -185,19 +189,20 @@ export const ReportFilters: React.FC<ReportFiltersProps> = ({
         <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Search</label>
         <input
           type="text"
-          value={filters.search}
+          value={filters.search || ''}
           onChange={(e) => onChange('search', e.target.value)}
           placeholder="Search..."
           className="w-full h-10 px-3 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
         />
       </div>
 
-      {/* Reset Button */}
+      {/* Unfilter Reset Button */}
       <div className="flex items-end">
         <button
           onClick={onReset}
-          className="w-full h-10 px-4 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 font-semibold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
+          className="w-full h-10 px-4 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 font-semibold text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors flex items-center justify-center gap-2"
         >
+          <FilterX className="w-4 h-4 text-slate-400" />
           Unfilter
         </button>
       </div>

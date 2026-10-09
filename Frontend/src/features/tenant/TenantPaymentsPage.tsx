@@ -55,6 +55,7 @@ export const TenantPaymentsPage: React.FC = () => {
     
     // Map real invoices
     tenantInvoices.forEach((inv: any) => {
+      const isPaid = inv.status === 'Paid' || inv.status === 'PAID' || inv.balance === 0;
       list.push({
         date: inv.dueDate,
         type: 'Invoice',
@@ -63,8 +64,25 @@ export const TenantPaymentsPage: React.FC = () => {
         invoiceAmt: inv.amount,
         paymentAmt: 0,
         additionalChg: 0,
-        status: inv.status === 'PAID' ? 'Paid' : inv.status === 'PENDING' ? 'Pending' : 'Unpaid'
+        status: isPaid ? 'Paid' : (inv.status === 'PENDING' ? 'Pending' : 'Unpaid')
       });
+
+      // If invoice is Paid but has no separate payment record, add matching payment entry so running balance stays accurate
+      if (isPaid) {
+        const hasPayment = tenantPayments.some((pay: any) => pay.invoiceId === inv.id || (pay.amount === inv.amount && pay.dueDate === inv.dueDate));
+        if (!hasPayment) {
+          list.push({
+            date: inv.paidDate ? inv.paidDate.split('T')[0] : inv.dueDate,
+            type: 'Payment',
+            desc: `Rent Payment (Settled)`,
+            ref: `PAY-${inv.id.substring(0, 6).toUpperCase()}`,
+            invoiceAmt: 0,
+            paymentAmt: inv.amount,
+            additionalChg: 0,
+            status: 'Cleared'
+          });
+        }
+      }
     });
 
     // Map real payments
@@ -72,7 +90,7 @@ export const TenantPaymentsPage: React.FC = () => {
       list.push({
         date: pay.paidDate ? pay.paidDate.split('T')[0] : pay.dueDate ? pay.dueDate.split('T')[0] : '',
         type: 'Payment',
-        desc: `Rent Payment - ${pay.paymentMethod}`,
+        desc: `Rent Payment - ${pay.paymentMethod || 'Online'}`,
         ref: `PAY-${pay.id.substring(0, 8).toUpperCase()}`,
         invoiceAmt: 0,
         paymentAmt: pay.amount,

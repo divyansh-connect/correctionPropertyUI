@@ -75,8 +75,26 @@ export const LeasesPage: React.FC = () => {
     { accessorKey: 'tenantName', header: t('leases.columns.resident'), id: 'tenantName' },
     { accessorKey: 'propertyName', header: t('leases.columns.property'), id: 'property' },
     { accessorKey: 'unitNumber', header: t('leases.columns.unit'), id: 'unit' },
-    { accessorKey: 'startDate', header: t('leases.columns.startDate'), id: 'startDate' },
-    { accessorKey: 'endDate', header: t('leases.columns.endDate'), id: 'endDate' },
+    {
+      accessorKey: 'startDate',
+      header: t('leases.columns.startDate'),
+      id: 'startDate',
+      cell: ({ row }) => {
+        const val = row.original.startDate;
+        if (!val) return '—';
+        return val.includes('T') ? val.split('T')[0] : val;
+      },
+    },
+    {
+      accessorKey: 'endDate',
+      header: t('leases.columns.endDate'),
+      id: 'endDate',
+      cell: ({ row }) => {
+        const val = row.original.endDate;
+        if (!val) return '—';
+        return val.includes('T') ? val.split('T')[0] : val;
+      },
+    },
     {
       accessorKey: 'rentAmount',
       header: t('leases.columns.rent'),

@@ -75,6 +75,41 @@ export const RequestScreeningModal: React.FC<RequestScreeningModalProps> = ({ op
     },
   });
 
+  const skipMutation = useMutation({
+    mutationFn: () => {
+      const selectedProp = properties.find((p: any) => p.id === propertyId);
+      const selectedUnit = units.find((u: any) => u.id === unitId);
+      return api.screening.create({
+        tenantId,
+        firstName,
+        lastName,
+        email,
+        phoneNumber,
+        propertyId,
+        propertyName: selectedProp ? selectedProp.name : 'Unknown Property',
+        unitId,
+        unitNumber: selectedUnit ? selectedUnit.unitNumber : '101',
+        screeningPackage,
+        paymentResponsibility,
+        status: 'Approved',
+        screeningStatus: 'Approved',
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['screening-checks-list'] });
+      onOpenChange(false);
+      // Reset form
+      setTenantId('');
+      setFirstName('');
+      setLastName('');
+      setEmail('');
+      setPhoneNumber('');
+      setPropertyId('');
+      setUnitId('');
+      if (onSuccess) onSuccess();
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (tenantId && propertyId && unitId && !isSelectedUnitOccupied) {
@@ -202,9 +237,19 @@ export const RequestScreeningModal: React.FC<RequestScreeningModalProps> = ({ op
         <div className="flex justify-end space-x-2 pt-4 border-t">
           <Button variant="outline" type="button" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button
+            type="button"
+            variant="secondary"
+            className="font-bold flex items-center gap-1 text-slate-700 dark:text-slate-200 border-slate-300 dark:border-slate-700"
+            disabled={requestMutation.isPending || skipMutation.isPending || !tenantId || !propertyId || !unitId || isSelectedUnitOccupied}
+            onClick={() => skipMutation.mutate()}
+          >
+            {skipMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" />}
+            Skip Screening
+          </Button>
+          <Button
             type="submit"
             className="bg-primary hover:bg-primary/95 text-white font-bold flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={requestMutation.isPending || !tenantId || !propertyId || !unitId || isSelectedUnitOccupied}
+            disabled={requestMutation.isPending || skipMutation.isPending || !tenantId || !propertyId || !unitId || isSelectedUnitOccupied}
           >
             {requestMutation.isPending ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />

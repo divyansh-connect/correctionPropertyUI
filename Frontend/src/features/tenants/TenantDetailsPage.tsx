@@ -128,7 +128,10 @@ export const TenantDetailsPage: React.FC = () => {
   }
 
   // Derived Balance / Details
-  const balanceDue = (tenant.invoices || []).reduce((sum, inv) => sum + (inv.balance || 0), 0);
+  const balanceDue = (tenant.invoices || []).reduce((sum, inv) => {
+    const invBal = (inv.status === 'Paid' || inv.status === 'PAID') ? 0 : (inv.balance !== undefined ? inv.balance : inv.amount);
+    return sum + Number(invBal || 0);
+  }, 0) + Number(tenant.previousBalance || tenant.openingBalance || 0);
   const hasBalance = balanceDue > 0;
   const monthlyRent = lease ? lease.rentAmount : 1400;
 
@@ -319,7 +322,7 @@ export const TenantDetailsPage: React.FC = () => {
                     </div>
                     <div>
                       <p className="text-muted-foreground">Rental Term Range</p>
-                      <p className="text-foreground mt-0.5">{lease.startDate} to {lease.endDate}</p>
+                      <p className="text-foreground mt-0.5">{(lease.startDate || '').split('T')[0]} to {(lease.endDate || '').split('T')[0]}</p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">Monthly Rent Amount</p>

@@ -172,6 +172,7 @@ interface NotificationState {
   markAsRead: (id: string) => void;
   markAllAsRead: (role?: string) => void;
   clearAll: (role?: string) => void;
+  deleteNotification: (id: string) => void;
 }
 
 export const useNotificationStore = create<NotificationState>((set) => ({
@@ -213,6 +214,12 @@ export const useNotificationStore = create<NotificationState>((set) => ({
       notifications: role 
         ? state.notifications.filter((n) => !(n.role === role))
         : []
+    }));
+  },
+  deleteNotification: (id) => {
+    apiClient.delete(`/notifications/${id}`).catch(() => {});
+    set((state) => ({
+      notifications: state.notifications.filter((n) => n.id !== id)
     }));
   },
 }));

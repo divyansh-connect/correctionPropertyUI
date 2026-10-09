@@ -5,14 +5,14 @@ import * as zod from 'zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useSearch, Link } from '@tanstack/react-router';
 import api from '../../api';
-import { useCompanyStore } from '../../store/useStore';
 import { PageHeader } from '../../components/PageHeader';
 import { AddressForm } from '../../components/AddressForm';
 import { FileUploader } from '../../components/FileUploader';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { Button } from '../../components/ui/Button';
-import { Loader2, ArrowLeft, ChevronDown } from 'lucide-react';
+import { Loader2, ArrowLeft, ChevronDown, Plus } from 'lucide-react';
+import { QuickAddOwnerModal } from '../../components/QuickAddOwnerModal';
 
 const optionalNumberRegister = {
   setValueAs: (v: any) => (v === '' || v === null || v === undefined || isNaN(Number(v)) ? undefined : Number(v)),
@@ -20,7 +20,7 @@ const optionalNumberRegister = {
 
 const propertyFormSchema = zod.object({
   name: zod.string().min(1, 'Property Name is required'),
-  type: zod.enum(['Apartment', 'Commercial', 'Single Family', 'Multi Family', 'HOA']),
+  type: zod.enum(['Apartment', 'Commercial', 'Single Family', 'Multi Family', 'SingleFamily', 'MultiFamily', 'HOA', 'MUP', 'Mixed-Use Property (MUP)']),
   status: zod.enum(['Active', 'Inactive', 'Under Review', 'Archived']),
 
   streetAddress: zod.string().min(1, 'Street Address is required'),
@@ -32,11 +32,12 @@ const propertyFormSchema = zod.object({
 
   owner: zod.string().min(1, 'Owner is required'),
   ownershipPercentage: zod.number().min(1).max(100),
-  managementCompany: zod.string().min(1, 'Management Company is required'),
+  managementCompany: zod.string().optional(),
 
   yearBuilt: zod.number().min(1700, 'Year built must be at least 1700').max(new Date().getFullYear() + 5, 'Year built is invalid').optional(),
-  totalBuildings: zod.number().min(1, 'Must be at least 1 building').optional(),
-  totalUnits: zod.number().min(0, 'Units cannot be negative').optional(),
+  totalFloors: zod.number().min(1, 'Must be at least 1 floor').optional(),
+  totalBuildings: zod.number().optional(),
+  totalUnits: zod.number().min(1, 'Must be at least 1 unit').optional(),
   squareFootage: zod.number().min(0, 'Square footage cannot be negative').optional(),
 
   purchasePrice: zod.number().min(0, 'Purchase price cannot be negative').optional(),
@@ -52,14 +53,12 @@ export const EditPropertyPage: React.FC<{ propertyId?: string }> = ({ propertyId
   const searchParams = useSearch({ strict: false }) as any;
   const propertyId = propPropertyId || searchParams?.id || new URLSearchParams(window.location.search).get('id') || '';
 
-  const { companyName } = useCompanyStore();
-  const activeCompany = companyName || 'Divine Properties';
-
   const [photos, setPhotos] = useState<string[]>([]);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [success, setSuccess] = useState(false);
   const [loadingProperty, setLoadingProperty] = useState(true);
   const [showAdditionalDetails, setShowAdditionalDetails] = useState(false);
+  const [isAddOwnerModalOpen, setIsAddOwnerModalOpen] = useState(false);
 
   // Query owners to select one
   const { data: owners = [] } = useQuery({
@@ -72,6 +71,7 @@ export const EditPropertyPage: React.FC<{ propertyId?: string }> = ({ propertyId
     handleSubmit,
     reset,
     setError,
+    setValue,
     formState: { errors },
   } = useForm<PropertyFormInputs>({
     resolver: zodResolver(propertyFormSchema),
@@ -100,10 +100,11 @@ export const EditPropertyPage: React.FC<{ propertyId?: string }> = ({ propertyId
               nycBin: data.nycBin || (data as any).bin || '',
               owner: ownerName,
               ownershipPercentage: data.ownershipPercentage || 100,
-              managementCompany: data.managementCompany || activeCompany,
+              managementCompany: data.managementCompany || '',
               yearBuilt: data.yearBuilt || 2020,
-              totalBuildings: data.totalBuildings || 1,
-              totalUnits: data.units?.length || 0,
+              totalFloors: data.buildings?.[0]?.floors || data.totalFloors || data.floors || data.totalBuildings || 1,
+              totalBuildings: data.buildings?.[0]?.floors || data.totalFloors || data.floors || data.totalBuildings || 1,
+              totalUnits: data.buildings?.[0]?.unitsCount || data.totalUnits || data.unitsCount || data.units?.length || 1,
               squareFootage: data.squareFootage || 10000,
               purchasePrice: data.purchasePrice || 1000000,
               currentValue: data.currentValue || 1200000,
@@ -118,7 +119,7 @@ export const EditPropertyPage: React.FC<{ propertyId?: string }> = ({ propertyId
     } else {
       setLoadingProperty(false);
     }
-  }, [propertyId, reset, owners, activeCompany]);
+  }, [propertyId, reset, owners]);
 
   const updateMutation = useMutation({
     mutationFn: (values: any) => {
@@ -154,7 +155,9 @@ export const EditPropertyPage: React.FC<{ propertyId?: string }> = ({ propertyId
       zip: values.zip,
       nycBin: values.nycBin,
       yearBuilt: values.yearBuilt,
-      totalBuildings: values.totalBuildings,
+      totalFloors: values.totalFloors || values.totalBuildings || 1,
+      totalBuildings: values.totalFloors || values.totalBuildings || 1,
+      totalUnits: values.totalUnits || 1,
       squareFootage: values.squareFootage,
       purchasePrice: values.purchasePrice,
       currentValue: values.currentValue,
@@ -204,6 +207,7 @@ export const EditPropertyPage: React.FC<{ propertyId?: string }> = ({ propertyId
                 <option value="Commercial">Commercial</option>
                 <option value="Single Family">Single Family</option>
                 <option value="Multi Family">Multi Family</option>
+                <option value="MUP">Mixed-Use Property (MUP)</option>
                 <option value="HOA">HOA</option>
               </Select>
             </div>
@@ -223,14 +227,52 @@ export const EditPropertyPage: React.FC<{ propertyId?: string }> = ({ propertyId
         {/* --- SECTION 2: ADDRESS (REUSABLE) --- */}
         <AddressForm register={register} errors={errors} />
 
+        {/* --- SECTION: PROPERTY PARAMETERS --- */}
+        <div className="space-y-4">
+          <h3 className="font-bold text-sm text-foreground uppercase border-b pb-2">Property Parameters</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-muted-foreground uppercase">Total Floors</label>
+              <Input type="number" placeholder="e.g. 3" {...register('totalFloors', optionalNumberRegister)} />
+              {errors.totalFloors && <p className="text-rose-500 text-xs font-semibold">{errors.totalFloors.message}</p>}
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-muted-foreground uppercase">Total Units</label>
+              <Input type="number" placeholder="e.g. 10" {...register('totalUnits', optionalNumberRegister)} />
+              {errors.totalUnits && <p className="text-rose-500 text-xs font-semibold">{errors.totalUnits.message}</p>}
+            </div>
+          </div>
+        </div>
+
         {/* --- SECTION 3: OWNERSHIP --- */}
         <div className="space-y-4">
           <h3 className="font-bold text-sm text-foreground uppercase border-b pb-2">Ownership Structure</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-1">
-              <label className="text-xs font-bold text-muted-foreground uppercase">Owner</label>
-              <Select {...register('owner')}>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-muted-foreground uppercase">Owner</label>
+                <button
+                  type="button"
+                  onClick={() => setIsAddOwnerModalOpen(true)}
+                  className="text-[11px] font-bold text-primary hover:underline flex items-center gap-1 cursor-pointer"
+                >
+                  <Plus className="w-3 h-3" /> Add Owner
+                </button>
+              </div>
+              <Select
+                {...register('owner')}
+                onChange={(e) => {
+                  if (e.target.value === '__ADD_NEW__') {
+                    setIsAddOwnerModalOpen(true);
+                    setValue('owner', '');
+                  } else {
+                    register('owner').onChange(e);
+                  }
+                }}
+              >
                 <option value="">Select Owner...</option>
+                <option value="__ADD_NEW__" className="text-primary font-bold">+ Add New Owner...</option>
                 {owners.map((o) => {
                   const displayName = o.name || `${o.firstName || ''} ${o.lastName || ''}`.trim();
                   return (
@@ -251,13 +293,7 @@ export const EditPropertyPage: React.FC<{ propertyId?: string }> = ({ propertyId
 
             <div className="space-y-1">
               <label className="text-xs font-bold text-muted-foreground uppercase">Management Company</label>
-              <Input {...register('managementCompany')} disabled className="bg-muted/50 text-muted-foreground cursor-not-allowed font-semibold" />
-              <p className="text-[11px] text-muted-foreground">
-                To change this, please go to{' '}
-                <Link to="/admin/company-settings" className="text-primary font-medium hover:underline">
-                  Company Settings
-                </Link>.
-              </p>
+              <Input {...register('managementCompany')} placeholder="Enter management company name" className="font-medium" />
               {errors.managementCompany && <p className="text-rose-500 text-xs">{errors.managementCompany.message}</p>}
             </div>
           </div>
@@ -277,7 +313,7 @@ export const EditPropertyPage: React.FC<{ propertyId?: string }> = ({ propertyId
                 </span>
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Property Parameters, Financial Valuation, Property Photo & Documents
+                Financial Valuation, Property Photo & Documents
               </p>
             </div>
             <div className="flex items-center gap-2 text-xs font-semibold text-primary">
@@ -289,24 +325,6 @@ export const EditPropertyPage: React.FC<{ propertyId?: string }> = ({ propertyId
 
         {showAdditionalDetails && (
           <div className="space-y-8 animate-fade-in pt-2">
-            {/* --- SECTION 4: PROPERTY DETAILS --- */}
-            <div className="space-y-4">
-              <h3 className="font-bold text-sm text-foreground uppercase border-b pb-2">Property Parameters (Optional)</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-muted-foreground uppercase">Total Floors</label>
-                  <Input type="number" placeholder="e.g. 3" {...register('totalBuildings', optionalNumberRegister)} />
-                  {errors.totalBuildings && <p className="text-rose-500 text-xs font-semibold">{errors.totalBuildings.message}</p>}
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-muted-foreground uppercase">Total Units</label>
-                  <Input type="number" disabled {...register('totalUnits', optionalNumberRegister)} />
-                  {errors.totalUnits && <p className="text-rose-500 text-xs font-semibold">{errors.totalUnits.message}</p>}
-                </div>
-              </div>
-            </div>
-
             {/* --- SECTION 5: FINANCIAL INFORMATION --- */}
             <div className="space-y-4">
               <h3 className="font-bold text-sm text-foreground uppercase border-b pb-2">Financial Valuation (Optional)</h3>
@@ -373,6 +391,14 @@ export const EditPropertyPage: React.FC<{ propertyId?: string }> = ({ propertyId
         </div>
 
       </form>
+      <QuickAddOwnerModal
+        isOpen={isAddOwnerModalOpen}
+        onClose={() => setIsAddOwnerModalOpen(false)}
+        onOwnerCreated={(newOwner) => {
+          const displayName = newOwner.name || `${newOwner.firstName || ''} ${newOwner.lastName || ''}`.trim() || newOwner.id;
+          setValue('owner', displayName, { shouldValidate: true });
+        }}
+      />
     </div>
   );
 };

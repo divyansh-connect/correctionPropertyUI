@@ -296,6 +296,14 @@ export const MoveOutDetailPage: React.FC<MoveOutDetailPageProps> = ({ id }) => {
                   >
                     <Play className="w-4 h-4 mr-2" /> Start Inspection
                   </Button>
+                  <Button
+                    variant="outline"
+                    onClick={handleCompleteMoveOut}
+                    disabled={completeMoveOutMutation.isPending}
+                    className="flex-shrink-0 border-emerald-500/40 text-emerald-500 hover:bg-emerald-500/10 font-bold"
+                  >
+                    <CheckCircle2 className="w-4 h-4 mr-2 text-emerald-500" /> Skip Inspection & Complete
+                  </Button>
                 </div>
               </div>
             ) : (
@@ -382,8 +390,15 @@ export const MoveOutDetailPage: React.FC<MoveOutDetailPageProps> = ({ id }) => {
             <h2 className="text-sm font-extrabold uppercase tracking-wider border-b pb-4 text-primary">Workflow Controls</h2>
 
             {status === 'SCHEDULED' && (
-              <div className="space-y-4">
-                <p className="text-xs text-muted-foreground">Tenant occupancy active. Start the move-out walkthrough inspection to check unit condition.</p>
+              <div className="space-y-3">
+                <p className="text-xs text-muted-foreground">Tenant occupancy active. Start the move-out walkthrough inspection to check unit condition, or skip inspection to complete move out immediately.</p>
+                <Button 
+                  onClick={handleCompleteMoveOut} 
+                  disabled={completeMoveOutMutation.isPending}
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+                >
+                  <CheckCircle2 className="w-4 h-4 mr-2" /> Skip Inspection & Complete Move Out
+                </Button>
                 <Button 
                   onClick={() => setShowCancelModal(true)} 
                   variant="outline" 

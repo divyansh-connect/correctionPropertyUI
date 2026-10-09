@@ -1769,7 +1769,11 @@ export const mockApi = {
       if (idx !== -1) leases[idx] = { ...leases[idx], ...data };
       return leases[idx];
     },
-    getRenewals: async () => { await delay(100); return [...renewals]; }
+    getRenewals: async () => { await delay(100); return [...renewals]; },
+    updateMoveIn: async (id: string, data: any) => {
+      await delay(200);
+      return { id, ...data };
+    }
   },
 
   rent: {

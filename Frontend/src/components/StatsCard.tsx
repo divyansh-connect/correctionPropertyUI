@@ -11,6 +11,7 @@ interface StatsCardProps {
   trend?: 'up' | 'down' | 'neutral';
   trendLabel?: string;
   loading?: boolean;
+  onClick?: () => void;
 }
 
 export const StatsCard: React.FC<StatsCardProps> = ({
@@ -21,6 +22,7 @@ export const StatsCard: React.FC<StatsCardProps> = ({
   trend,
   trendLabel,
   loading = false,
+  onClick,
 }) => {
   if (loading) {
     return (
@@ -38,7 +40,13 @@ export const StatsCard: React.FC<StatsCardProps> = ({
   }
 
   return (
-    <Card className="p-6 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 relative group cursor-pointer border-border bg-card">
+    <Card 
+      onClick={onClick}
+      className={clsx(
+        "p-6 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 relative group border-border bg-card",
+        onClick && "cursor-pointer hover:border-primary/50"
+      )}
+    >
       <div className="flex justify-between items-start">
         <div className="space-y-1">
           <p className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">

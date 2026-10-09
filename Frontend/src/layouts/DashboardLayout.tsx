@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../api';
 import { useAuthStore, useThemeStore, useNotificationStore } from '../store/useStore';
-import { getNotificationRedirectPath } from '../utils/navigation';
+import { getNotificationRedirectPath, getNotificationModule } from '../features/notifications/NotificationsPage';
 import { 
   Menu, Bell, Sun, Moon, LogOut, ChevronDown, ChevronRight, User,
   LayoutDashboard, Building2, Home, Key, Users, UserCheck, CreditCard, 
@@ -176,6 +176,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       path: '/communication',
     },
     {
+      title: 'Notifications',
+      icon: <Bell className="w-5 h-5" />,
+      path: '/notifications',
+    },
+    {
       title: t('nav.aiAssistant'),
       icon: <Bot className="w-5 h-5" />,
       path: '/ai/assistant',
@@ -187,6 +192,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       submenu: [
         { title: t('nav.companyProfile'), path: '/admin/company-settings' },
         { title: t('nav.unitDeletionSettings'), path: '/admin/unit-deletion' },
+        { title: 'Late Fee Policy', path: '/admin/late-fees' },
         { title: t('nav.usersAndRoles'), path: '/admin/users' },
         { title: t('nav.rolesAndPermissions'), path: '/admin/roles' },
         { title: t('nav.paymentSettings'), path: '/admin/payment-settings' },
@@ -261,6 +267,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         moduleName = 'Reports';
       } else if (item.path.startsWith('/communication')) {
         moduleName = 'Communication';
+      } else if (item.path.startsWith('/notifications')) {
+        moduleName = 'Notifications';
       } else if (item.path.startsWith('/admin') || item.path.startsWith('/platform-integrations')) {
         moduleName = 'Company Settings';
       } else if (item.path.startsWith('/ai')) {
@@ -293,11 +301,20 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   });
 
   const localNotifications = notifications.filter((n) => !n.role || n.role === displayRole);
-  const roleNotifications = Array.from(
+  const combinedNotifications = Array.from(
     new Map(
       [...(realNotifications || []), ...localNotifications].map((n) => [n.id, n])
     ).values()
   );
+
+  // Filter out notifications for hidden modules / menus!
+  const roleNotifications = combinedNotifications.filter((n) => {
+    const mod = getNotificationModule(n);
+    if (mod && !hasModuleAccess(mod)) {
+      return false; // Hide notification if user role has no access to this module menu!
+    }
+    return true;
+  });
 
   const unreadCount = roleNotifications.filter((n) => !n.read).length;
 
@@ -504,9 +521,14 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                         active ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent/40'
                       )}
                     >
-                      <div className="flex items-center space-x-3">
+                      <div className="flex items-center space-x-3 w-full">
                         {item.icon}
-                        <span>{item.title}</span>
+                        <span className="truncate">{item.title}</span>
+                        {item.path === '/notifications' && unreadCount > 0 && (
+                          <span className="ml-auto bg-rose-500 text-white text-[10px] font-extrabold px-1.5 py-0.5 rounded-full">
+                            {unreadCount}
+                          </span>
+                        )}
                       </div>
                       {hasSub && (isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />)}
                     </button>

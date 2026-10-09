@@ -205,7 +205,10 @@ export const UsersPage: React.FC = () => {
 
     // Fetch assignments to populate edit modal
     const ass = await api.assignments.getForUser(u.id);
-    setAssignedProperties(ass.properties || []);
+    const initialProperties = (ass.properties && ass.properties.length > 0)
+      ? ass.properties
+      : (ass.buildings || []);
+    setAssignedProperties(initialProperties);
     setAssignedUnit(ass.units?.[0] || '');
     setAssignedBuildings(ass.buildings || []);
     setAssignedDepartments(ass.departments || []);
@@ -446,13 +449,13 @@ export const UsersPage: React.FC = () => {
 
                     {userAssignments.buildings && userAssignments.buildings.length > 0 && (
                       <div className="space-y-1">
-                        <span className="text-[10px] text-muted-foreground font-semibold uppercase block">Assigned Buildings:</span>
+                        <span className="text-[10px] text-muted-foreground font-semibold uppercase block">Assigned Properties:</span>
                         <div className="flex flex-wrap gap-1">
                           {userAssignments.buildings.map((bid: string) => {
-                            const bName = buildings.find((b: any) => b.id === bid)?.name || bid;
+                            const bName = properties.find((p: any) => p.id === bid)?.name || buildings.find((b: any) => b.id === bid)?.name || bid;
                             return (
                               <span key={bid} className="px-2 py-0.5 bg-amber-500/10 text-amber-600 text-[10px] font-bold rounded flex items-center gap-0.5">
-                                <Building2 className="w-2.5 h-2.5" /> Building: {bName}
+                                <Building2 className="w-2.5 h-2.5" /> Property: {bName}
                               </span>
                             );
                           })}
@@ -640,27 +643,27 @@ export const UsersPage: React.FC = () => {
                   </div>
                 )}
 
-                {formRole === 'Maintenance' && (
+                {(formRole === 'Maintenance' || formRole === 'Maintenance Staff') && (
                   <div className="space-y-1.5">
-                    <label className="text-[10px] uppercase font-bold text-muted-foreground">Assign Buildings Scope</label>
+                    <label className="text-[10px] uppercase font-bold text-muted-foreground">Assign Property Scope</label>
                     <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto border border-border p-2 rounded-lg bg-secondary/20">
-                      {buildings.map((b: any) => {
-                        const checked = assignedBuildings.includes(b.id);
+                      {properties.map((p: any) => {
+                        const checked = assignedProperties.includes(p.id);
                         return (
-                          <label key={b.id} className="flex items-center space-x-2 text-xs font-semibold cursor-pointer">
+                          <label key={p.id} className="flex items-center space-x-2 text-xs font-semibold cursor-pointer">
                             <input
                               type="checkbox"
                               checked={checked}
                               onChange={() => {
                                 if (checked) {
-                                  setAssignedBuildings(prev => prev.filter(x => x !== b.id));
+                                  setAssignedProperties(prev => prev.filter(x => x !== p.id));
                                 } else {
-                                  setAssignedBuildings(prev => [...prev, b.id]);
+                                  setAssignedProperties(prev => [...prev, p.id]);
                                 }
                               }}
                               className="rounded border-border text-primary h-3.5 w-3.5"
                             />
-                            <span>{b.name}</span>
+                            <span>{p.name}</span>
                           </label>
                         );
                       })}

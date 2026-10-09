@@ -51,7 +51,11 @@ export const TenantsPage: React.FC<{ filterStatus?: string }> = ({ filterStatus 
     const matchesProp = propertyFilter === '' || t.propertyId === propertyFilter;
     const matchesStatus = statusFilter === '' || t.status === statusFilter;
     
-    const balanceSum = (t.invoices || []).reduce((sum, inv) => sum + (inv.balance || 0), 0);
+    const balanceSum = (t.invoices || []).reduce((sum, inv) => {
+      const isPaid = (inv as any).status === 'Paid' || (inv as any).status === 'PAID';
+      const invBal = isPaid ? 0 : (inv.balance !== undefined ? inv.balance : inv.amount);
+      return sum + Number(invBal || 0);
+    }, 0) + Number(t.previousBalance || t.openingBalance || 0);
     const hasBalance = balanceSum > 0;
     const matchesBalance = balanceFilter === '' || 
       (balanceFilter === 'has-balance' && hasBalance) ||
@@ -116,7 +120,11 @@ export const TenantsPage: React.FC<{ filterStatus?: string }> = ({ filterStatus 
       id: 'balance',
       header: t('tenants.columns.balance'),
       cell: ({ row }) => {
-        const balanceSum = (row.original.invoices || []).reduce((sum, inv) => sum + (inv.balance || 0), 0);
+        const balanceSum = (row.original.invoices || []).reduce((sum, inv) => {
+          const isPaid = (inv as any).status === 'Paid' || (inv as any).status === 'PAID';
+          const invBal = isPaid ? 0 : (inv.balance !== undefined ? inv.balance : inv.amount);
+          return sum + Number(invBal || 0);
+        }, 0) + Number(row.original.previousBalance || row.original.openingBalance || 0);
         return (
           <span className={balanceSum > 0 ? 'text-rose-500 font-bold' : 'text-emerald-500 font-bold'}>
             ${balanceSum.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}

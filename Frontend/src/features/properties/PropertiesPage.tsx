@@ -246,6 +246,7 @@ export const PropertiesPage: React.FC = () => {
               { label: t('properties.types.commercial'), value: 'Commercial' },
               { label: t('properties.types.singleFamily'), value: 'Single Family' },
               { label: t('properties.types.multiFamily'), value: 'Multi Family' },
+              { label: 'Mixed-Use Property (MUP)', value: 'MUP' },
               { label: t('properties.types.hoa'), value: 'HOA' },
             ],
           },

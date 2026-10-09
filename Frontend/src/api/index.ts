@@ -4,6 +4,37 @@ import { apiClient } from './client';
 export const api = {
   ...mockApi,
 
+  company: {
+    getSettings: async () => {
+      try {
+        const res: any = await apiClient.get('/company/settings');
+        if (res && res.data) return res.data;
+      } catch (e) {
+        console.warn('Company settings backend fetch failed, using local settings:', e);
+      }
+      const saved = JSON.parse(localStorage.getItem('company_settings') || '{}');
+      return {
+        lateFeeGraceDays: saved.lateFeeGraceDays ?? 10,
+        lateFeeAmount: saved.lateFeeAmount ?? 50,
+        lateFeeType: saved.lateFeeType || 'FLAT',
+        isLateFeeEnabled: saved.isLateFeeEnabled ?? true,
+      };
+    },
+    updateSettings: async (data: any) => {
+      let result = null;
+      try {
+        const res: any = await apiClient.put('/company/settings', data);
+        result = res?.data;
+      } catch (e) {
+        console.warn('Backend updateSettings failed, applying local fallback:', e);
+      }
+      const existing = JSON.parse(localStorage.getItem('company_settings') || '{}');
+      const updated = { ...existing, ...data };
+      localStorage.setItem('company_settings', JSON.stringify(updated));
+      return result || updated;
+    },
+  },
+
   // Real Database connections (strictly reflects DB state, even if empty)
   property: {
     ...mockApi.property,
@@ -23,6 +54,10 @@ export const api = {
           ownerId: p.ownerId,
           owner: p.owner,
           nycBin: p.nycBin || p.bin || '',
+          totalFloors: p.buildings?.[0]?.floors || p.totalFloors || p.floors || 1,
+          totalUnits: p.buildings?.[0]?.unitsCount || p.totalUnits || p.unitsCount || (p.units?.length || 0),
+          floors: p.buildings?.[0]?.floors || p.totalFloors || p.floors || 1,
+          buildings: p.buildings || [],
           createdAt: p.createdAt ? p.createdAt.split('T')[0] : '',
         }));
       } catch (e) {
@@ -134,8 +169,13 @@ export const api = {
     getById: async (id: string) => {
       try {
         const res: any = await apiClient.get(`/units/${id}`);
-        if (res.data && res.data.availabilityDate) {
-          res.data.availabilityDate = String(res.data.availabilityDate).split('T')[0];
+        if (res.data) {
+          if (res.data.availabilityDate) {
+            res.data.availabilityDate = String(res.data.availabilityDate).split('T')[0];
+          }
+          if (!res.data.tenant && Array.isArray(res.data.tenants) && res.data.tenants.length > 0) {
+            res.data.tenant = res.data.tenants[0];
+          }
         }
         return res.data;
       } catch (e) {
@@ -187,6 +227,15 @@ export const api = {
     deleteLease: async (id: string) => {
       await apiClient.delete(`/leases/${id}`);
       return true;
+    },
+    updateMoveIn: async (id: string, data: any) => {
+      try {
+        const res: any = await apiClient.put(`/move-ins/${id}`, data);
+        return res.data;
+      } catch (e) {
+        console.warn('updateMoveIn failed:', e);
+        return null;
+      }
     },
     getLeads: async () => {
       try {
@@ -291,6 +340,9 @@ export const api = {
           createdAt: t.createdAt,
           screeningReports: t.screeningReports || [],
           invoices: t.invoices || [],
+          previousBalance: Number(t.previousBalance || t.openingBalance || 0),
+          openingBalance: Number(t.openingBalance || t.previousBalance || 0),
+          moveInDate: t.moveInDate ? (t.moveInDate.includes('T') ? t.moveInDate.split('T')[0] : t.moveInDate) : '',
         }));
       } catch (e) {
         console.error('Tenants fetch failed:', e);
@@ -336,6 +388,9 @@ export const api = {
           imageUrl: t.imageUrl || '',
           pets: t.pets || [],
           vehicles: t.vehicles || [],
+          previousBalance: Number(t.previousBalance || t.openingBalance || 0),
+          openingBalance: Number(t.openingBalance || t.previousBalance || 0),
+          moveInDate: t.moveInDate ? (t.moveInDate.includes('T') ? t.moveInDate.split('T')[0] : t.moveInDate) : '',
         };
       } catch (e) {
         console.error(`Tenant fetch by id failed for ${id}:`, e);
@@ -1250,7 +1305,7 @@ export const api = {
         });
 
         paymentsList.forEach((pay: any) => {
-          if (pay.status === 'Paid' || !pay.status || String(pay.status).toLowerCase() === 'paid') {
+          if (pay.status === 'Paid' || pay.status === 'Partially Paid' || pay.status === 'Cleared' || !pay.status || String(pay.status).toLowerCase().includes('paid') || String(pay.status).toLowerCase().includes('partial')) {
             allTransactions.push({
               type: 'payment',
               date: pay.paidDate || pay.dueDate || pay.createdAt || '2026-08-01',
@@ -1850,6 +1905,14 @@ export const api = {
       try {
         const query = role ? `?role=${encodeURIComponent(role)}` : '';
         const res: any = await apiClient.delete(`/notifications${query}`);
+        return res.data;
+      } catch (e) {
+        return true;
+      }
+    },
+    delete: async (id: string) => {
+      try {
+        const res: any = await apiClient.delete(`/notifications/${id}`);
         return res.data;
       } catch (e) {
         return true;

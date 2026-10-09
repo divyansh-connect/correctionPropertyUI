@@ -158,6 +158,7 @@ import { ForecastingPage } from '../features/reports/pages/ForecastingPage';
 import { ExportCenter } from '../features/reports/pages/ExportCenter';
 import { AnalyticsSettingsPage } from '../features/reports/pages/AnalyticsSettingsPage';
 import { CommunicationPage } from '../features/communication/CommunicationPage';
+import { NotificationsPage } from '../features/notifications/NotificationsPage';
 import { AIAssistantPage } from '../features/ai/AIAssistantPage';
 import { AISettingsPage } from '../features/ai/AISettingsPage';
 import { AdminDashboard } from '../features/admin/pages/AdminDashboard';
@@ -1818,6 +1819,16 @@ const commNotificationsRoute = createRoute({
   component: () => (
     <ProtectedWrapper>
       <CommNotificationsPage />
+    </ProtectedWrapper>
+  ),
+});
+
+const notificationsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/notifications',
+  component: () => (
+    <ProtectedWrapper>
+      <NotificationsPage />
     </ProtectedWrapper>
   ),
 });
@@ -5006,41 +5017,204 @@ const TrustAccountsPage: React.FC = () => {
 
 // 6. LATE FEES CONFIG
 const LateFeesPage: React.FC = () => {
+  const [graceDays, setGraceDays] = React.useState<number>(10);
+  const [lateFeeAmount, setLateFeeAmount] = React.useState<number>(50);
+  const [lateFeeType, setLateFeeType] = React.useState<string>('FLAT');
+  const [isLateFeeEnabled, setIsLateFeeEnabled] = React.useState<boolean>(true);
+  
+  const [isEditing, setIsEditing] = React.useState<boolean>(false);
+  const [loading, setLoading] = React.useState<boolean>(false);
+  const [msg, setMsg] = React.useState<string>('');
+
+  // Backup state for cancel
+  const [backupState, setBackupState] = React.useState<any>(null);
+
+  React.useEffect(() => {
+    api.company.getSettings().then((s: any) => {
+      if (s) {
+        if (s.lateFeeGraceDays !== undefined) setGraceDays(s.lateFeeGraceDays);
+        if (s.lateFeeAmount !== undefined) setLateFeeAmount(s.lateFeeAmount);
+        if (s.lateFeeType !== undefined) setLateFeeType(s.lateFeeType);
+        if (s.isLateFeeEnabled !== undefined) setIsLateFeeEnabled(s.isLateFeeEnabled);
+      }
+    }).catch(console.error);
+  }, []);
+
+  const handleStartEdit = () => {
+    setBackupState({ graceDays, lateFeeAmount, lateFeeType, isLateFeeEnabled });
+    setIsEditing(true);
+  };
+
+  const handleCancel = () => {
+    if (backupState) {
+      setGraceDays(backupState.graceDays);
+      setLateFeeAmount(backupState.lateFeeAmount);
+      setLateFeeType(backupState.lateFeeType);
+      setIsLateFeeEnabled(backupState.isLateFeeEnabled);
+    }
+    setIsEditing(false);
+  };
+
+  const handleSave = async () => {
+    try {
+      setLoading(true);
+      const updated = await api.company.updateSettings({
+        lateFeeGraceDays: graceDays,
+        lateFeeAmount,
+        lateFeeType,
+        isLateFeeEnabled,
+      });
+
+      if (updated) {
+        if (updated.lateFeeGraceDays !== undefined) setGraceDays(updated.lateFeeGraceDays);
+        if (updated.lateFeeAmount !== undefined) setLateFeeAmount(updated.lateFeeAmount);
+        if (updated.lateFeeType !== undefined) setLateFeeType(updated.lateFeeType);
+        if (updated.isLateFeeEnabled !== undefined) setIsLateFeeEnabled(updated.isLateFeeEnabled);
+      }
+
+      setIsEditing(false); // Mute back to read-only mode after save
+      setMsg(`Late Fee Policy saved successfully! Inputs are now locked (Muted).`);
+      setTimeout(() => setMsg(''), 4000);
+    } catch (e: any) {
+      alert('Error saving policy: ' + (e?.message || 'Unknown error'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-6 max-w-4xl mx-auto text-foreground">
       <PageHeader
         title="Late Fee Configuration"
-        description="Configure late payment fees rules, structures, and grace period settings."
-        breadcrumbs={[{ label: 'Rent Collection', href: '/rent' }, { label: 'Late Fees' }]}
+        description="Configure company-wide late payment fees rules, structures, and grace period settings."
+        breadcrumbs={[{ label: 'Company Settings', href: '/admin/company-settings' }, { label: 'Late Fees' }]}
       />
-      <div className="bg-card border rounded-xl p-6 shadow-sm space-y-6">
-        <h2 className="text-sm font-extrabold uppercase tracking-wide border-b pb-2">Default Late Fee Policy Settings</h2>
-        <div className="grid grid-cols-2 gap-4 text-xs">
-          <div className="space-y-1">
-            <label className="text-[10px] font-bold text-muted-foreground uppercase">Late Fee Type</label>
-            <select className="w-full p-2.5 rounded border bg-secondary font-semibold text-xs focus:outline-none focus:ring-1 focus:ring-primary">
-              <option>Flat Fee ($)</option>
-              <option>Percentage of Rent (%)</option>
-            </select>
+
+      {msg && (
+        <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 p-4 rounded-xl text-sm font-semibold flex items-center justify-between">
+          <span>{msg}</span>
+        </div>
+      )}
+
+      <div className="bg-card border border-border rounded-xl p-6 shadow-sm space-y-6">
+        <div className="flex items-center justify-between border-b pb-3">
+          <div>
+            <h2 className="text-sm font-extrabold uppercase tracking-wide flex items-center gap-2">
+              Company Late Fee Policy Settings
+              {isEditing ? (
+                <span className="text-[10px] bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-full uppercase font-bold">
+                  Editing Mode
+                </span>
+              ) : (
+                <span className="text-[10px] bg-secondary text-muted-foreground border border-border px-2 py-0.5 rounded-full uppercase font-bold">
+                  Locked (Muted)
+                </span>
+              )}
+            </h2>
           </div>
-          <div className="space-y-1">
-            <label className="text-[10px] font-bold text-muted-foreground uppercase">Amount / Rate</label>
-            <input defaultValue="50" className="w-full p-2 rounded border bg-secondary font-semibold text-xs" />
+          <div className="flex items-center gap-2">
+            {!isEditing && (
+              <Button
+                onClick={handleStartEdit}
+                variant="outline"
+                className="text-xs font-bold border-primary text-primary hover:bg-primary/10 flex items-center gap-1.5"
+              >
+                ✏️ Edit Policy
+              </Button>
+            )}
           </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-semibold">
           <div className="space-y-1">
             <label className="text-[10px] font-bold text-muted-foreground uppercase">Grace Period (Days)</label>
-            <input defaultValue="5" type="number" className="w-full p-2 rounded border bg-secondary font-semibold text-xs" />
+            <input
+              type="number"
+              min="0"
+              max="90"
+              disabled={!isEditing}
+              value={graceDays}
+              onChange={(e) => setGraceDays(parseInt(e.target.value) || 0)}
+              className="w-full p-2.5 rounded border bg-background font-bold text-sm disabled:bg-secondary/40 disabled:text-muted-foreground disabled:cursor-not-allowed disabled:border-border/30 transition"
+              placeholder="e.g. 10"
+            />
+            <p className="text-[10px] text-muted-foreground">Number of days after due date before late fee is applied (Default: 10 days)</p>
           </div>
+
           <div className="space-y-1">
-            <label className="text-[10px] font-bold text-muted-foreground uppercase">Recurrence</label>
-            <select className="w-full p-2.5 rounded border bg-secondary font-semibold text-xs focus:outline-none focus:ring-1 focus:ring-primary">
-              <option>One-Time Fee</option>
-              <option>Daily Cumulative</option>
+            <label className="text-[10px] font-bold text-muted-foreground uppercase">Late Fee Amount</label>
+            <input
+              type="number"
+              min="0"
+              disabled={!isEditing}
+              value={lateFeeAmount}
+              onChange={(e) => setLateFeeAmount(parseFloat(e.target.value) || 0)}
+              className="w-full p-2.5 rounded border bg-background font-bold text-sm disabled:bg-secondary/40 disabled:text-muted-foreground disabled:cursor-not-allowed disabled:border-border/30 transition"
+              placeholder="50"
+            />
+            <p className="text-[10px] text-muted-foreground">Fee charged per overdue invoice</p>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold text-muted-foreground uppercase">Late Fee Type</label>
+            <select
+              disabled={!isEditing}
+              value={lateFeeType}
+              onChange={(e) => setLateFeeType(e.target.value)}
+              className="w-full p-2.5 rounded border bg-background font-semibold text-xs focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-secondary/40 disabled:text-muted-foreground disabled:cursor-not-allowed disabled:border-border/30 transition"
+            >
+              <option value="FLAT">Flat Fee ($)</option>
+              <option value="PERCENTAGE">Percentage of Rent (%)</option>
+            </select>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold text-muted-foreground uppercase">Automation Status</label>
+            <select
+              disabled={!isEditing}
+              value={isLateFeeEnabled ? 'ENABLED' : 'DISABLED'}
+              onChange={(e) => setIsLateFeeEnabled(e.target.value === 'ENABLED')}
+              className="w-full p-2.5 rounded border bg-background font-semibold text-xs focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-secondary/40 disabled:text-muted-foreground disabled:cursor-not-allowed disabled:border-border/30 transition"
+            >
+              <option value="ENABLED">Active (Auto-Apply after Grace Period)</option>
+              <option value="DISABLED">Disabled</option>
             </select>
           </div>
         </div>
-        <div className="border-t pt-4 flex justify-end">
-          <Button className="font-bold bg-primary text-white hover:bg-primary/95">Save Late Fee Policy</Button>
+
+        <div className="border-t pt-4 flex justify-between items-center">
+          <span className="text-xs font-semibold text-muted-foreground">
+            Current Rule: <strong className="text-foreground">{isLateFeeEnabled ? `Apply $${lateFeeAmount} after ${graceDays} Days` : 'Disabled'}</strong>
+          </span>
+
+          <div className="flex items-center gap-2">
+            {isEditing ? (
+              <>
+                <Button
+                  onClick={handleCancel}
+                  variant="outline"
+                  disabled={loading}
+                  className="text-xs font-bold text-muted-foreground border-border hover:bg-secondary"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSave}
+                  disabled={loading}
+                  className="font-bold bg-primary text-white hover:bg-primary/95 text-xs h-9 px-4"
+                >
+                  {loading ? 'Saving...' : 'Save Late Fee Policy'}
+                </Button>
+              </>
+            ) : (
+              <Button
+                onClick={handleStartEdit}
+                className="font-bold bg-primary text-white hover:bg-primary/95 text-xs h-9 px-4"
+              >
+                ✏️ Edit Policy
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -5713,6 +5887,11 @@ const lateFeesRoute = createRoute({
   path: '/rent/late-fees',
   component: () => (<ProtectedWrapper><LateFeesPage /></ProtectedWrapper>),
 });
+const adminLateFeesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/admin/late-fees',
+  component: () => (<ProtectedWrapper><LateFeesPage /></ProtectedWrapper>),
+});
 const trustAccountsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/accounting/trust-accounts',
@@ -5788,6 +5967,7 @@ const routeTree = rootRoute.addChildren([
   managerTenantDocumentsRoute,
   ownersStatementsRoute,
   lateFeesRoute,
+  adminLateFeesRoute,
   trustAccountsRoute,
   rentRollReportRoute,
   occupancyReportRoute,
@@ -5954,6 +6134,7 @@ const routeTree = rootRoute.addChildren([
   commTemplatesRoute,
   commContactsRoute,
   commNotificationsRoute,
+  notificationsRoute,
   commScheduledRoute,
   commActivityRoute,
   commSettingsRoute,

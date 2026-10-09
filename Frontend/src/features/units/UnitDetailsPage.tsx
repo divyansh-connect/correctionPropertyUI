@@ -330,7 +330,7 @@ export const UnitDetailsPage: React.FC = () => {
                     </div>
                     <div>
                       <p className="text-muted-foreground">Lease Term</p>
-                      <p className="text-foreground mt-0.5">{unitLease.startDate} to {unitLease.endDate}</p>
+                      <p className="text-foreground mt-0.5">{(unitLease.startDate || '').split('T')[0]} to {(unitLease.endDate || '').split('T')[0]}</p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">Monthly Rent Amount</p>

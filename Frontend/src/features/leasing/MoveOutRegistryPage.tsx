@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../api';
 import { useNavigate } from '@tanstack/react-router';
 import { PageHeader } from '../../components/PageHeader';
 import { Button } from '../../components/ui/Button';
 import { StatusBadge } from '../../components/StatusBadge';
-import { Eye, ClipboardList, RefreshCw } from 'lucide-react';
+import { Eye, ClipboardList, RefreshCw, CheckCircle2 } from 'lucide-react';
 
 export const MoveOutRegistryPage: React.FC = () => {
   const { t } = useTranslation();
@@ -15,14 +15,21 @@ export const MoveOutRegistryPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>(''); // empty means all
 
   // Load Move Outs from backend database
-  const { data: moveOuts = [], isLoading, refetch } = useQuery({
+  const { data: moveOuts = [], isLoading, isFetching, refetch } = useQuery({
     queryKey: ['moveOuts', statusFilter],
     queryFn: () => api.moveOuts.getAll(statusFilter),
   });
 
-  const handleRefresh = () => {
-    refetch();
-  };
+  const completeMutation = useMutation({
+    mutationFn: (moveOutId: string) => api.moveOuts.complete(moveOutId),
+    onSuccess: () => {
+      refetch();
+      queryClient.invalidateQueries({ queryKey: ['moveOuts'] });
+      queryClient.invalidateQueries({ queryKey: ['leases'] });
+      queryClient.invalidateQueries({ queryKey: ['units'] });
+      queryClient.invalidateQueries({ queryKey: ['tenants'] });
+    },
+  });
 
   const statusFilters = [
     { label: 'All Moves', value: '' },
@@ -46,9 +53,9 @@ export const MoveOutRegistryPage: React.FC = () => {
           { label: 'Move Out Registry' },
         ]}
         action={{
-          label: 'Refresh Registry',
-          onClick: handleRefresh,
-          icon: <RefreshCw className="w-4 h-4" />
+          label: isFetching ? 'Refreshing...' : 'Refresh Registry',
+          onClick: () => refetch(),
+          icon: <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
         }}
       />
 
@@ -113,6 +120,17 @@ export const MoveOutRegistryPage: React.FC = () => {
                         <StatusBadge status={m.status} />
                       </td>
                       <td className="p-4 text-right space-x-1.5 whitespace-nowrap">
+                        {m.status === 'SCHEDULED' && (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => completeMutation.mutate(m.id)}
+                            disabled={completeMutation.isPending}
+                            className="border-emerald-500/40 text-emerald-500 hover:bg-emerald-500/10 font-bold"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Skip Inspection
+                          </Button>
+                        )}
                         <Button 
                           variant="ghost" 
                           size="sm" 

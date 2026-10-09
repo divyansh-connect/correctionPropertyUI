@@ -72,6 +72,12 @@ export interface Tenant {
   propertyName?: string;
   status: 'Active' | 'Inactive' | 'Pending';
   invoices?: Invoice[];
+  previousBalance?: number;
+  openingBalance?: number;
+  ssn?: string;
+  employer?: string;
+  emergencyPhone?: string;
+  jobPhone?: string;
 }
 
 export interface Lead {

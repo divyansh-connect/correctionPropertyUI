@@ -5,8 +5,9 @@ export interface PaginationInfo {
   totalPages: number;
 }
 
-export interface ReportResponse<T> {
+export interface ReportResponse<T, S = any> {
   data: T[];
+  summary?: S;
   pagination: PaginationInfo;
 }
 

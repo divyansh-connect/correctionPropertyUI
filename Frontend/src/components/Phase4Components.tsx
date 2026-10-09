@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card } from './ui/Card';
 import { StatusBadge } from './StatusBadge';
-import { DollarSign, Calendar, CreditCard, Clock, FileText, CheckCircle } from 'lucide-react';
+import { DollarSign, Calendar, CreditCard, Clock, FileText, CheckCircle, Wallet } from 'lucide-react';
 import { clsx } from 'clsx';
 
 // --- PAYMENT CARD ---
@@ -141,9 +141,15 @@ export const ChargeCard: React.FC<ChargeCardProps> = ({
 
 // --- PAYMENT METHOD BADGE ---
 export const PaymentMethodBadge: React.FC<{ method: string }> = ({ method }) => {
+  const isOffline = method?.toLowerCase().includes('offline');
   return (
-    <span className="inline-flex items-center gap-1 bg-secondary/60 text-foreground text-[10px] font-bold px-2 py-0.5 rounded-lg border border-border">
-      <CreditCard className="w-3 h-3 text-primary" />
+    <span className={clsx(
+      "inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-lg border",
+      isOffline 
+        ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+        : "bg-secondary/60 text-foreground border-border"
+    )}>
+      {isOffline ? <Wallet className="w-3.5 h-3.5 text-amber-500" /> : <CreditCard className="w-3.5 h-3.5 text-primary" />}
       {method}
     </span>
   );

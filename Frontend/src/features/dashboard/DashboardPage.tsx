@@ -15,9 +15,11 @@ import {
 
 import { useAuthStore } from '../../store/useStore';
 import { useTranslation } from 'react-i18next';
+import { MetricDetailsModal, MetricType } from './MetricDetailsModal';
 
 export const DashboardPage: React.FC = () => {
   const { t } = useTranslation();
+  const [selectedMetric, setSelectedMetric] = React.useState<MetricType | null>(null);
 
   // Query Metrics
   const { data: metrics, isLoading: loadingMetrics, refetch: refetchMetrics } = useQuery({
@@ -106,6 +108,7 @@ export const DashboardPage: React.FC = () => {
             trendLabel={`+1 ${t('dashboard.thisQuarter').split(' ')[0]}`}
             description={t('dashboard.thisQuarter')}
             loading={loadingMetrics}
+            onClick={() => setSelectedMetric('properties')}
           />
           <StatsCard
             title={t('dashboard.totalUnits')}
@@ -113,6 +116,7 @@ export const DashboardPage: React.FC = () => {
             icon={<Home className="w-5 h-5" />}
             description={t('dashboard.acrossAllAssets')}
             loading={loadingMetrics}
+            onClick={() => setSelectedMetric('totalUnits')}
           />
           <StatsCard
             title={t('dashboard.occupiedUnits')}
@@ -122,6 +126,7 @@ export const DashboardPage: React.FC = () => {
             trendLabel="Stable"
             description={t('dashboard.activeLeases')}
             loading={loadingMetrics}
+            onClick={() => setSelectedMetric('occupiedUnits')}
           />
           <StatsCard
             title={t('dashboard.vacantUnits')}
@@ -131,6 +136,7 @@ export const DashboardPage: React.FC = () => {
             trendLabel="-2"
             description={t('dashboard.readyForListings')}
             loading={loadingMetrics}
+            onClick={() => setSelectedMetric('vacantUnits')}
           />
           <StatsCard
             title={t('dashboard.occupancyRate')}
@@ -375,6 +381,13 @@ export const DashboardPage: React.FC = () => {
           </ChartCard>
         </div>
       )}
+
+      {/* METRIC DETAILS MODAL */}
+      <MetricDetailsModal
+        open={!!selectedMetric}
+        metricType={selectedMetric}
+        onClose={() => setSelectedMetric(null)}
+      />
     </div>
   );
 };

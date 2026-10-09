@@ -6,7 +6,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { PageHeader } from '../../components/PageHeader';
 import { Button } from '../../components/ui/Button';
 import { StatusBadge } from '../../components/StatusBadge';
-import { Eye, Edit, Trash2, Calendar, ClipboardList, AlertCircle, RefreshCw } from 'lucide-react';
+import { Eye, Edit, Trash2, Calendar, ClipboardList, AlertCircle, RefreshCw, CheckCircle2 } from 'lucide-react';
 
 export const MoveInOutPage: React.FC = () => {
   const { t } = useTranslation();
@@ -15,14 +15,21 @@ export const MoveInOutPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>(''); // empty means all
 
   // Load Move Ins from backend database
-  const { data: moveIns = [], isLoading, refetch } = useQuery({
+  const { data: moveIns = [], isLoading, isFetching, refetch } = useQuery({
     queryKey: ['moveIns', statusFilter],
     queryFn: () => api.moveIns.getAll(statusFilter),
   });
 
-  const handleRefresh = () => {
-    refetch();
-  };
+  const completeMutation = useMutation({
+    mutationFn: (moveInId: string) => api.moveIns.complete(moveInId),
+    onSuccess: () => {
+      refetch();
+      queryClient.invalidateQueries({ queryKey: ['moveIns'] });
+      queryClient.invalidateQueries({ queryKey: ['leases'] });
+      queryClient.invalidateQueries({ queryKey: ['units'] });
+      queryClient.invalidateQueries({ queryKey: ['tenants'] });
+    },
+  });
 
   const statusFilters = [
     { label: 'All Moves', value: '' },
@@ -44,9 +51,9 @@ export const MoveInOutPage: React.FC = () => {
           { label: 'Move In Registry' },
         ]}
         action={{
-          label: 'Refresh Registry',
-          onClick: handleRefresh,
-          icon: <RefreshCw className="w-4 h-4" />
+          label: isFetching ? 'Refreshing...' : 'Refresh Registry',
+          onClick: () => refetch(),
+          icon: <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
         }}
       />
 
@@ -111,6 +118,17 @@ export const MoveInOutPage: React.FC = () => {
                         <StatusBadge status={m.status} />
                       </td>
                       <td className="p-4 text-right space-x-1.5 whitespace-nowrap">
+                        {m.status === 'SCHEDULED' && (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => completeMutation.mutate(m.id)}
+                            disabled={completeMutation.isPending}
+                            className="border-emerald-500/40 text-emerald-500 hover:bg-emerald-500/10 font-bold"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Skip Inspection
+                          </Button>
+                        )}
                         <Button 
                           variant="ghost" 
                           size="sm" 
